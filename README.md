@@ -1,8 +1,5 @@
 #Optimizely Ruby SDK
 
-[![Build Status](https://travis-ci.com/optimizely/optimizely-testing-sdk-ruby.svg?token=xoLe5GgfDMgLPXDntAq3&branch=master)](https://travis-ci.com/optimizely/optimizely-testing-sdk-ruby)
-[![Coverage Status](https://coveralls.io/repos/github/optimizely/optimizely-testing-sdk-ruby/badge.svg?branch=master&t=ZHDjST)](https://coveralls.io/github/optimizely/optimizely-testing-sdk-ruby?branch=master)
-
 This repository houses the Ruby SDK for Optimizely's server-side testing product, which is currently in private beta.
 
 ##Getting Started
