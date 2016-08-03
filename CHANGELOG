@@ -1,0 +1,11 @@
+-------------------------------------------------------------------------------
+0.1.1
+* Add option to skip JSON schema validation of datafile.
+* Update datafile JSON schema.
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+0.1.0
+* Beta release of the Node SDK for server-side testing.
+* Properly handle tracking events without valid experiments attached.
+-------------------------------------------------------------------------------

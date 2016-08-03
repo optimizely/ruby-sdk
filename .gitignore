@@ -1,0 +1,11 @@
+.idea/*
+/.bundle/
+/.yardoc
+Gemfile.lock
+/_yardoc/
+/coverage/
+/doc/
+/spec/reports/
+/tmp/
+*.DS_Store
+.ruby-version
