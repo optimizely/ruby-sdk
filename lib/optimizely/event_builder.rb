@@ -6,7 +6,6 @@ module Optimizely
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
-    # Gets/Sets event params.
     attr_reader :method
     attr_reader :params
     attr_reader :url
