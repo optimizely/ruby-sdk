@@ -96,7 +96,7 @@ describe Optimizely do
       }
 
       allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                        .with('test_experiment')
                                        .and_return([])
@@ -104,7 +104,7 @@ describe Optimizely do
       stub_request(:get, log_url).with(:query => params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(log_url, params).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(:get, log_url, params).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -121,11 +121,11 @@ describe Optimizely do
         'time' => time_now.strftime('%s').to_i
       }
       allow(project_instance.bucketer).to receive(:bucket).and_return('122228')
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(log_url, params).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(:get, log_url, params).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -160,7 +160,7 @@ describe Optimizely do
       }
 
       allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                         .with('test_experiment')
                                         .and_return([])
@@ -192,9 +192,9 @@ describe Optimizely do
         'time' => time_now.strftime('%s').to_i
       }
 
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(log_url, params).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(:get, log_url, params).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
@@ -210,9 +210,9 @@ describe Optimizely do
         'time' => time_now.strftime('%s').to_i
       }
 
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(log_url, params).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(:get, log_url, params).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
@@ -228,9 +228,9 @@ describe Optimizely do
         'time' => time_now.strftime('%s').to_i
       }
 
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(log_url, params).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(:get, log_url, params).once
     end
 
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
@@ -258,7 +258,7 @@ describe Optimizely do
         'time' => time_now.strftime('%s').to_i
       }
 
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(log_url, params)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(:get, log_url, params)
       project_instance.track('test_event', 'test_user', nil, 42)
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching conversion event to" \
                                                                                 " URL #{log_url} with params"))
