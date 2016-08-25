@@ -6,28 +6,19 @@ module Optimizely
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
-    # Event API format
-    OFFLINE_API_PATH = 'https://%{project_id}.log.optimizely.com/event'
-
     # Gets/Sets event params.
-    attr_accessor :params
+    attr_reader :method
+    attr_reader :params
+    attr_reader :url
 
-    def initialize(params)
+    def initialize(method, url, params)
+      @method = method
+      @url = url
       @params = params
-    end
-
-    def url
-      # URL for sending impression/conversion event.
-      #
-      # project_id - ID for the project.
-      #
-      # Returns URL for event API.
-
-      sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID])
     end
   end
 
-  class EventBuilder
+  class EventBuilderV1
     # Class which encapsulates methods to build events for tracking impressions and conversions.
 
     # Attribute mapping format
@@ -36,8 +27,11 @@ module Optimizely
     # Experiment mapping format
     EXPERIMENT_PARAM_FORMAT = '%{experiment_prefix}%{experiment_id}'
 
-    attr_accessor :config
-    attr_accessor :bucketer
+    # Event endpoint path
+    OFFLINE_API_PATH = 'https://%{project_id}.log.optimizely.com/event'
+
+    attr_reader :config
+    attr_reader :bucketer
     attr_accessor :params
 
     def initialize(config, bucketer)
@@ -60,7 +54,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_impression_goal(experiment_key)
       add_experiment(experiment_key, variation_id)
-      Event.new(@params)
+      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params)
     end
 
     def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
@@ -76,7 +70,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_conversion_goal(event_key, event_value)
       add_experiment_variation_params(user_id, experiment_keys)
-      Event.new(@params)
+      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params)
     end
 
     private

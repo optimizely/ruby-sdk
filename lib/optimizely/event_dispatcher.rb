@@ -11,15 +11,20 @@ module Optimizely
   class EventDispatcher
     REQUEST_TIMEOUT = 10
 
-    def dispatch_event(url, params)
+    def dispatch_event(method, url, params)
       # Dispatch the event being represented by the Event object.
       #
+      # method - HTTP verb by which to send the event.
       # url - URL to send impression/conversion event to.
       # params - Params to be sent to the impression/conversion event.
 
-      HTTParty.get(url, query: params, timeout: REQUEST_TIMEOUT)
-      rescue Timeout::Error => e
-        return e
+      if method == :get
+        begin
+          HTTParty.get(url, query: params, timeout: REQUEST_TIMEOUT)
+        rescue Timeout::Error => e
+          return e
+        end
+      end
     end
   end
 end
