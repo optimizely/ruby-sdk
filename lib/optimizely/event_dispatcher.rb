@@ -1,22 +1,14 @@
 require 'httparty'
 
 module Optimizely
-  class BaseEventDispatcher
-    # Class encapsulating event dispatching functionality.
-    # Override with your own EventDispatcher providing dispatch_event method.
-
-    def dispatch_event(_url, _params)
-    end
-  end
-
-  class NoOpEventDispatcher < BaseEventDispatcher
+  class NoOpEventDispatcher
     # Class providing dispatch_event method which does nothing.
 
     def dispatch_event(_url, _params)
     end
   end
 
-  class EventDispatcher < BaseEventDispatcher
+  class EventDispatcher
     REQUEST_TIMEOUT = 10
 
     def dispatch_event(url, params)
