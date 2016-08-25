@@ -4,7 +4,7 @@ module Optimizely
   class NoOpEventDispatcher
     # Class providing dispatch_event method which does nothing.
 
-    def dispatch_event(_url, _params)
+    def dispatch_event(_method, _url, _params)
     end
   end
 
@@ -14,7 +14,7 @@ module Optimizely
     def dispatch_event(method, url, params)
       # Dispatch the event being represented by the Event object.
       #
-      # method - HTTP verb by which to send the event.
+      # method - HTTP verb with which to send the event.
       # url - URL to send impression/conversion event to.
       # params - Params to be sent to the impression/conversion event.
 
