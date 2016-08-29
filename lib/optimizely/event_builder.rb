@@ -15,6 +15,11 @@ module Optimizely
       @url = url
       @params = params
     end
+
+    # Override equality operator to make two events with the same contents equal for testing purposes
+    def ==(event)
+      @http_verb == event.http_verb && @url == event.url && @params == event.params
+    end
   end
 
   class EventBuilderV1
