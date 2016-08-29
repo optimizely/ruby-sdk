@@ -6,12 +6,12 @@ module Optimizely
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
-    attr_reader :method
+    attr_reader :http_verb
     attr_reader :params
     attr_reader :url
 
-    def initialize(method, url, params)
-      @method = method
+    def initialize(http_verb, url, params)
+      @http_verb = http_verb
       @url = url
       @params = params
     end

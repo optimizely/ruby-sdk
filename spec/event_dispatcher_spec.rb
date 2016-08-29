@@ -19,7 +19,7 @@ describe Optimizely::EventDispatcher do
 
   it 'should fire off GET request with provided URL and params' do
     stub_request(:get, @url).with(:query => @params)
-    @event_dispatcher.dispatch_event(:get, @url, @params)
+    @event_dispatcher.dispatch_event(@url, @params, :get)
 
     expect(a_request(:get, @url).with(:query => @params)).to have_been_made.once
   end

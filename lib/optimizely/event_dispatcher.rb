@@ -4,21 +4,21 @@ module Optimizely
   class NoOpEventDispatcher
     # Class providing dispatch_event method which does nothing.
 
-    def dispatch_event(_method, _url, _params)
+    def dispatch_event(_url, _params, _http_verb)
     end
   end
 
   class EventDispatcher
     REQUEST_TIMEOUT = 10
 
-    def dispatch_event(method, url, params)
+    def dispatch_event(url, params, http_verb = :get)
       # Dispatch the event being represented by the Event object.
       #
-      # method - HTTP verb with which to send the event.
+      # http_verb - HTTP verb with which to send the event.
       # url - URL to send impression/conversion event to.
       # params - Params to be sent to the impression/conversion event.
 
-      if method == :get
+      if http_verb == :get
         begin
           HTTParty.get(url, query: params, timeout: REQUEST_TIMEOUT)
         rescue Timeout::Error => e

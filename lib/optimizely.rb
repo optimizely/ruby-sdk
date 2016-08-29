@@ -70,7 +70,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
                                                                               impression_event.params])
-      @event_dispatcher.dispatch_event(impression_event.method, impression_event.url, impression_event.params)
+      @event_dispatcher.dispatch_event(impression_event.url, impression_event.params, impression_event.http_verb)
 
       @config.get_variation_key_from_id(experiment_key, variation_id)
     end
@@ -136,7 +136,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
-      @event_dispatcher.dispatch_event(conversion_event.method, conversion_event.url, conversion_event.params)
+      @event_dispatcher.dispatch_event(conversion_event.url, conversion_event.params, conversion_event.http_verb)
     end
 
     private
