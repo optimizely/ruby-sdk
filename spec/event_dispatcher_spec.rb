@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'webmock'
+require 'optimizely/event_builder'
 require 'optimizely/event_dispatcher'
 
 describe Optimizely::EventDispatcher do
@@ -19,7 +20,8 @@ describe Optimizely::EventDispatcher do
 
   it 'should fire off GET request with provided URL and params' do
     stub_request(:get, @url).with(:query => @params)
-    @event_dispatcher.dispatch_event(@url, @params)
+    event = Optimizely::Event.new(:get, @url, @params)
+    @event_dispatcher.dispatch_event(event)
 
     expect(a_request(:get, @url).with(:query => @params)).to have_been_made.once
   end

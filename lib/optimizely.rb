@@ -35,7 +35,7 @@ module Optimizely
 
       @config = ProjectConfig.new(datafile, @logger, @error_handler)
       @bucketer = Bucketer.new(@config)
-      @event_builder = EventBuilder.new(@config, @bucketer)
+      @event_builder = EventBuilderV1.new(@config, @bucketer)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -70,7 +70,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
                                                                               impression_event.params])
-      @event_dispatcher.dispatch_event(impression_event.url, impression_event.params)
+      @event_dispatcher.dispatch_event(impression_event)
 
       @config.get_variation_key_from_id(experiment_key, variation_id)
     end
@@ -136,7 +136,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
-      @event_dispatcher.dispatch_event(conversion_event.url, conversion_event.params)
+      @event_dispatcher.dispatch_event(conversion_event)
     end
 
     private
