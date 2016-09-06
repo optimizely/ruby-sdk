@@ -22,6 +22,15 @@ module Optimizely
         rescue Timeout::Error => e
           return e
         end
+      elsif event.http_verb == :post
+        begin
+          HTTParty.post(event.url,
+                   body: event.params.to_json,
+                   headers: { 'Content-Type' => 'application/json' },
+                   timeout: REQUEST_TIMEOUT)
+        rescue Timeout::Error => e
+          return e
+        end
       end
     end
   end
