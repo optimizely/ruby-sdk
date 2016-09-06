@@ -3,8 +3,8 @@ require 'optimizely/project_config'
 require 'optimizely/exceptions'
 
 describe Optimizely::ProjectConfig do
-  let(:config_body) { OptimizelySpec::CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::V1_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
 
