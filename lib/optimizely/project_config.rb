@@ -11,8 +11,9 @@ module Optimizely
 
     # Gets project config attributes.
     attr_reader :error_handler
-    attr_accessor :logger
+    attr_reader :logger
 
+    attr_reader :version
     attr_reader :account_id
     attr_reader :project_id
     attr_reader :attributes
@@ -41,6 +42,7 @@ module Optimizely
 
       @error_handler = error_handler
       @logger = logger
+      @version = config['version']
       @account_id = config['accountId']
       @project_id = config['projectId']
       @attributes = config['dimensions']

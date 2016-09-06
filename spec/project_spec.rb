@@ -5,8 +5,8 @@ require 'optimizely/exceptions'
 require 'optimizely/version'
 
 describe Optimizely do
-  let(:config_body) { OptimizelySpec::CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::V1_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }

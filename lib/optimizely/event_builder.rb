@@ -22,7 +22,173 @@ module Optimizely
     end
   end
 
-  class EventBuilderV1
+  class BaseEventBuilder
+    attr_reader :config
+    attr_reader :bucketer
+    attr_accessor :params
+
+    def initialize(config, bucketer)
+      @config = config
+      @bucketer = bucketer
+      @params = {}
+    end
+
+    private
+
+    def add_common_params(user_id, attributes)
+      # Add params which are used in both conversion and impression events.
+      #
+      # user_id - ID for user.
+      # attributes - Hash representing user attributes and values which need to be recorded.
+
+      add_project_id
+      add_account_id
+      add_user_id(user_id)
+      add_attributes(attributes)
+      add_source
+      add_time
+    end
+  end
+
+  class EventBuilderV2 < BaseEventBuilder
+    IMPRESSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
+    CONVERSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
+
+    def create_impression_event(experiment_key, variation_id, user_id, attributes)
+      # Create conversion Event to be sent to the logging endpoint.
+      #
+      # experiment_key - Experiment for which impression needs to be recorded.
+      # variation_id - ID for variation which would be presented to user.
+      # user_id - ID for user.
+      # attributes - Hash representing user attributes and values which need to be recorded.
+      #
+      # Returns event hash encapsulating the impression event.
+
+      @params = {}
+      add_common_params(user_id, attributes)
+      add_decision(experiment_key, variation_id)
+      add_attributes(attributes)
+      Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params)
+    end
+
+    def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
+      # Create conversion Event to be sent to the logging endpoint.
+      #
+      # event_key - Event key representing the event which needs to be recorded.
+      # user_id - ID for user.
+      # attributes - Hash representing user attributes and values which need to be recorded.
+      # event_value - Value associated with the event. Can be used to represent revenue in cents.
+      # experiment_keys - Array of valid experiment keys for the event
+      #
+      # Returns event hash encapsulating the conversion event.
+
+      @params = {}
+      add_common_params(user_id, attributes)
+      add_conversion_event(event_key, event_value)
+      add_layer_states(user_id, experiment_keys)
+      Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params)
+    end
+
+    private
+
+    def add_common_params(user_id, attributes)
+      super
+      @params['isGlobalHoldback'] = false
+    end
+
+    def add_project_id
+      @params['projectId'] = @config.project_id
+    end
+
+    def add_account_id
+      @params['accountId'] = @config.account_id
+    end
+
+    def add_user_id(user_id)
+      @params['visitorId'] = user_id
+    end
+
+    def add_attributes(attributes)
+      @params['userFeatures'] = []
+
+      return if attributes.nil?
+
+      attributes.keys.each do |attribute_key|
+        attribute_value = attributes[attribute_key]
+        next unless attribute_value
+        feature = {
+          'id' => @config.attribute_key_map[attribute_key]['id'],
+          'name' => @config.attribute_key_map[attribute_key]['key'],
+          'type' => 'custom',
+          'value' => attribute_value,
+          'shouldIndex' => true,
+        }
+        @params['userFeatures'].push(feature)
+      end
+    end
+
+    def add_decision(experiment_key, variation_id)
+      experiment_id = @config.get_experiment_id(experiment_key)
+      @params['layerId'] = @config.experiment_key_map[experiment_key]['layerId']
+      @params['decision'] = {
+        'variationId' => variation_id,
+        'experimentId' => experiment_id,
+        'isLayerHoldback' => false
+      }
+    end
+
+    def add_conversion_event(event_key, event_value)
+      # Add conversion event information to the event.
+      #
+      # event_key - Event key representing the event which needs to be recorded.
+      # event_value - Value associated with the event. Can be used to represent revenue in cents.
+
+      event_id = @config.event_key_map[event_key]['id']
+      event_name = @config.event_key_map[event_key]['key']
+
+      @params['eventEntityId'] = event_id
+      @params['eventFeatures'] = []
+      @params['eventName'] = event_name
+      @params['eventMetrics'] = []
+
+      if event_value
+        @params['eventMetrics'].push({
+          'name' => 'revenue',
+          'value' => event_value,
+        })
+      end
+    end
+
+    def add_layer_states(user_id, experiment_keys)
+      @params['layerStates'] = []
+
+      experiment_keys.each do |experiment_key|
+        variation_id = @bucketer.bucket(experiment_key, user_id)
+        experiment_id = @config.experiment_key_map[experiment_key]['id']
+        layer_state = {
+          'layerId' => @config.experiment_key_map[experiment_key]['layerId'],
+          'decision' => {
+            'variationId' => variation_id,
+            'experimentId' => experiment_id,
+            'isLayerHoldback' => false,
+          },
+          'actionTriggered' => true,
+        }
+        @params['layerStates'].push(layer_state)
+      end
+    end
+
+    def add_source
+      @params['clientEngine'] = 'ruby-sdk'
+      @params['clientVersion'] = VERSION
+    end
+
+    def add_time
+      @params['timestamp'] = (Time.now.to_f * 1000).to_i
+    end
+  end
+
+  class EventBuilderV1 < BaseEventBuilder
     # Class which encapsulates methods to build events for tracking impressions and conversions.
 
     # Attribute mapping format
@@ -33,16 +199,6 @@ module Optimizely
 
     # Event endpoint path
     OFFLINE_API_PATH = 'https://%{project_id}.log.optimizely.com/event'
-
-    attr_reader :config
-    attr_reader :bucketer
-    attr_accessor :params
-
-    def initialize(config, bucketer)
-      @config = config
-      @bucketer = bucketer
-      @params = {}
-    end
 
     def create_impression_event(experiment_key, variation_id, user_id, attributes)
       # Create conversion Event to be sent to the logging endpoint.
@@ -69,6 +225,8 @@ module Optimizely
       # attributes - Hash representing user attributes and values which need to be recorded.
       # event_value - Value associated with the event. Can be used to represent revenue in cents.
       # experiment_keys - Array of valid experiment keys for the goal
+      #
+      # Returns event hash encapsulating the conversion event.
 
       @params = {}
       add_common_params(user_id, attributes)
@@ -124,20 +282,6 @@ module Optimizely
       # Add time information to the event.
 
       @params[Params::TIME] = Time.now.strftime('%s').to_i
-    end
-
-    def add_common_params(user_id, attributes)
-      # Add params which are used same in both conversion and impression events.
-      #
-      # user_id - ID for user.
-      # attributes - Hash representing user attributes and values which need to be recorded.
-
-      add_project_id
-      add_account_id
-      add_user_id(user_id)
-      add_attributes(attributes)
-      add_source
-      add_time
     end
 
     def add_impression_goal(experiment_key)
