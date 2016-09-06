@@ -20,6 +20,7 @@ describe Optimizely::EventBuilderV2 do
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)
 
+    @expected_impression_url = 'https://p13nlog.dz.optimizely.com/log/decision'
     @expected_impression_params = {
       'visitorId' => 'testUser',
       'timestamp' => (time_now.to_f * 1000).to_i,
@@ -37,6 +38,7 @@ describe Optimizely::EventBuilderV2 do
       'userFeatures' => [],
     }
 
+    @expected_conversion_url = 'https://p13nlog.dz.optimizely.com/log/event'
     @expected_conversion_params = {
       'visitorId' => 'testUser',
       'timestamp' => (time_now.to_f * 1000).to_i,
@@ -63,16 +65,13 @@ describe Optimizely::EventBuilderV2 do
   end
 
   it 'should create a valid V2 Event when create_impression_event is called' do
-    expected_url = 'https://p13nlog.dz.optimizely.com/log/decision'
-
     impression_event = @event_builder.create_impression_event('testExperiment', '111128', 'testUser', nil)
     expect(impression_event.params).to eq(@expected_impression_params)
-    expect(impression_event.url).to eq(expected_url)
+    expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_impression_event is called with attributes' do
-    expected_url = 'https://p13nlog.dz.optimizely.com/log/decision'
     @expected_impression_params['userFeatures'] = [{
       'id' => '111094',
       'name' => 'browser_type',
@@ -83,21 +82,18 @@ describe Optimizely::EventBuilderV2 do
 
     impression_event = @event_builder.create_impression_event('testExperiment', '111128', 'testUser', {'browser_type' => 'firefox'})
     expect(impression_event.params).to eq(@expected_impression_params)
-    expect(impression_event.url).to eq(expected_url)
+    expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called' do
-    expected_url = 'https://p13nlog.dz.optimizely.com/log/event'
-
     conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', nil, nil, ['testExperiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(expected_url)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with attributes' do
-    expected_url = 'https://p13nlog.dz.optimizely.com/log/event'
     @expected_conversion_params['userFeatures'] = [{
       'id' => '111094',
       'name' => 'browser_type',
@@ -108,12 +104,11 @@ describe Optimizely::EventBuilderV2 do
 
     conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', {'browser_type' => 'firefox'}, nil, ['testExperiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(expected_url)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with event value' do
-    expected_url = 'https://p13nlog.dz.optimizely.com/log/event'
     @expected_conversion_params['eventMetrics'] = [{
       'name' => 'revenue',
       'value' => 4200,
@@ -121,7 +116,7 @@ describe Optimizely::EventBuilderV2 do
 
     conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', nil, 4200, ['testExperiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(expected_url)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
 end
