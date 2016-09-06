@@ -40,9 +40,7 @@ module Optimizely
 
       @config = ProjectConfig.new(datafile, @logger, @error_handler)
       @bucketer = Bucketer.new(@config)
-      event_builder = EVENT_BUILDERS_BY_VERSION[@config.version]
-      @event_builder = event_builder.new(@config, @bucketer)
-
+      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
