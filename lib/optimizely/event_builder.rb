@@ -133,7 +133,7 @@ module Optimizely
       @params['decision'] = {
         'variationId' => variation_id,
         'experimentId' => experiment_id,
-        'isLayerHoldback' => false
+        'isLayerHoldback' => false,
       }
     end
 
