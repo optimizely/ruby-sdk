@@ -24,7 +24,13 @@ module Optimizely
         #
         # Returns boolean depending on validity of datafile.
 
-        version = JSON.load(datafile)['version']
+        begin
+          datafile = JSON.load(datafile)
+        rescue
+          return false
+        end
+
+        version = datafile['version']
 
         if version == Optimizely::V1_CONFIG_VERSION
           JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA_V1, datafile)
