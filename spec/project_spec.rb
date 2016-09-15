@@ -385,41 +385,14 @@ describe Optimizely do
   end
 
   describe '#activate' do
-    # To come in future diff
+    # To come
   end
 
   describe '#track' do
-    # To come in future diff
+    # To come
   end
 
   describe '#get_variation' do
-    it 'should have get_variation return expected variation when there are no audiences' do
-      expect(project_instance.config).to receive(:get_audience_ids_for_experiment)
-                                        .with('test_experiment')
-                                        .and_return([])
-      expect(project_instance.get_variation('test_experiment', 'test_user'))
-             .to eq(config_body['experiments'][0]['variations'][0]['key'])
-    end
-
-    it 'should have get_variation return expected variation when audience conditions match' do
-      user_attributes = {'browser_type' => 'firefox'}
-      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
-             .to eq('control_with_audience')
-    end
-
-    it 'should have get_variation return nil when audience conditions do not match' do
-      user_attributes = {'browser_type' => 'chrome'}
-      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
-             .to eq(nil)
-    end
-
-    it 'should have get_variation return nil when experiment is not Running' do
-      expect(project_instance.get_variation('test_experiment_not_started', 'test_user')).to eq(nil)
-    end
-
-    it 'should raise an exception when called with invalid attributes' do
-      expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
-             .to raise_error(Optimizely::InvalidAttributeFormatError)
-    end
+    # To come
   end
 end
