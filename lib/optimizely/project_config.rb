@@ -1,6 +1,10 @@
 require 'json'
 
 module Optimizely
+
+  V1_CONFIG_VERSION = '1'
+  V2_CONFIG_VERSION = '2'
+
   class ProjectConfig
     # Representation of the Optimizely project config.
 
@@ -45,7 +49,11 @@ module Optimizely
       @version = config['version']
       @account_id = config['accountId']
       @project_id = config['projectId']
-      @attributes = config['dimensions']
+      if @version == V1_CONFIG_VERSION
+        @attributes = config['dimensions']
+      else
+        @attributes = config['attributes']
+      end
       @events = config['events']
       @experiments = config['experiments']
       @revision = config['revision']
@@ -75,7 +83,7 @@ module Optimizely
     end
 
     def experiment_running?(experiment_key)
-      # Determine if experiment coresponding to given key is running
+      # Determine if experiment corresponding to given key is running
       #
       # experiment_key - String key representing the experiment
       #

@@ -23,7 +23,7 @@ module Optimizely
         #
         # Returns boolean depending on validity of datafile.
 
-        JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA, datafile)
+        JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA_V1, datafile)
       end
 
       def error_handler_valid?(error_handler)
