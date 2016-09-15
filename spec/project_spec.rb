@@ -308,3 +308,118 @@ describe Optimizely do
     end
   end
 end
+
+describe Optimizely do
+  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
+  let(:error_handler) { Optimizely::RaiseErrorHandler.new }
+  let(:spy_logger) { spy('logger') }
+  let(:version) { Optimizely::VERSION }
+  let(:impression_log_url) { 'https://p13nlog.dz.optimizely.com/log/decision' }
+  let(:conversion_log_url) { 'https://p13nlog.dz.optimizely.com/log/event' }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:time_now) { Time.now }
+
+  it 'has a version number' do
+    expect(Optimizely::VERSION).not_to be nil
+  end
+
+  describe '.initialize' do
+    it 'should take in a custom logger when instantiating Project class' do
+      class CustomLogger
+        def log(log_message)
+          log_message
+        end
+      end
+
+      logger = CustomLogger.new
+      instance_with_logger = Optimizely::Project.new(config_body_JSON, nil, logger)
+      expect(instance_with_logger.logger.log('test_message')).to eq('test_message')
+    end
+
+    it 'should take in a custom error handler when instantiating Project class' do
+      class CustomErrorHandler
+        def handle_error(error)
+          error
+        end
+      end
+
+      error_handler = CustomErrorHandler.new
+      instance_with_error_handler = Optimizely::Project.new(config_body_JSON, nil, nil, error_handler)
+      expect(instance_with_error_handler.error_handler.handle_error('test_message')). to eq('test_message')
+    end
+
+    it 'should throw an error when given a datafile that does not conform to the schema' do
+      expect { Optimizely::Project.new('{"foo": "bar"}') }.to raise_error(Optimizely::InvalidDatafileError)
+    end
+
+    it 'should throw an error when given an invalid logger' do
+      class InvalidLogger; end
+
+      logger = InvalidLogger.new
+      expect { Optimizely::Project.new(config_body_JSON, nil, logger) }
+             .to raise_error(Optimizely::InvalidLoggerError)
+    end
+
+    it 'should throw an error when given an invalid event_dispatcher' do
+      class InvalidEventDispatcher; end
+
+      event_dispatcher = InvalidEventDispatcher.new
+      expect { Optimizely::Project.new(config_body_JSON, event_dispatcher) }
+             .to raise_error(Optimizely::InvalidEventDispatcherError)
+    end
+
+    it 'should throw an error when given an invalid error_handler' do
+      class InvalidErrorHandler; end
+
+      error_handler = InvalidErrorHandler.new
+      expect { Optimizely::Project.new(config_body_JSON, nil, nil, error_handler) }
+             .to raise_error(Optimizely::InvalidErrorHandlerError)
+    end
+
+    it 'should not validate the JSON schema of the datafile when skip_json_validation is true' do
+      expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
+
+      Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
+    end
+  end
+
+  describe '#activate' do
+    # To come in future diff
+  end
+
+  describe '#track' do
+    # To come in future diff
+  end
+
+  describe '#get_variation' do
+    it 'should have get_variation return expected variation when there are no audiences' do
+      expect(project_instance.config).to receive(:get_audience_ids_for_experiment)
+                                        .with('test_experiment')
+                                        .and_return([])
+      expect(project_instance.get_variation('test_experiment', 'test_user'))
+             .to eq(config_body['experiments'][0]['variations'][0]['key'])
+    end
+
+    it 'should have get_variation return expected variation when audience conditions match' do
+      user_attributes = {'browser_type' => 'firefox'}
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
+             .to eq('control_with_audience')
+    end
+
+    it 'should have get_variation return nil when audience conditions do not match' do
+      user_attributes = {'browser_type' => 'chrome'}
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
+             .to eq(nil)
+    end
+
+    it 'should have get_variation return nil when experiment is not Running' do
+      expect(project_instance.get_variation('test_experiment_not_started', 'test_user')).to eq(nil)
+    end
+
+    it 'should raise an exception when called with invalid attributes' do
+      expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
+             .to raise_error(Optimizely::InvalidAttributeFormatError)
+    end
+  end
+end
