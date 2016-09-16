@@ -22,7 +22,7 @@ describe Optimizely::EventBuilderV2 do
 
     @expected_impression_url = 'https://p13nlog.dz.optimizely.com/log/decision'
     @expected_impression_params = {
-      'visitorId' => 'testUser',
+      'visitorId' => 'test_user',
       'timestamp' => (time_now.to_f * 1000).to_i,
       'isGlobalHoldback' => false,
       'projectId' => '111001',
@@ -31,7 +31,7 @@ describe Optimizely::EventBuilderV2 do
         'experimentId' => '111127',
         'isLayerHoldback' => false,
       },
-      'layerId' => '4',
+      'layerId' => '1',
       'accountId' => '12001',
       'clientEngine' => 'ruby-sdk',
       'clientVersion' => Optimizely::VERSION,
@@ -40,7 +40,7 @@ describe Optimizely::EventBuilderV2 do
 
     @expected_conversion_url = 'https://p13nlog.dz.optimizely.com/log/event'
     @expected_conversion_params = {
-      'visitorId' => 'testUser',
+      'visitorId' => 'test_user',
       'timestamp' => (time_now.to_f * 1000).to_i,
       'isGlobalHoldback' => false,
       'projectId' => '111001',
@@ -50,10 +50,10 @@ describe Optimizely::EventBuilderV2 do
       'userFeatures' => [],
       'eventMetrics' => [],
       'eventFeatures' => [],
-      'eventName' => 'testEvent',
+      'eventName' => 'test_event',
       'eventEntityId' => '111095',
       'layerStates' => [{
-        'layerId' => '4',
+        'layerId' => '1',
         'decision' => {
           'variationId' => '111128',
           'experimentId' => '111127',
@@ -65,7 +65,7 @@ describe Optimizely::EventBuilderV2 do
   end
 
   it 'should create a valid V2 Event when create_impression_event is called' do
-    impression_event = @event_builder.create_impression_event('testExperiment', '111128', 'testUser', nil)
+    impression_event = @event_builder.create_impression_event('test_experiment', '111128', 'test_user', nil)
     expect(impression_event.params).to eq(@expected_impression_params)
     expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
@@ -80,14 +80,14 @@ describe Optimizely::EventBuilderV2 do
       'shouldIndex' => true,
     }]
 
-    impression_event = @event_builder.create_impression_event('testExperiment', '111128', 'testUser', {'browser_type' => 'firefox'})
+    impression_event = @event_builder.create_impression_event('test_experiment', '111128', 'test_user', {'browser_type' => 'firefox'})
     expect(impression_event.params).to eq(@expected_impression_params)
     expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called' do
-    conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', nil, nil, ['testExperiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, ['test_experiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -102,7 +102,7 @@ describe Optimizely::EventBuilderV2 do
       'shouldIndex' => true,
     }]
 
-    conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', {'browser_type' => 'firefox'}, nil, ['testExperiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'}, nil, ['test_experiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -114,7 +114,7 @@ describe Optimizely::EventBuilderV2 do
       'value' => 4200,
     }]
 
-    conversion_event = @event_builder.create_conversion_event('testEvent', 'testUser', nil, 4200, ['testExperiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, 4200, ['test_experiment'])
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)

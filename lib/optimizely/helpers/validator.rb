@@ -1,4 +1,5 @@
 require_relative 'constants'
+require 'json'
 require 'json-schema'
 
 module Optimizely
@@ -23,7 +24,19 @@ module Optimizely
         #
         # Returns boolean depending on validity of datafile.
 
-        JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA, datafile)
+        begin
+          datafile = JSON.load(datafile)
+        rescue
+          return false
+        end
+
+        version = datafile['version']
+
+        if version == Optimizely::V1_CONFIG_VERSION
+          JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA_V1, datafile)
+        else
+          JSON::Validator.validate(Helpers::Constants::JSON_SCHEMA_V2, datafile)
+        end
       end
 
       def error_handler_valid?(error_handler)

@@ -19,8 +19,8 @@ module Optimizely
     attr_accessor :error_handler
 
     EVENT_BUILDERS_BY_VERSION = {
-      '1' => EventBuilderV1,
-      '2' => EventBuilderV2
+      Optimizely::V1_CONFIG_VERSION => EventBuilderV1,
+      Optimizely::V2_CONFIG_VERSION => EventBuilderV2
     }
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
