@@ -4,7 +4,7 @@ require 'optimizely/helpers/validator'
 require 'optimizely/exceptions'
 require 'optimizely/version'
 
-describe Optimizely do
+describe 'OptimizelyV1' do
   let(:config_body) { OptimizelySpec::V1_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
@@ -309,7 +309,7 @@ describe Optimizely do
   end
 end
 
-describe Optimizely do
+describe 'OptimizelyV2' do
   let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
