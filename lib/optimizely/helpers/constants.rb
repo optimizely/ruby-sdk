@@ -133,9 +133,6 @@ module Optimizely
                 'status' => {
                   'type' => 'string'
                 },
-                'layerId' => {
-                  'type' => 'string'
-                },
                 'variations' => {
                   'type' => 'array',
                   'items' => {
@@ -190,7 +187,6 @@ module Optimizely
                 'audienceIds',
                 'forcedVariations',
                 'status',
-                'layerId'
               ]
             }
           },
@@ -419,6 +415,9 @@ module Optimizely
                 'status' => {
                   'type' => 'string'
                 },
+                'layerId' => {
+                  'type' => 'string'
+                },
                 'variations' => {
                   'type' => 'array',
                   'items' => {
@@ -472,7 +471,8 @@ module Optimizely
                 'trafficAllocation',
                 'audienceIds',
                 'forcedVariations',
-                'status'
+                'status',
+                'layerId'
               ]
             }
           },
