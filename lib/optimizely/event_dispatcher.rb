@@ -9,7 +9,6 @@ module Optimizely
   end
 
   class EventDispatcher
-    POST_HEADERS = { 'Content-Type' => 'application/json' }
     REQUEST_TIMEOUT = 10
 
     def dispatch_event(event)
@@ -19,7 +18,7 @@ module Optimizely
 
       if event.http_verb == :get
         begin
-          HTTParty.get(event.url, query: event.params, timeout: REQUEST_TIMEOUT)
+          HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
         rescue Timeout::Error => e
           return e
         end
@@ -27,7 +26,7 @@ module Optimizely
         begin
           HTTParty.post(event.url,
                    body: event.params.to_json,
-                   headers: POST_HEADERS,
+                   headers: event.headers,
                    timeout: REQUEST_TIMEOUT)
         rescue Timeout::Error => e
           return e

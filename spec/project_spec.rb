@@ -104,7 +104,7 @@ describe 'OptimizelyV1' do
       stub_request(:get, log_url).with(:query => params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -125,7 +125,7 @@ describe 'OptimizelyV1' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -194,7 +194,7 @@ describe 'OptimizelyV1' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
@@ -212,7 +212,7 @@ describe 'OptimizelyV1' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
@@ -230,7 +230,7 @@ describe 'OptimizelyV1' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
@@ -319,6 +319,7 @@ describe 'OptimizelyV2' do
   let(:conversion_log_url) { 'https://p13nlog.dz.optimizely.com/log/event' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:time_now) { Time.now }
+  let(:post_headers) { { 'Content-Type' => 'application/json' } }
 
   it 'has a version number' do
     expect(Optimizely::VERSION).not_to be nil
@@ -416,7 +417,7 @@ describe 'OptimizelyV2' do
       stub_request(:post, impression_log_url).with(:query => params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -451,7 +452,7 @@ describe 'OptimizelyV2' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.bucketer).to have_received(:bucket).once
     end
 
@@ -541,7 +542,7 @@ describe 'OptimizelyV2' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
@@ -578,7 +579,7 @@ describe 'OptimizelyV2' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
@@ -618,7 +619,7 @@ describe 'OptimizelyV2' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do

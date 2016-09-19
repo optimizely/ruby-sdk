@@ -153,7 +153,7 @@ describe Optimizely::EventBuilderV1 do
 
     expect(@event_builder).to receive(:create_impression_event)
                           .with('test_experiment', 'test_user')
-                          .and_return(Optimizely::Event.new(:get, '', expected_params))
+                          .and_return(Optimizely::Event.new(:get, '', expected_params, {}))
     impression_event = @event_builder.create_impression_event('test_experiment', 'test_user')
     expect(impression_event.params).to eq(expected_params)
   end
@@ -176,7 +176,7 @@ describe Optimizely::EventBuilderV1 do
 
       expect(@event_builder).to receive(:create_impression_event)
                             .with('test_experiment', 'test_user', {'browser_type' => 'firefox'})
-                            .and_return(Optimizely::Event.new(:get, '', expected_params))
+                            .and_return(Optimizely::Event.new(:get, '', expected_params, {}))
       impression_event = @event_builder.create_impression_event('test_experiment',
                                                                 'test_user',
                                                                 {'browser_type' => 'firefox'})
@@ -200,7 +200,7 @@ describe Optimizely::EventBuilderV1 do
 
     expect(@event_builder).to receive(:create_conversion_event)
                           .with('test_event', 'test_user')
-                          .and_return(Optimizely::Event.new(:get, '', expected_params))
+                          .and_return(Optimizely::Event.new(:get, '', expected_params, {}))
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user')
     expect(conversion_event.params).to eq(expected_params)
   end
@@ -223,7 +223,7 @@ describe Optimizely::EventBuilderV1 do
 
     expect(@event_builder).to receive(:create_conversion_event)
                           .with('test_event', 'test_user', {'browser_type' => 'firefox'})
-                          .and_return(Optimizely::Event.new(:get, '', expected_params))
+                          .and_return(Optimizely::Event.new(:get, '', expected_params, {}))
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'})
     expect(conversion_event.params).to eq(expected_params)
   end
@@ -246,7 +246,7 @@ describe Optimizely::EventBuilderV1 do
 
     expect(@event_builder).to receive(:create_conversion_event)
                           .with('test_event', 'test_user', nil, 42)
-                          .and_return(Optimizely::Event.new(:get, '', expected_params))
+                          .and_return(Optimizely::Event.new(:get, '', expected_params, {}))
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, 42)
     expect(conversion_event.params).to eq(expected_params)
   end

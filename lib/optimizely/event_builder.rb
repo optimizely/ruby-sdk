@@ -9,16 +9,18 @@ module Optimizely
     attr_reader :http_verb
     attr_reader :params
     attr_reader :url
+    attr_reader :headers
 
-    def initialize(http_verb, url, params)
+    def initialize(http_verb, url, params, headers)
       @http_verb = http_verb
       @url = url
       @params = params
+      @headers = headers
     end
 
     # Override equality operator to make two events with the same contents equal for testing purposes
     def ==(event)
-      @http_verb == event.http_verb && @url == event.url && @params == event.params
+      @http_verb == event.http_verb && @url == event.url && @params == event.params && @headers == event.headers
     end
   end
 
@@ -51,8 +53,9 @@ module Optimizely
   end
 
   class EventBuilderV2 < BaseEventBuilder
-    IMPRESSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
     CONVERSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
+    IMPRESSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
+    POST_HEADERS = { 'Content-Type' => 'application/json' }
 
     def create_impression_event(experiment_key, variation_id, user_id, attributes)
       # Create conversion Event to be sent to the logging endpoint.
@@ -68,7 +71,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_decision(experiment_key, variation_id)
       add_attributes(attributes)
-      Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params)
+      Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
 
     def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
@@ -86,7 +89,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_conversion_event(event_key, event_value)
       add_layer_states(user_id, experiment_keys)
-      Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params)
+      Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
 
     private
@@ -220,7 +223,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_impression_goal(experiment_key)
       add_experiment(experiment_key, variation_id)
-      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params)
+      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params, {})
     end
 
     def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
@@ -238,7 +241,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_conversion_goal(event_key, event_value)
       add_experiment_variation_params(user_id, experiment_keys)
-      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params)
+      Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params, {})
     end
 
     private

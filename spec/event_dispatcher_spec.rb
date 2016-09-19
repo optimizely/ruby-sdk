@@ -12,6 +12,7 @@ describe Optimizely::EventDispatcher do
       'g' => '111028',
       'u' => 'test_user',
     }
+    @post_headers = {'Content-Type' => 'application/json'}
   end
 
   before(:example) do
@@ -20,7 +21,7 @@ describe Optimizely::EventDispatcher do
 
   it 'should properly dispatch V1 (GET) events' do
     stub_request(:get, @url).with(:query => @params)
-    event = Optimizely::Event.new(:get, @url, @params)
+    event = Optimizely::Event.new(:get, @url, @params, {})
     @event_dispatcher.dispatch_event(event)
 
     expect(a_request(:get, @url).with(:query => @params)).to have_been_made.once
@@ -28,10 +29,10 @@ describe Optimizely::EventDispatcher do
 
   it 'should properly dispatch V2 (POST) events' do
     stub_request(:post, @url)
-    event = Optimizely::Event.new(:post, @url, @params)
+    event = Optimizely::Event.new(:post, @url, @params, @post_headers)
     @event_dispatcher.dispatch_event(event)
 
     expect(a_request(:post, @url).
-      with(:body => @params, :headers => {'Content-Type' => 'application/json'})).to have_been_made.once
+      with(:body => @params, :headers => @post_headers)).to have_been_made.once
   end
 end
