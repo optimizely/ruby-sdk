@@ -114,11 +114,17 @@ module Optimizely
       return if attributes.nil?
 
       attributes.keys.each do |attribute_key|
+        # Omit falsy attribute values
         attribute_value = attributes[attribute_key]
         next unless attribute_value
+
+        # Skip attributes not in the datafile
+        attribute_id = @config.get_attribute_id(attribute_key)
+        next unless attribute_id
+
         feature = {
-          'id' => @config.attribute_key_map[attribute_key]['id'],
-          'name' => @config.attribute_key_map[attribute_key]['key'],
+          'id' => attribute_id,
+          'name' => attribute_key,
           'type' => 'custom',
           'value' => attribute_value,
           'shouldIndex' => true,
