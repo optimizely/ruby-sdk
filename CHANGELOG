@@ -1,4 +1,10 @@
 -------------------------------------------------------------------------------
+0.1.2
+* Add support for V2 datafile and event endpoint.
+* Change EventDispatcher / Event signature. The EventDispatcher's dispatch_event method now takes an Event with four properties: url (string URL to dispatch the Event to), params (Hash of params to send), http_verb (either :get or :post), and headers (Hash of headers to send with the request).
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 0.1.1
 * Add option to skip JSON schema validation of datafile.
 * Update datafile JSON schema.

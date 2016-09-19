@@ -1,4 +1,5 @@
 .idea/*
+pkg/*
 /.bundle/
 /.yardoc
 Gemfile.lock

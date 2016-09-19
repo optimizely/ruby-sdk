@@ -1,6 +1,10 @@
 require 'json'
 
 module Optimizely
+
+  V1_CONFIG_VERSION = '1'
+  V2_CONFIG_VERSION = '2'
+
   class ProjectConfig
     # Representation of the Optimizely project config.
 
@@ -11,8 +15,9 @@ module Optimizely
 
     # Gets project config attributes.
     attr_reader :error_handler
-    attr_accessor :logger
+    attr_reader :logger
 
+    attr_reader :version
     attr_reader :account_id
     attr_reader :project_id
     attr_reader :attributes
@@ -41,9 +46,14 @@ module Optimizely
 
       @error_handler = error_handler
       @logger = logger
+      @version = config['version']
       @account_id = config['accountId']
       @project_id = config['projectId']
-      @attributes = config['dimensions']
+      if @version == V1_CONFIG_VERSION
+        @attributes = config['dimensions']
+      else
+        @attributes = config['attributes']
+      end
       @events = config['events']
       @experiments = config['experiments']
       @revision = config['revision']
@@ -73,7 +83,7 @@ module Optimizely
     end
 
     def experiment_running?(experiment_key)
-      # Determine if experiment coresponding to given key is running
+      # Determine if experiment corresponding to given key is running
       #
       # experiment_key - String key representing the experiment
       #
@@ -237,6 +247,14 @@ module Optimizely
       return experiment['groupId'] if experiment
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
+    end
+
+    def get_attribute_id(attribute_key)
+      attribute = @attribute_key_map[attribute_key]
+      return attribute['id'] if attribute
+      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
+      @error_handler.handle_error InvalidAttributeError
+      nil
     end
 
     private

@@ -3,7 +3,7 @@ require 'spec_helper'
 
 describe Optimizely::ConditionEvaluator do
   before(:context) do
-    @config_body = OptimizelySpec::CONFIG_BODY
+    @config_body = OptimizelySpec::V1_CONFIG_BODY
   end
 
   before(:example) do

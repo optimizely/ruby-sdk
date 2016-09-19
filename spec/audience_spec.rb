@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Optimizely::Audience do
   before(:context) do
-    @config_body = OptimizelySpec::CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::CONFIG_BODY_JSON
+    @config_body = OptimizelySpec::V1_CONFIG_BODY
+    @config_body_JSON = OptimizelySpec::V1_CONFIG_BODY_JSON
   end
 
   before(:example) do

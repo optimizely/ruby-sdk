@@ -3,8 +3,8 @@ require 'optimizely/project_config'
 require 'optimizely/exceptions'
 
 describe Optimizely::ProjectConfig do
-  let(:config_body) { OptimizelySpec::CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::V1_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
 
@@ -257,6 +257,14 @@ describe Optimizely::ProjectConfig do
                                                        "Experiment key 'invalid_key' is not in datafile.")
       end
     end
+
+    describe 'get_attribute_id' do
+      it 'should log a message when provided attribute key is invalid' do
+        config.get_attribute_id('invalid_attr')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Attribute key 'invalid_attr' is not in datafile.")
+      end
+    end
   end
 
   describe '@error_handler' do
@@ -305,6 +313,12 @@ describe Optimizely::ProjectConfig do
       it 'should raise an error when provided experiment key is invalid' do
         expect { config.get_variation_key_from_id('invalid_key', 'some_variation') }
                .to raise_error(Optimizely::InvalidExperimentError)
+      end
+    end
+
+    describe 'get_attribute_id' do
+      it 'should raise an error when provided attribute key is invalid' do
+        expect { config.get_attribute_id('invalid_attr') }.to raise_error(Optimizely::InvalidAttributeError)
       end
     end
   end

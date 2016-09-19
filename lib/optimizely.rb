@@ -18,6 +18,11 @@ module Optimizely
     attr_accessor :logger
     attr_accessor :error_handler
 
+    EVENT_BUILDERS_BY_VERSION = {
+      Optimizely::V1_CONFIG_VERSION => EventBuilderV1,
+      Optimizely::V2_CONFIG_VERSION => EventBuilderV2
+    }
+
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
       # Constructor for Projects.
       #
@@ -35,7 +40,7 @@ module Optimizely
 
       @config = ProjectConfig.new(datafile, @logger, @error_handler)
       @bucketer = Bucketer.new(@config)
-      @event_builder = EventBuilder.new(@config, @bucketer)
+      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -70,7 +75,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
                                                                               impression_event.params])
-      @event_dispatcher.dispatch_event(impression_event.url, impression_event.params)
+      @event_dispatcher.dispatch_event(impression_event)
 
       @config.get_variation_key_from_id(experiment_key, variation_id)
     end
@@ -136,7 +141,7 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
-      @event_dispatcher.dispatch_event(conversion_event.url, conversion_event.params)
+      @event_dispatcher.dispatch_event(conversion_event)
     end
 
     private
