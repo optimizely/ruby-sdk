@@ -1,6 +1,7 @@
 -------------------------------------------------------------------------------
 0.1.2
 * Add support for V2 datafile and event endpoint.
+* Change EventDispatcher / Event signature. The EventDispatcher's dispatch_event method now takes an Event with three properties: url (string URL to dispatch the Event to), params (Hash of params to send), and http_verb (either :get or :post).
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
