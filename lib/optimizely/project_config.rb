@@ -249,6 +249,14 @@ module Optimizely
       @error_handler.handle_error InvalidExperimentError
     end
 
+    def get_attribute_id(attribute_key)
+      attribute = @attribute_key_map[attribute_key]
+      return attribute['id'] if attribute
+      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
+      @error_handler.handle_error InvalidAttributeError
+      nil
+    end
+
     private
 
     def generate_key_map(array, key)
