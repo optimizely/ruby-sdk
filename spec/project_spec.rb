@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'optimizely'
+require 'optimizely/audience'
 require 'optimizely/helpers/validator'
 require 'optimizely/exceptions'
 require 'optimizely/version'
@@ -98,8 +99,8 @@ describe 'OptimizelyV1' do
       allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
-                                       .with('test_experiment')
-                                       .and_return([])
+                                    .with('test_experiment')
+                                    .and_return([])
 
       stub_request(:get, log_url).with(:query => params)
 
@@ -506,6 +507,15 @@ describe 'OptimizelyV2' do
       expect { project_instance.activate('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
+
+    it 'should override the audience check if the user is whitelisted to a specific variation' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      allow(Optimizely::Audience).to receive(:user_in_experiment?)
+
+      expect(project_instance.activate('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
+        .to eq('variation_with_audience')
+      expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
+    end
   end
 
   describe '#track' do
@@ -681,6 +691,48 @@ describe 'OptimizelyV2' do
       expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
+
+    it 'should override the audience check if the user is whitelisted to a specific variation' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'forced_audience_user',
+        'userFeatures' => [
+          {
+            'id' => '111094',
+            'name' => 'browser_type',
+            'type' => 'custom',
+            'value' => 'wrong_browser',
+            'shouldIndex' => true,
+          }
+        ],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'eventEntityId' => '111097',
+        'eventFeatures' => [],
+        'eventName' => 'test_event_with_audience',
+        'eventMetrics' => [],
+        'layerStates' => [
+          {
+            'layerId' => '3',
+            'decision' => {
+              'variationId' => '122229',
+              'experimentId' => '122227',
+              'isLayerHoldback' => false,
+            },
+            'actionTriggered' => true,
+          }
+        ]
+      }
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      allow(Optimizely::Audience).to receive(:user_in_experiment?)
+
+      project_instance.track('test_event_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser')
+      expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+    end
   end
 
   describe '#get_variation' do
@@ -711,6 +763,15 @@ describe 'OptimizelyV2' do
     it 'should raise an exception when called with invalid attributes' do
       expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
+    end
+
+    it 'should override the audience check if the user is whitelisted to a specific variation' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      allow(Optimizely::Audience).to receive(:user_in_experiment?)
+
+      expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
+        .to eq('variation_with_audience')
+      expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
   end
 end
