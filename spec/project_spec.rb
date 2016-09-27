@@ -509,11 +509,37 @@ describe 'OptimizelyV2' do
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'forced_audience_user',
+        'userFeatures' => [
+          {
+            'id' => '111094',
+            'name' => 'browser_type',
+            'type' => 'custom',
+            'value' => 'wrong_browser',
+            'shouldIndex' => true,
+          },
+        ],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'layerId' => '3',
+        'decision' => {
+          'variationId' => '122229',
+          'experimentId' => '122227',
+          'isLayerHoldback' => false,
+        }
+      }
+
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
       expect(project_instance.activate('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
   end
@@ -766,7 +792,6 @@ describe 'OptimizelyV2' do
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
       expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
