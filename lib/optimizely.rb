@@ -56,7 +56,7 @@ module Optimizely
       rescue
         @is_valid = false
         logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidInputError.new('datafile'))
+        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
         return
       end
 

@@ -75,6 +75,18 @@ describe 'OptimizelyV1' do
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
     end
+
+    it 'should log an error when provided a datafile that is not JSON and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('this is not JSON', nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('{"foo": "bar"}', nil, nil, nil, true)
+    end
   end
 
   describe '#activate' do
@@ -379,6 +391,18 @@ describe 'OptimizelyV2' do
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided a datafile that is not JSON and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('this is not JSON', nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('{"foo": "bar"}', nil, nil, nil, true)
     end
   end
 
