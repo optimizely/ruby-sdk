@@ -257,6 +257,19 @@ module Optimizely
       nil
     end
 
+    def user_in_forced_variation?(experiment_key, user_id)
+      # Determines if a given user is in a forced variation
+      #
+      # experiment_key - String experiment key
+      # user_id - String user ID
+      #
+      # Returns true if user is in a forced variation
+
+      forced_variations = get_forced_variations(experiment_key)
+      return forced_variations.include?(user_id) if forced_variations
+      false
+    end
+
     private
 
     def generate_key_map(array, key)

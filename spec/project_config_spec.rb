@@ -3,17 +3,32 @@ require 'optimizely/project_config'
 require 'optimizely/exceptions'
 
 describe Optimizely::ProjectConfig do
-  let(:config_body) { OptimizelySpec::V1_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
+  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
+
+  describe '#user_in_forced_variations' do
+    it 'should return false when the experiment has no forced variations' do
+      expect(config.user_in_forced_variation?('group1_exp1', 'test_user')).to be(false)
+    end
+
+    it 'should return false when the user is not in a forced variation' do
+      expect(config.user_in_forced_variation?('test_experiment', 'test_user')).to be(false)
+    end
+
+    it 'should return true when the user is in a forced variation' do
+      expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(true)
+    end
+  end
 
   describe '.initialize' do
     it 'should initialize properties correctly upon creating project' do
       project_config = Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)
 
       expect(project_config.account_id).to eq(config_body['accountId'])
-      expect(project_config.attributes).to eq(config_body['dimensions'])
+      expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
       expect(project_config.events).to eq(config_body['events'])
       expect(project_config.groups).to eq(config_body['groups'])
@@ -21,7 +36,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.revision).to eq(config_body['revision'])
 
       expected_attribute_key_map = {
-        'browser_type' => config_body['dimensions'][0]
+        'browser_type' => config_body['attributes'][0]
       }
 
       expected_audience_id_map = {

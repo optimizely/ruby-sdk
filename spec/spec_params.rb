@@ -83,7 +83,9 @@ module OptimizelySpec
         'entityId' => '122229',
         'endOfRange' => 10000
       }],
-      'forcedVariations' => {},
+      'forcedVariations' => {
+        'forced_audience_user' => 'variation_with_audience',
+      },
       'id' => '122227',
       'percentageIncluded' => 10000,
       'variations' => [{
