@@ -17,20 +17,12 @@ module Optimizely
       # event - Event object
 
       if event.http_verb == :get
-        begin
-          HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
-        rescue Timeout::Error => e
-          return e
-        end
+        HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
       elsif event.http_verb == :post
-        begin
-          HTTParty.post(event.url,
-                   body: event.params.to_json,
-                   headers: event.headers,
-                   timeout: REQUEST_TIMEOUT)
-        rescue Timeout::Error => e
-          return e
-        end
+        HTTParty.post(event.url,
+                 body: event.params.to_json,
+                 headers: event.headers,
+                 timeout: REQUEST_TIMEOUT)
       end
     end
   end
