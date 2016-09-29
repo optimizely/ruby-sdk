@@ -82,7 +82,7 @@ module Optimizely
 
       unless @is_valid
         logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('activate'))
+        logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
         return nil
       end
 
@@ -129,7 +129,7 @@ module Optimizely
 
       unless @is_valid
         logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation'))
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
         return nil
       end
 
@@ -157,7 +157,7 @@ module Optimizely
 
       unless @is_valid
         logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('track'))
+        logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
         return nil
       end
 

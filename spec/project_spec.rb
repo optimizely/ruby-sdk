@@ -184,6 +184,16 @@ describe 'OptimizelyV1' do
       expect { project_instance.activate('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.activate('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
+    end
   end
 
   describe '#track' do
@@ -286,6 +296,16 @@ describe 'OptimizelyV1' do
       expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.track('test_event', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
+    end
   end
 
   describe '#get_variation' do
@@ -317,6 +337,16 @@ describe 'OptimizelyV1' do
       expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
+  end
+
+  it 'should log an error when called with an invalid Project object' do
+    logger = double('logger')
+    allow(logger).to receive(:log)
+    allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+    invalid_project = Optimizely::Project.new('invalid')
+    invalid_project.get_variation('test_exp', 'test_user')
+    expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
   end
 end
 
@@ -562,6 +592,16 @@ describe 'OptimizelyV2' do
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.activate('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
+    end
   end
 
   describe '#track' do
@@ -779,6 +819,16 @@ describe 'OptimizelyV2' do
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.track('test_event', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
+    end
   end
 
   describe '#get_variation' do
@@ -817,6 +867,16 @@ describe 'OptimizelyV2' do
       expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
+    end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.get_variation('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
     end
   end
 end
