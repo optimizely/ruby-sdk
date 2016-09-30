@@ -210,7 +210,7 @@ module Optimizely
       # Returns boolean representing whether all preconditions are valid.
 
       unless @config.experiment_running?(experiment_key)
-        @logger.log(Logger::INFO, "Experiment '#{experiment_key} is not running.")
+        @logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
         return false
       end
 
@@ -220,7 +220,7 @@ module Optimizely
 
       unless Audience.user_in_experiment?(@config, experiment_key, attributes)
         @logger.log(Logger::INFO,
-                    "User '#{user_id} does not meet the conditions to be in experiment '#{experiment_key}.")
+                    "User '#{user_id} does not meet the conditions to be in experiment '#{experiment_key}'.")
         return false
       end
 

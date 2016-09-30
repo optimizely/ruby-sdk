@@ -293,7 +293,7 @@ describe 'OptimizelyV1' do
     it 'should return nil and not call dispatch_event for an invalid event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
-      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
+      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidEventError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
@@ -774,7 +774,7 @@ describe 'OptimizelyV2' do
     it 'should return nil and not call dispatch_event for an invalid event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
-      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
+      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidEventError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 

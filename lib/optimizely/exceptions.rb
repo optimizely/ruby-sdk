@@ -33,7 +33,7 @@ module Optimizely
     end
   end
 
-  class InvalidGoalError < Error
+  class InvalidEventError < Error
     # Raised when an invalid event key is provided
 
     def initialize(msg = 'Provided event is not in datafile.')
@@ -53,7 +53,7 @@ module Optimizely
     # Raised when a public method fails due to an invalid datafile
 
     def initialize(aborted_method)
-      super("Provided datafile is in an invalid format. Aborting #{aborted_method}")
+      super("Provided datafile is in an invalid format. Aborting #{aborted_method}.")
     end
   end
 
