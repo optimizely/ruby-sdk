@@ -300,7 +300,7 @@ describe Optimizely::ProjectConfig do
 
     describe 'get_experiment_ids_for_goal' do
       it 'should raise an error when provided goal key is invalid' do
-        expect { config.get_experiment_ids_for_goal('invalid_key') }.to raise_error(Optimizely::InvalidGoalError)
+        expect { config.get_experiment_ids_for_goal('invalid_key') }.to raise_error(Optimizely::InvalidEventError)
       end
     end
 

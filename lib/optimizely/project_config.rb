@@ -139,7 +139,7 @@ module Optimizely
       goal = @event_key_map[goal_key]
       return goal['experimentIds'] if goal
       @logger.log Logger::ERROR, "Event '#{goal_key}' is not in datafile."
-      @error_handler.handle_error InvalidGoalError
+      @error_handler.handle_error InvalidEventError
       []
     end
 
@@ -252,6 +252,14 @@ module Optimizely
     def get_attribute_id(attribute_key)
       attribute = @attribute_key_map[attribute_key]
       return attribute['id'] if attribute
+      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
+      @error_handler.handle_error InvalidAttributeError
+      nil
+    end
+
+    def get_segment_id(attribute_key)
+      attribute = @attribute_key_map[attribute_key]
+      return attribute['segmentId'] if attribute
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil

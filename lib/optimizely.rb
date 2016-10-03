@@ -11,6 +11,10 @@ require_relative 'optimizely/project_config'
 
 module Optimizely
   class Project
+
+    # Boolean representing if the instance represents a usable Optimizely Project
+    attr_reader   :is_valid
+
     attr_accessor :config
     attr_accessor :bucketer
     attr_accessor :event_builder
@@ -33,14 +37,37 @@ module Optimizely
       #                 By default all exceptions will be suppressed.
       # skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
 
+      @is_valid = true
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new
-      validate_inputs(datafile, skip_json_validation)
 
-      @config = ProjectConfig.new(datafile, @logger, @error_handler)
-      @bucketer = Bucketer.new(@config)
-      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
+      begin
+        validate_inputs(datafile, skip_json_validation)
+      rescue InvalidInputError => e
+        @is_valid = false
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, e.message)
+        return
+      end
+
+      begin
+        @config = ProjectConfig.new(datafile, @logger, @error_handler)
+      rescue
+        @is_valid = false
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        return
+      end
+
+      begin
+        @bucketer = Bucketer.new(@config)
+        @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
+      rescue
+        @is_valid = false
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileVersionError.new)
+      end
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -51,7 +78,13 @@ module Optimizely
       # attributes - Hash representing user attributes and values to be recorded.
       #
       # Returns variation key representing the variation the user will be bucketed in.
-      # Returns nil if experiment is not Running or if user is not in experiment.
+      # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
+        return nil
+      end
 
       if attributes && !attributes_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
@@ -75,7 +108,11 @@ module Optimizely
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
                                                                               impression_event.params])
-      @event_dispatcher.dispatch_event(impression_event)
+      begin
+        @event_dispatcher.dispatch_event(impression_event)
+      rescue => e
+        @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
+      end
 
       @config.get_variation_key_from_id(experiment_key, variation_id)
     end
@@ -88,7 +125,13 @@ module Optimizely
       # attributes - Hash representing user attributes.
       #
       # Returns variation key where visitor will be bucketed.
-      # Returns nil if experiment is not Running or if user is not in experiment.
+      # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
+        return nil
+      end
 
       if attributes && !attributes_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
@@ -112,7 +155,11 @@ module Optimizely
       # attributes - Hash representing visitor attributes and values which need to be recorded.
       # event_value - Value associated with the event. Can be used to represent revenue in cents.
 
-      # Create and dispatch conversion event
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
+        return nil
+      end
 
       return nil if attributes && !attributes_valid?(attributes)
 
@@ -134,14 +181,21 @@ module Optimizely
       end
 
       # Don't track events without valid experiments attached
-      return if valid_experiment_keys.empty?
+      if valid_experiment_keys.empty?
+        @logger.log(Logger::INFO, "There are no valid experiments for event '#{event_key}' to track.")
+        return nil
+      end
 
       conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
                                                                 event_value, valid_experiment_keys)
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
-      @event_dispatcher.dispatch_event(conversion_event)
+      begin
+        @event_dispatcher.dispatch_event(conversion_event)
+      rescue => e
+        @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
+      end
     end
 
     private
@@ -156,7 +210,7 @@ module Optimizely
       # Returns boolean representing whether all preconditions are valid.
 
       unless @config.experiment_running?(experiment_key)
-        @logger.log(Logger::INFO, "Experiment '#{experiment_key} is not running.")
+        @logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
         return false
       end
 
@@ -166,7 +220,7 @@ module Optimizely
 
       unless Audience.user_in_experiment?(@config, experiment_key, attributes)
         @logger.log(Logger::INFO,
-                    "User '#{user_id} does not meet the conditions to be in experiment '#{experiment_key}.")
+                    "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
         return false
       end
 
@@ -184,12 +238,12 @@ module Optimizely
 
     def validate_inputs(datafile, skip_json_validation)
       unless skip_json_validation
-        raise InvalidDatafileError unless Helpers::Validator.datafile_valid?(datafile)
+        raise InvalidInputError.new('datafile') unless Helpers::Validator.datafile_valid?(datafile)
       end
 
-      raise InvalidLoggerError unless Helpers::Validator.logger_valid?(@logger)
-      raise InvalidErrorHandlerError unless Helpers::Validator.error_handler_valid?(@error_handler)
-      raise InvalidEventDispatcherError unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
+      raise InvalidInputError.new('logger') unless Helpers::Validator.logger_valid?(@logger)
+      raise InvalidInputError.new('error_handler') unless Helpers::Validator.error_handler_valid?(@error_handler)
+      raise InvalidInputError.new('event_dispatcher') unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
     end
   end
 end
