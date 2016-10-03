@@ -274,7 +274,10 @@ module Optimizely
       attributes.keys.each do |attribute_key|
         attribute_value = attributes[attribute_key]
         next unless attribute_value
-        segment_id = @config.attribute_key_map[attribute_key]['segmentId']
+
+        # Skip attributes not in the datafile
+        segment_id = @config.get_segment_id(attribute_key)
+        next unless segment_id
         segment_param = sprintf(ATTRIBUTE_PARAM_FORMAT,
                                 segment_prefix: Params::SEGMENT_PREFIX, segment_id: segment_id)
         params[segment_param] = attribute_value

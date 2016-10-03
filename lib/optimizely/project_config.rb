@@ -257,6 +257,14 @@ module Optimizely
       nil
     end
 
+    def get_segment_id(attribute_key)
+      attribute = @attribute_key_map[attribute_key]
+      return attribute['segmentId'] if attribute
+      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
+      @error_handler.handle_error InvalidAttributeError
+      nil
+    end
+
     def user_in_forced_variation?(experiment_key, user_id)
       # Determines if a given user is in a forced variation
       #
