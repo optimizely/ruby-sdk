@@ -139,7 +139,7 @@ module Optimizely
       goal = @event_key_map[goal_key]
       return goal['experimentIds'] if goal
       @logger.log Logger::ERROR, "Event '#{goal_key}' is not in datafile."
-      @error_handler.handle_error InvalidGoalError
+      @error_handler.handle_error InvalidEventError
       []
     end
 

@@ -44,38 +44,48 @@ describe 'OptimizelyV1' do
       expect(instance_with_error_handler.error_handler.handle_error('test_message')). to eq('test_message')
     end
 
-    it 'should throw an error when given a datafile that does not conform to the schema' do
-      expect { Optimizely::Project.new('{"foo": "bar"}') }.to raise_error(Optimizely::InvalidDatafileError)
+    it 'should log an error when given a datafile that does not conform to the schema' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      Optimizely::Project.new('{"foo": "bar"}')
     end
 
-    it 'should throw an error when given an invalid logger' do
+    it 'should log an error when given an invalid logger' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
+
       class InvalidLogger; end
-
-      logger = InvalidLogger.new
-      expect { Optimizely::Project.new(config_body_JSON, nil, logger) }
-             .to raise_error(Optimizely::InvalidLoggerError)
+      Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new)
     end
 
-    it 'should throw an error when given an invalid event_dispatcher' do
+    it 'should log an error when given an invalid event_dispatcher' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
+
       class InvalidEventDispatcher; end
-
-      event_dispatcher = InvalidEventDispatcher.new
-      expect { Optimizely::Project.new(config_body_JSON, event_dispatcher) }
-             .to raise_error(Optimizely::InvalidEventDispatcherError)
+      Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new)
     end
 
-    it 'should throw an error when given an invalid error_handler' do
-      class InvalidErrorHandler; end
+    it 'should log an error when given an invalid error_handler' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
-      error_handler = InvalidErrorHandler.new
-      expect { Optimizely::Project.new(config_body_JSON, nil, nil, error_handler) }
-             .to raise_error(Optimizely::InvalidErrorHandlerError)
+      class InvalidErrorHandler; end
+      Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new)
     end
 
     it 'should not validate the JSON schema of the datafile when skip_json_validation is true' do
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided a datafile that is not JSON and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('this is not JSON', nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('{"foo": "bar"}', nil, nil, nil, true)
     end
   end
 
@@ -173,6 +183,16 @@ describe 'OptimizelyV1' do
     it 'should raise an exception when called with invalid attributes' do
       expect { project_instance.activate('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
+    end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.activate('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
     end
   end
 
@@ -273,8 +293,18 @@ describe 'OptimizelyV1' do
     it 'should return nil and not call dispatch_event for an invalid event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
-      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
+      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidEventError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
+    end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.track('test_event', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
     end
   end
 
@@ -307,6 +337,16 @@ describe 'OptimizelyV1' do
       expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
+  end
+
+  it 'should log an error when called with an invalid Project object' do
+    logger = double('logger')
+    allow(logger).to receive(:log)
+    allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+    invalid_project = Optimizely::Project.new('invalid')
+    invalid_project.get_variation('test_exp', 'test_user')
+    expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
   end
 end
 
@@ -351,38 +391,48 @@ describe 'OptimizelyV2' do
       expect(instance_with_error_handler.error_handler.handle_error('test_message')). to eq('test_message')
     end
 
-    it 'should throw an error when given a datafile that does not conform to the schema' do
-      expect { Optimizely::Project.new('{"foo": "bar"}') }.to raise_error(Optimizely::InvalidDatafileError)
+    it 'should log an error when given a datafile that does not conform to the schema' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      Optimizely::Project.new('{"foo": "bar"}')
     end
 
-    it 'should throw an error when given an invalid logger' do
+    it 'should log an error when given an invalid logger' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
+
       class InvalidLogger; end
-
-      logger = InvalidLogger.new
-      expect { Optimizely::Project.new(config_body_JSON, nil, logger) }
-             .to raise_error(Optimizely::InvalidLoggerError)
+      Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new)
     end
 
-    it 'should throw an error when given an invalid event_dispatcher' do
+    it 'should log an error when given an invalid event_dispatcher' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
+
       class InvalidEventDispatcher; end
-
-      event_dispatcher = InvalidEventDispatcher.new
-      expect { Optimizely::Project.new(config_body_JSON, event_dispatcher) }
-             .to raise_error(Optimizely::InvalidEventDispatcherError)
+      Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new)
     end
 
-    it 'should throw an error when given an invalid error_handler' do
-      class InvalidErrorHandler; end
+    it 'should log an error when given an invalid error_handler' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
-      error_handler = InvalidErrorHandler.new
-      expect { Optimizely::Project.new(config_body_JSON, nil, nil, error_handler) }
-             .to raise_error(Optimizely::InvalidErrorHandlerError)
+      class InvalidErrorHandler; end
+      Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new)
     end
 
     it 'should not validate the JSON schema of the datafile when skip_json_validation is true' do
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided a datafile that is not JSON and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('this is not JSON', nil, nil, nil, true)
+    end
+
+    it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+
+      Optimizely::Project.new('{"foo": "bar"}', nil, nil, nil, true)
     end
   end
 
@@ -541,6 +591,16 @@ describe 'OptimizelyV2' do
         .to eq('variation_with_audience')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
+    end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.activate('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
     end
   end
 
@@ -714,7 +774,7 @@ describe 'OptimizelyV2' do
     it 'should return nil and not call dispatch_event for an invalid event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
-      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidGoalError)
+      expect { project_instance.track('invalid_event', 'test_user') }.to raise_error(Optimizely::InvalidEventError)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
@@ -759,6 +819,16 @@ describe 'OptimizelyV2' do
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.track('test_event', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
+    end
   end
 
   describe '#get_variation' do
@@ -797,6 +867,16 @@ describe 'OptimizelyV2' do
       expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
+    end
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.get_variation('test_exp', 'test_user')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
     end
   end
 end
