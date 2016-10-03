@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["developers@optimizely.com"]
 
   spec.summary       = "Ruby SDK for Optimizely's testing framework"
-  spec.description   = "A Ruby SDK for Optimizely's server-side testing product, which is currently in private beta."
+  spec.description   = "A Ruby SDK for Optimizely's Full Stack testing product."
   spec.homepage      = "https://www.optimizely.com/"
   spec.license       = "Apache-2.0"
 
