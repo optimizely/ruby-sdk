@@ -189,10 +189,11 @@ describe 'OptimizelyV1' do
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.activate('test_exp', 'test_user')
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
     end
   end
 
@@ -301,10 +302,11 @@ describe 'OptimizelyV1' do
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.track('test_event', 'test_user')
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
     end
   end
 
@@ -337,16 +339,17 @@ describe 'OptimizelyV1' do
       expect { project_instance.get_variation('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
-  end
 
-  it 'should log an error when called with an invalid Project object' do
-    logger = double('logger')
-    allow(logger).to receive(:log)
-    allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
 
-    invalid_project = Optimizely::Project.new('invalid')
-    invalid_project.get_variation('test_exp', 'test_user')
-    expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.get_variation('test_exp', 'test_user')
+    end
   end
 end
 
@@ -597,10 +600,11 @@ describe 'OptimizelyV2' do
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.activate('test_exp', 'test_user')
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate')
     end
   end
 
@@ -824,10 +828,11 @@ describe 'OptimizelyV2' do
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.track('test_event', 'test_user')
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting track')
     end
   end
 
@@ -873,10 +878,11 @@ describe 'OptimizelyV2' do
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.get_variation('test_exp', 'test_user')
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation')
     end
   end
 end
