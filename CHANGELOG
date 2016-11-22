@@ -1,4 +1,10 @@
 -------------------------------------------------------------------------------
+1.0.1
+* Relax HTTParty version requirement.
+* Add Apache license headers to source files.
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 1.0.0
 * Introduce support for Full Stack projects in Optimizely X with no breaking changes from previous version.
 * Introduce more graceful exception handling in instantiation and core methods.
