@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.4.0"
   spec.add_development_dependency "rubocop", "~> 0.41.1"
 
-  spec.add_runtime_dependency "murmurhash3", "~> 0.1.6"
-  spec.add_runtime_dependency "httparty", ">= 0.11.0", "< 0.14.0"
-  spec.add_runtime_dependency "json-schema", "~> 2.6.2"
+  spec.add_runtime_dependency "murmurhash3", "~> 0.1"
+  spec.add_runtime_dependency "httparty", "~> 0.11"
+  spec.add_runtime_dependency "json-schema", "~> 2.6"
 end

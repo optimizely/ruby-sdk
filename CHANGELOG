@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
+1.0.2
+* Change HTTParty version requirement to ~> 0.11, allowing HTTParty v0.14 (thanks @gaganawhad!)
+* Relax murmurhash3 and json-schema version requirements to ~> 0.1 and ~> 2.6, respectively (thanks @gaganawhad!)
+* Update Apache license headers.
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 1.0.1
 * Relax HTTParty version requirement.
 * Add Apache license headers to source files.
