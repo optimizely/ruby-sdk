@@ -168,7 +168,7 @@ module Optimizely
       # event_key - Goal key representing the event which needs to be recorded.
       # user_id - String ID for user.
       # attributes - Hash representing visitor attributes and values which need to be recorded.
-      # event_tags - Hash representing attributes and values associates with the event.
+      # event_tags - Hash representing metadata associated with the event.
 
       unless @is_valid
         logger = SimpleLogger.new
@@ -176,13 +176,11 @@ module Optimizely
         return nil
       end
 
-      unless event_tags.nil?
-        if event_tags.is_a? Numeric
-          event_tags = {
-              'revenue' => event_tags
-          }
-          @logger.log(Logger::WARN, 'Event value is deprecated in track call.')
-        end
+      if event_tags and event_tags.is_a? Numeric
+        event_tags = {
+          'revenue' => event_tags
+        }
+        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
       end
 
       return nil if attributes && !attributes_valid?(attributes)

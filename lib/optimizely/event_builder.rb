@@ -95,7 +95,7 @@ module Optimizely
       # event_key - Event key representing the event which needs to be recorded.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
-      # event_tags - Hash representing event attributes and values which need to be recorded.
+      # event_tags - Hash representing metadata associated with the event.
       # experiment_keys - Array of valid experiment keys for the event
       #
       # Returns event hash encapsulating the conversion event.
@@ -163,10 +163,14 @@ module Optimizely
     end
 
     def add_event_tags(event_tags)
-      @params['eventFeatures'] = []
-      @params['eventMetrics'] = []
+      unless @params['eventFeatures']
+        @params['eventFeatures'] = []
+      end
+      unless @params['eventMetrics']
+        @params['eventMetrics'] = []
+      end
 
-      return if event_tags.nil? or event_tags.is_a? Numeric
+      return if event_tags.nil?
 
       event_tags.keys.each do |event_tag_key|
         event_tag_value = event_tags[event_tag_key]
@@ -266,7 +270,7 @@ module Optimizely
       # event_key - Goal key representing the event which needs to be recorded.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
-      # event_tags - Hash representing event attributes and values which need to be recorded.
+      # event_tags - Hash representing metadata associated with the event.
       # experiment_keys - Array of valid experiment keys for the goal
       #
       # Returns event hash encapsulating the conversion event.
@@ -274,10 +278,8 @@ module Optimizely
       @params = {}
 
       event_value = nil
-      unless event_tags.nil?
-        unless event_tags.is_a? Numeric
-          event_value = event_tags['revenue']
-        end
+      if event_tags
+        event_value = event_tags['revenue']
       end
 
       add_common_params(user_id, attributes)

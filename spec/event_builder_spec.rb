@@ -108,14 +108,6 @@ describe Optimizely::EventBuilderV2 do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with deprecated event value parameter' do
-
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, 42, ['test_experiment'])
-    expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
-    expect(conversion_event.http_verb).to eq(:post)
-  end
-
   it 'should create a valid V2 Event when create_conversion_event is called with attributes' do
     @expected_conversion_params['userFeatures'] = [{
       'id' => '111094',
@@ -376,24 +368,6 @@ describe Optimizely::EventBuilderV1 do
     }
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, [])
-    expect(conversion_event.params).to eq(expected_params)
-  end
-
-  it 'should create Event object with right params when create_conversion_event is called with invalid tags' do
-    time_now = Time.now
-    allow(Time).to receive(:now).and_return(time_now)
-
-    expected_params = {
-      'd' => @config_body['accountId'],
-      'a' => @config_body['projectId'],
-      'n' => 'test_event',
-      'g' => '111095',
-      'u' => 'test_user',
-      'src' => sprintf('ruby-sdk-%{version}', version: @version),
-      'time' => time_now.strftime('%s').to_i
-    }
-
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, 42, [])
     expect(conversion_event.params).to eq(expected_params)
   end
 

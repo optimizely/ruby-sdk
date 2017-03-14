@@ -249,7 +249,7 @@ describe 'OptimizelyV1' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call.")
+      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call. Use event tags to pass in revenue value instead.")
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
@@ -334,7 +334,7 @@ describe 'OptimizelyV1' do
     it 'should log when a conversion event is dispatched with deprecated value' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call.")
+      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call. Use event tags to pass in revenue value instead.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching conversion event to" \
                                                                                 " URL #{log_url} with params"))
     end
