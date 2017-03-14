@@ -89,20 +89,21 @@ module Optimizely
       Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
 
-    def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
+    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_keys)
       # Create conversion Event to be sent to the logging endpoint.
       #
       # event_key - Event key representing the event which needs to be recorded.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
-      # event_value - Value associated with the event. Can be used to represent revenue in cents.
+      # event_tags - Hash representing event attributes and values which need to be recorded.
       # experiment_keys - Array of valid experiment keys for the event
       #
       # Returns event hash encapsulating the conversion event.
 
       @params = {}
       add_common_params(user_id, attributes)
-      add_conversion_event(event_key, event_value)
+      add_conversion_event(event_key)
+      add_event_tags(event_tags)
       add_layer_states(user_id, experiment_keys)
       Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
@@ -161,26 +162,44 @@ module Optimizely
       }
     end
 
-    def add_conversion_event(event_key, event_value)
+    def add_event_tags(event_tags)
+      @params['eventFeatures'] = []
+      @params['eventMetrics'] = []
+
+      return if event_tags.nil? or event_tags.is_a? Numeric
+
+      event_tags.keys.each do |event_tag_key|
+        event_tag_value = event_tags[event_tag_key]
+        next if event_tag_value.nil?
+
+        event_feature = {
+            'id' => event_tag_key,
+            'type' => 'custom',
+            'value' => event_tag_value,
+            'shouldIndex' => false,
+        }
+        @params['eventFeatures'].push(event_feature)
+
+        if event_tag_key == 'revenue'
+          event_metric  = {
+              'name' => 'revenue',
+              'value' => event_tag_value
+          }
+          @params['eventMetrics'].push(event_metric)
+        end
+      end
+    end
+
+    def add_conversion_event(event_key)
       # Add conversion event information to the event.
       #
       # event_key - Event key representing the event which needs to be recorded.
-      # event_value - Value associated with the event. Can be used to represent revenue in cents.
 
       event_id = @config.event_key_map[event_key]['id']
       event_name = @config.event_key_map[event_key]['key']
 
       @params['eventEntityId'] = event_id
-      @params['eventFeatures'] = []
       @params['eventName'] = event_name
-      @params['eventMetrics'] = []
-
-      if event_value
-        @params['eventMetrics'].push({
-          'name' => 'revenue',
-          'value' => event_value,
-        })
-      end
     end
 
     def add_layer_states(user_id, experiment_keys)
@@ -241,18 +260,26 @@ module Optimizely
       Event.new(:get, sprintf(OFFLINE_API_PATH, project_id: @params[Params::PROJECT_ID]), @params, {})
     end
 
-    def create_conversion_event(event_key, user_id, attributes, event_value, experiment_keys)
+    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_keys)
       # Create conversion Event to be sent to the logging endpoint.
       #
       # event_key - Goal key representing the event which needs to be recorded.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
-      # event_value - Value associated with the event. Can be used to represent revenue in cents.
+      # event_tags - Hash representing event attributes and values which need to be recorded.
       # experiment_keys - Array of valid experiment keys for the goal
       #
       # Returns event hash encapsulating the conversion event.
 
       @params = {}
+
+      event_value = nil
+      unless event_tags.nil?
+        unless event_tags.is_a? Numeric
+          event_value = event_tags['revenue']
+        end
+      end
+
       add_common_params(user_id, attributes)
       add_conversion_goal(event_key, event_value)
       add_experiment_variation_params(user_id, experiment_keys)

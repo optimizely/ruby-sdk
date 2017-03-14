@@ -249,6 +249,30 @@ describe 'OptimizelyV1' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
+      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call.")
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
+    end
+
+    it 'should properly track an event by calling dispatch_event with right params with invalid event tag provided' do
+      expect { project_instance.track('test_event', 'test_user', nil, '42') }
+          .to raise_error(Optimizely::InvalidEventTagFormatError)
+    end
+
+    it 'should properly track an event by calling dispatch_event with right params with revenue event tags provided' do
+      params = {
+        'd' => config_body['accountId'],
+        'a' => config_body['projectId'],
+        'n' => config_body['events'][0]['key'],
+        'g' => '111095,111096',
+        'u' => 'test_user',
+        'x111127' => '111128',
+        'v' => 42,
+        'src' => sprintf('ruby-sdk-%{version}', version: version),
+        'time' => time_now.strftime('%s').to_i
+      }
+
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
@@ -270,6 +294,24 @@ describe 'OptimizelyV1' do
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
     end
 
+    it 'should properly track an event by calling dispatch_event with right params with attributes and event tags provided' do
+      params = {
+        'd' => config_body['accountId'],
+        'a' => config_body['projectId'],
+        'n' => config_body['events'][2]['key'],
+        'g' => config_body['events'][2]['id'],
+        'u' => 'test_user',
+        'x122227' => '122228',
+        's5175100584230912' => 'firefox',
+        'src' => sprintf('ruby-sdk-%{version}', version: version),
+        'time' => time_now.strftime('%s').to_i
+      }
+
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event_with_audience', 'test_user', {'browser_type' => 'firefox'}, {})
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:get, log_url, params, {})).once
+    end
+
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'cyberdog')
@@ -283,20 +325,16 @@ describe 'OptimizelyV1' do
     end
 
     it 'should log when a conversion event is dispatched' do
-      params = {
-        'd' => config_body['accountId'],
-        'a' => config_body['projectId'],
-        'n' => config_body['events'][0]['key'],
-        'g' => '111095,111096',
-        'u' => 'test_user',
-        'x111127' => '111128',
-        'v' => 42,
-        'src' => sprintf('ruby-sdk-%{version}', version: version),
-        'time' => time_now.strftime('%s').to_i
-      }
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event', 'test_user', nil, {'non-revenue' => 42})
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching conversion event to" \
+                                                                                " URL #{log_url} with params"))
+    end
 
+    it 'should log when a conversion event is dispatched with deprecated value' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
+      expect(spy_logger).to have_received(:log).with(Logger::WARN, "Event value is deprecated in track call.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching conversion event to" \
                                                                                 " URL #{log_url} with params"))
     end
@@ -671,7 +709,14 @@ describe 'OptimizelyV2' do
         'timestamp' => (time_now.to_f * 1000).to_i,
         'isGlobalHoldback' => false,
         'eventEntityId' => '111095',
-        'eventFeatures' => [],
+        'eventFeatures' => [
+          {
+            "id" => "revenue",
+            "type" => "custom",
+            "value" => 42,
+            "shouldIndex" => false
+          }
+        ],
         'eventName' => 'test_event',
         'eventMetrics' => [
           {
@@ -693,7 +738,7 @@ describe 'OptimizelyV2' do
       }
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      project_instance.track('test_event', 'test_user', nil, 42)
+      project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
@@ -760,8 +805,15 @@ describe 'OptimizelyV2' do
         'timestamp' => (time_now.to_f * 1000).to_i,
         'isGlobalHoldback' => false,
         'eventEntityId' => '111095',
-        'eventFeatures' => [],
         'eventName' => 'test_event',
+        'eventFeatures' => [
+          {
+            "id" => "revenue",
+            "type" => "custom",
+            "value" => 42,
+            "shouldIndex" => false
+          }
+        ],
         'eventMetrics' => [
           'name' => 'revenue',
           'value' => 42,
@@ -780,8 +832,8 @@ describe 'OptimizelyV2' do
       }
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      project_instance.track('test_event', 'test_user', nil, 42)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching conversion event to" \
+      project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, include("Dispatching conversion event to" \
                                                                                 " URL #{conversion_log_url} with params #{params}"))
     end
 
