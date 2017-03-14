@@ -130,10 +130,10 @@ describe Optimizely::EventBuilderV2 do
     }]
     @expected_conversion_params['eventFeatures'] = [
       {
-        "id" => "revenue",
-        "type" => "custom",
-        "value" => 4200,
-        "shouldIndex" => false
+        'id' => 'revenue',
+        'type' => 'custom',
+        'value' => 4200,
+        'shouldIndex' => false
       },
     ]
 
@@ -144,13 +144,33 @@ describe Optimizely::EventBuilderV2 do
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with revenue event tag' do
+    @expected_conversion_params['eventMetrics'] = []
+    @expected_conversion_params['eventFeatures'] = [
+      {
+        'id' => 'revenue',
+        'type' => 'custom',
+        'value' => "4200",
+        'shouldIndex' => false
+      },
+    ]
+
+    event_tags = {'revenue' => '4200'}
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
   it 'should create a valid V2 Event when create_conversion_event is called with boolean event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        "id" => "boolean_tag",
-        "type" => "custom",
-        "value" => false,
-        "shouldIndex" => false
+        'id' => 'boolean_tag',
+        'type' => 'custom',
+        'value' => false,
+        'shouldIndex' => false
       },
     ]
 
@@ -164,13 +184,14 @@ describe Optimizely::EventBuilderV2 do
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
+
   it 'should create a valid V2 Event when create_conversion_event is called with string event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        "id" => "string_tag",
-        "type" => "custom",
-        "value" => 'iamstring',
-        "shouldIndex" => false
+        'id' => 'string_tag',
+        'type' => 'custom',
+        'value' => 'iamstring',
+        'shouldIndex' => false
       },
     ]
 
@@ -183,13 +204,14 @@ describe Optimizely::EventBuilderV2 do
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
+
   it 'should create a valid V2 Event when create_conversion_event is called with integer event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        "id" => "integer_tag",
-        "type" => "custom",
-        "value" => 42,
-        "shouldIndex" => false
+        'id' => 'integer_tag',
+        'type' => 'custom',
+        'value' => 42,
+        'shouldIndex' => false
       },
     ]
 
@@ -202,13 +224,14 @@ describe Optimizely::EventBuilderV2 do
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
   end
+
   it 'should create a valid V2 Event when create_conversion_event is called with float event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        "id" => "float_tag",
-        "type" => "custom",
-        "value" => 42.01,
-        "shouldIndex" => false
+        'id' => 'float_tag',
+        'type' => 'custom',
+        'value' => 42.01,
+        'shouldIndex' => false
       },
     ]
 
@@ -405,6 +428,24 @@ describe Optimizely::EventBuilderV1 do
     }
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, {'revenue' => 42}, [])
+    expect(conversion_event.params).to eq(expected_params)
+  end
+
+  it 'should create Event object with right params when create_conversion_event is called with invalid revenue tag' do
+    time_now = Time.now
+    allow(Time).to receive(:now).and_return(time_now)
+
+    expected_params = {
+      'd' => @config_body['accountId'],
+      'a' => @config_body['projectId'],
+      'n' => 'test_event',
+      'g' => '111095',
+      'u' => 'test_user',
+      'src' => sprintf('ruby-sdk-%{version}', version: @version),
+      'time' => time_now.strftime('%s').to_i
+    }
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, {'revenue' => '42'}, [])
     expect(conversion_event.params).to eq(expected_params)
   end
 end

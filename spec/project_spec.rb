@@ -711,10 +711,10 @@ describe 'OptimizelyV2' do
         'eventEntityId' => '111095',
         'eventFeatures' => [
           {
-            "id" => "revenue",
-            "type" => "custom",
-            "value" => 42,
-            "shouldIndex" => false
+            'id' => 'revenue',
+            'type' => 'custom',
+            'value' => 42,
+            'shouldIndex' => false
           }
         ],
         'eventName' => 'test_event',
@@ -808,10 +808,10 @@ describe 'OptimizelyV2' do
         'eventName' => 'test_event',
         'eventFeatures' => [
           {
-            "id" => "revenue",
-            "type" => "custom",
-            "value" => 42,
-            "shouldIndex" => false
+            'id' => 'revenue',
+            'type' => 'custom',
+            'value' => 42,
+            'shouldIndex' => false
           }
         ],
         'eventMetrics' => [

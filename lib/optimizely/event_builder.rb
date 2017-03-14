@@ -16,6 +16,7 @@
 require_relative './audience'
 require_relative './params'
 require_relative './version'
+require_relative '../optimizely/helpers/event_tag_utils'
 
 module Optimizely
   class Event
@@ -172,21 +173,25 @@ module Optimizely
         next if event_tag_value.nil?
 
         event_feature = {
-            'id' => event_tag_key,
-            'type' => 'custom',
-            'value' => event_tag_value,
-            'shouldIndex' => false,
+          'id' => event_tag_key,
+          'type' => 'custom',
+          'value' => event_tag_value,
+          'shouldIndex' => false,
         }
         @params['eventFeatures'].push(event_feature)
 
-        if event_tag_key == 'revenue'
-          event_metric = {
-            'name' => 'revenue',
-            'value' => event_tag_value
-          }
-          @params['eventMetrics'].push(event_metric)
-        end
       end
+
+      event_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
+
+      if event_value
+        event_metric = {
+          'name' => 'revenue',
+          'value' => event_value
+        }
+        @params['eventMetrics'].push(event_metric)
+      end
+
     end
 
     def add_conversion_event(event_key)
@@ -272,7 +277,7 @@ module Optimizely
 
       @params = {}
 
-      event_value = event_tags ? event_tags['revenue'] : nil
+      event_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
 
       add_common_params(user_id, attributes)
       add_conversion_goal(event_key, event_value)
