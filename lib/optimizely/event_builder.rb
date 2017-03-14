@@ -163,17 +163,12 @@ module Optimizely
     end
 
     def add_event_tags(event_tags)
-      unless @params['eventFeatures']
-        @params['eventFeatures'] = []
-      end
-      unless @params['eventMetrics']
-        @params['eventMetrics'] = []
-      end
+      @params['eventFeatures'] ||= []
+      @params['eventMetrics'] ||= []
 
       return if event_tags.nil?
 
-      event_tags.keys.each do |event_tag_key|
-        event_tag_value = event_tags[event_tag_key]
+      event_tags.each_pair do |event_tag_key, event_tag_value|
         next if event_tag_value.nil?
 
         event_feature = {
@@ -185,9 +180,9 @@ module Optimizely
         @params['eventFeatures'].push(event_feature)
 
         if event_tag_key == 'revenue'
-          event_metric  = {
-              'name' => 'revenue',
-              'value' => event_tag_value
+          event_metric = {
+            'name' => 'revenue',
+            'value' => event_tag_value
           }
           @params['eventMetrics'].push(event_metric)
         end
@@ -277,10 +272,7 @@ module Optimizely
 
       @params = {}
 
-      event_value = nil
-      if event_tags
-        event_value = event_tags['revenue']
-      end
+      event_value = event_tags ? event_tags['revenue'] : nil
 
       add_common_params(user_id, attributes)
       add_conversion_goal(event_key, event_value)
