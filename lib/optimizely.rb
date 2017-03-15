@@ -162,13 +162,13 @@ module Optimizely
       @config.get_variation_key_from_id(experiment_key, variation_id)
     end
 
-    def track(event_key, user_id, attributes = nil, event_value = nil)
+    def track(event_key, user_id, attributes = nil, event_tags = nil)
       # Send conversion event to Optimizely.
       #
       # event_key - Goal key representing the event which needs to be recorded.
       # user_id - String ID for user.
       # attributes - Hash representing visitor attributes and values which need to be recorded.
-      # event_value - Value associated with the event. Can be used to represent revenue in cents.
+      # event_tags - Hash representing metadata associated with the event.
 
       unless @is_valid
         logger = SimpleLogger.new
@@ -176,7 +176,15 @@ module Optimizely
         return nil
       end
 
+      if event_tags and event_tags.is_a? Numeric
+        event_tags = {
+          'revenue' => event_tags
+        }
+        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
+      end
+
       return nil if attributes && !attributes_valid?(attributes)
+      return nil if event_tags && !event_tags_valid?(event_tags)
 
       experiment_ids = @config.get_experiment_ids_for_goal(event_key)
       if experiment_ids.empty?
@@ -202,7 +210,7 @@ module Optimizely
       end
 
       conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
-                                                                event_value, valid_experiment_keys)
+                                                                event_tags, valid_experiment_keys)
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
@@ -246,6 +254,15 @@ module Optimizely
       unless Helpers::Validator.attributes_valid?(attributes)
         @logger.log(Logger::ERROR, 'Provided attributes are in an invalid format.')
         @error_handler.handle_error(InvalidAttributeFormatError)
+        return false
+      end
+      true
+    end
+
+    def event_tags_valid?(event_tags)
+      unless Helpers::Validator.event_tags_valid?(event_tags)
+        @logger.log(Logger::ERROR, 'Provided event tags are in an invalid format.')
+        @error_handler.handle_error(InvalidEventTagFormatError)
         return false
       end
       true
