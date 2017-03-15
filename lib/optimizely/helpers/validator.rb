@@ -32,6 +32,16 @@ module Optimizely
         attributes.is_a?(Hash)
       end
 
+      def event_tags_valid?(event_tags)
+        # Determines if provided event tags are valid.
+        #
+        # event_tags - Event tags to be validated.
+        #
+        # Returns boolean depending on validity of event tags.
+
+        event_tags.is_a?(Hash)
+      end
+
       def datafile_valid?(datafile)
         # Determines if a given datafile is valid.
         #

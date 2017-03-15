@@ -260,7 +260,7 @@ module Optimizely
     end
 
     def event_tags_valid?(event_tags)
-      unless Helpers::Validator.attributes_valid?(event_tags)
+      unless Helpers::Validator.event_tags_valid?(event_tags)
         @logger.log(Logger::ERROR, 'Provided event tags are in an invalid format.')
         @error_handler.handle_error(InvalidEventTagFormatError)
         return false
