@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,5 +14,5 @@
 #    limitations under the License.
 #
 module Optimizely
-  VERSION = '1.0.2'.freeze
+  VERSION = '1.1.0'.freeze
 end
