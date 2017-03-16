@@ -40,6 +40,14 @@ module Optimizely
     end
   end
 
+  class InvalidEventTagFormatError < Error
+    # Raised when attributes are provided in an invalid format (e.g. not a Hash)
+
+    def initialize(msg = 'Event tags provided are in an invalid format.')
+      super
+    end
+  end
+
   class InvalidExperimentError < Error
     # Raised when an invalid experiment key is provided
 
