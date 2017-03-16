@@ -2,7 +2,7 @@
 1.1.0
 * Introduce support for event tags.
 * Add optional eventTags argument to track method signature.
-* Removed optional eventValue argument from track method signature.
+* Deprecating optional eventValue argument in track method signature.
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
