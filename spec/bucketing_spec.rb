@@ -138,6 +138,8 @@ describe Optimizely::Bucketer do
     expect(bucketer.bucket('test_experiment', 'test_user')).to be_nil
     expect(spy_logger).to have_received(:log)
                       .with(Logger::INFO, "User 'test_user' is in no variation.")
+    expect(spy_logger).to have_received(:log)
+                      .with(Logger::DEBUG, "Bucketed into an empty traffic range. Returning nil.")
   end
 
   describe 'logging' do
