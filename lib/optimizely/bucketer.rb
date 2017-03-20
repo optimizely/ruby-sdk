@@ -100,7 +100,7 @@ module Optimizely
       @config.logger.log(Logger::DEBUG, "Assigned variation bucket #{bucket_value} to user '#{user_id}'.")
       traffic_allocations = @config.get_traffic_allocation(experiment_key)
       variation_id = find_bucket(bucket_value, traffic_allocations)
-      if variation_id
+      if variation_id && variation_id != ''
         variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
         @config.logger.log(
           Logger::INFO,

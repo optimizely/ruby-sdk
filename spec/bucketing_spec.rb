@@ -133,6 +133,13 @@ describe Optimizely::Bucketer do
     bucketer.bucket('group1_exp1', 'test_user')
   end
 
+  it 'should return nil when user is in an empty traffic allocation range due to sticky bucketing' do
+    expect(bucketer).to receive(:find_bucket).once.and_return('')
+    expect(bucketer.bucket('test_experiment', 'test_user')).to be_nil
+    expect(spy_logger).to have_received(:log)
+                      .with(Logger::INFO, "User 'test_user' is in no variation.")
+  end
+
   describe 'logging' do
     it 'should log the results of bucketing a user into variation 1' do
       expect(bucketer).to receive(:generate_bucket_value).and_return(50)
