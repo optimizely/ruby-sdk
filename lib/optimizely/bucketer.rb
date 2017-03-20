@@ -100,13 +100,18 @@ module Optimizely
       @config.logger.log(Logger::DEBUG, "Assigned variation bucket #{bucket_value} to user '#{user_id}'.")
       traffic_allocations = @config.get_traffic_allocation(experiment_key)
       variation_id = find_bucket(bucket_value, traffic_allocations)
-      if variation_id
+      if variation_id && variation_id != ''
         variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
         @config.logger.log(
           Logger::INFO,
           "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
         )
         return variation_id
+      end
+
+      # Handle the case when the traffic range is empty due to sticky bucketing
+      if variation_id == ''
+        @config.logger.log(Logger::DEBUG, 'Bucketed into an empty traffic range. Returning nil.')
       end
 
       @config.logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")

@@ -1,4 +1,9 @@
 -------------------------------------------------------------------------------
+1.1.1
+* Gracefully handle empty traffic allocation ranges.
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 1.1.0
 * Introduce support for event tags.
 * Add optional eventTags argument to track method signature.
