@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ describe Optimizely::EventBuilderV2 do
     }]
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'revenue',
+        'name' => 'revenue',
         'type' => 'custom',
         'value' => 4200,
         'shouldIndex' => false
@@ -149,7 +149,7 @@ describe Optimizely::EventBuilderV2 do
     @expected_conversion_params['eventMetrics'] = []
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'revenue',
+        'name' => 'revenue',
         'type' => 'custom',
         'value' => "4200",
         'shouldIndex' => false
@@ -167,7 +167,7 @@ describe Optimizely::EventBuilderV2 do
   it 'should create a valid V2 Event when create_conversion_event is called with boolean event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'boolean_tag',
+        'name' => 'boolean_tag',
         'type' => 'custom',
         'value' => false,
         'shouldIndex' => false
@@ -188,7 +188,7 @@ describe Optimizely::EventBuilderV2 do
   it 'should create a valid V2 Event when create_conversion_event is called with string event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'string_tag',
+        'name' => 'string_tag',
         'type' => 'custom',
         'value' => 'iamstring',
         'shouldIndex' => false
@@ -208,7 +208,7 @@ describe Optimizely::EventBuilderV2 do
   it 'should create a valid V2 Event when create_conversion_event is called with integer event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'integer_tag',
+        'name' => 'integer_tag',
         'type' => 'custom',
         'value' => 42,
         'shouldIndex' => false
@@ -228,7 +228,7 @@ describe Optimizely::EventBuilderV2 do
   it 'should create a valid V2 Event when create_conversion_event is called with float event tag' do
     @expected_conversion_params['eventFeatures'] = [
       {
-        'id' => 'float_tag',
+        'name' => 'float_tag',
         'type' => 'custom',
         'value' => 42.01,
         'shouldIndex' => false
