@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -711,7 +711,7 @@ describe 'OptimizelyV2' do
         'eventEntityId' => '111095',
         'eventFeatures' => [
           {
-            'id' => 'revenue',
+            'name' => 'revenue',
             'type' => 'custom',
             'value' => 42,
             'shouldIndex' => false
@@ -808,7 +808,7 @@ describe 'OptimizelyV2' do
         'eventName' => 'test_event',
         'eventFeatures' => [
           {
-            'id' => 'revenue',
+            'name' => 'revenue',
             'type' => 'custom',
             'value' => 42,
             'shouldIndex' => false
