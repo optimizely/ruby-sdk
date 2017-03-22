@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 1.1.2
-* Send name of event tags instead of event id.
+* Send name of event tags instead of event ID.
 * Update URL endpoint to the log server.
 -------------------------------------------------------------------------------
 
