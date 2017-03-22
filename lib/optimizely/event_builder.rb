@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -69,8 +69,8 @@ module Optimizely
   end
 
   class EventBuilderV2 < BaseEventBuilder
-    CONVERSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
-    IMPRESSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
+    CONVERSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/event'
+    IMPRESSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/decision'
     POST_HEADERS = { 'Content-Type' => 'application/json' }
 
     def create_impression_event(experiment_key, variation_id, user_id, attributes)
@@ -173,7 +173,7 @@ module Optimizely
         next if event_tag_value.nil?
 
         event_feature = {
-          'id' => event_tag_key,
+          'name' => event_tag_key,
           'type' => 'custom',
           'value' => event_tag_value,
           'shouldIndex' => false,

@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -412,8 +412,8 @@ describe 'OptimizelyV2' do
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
-  let(:impression_log_url) { 'https://p13nlog.dz.optimizely.com/log/decision' }
-  let(:conversion_log_url) { 'https://p13nlog.dz.optimizely.com/log/event' }
+  let(:impression_log_url) { 'https://logx.optimizely.com/log/decision' }
+  let(:conversion_log_url) { 'https://logx.optimizely.com/log/event' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:time_now) { Time.now }
   let(:post_headers) { { 'Content-Type' => 'application/json' } }
@@ -711,7 +711,7 @@ describe 'OptimizelyV2' do
         'eventEntityId' => '111095',
         'eventFeatures' => [
           {
-            'id' => 'revenue',
+            'name' => 'revenue',
             'type' => 'custom',
             'value' => 42,
             'shouldIndex' => false
@@ -808,7 +808,7 @@ describe 'OptimizelyV2' do
         'eventName' => 'test_event',
         'eventFeatures' => [
           {
-            'id' => 'revenue',
+            'name' => 'revenue',
             'type' => 'custom',
             'value' => 42,
             'shouldIndex' => false
