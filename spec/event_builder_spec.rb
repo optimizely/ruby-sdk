@@ -35,7 +35,7 @@ describe Optimizely::EventBuilderV2 do
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)
 
-    @expected_impression_url = 'https://p13nlog.dz.optimizely.com/log/decision'
+    @expected_impression_url = 'https://logx.optimizely.com/log/decision'
     @expected_impression_params = {
       'visitorId' => 'test_user',
       'timestamp' => (time_now.to_f * 1000).to_i,
@@ -53,7 +53,7 @@ describe Optimizely::EventBuilderV2 do
       'userFeatures' => [],
     }
 
-    @expected_conversion_url = 'https://p13nlog.dz.optimizely.com/log/event'
+    @expected_conversion_url = 'https://logx.optimizely.com/log/event'
     @expected_conversion_params = {
       'visitorId' => 'test_user',
       'timestamp' => (time_now.to_f * 1000).to_i,

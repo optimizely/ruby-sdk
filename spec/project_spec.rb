@@ -412,8 +412,8 @@ describe 'OptimizelyV2' do
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
-  let(:impression_log_url) { 'https://p13nlog.dz.optimizely.com/log/decision' }
-  let(:conversion_log_url) { 'https://p13nlog.dz.optimizely.com/log/event' }
+  let(:impression_log_url) { 'https://logx.optimizely.com/log/decision' }
+  let(:conversion_log_url) { 'https://logx.optimizely.com/log/event' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:time_now) { Time.now }
   let(:post_headers) { { 'Content-Type' => 'application/json' } }

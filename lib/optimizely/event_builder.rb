@@ -69,8 +69,8 @@ module Optimizely
   end
 
   class EventBuilderV2 < BaseEventBuilder
-    CONVERSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
-    IMPRESSION_EVENT_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
+    CONVERSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/event'
+    IMPRESSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/decision'
     POST_HEADERS = { 'Content-Type' => 'application/json' }
 
     def create_impression_event(experiment_key, variation_id, user_id, attributes)
