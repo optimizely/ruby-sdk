@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -32,14 +32,6 @@ describe Optimizely::EventDispatcher do
 
   before(:example) do
     @event_dispatcher = Optimizely::EventDispatcher.new
-  end
-
-  it 'should properly dispatch V1 (GET) events' do
-    stub_request(:get, @url).with(:query => @params)
-    event = Optimizely::Event.new(:get, @url, @params, {})
-    @event_dispatcher.dispatch_event(event)
-
-    expect(a_request(:get, @url).with(:query => @params)).to have_been_made.once
   end
 
   it 'should properly dispatch V2 (POST) events' do

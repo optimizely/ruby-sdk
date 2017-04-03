@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ require 'json'
 
 module Optimizely
 
-  V1_CONFIG_VERSION = '1'
   V2_CONFIG_VERSION = '2'
 
   class ProjectConfig
@@ -64,11 +63,7 @@ module Optimizely
       @version = config['version']
       @account_id = config['accountId']
       @project_id = config['projectId']
-      if @version == V1_CONFIG_VERSION
-        @attributes = config['dimensions']
-      else
-        @attributes = config['attributes']
-      end
+      @attributes = config['attributes']
       @events = config['events']
       @experiments = config['experiments']
       @revision = config['revision']
