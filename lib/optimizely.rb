@@ -74,14 +74,15 @@ module Optimizely
         return
       end
 
-      begin
-        @bucketer = Bucketer.new(@config)
-        @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
-      rescue
+      unless @config.was_parsing_successful?
         @is_valid = false
         logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileVersionError.new)
+        logger.log(Logger::ERROR, InvalidDatafileVersionError.new.message)
+        return
       end
+
+      @bucketer = Bucketer.new(@config)
+      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
     end
 
     def activate(experiment_key, user_id, attributes = nil)

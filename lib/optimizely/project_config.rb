@@ -17,7 +17,11 @@ require 'json'
 
 module Optimizely
 
+  V1_CONFIG_VERSION = '1'
   V2_CONFIG_VERSION = '2'
+
+  SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
+  UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
 
   class ProjectConfig
     # Representation of the Optimizely project config.
@@ -31,6 +35,7 @@ module Optimizely
     attr_reader :error_handler
     attr_reader :logger
 
+    attr_reader :parsing_succeeded
     attr_reader :version
     attr_reader :account_id
     attr_reader :project_id
@@ -58,9 +63,15 @@ module Optimizely
 
       config = JSON.load(datafile)
 
+      @parsing_succeeded = false
       @error_handler = error_handler
       @logger = logger
       @version = config['version']
+
+      if UNSUPPORTED_VERSIONS.include?(@version)
+        return
+      end
+
       @account_id = config['accountId']
       @project_id = config['projectId']
       @attributes = config['attributes']
@@ -90,6 +101,7 @@ module Optimizely
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
       end
+      @parsing_succeeded = true
     end
 
     def experiment_running?(experiment_key)
@@ -286,6 +298,14 @@ module Optimizely
       forced_variations = get_forced_variations(experiment_key)
       return forced_variations.include?(user_id) if forced_variations
       false
+    end
+
+    def was_parsing_successful?
+      # Helper method to determine if parsing the datafile was successful.
+      #
+      # Returns Boolean depending on whether parsing the datafile succeeded or not.
+
+      @parsing_succeeded
     end
 
     private

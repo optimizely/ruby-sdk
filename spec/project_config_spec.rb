@@ -49,6 +49,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
+      expect(project_config.parsing_succeeded).to be(true)
 
       expected_attribute_key_map = {
         'browser_type' => config_body['attributes'][0]
@@ -227,6 +228,24 @@ describe Optimizely::ProjectConfig do
       expect(project_config.experiment_key_map).to eq(expected_experiment_key_map)
       expect(project_config.variation_id_map).to eq(expected_variation_id_map)
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
+    end
+  end
+
+  describe 'was_parsing_successful?' do
+    let(:config_body_v1) { OptimizelySpec::V1_CONFIG_BODY }
+    let(:config_body_v1_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
+    let(:config_body_v2) { OptimizelySpec::V2_CONFIG_BODY }
+    let(:config_body_v2_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
+
+
+    it 'should be true for version 2' do
+      project_config_v2 = Optimizely::ProjectConfig.new(config_body_v2_JSON, logger, error_handler)
+      expect(project_config_v2.was_parsing_successful?).to be(true)
+    end
+
+    it 'should be false for version 1' do
+      project_config_v1 = Optimizely::ProjectConfig.new(config_body_v1_JSON, logger, error_handler)
+      expect(project_config_v1.was_parsing_successful?).to be(false)
     end
   end
 
