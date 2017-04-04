@@ -193,6 +193,12 @@ describe 'OptimizelyV2' do
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', user_attributes)).to eq(nil)
     end
 
+    it 'should return nil when attributes are invalid' do
+      allow(project_instance).to receive(:attributes_valid?).and_return(false)
+      expect(project_instance.activate('test_experiment_with_audience', 'test_user2', 'invalid')).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user2'.")
+    end
+
     it 'should return nil when user is in no variation' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
       allow(project_instance.bucketer).to receive(:bucket).and_return(nil)
@@ -228,6 +234,13 @@ describe 'OptimizelyV2' do
       project_instance.activate('test_experiment', 'test_user')
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching impression event to" \
                                                                                 " URL #{impression_log_url} with params #{params}"))
+    end
+
+    it 'should log when an exception has occurred during dispatching the impression event' do
+      allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
+      project_instance.activate('test_experiment', 'test_user')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Unable to dispatch impression event. Error: RuntimeError")
     end
 
     it 'should raise an exception when called with invalid attributes' do
@@ -319,6 +332,12 @@ describe 'OptimizelyV2' do
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
+    it 'should log a message if an exception has occurred during dispatching of the event' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
+      project_instance.track('test_event', 'test_user')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Unable to dispatch conversion event. Error: RuntimeError")
+    end
+
     it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
       params = {
         'projectId' => '111001',
@@ -361,6 +380,51 @@ describe 'OptimizelyV2' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+    end
+
+    it 'should properly track an event by calling dispatch_event with right params with deprecated revenue provided' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'test_user',
+        'userFeatures' => [],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'eventEntityId' => '111095',
+        'eventFeatures' => [
+          {
+            'name' => 'revenue',
+            'type' => 'custom',
+            'value' => 42,
+            'shouldIndex' => false
+          }
+        ],
+        'eventName' => 'test_event',
+        'eventMetrics' => [
+          {
+            'name' => 'revenue',
+            'value' => 42,
+          }
+        ],
+        'layerStates' => [
+          {
+            'layerId' => '1',
+            'decision' => {
+              'variationId' => '111128',
+              'experimentId' => '111127',
+              'isLayerHoldback' => false,
+            },
+            'actionTriggered' => true,
+          }
+        ]
+      }
+
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event', 'test_user', nil, 42)
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(spy_logger).to have_received(:log).once.with(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
@@ -475,6 +539,15 @@ describe 'OptimizelyV2' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
+    it 'should return nil and not call dispatch_event if experiment_ids list is empty' do
+      allow(project_instance.config).to receive(:get_experiment_ids_for_goal).with(any_args).and_return([])
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event)
+
+      expect(project_instance.track('invalid_event', 'test_user')).to eq(nil)
+      expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, "Not tracking user 'test_user'.")
+    end
+
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       params = {
         'projectId' => '111001',
@@ -542,6 +615,12 @@ describe 'OptimizelyV2' do
       user_attributes = {'browser_type' => 'firefox'}
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
              .to eq('control_with_audience')
+    end
+
+    it 'should have get_variation return nil when attributes are invalid' do
+      allow(project_instance).to receive(:attributes_valid?).and_return(false)
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid')).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user.")
     end
 
     it 'should have get_variation return nil when audience conditions do not match' do

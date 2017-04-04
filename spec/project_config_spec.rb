@@ -37,7 +37,7 @@ describe Optimizely::ProjectConfig do
       expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(true)
     end
 
-    it 'should return false when there is no forced variations' do
+    it 'should return false when there are no forced variations' do
       expect(config).to receive(:get_forced_variations).once.and_return(nil)
       expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(false)
     end
@@ -318,6 +318,25 @@ describe Optimizely::ProjectConfig do
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment key 'invalid_key' is not in datafile.")
       end
+      it 'should return nil when provided variation key is invalid' do
+        expect(config.get_variation_key_from_id('test_experiment', 'invalid_variation')).to eq(nil)
+      end
+    end
+
+    describe 'get_variation_id_from_key' do
+      it 'should log a message when there is no variation key map for the experiment' do
+        config.get_variation_id_from_key('invalid_key', 'invalid_variation')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment key 'invalid_key' is not in datafile.")
+      end
+    end
+
+    describe 'get_forced_variations' do
+      it 'should log a message when there is no experiment key map for the experiment' do
+        config.get_forced_variations('invalid_key')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment key 'invalid_key' is not in datafile.")
+      end
     end
 
     describe 'get_attribute_id' do
@@ -382,6 +401,19 @@ describe Optimizely::ProjectConfig do
       it 'should raise an error when provided variation key is invalid' do
         expect { config.get_variation_key_from_id('test_experiment', 'invalid_variation') }
                .to raise_error(Optimizely::InvalidVariationError)
+      end
+    end
+
+    describe 'get_variation_id_from_key' do
+      it 'should raise an error when there is no variation key map for the experiment' do
+        expect { config.get_variation_id_from_key('invalid_key', 'invalid_variation') }
+          .to raise_error(Optimizely::InvalidExperimentError)
+      end
+    end
+
+    describe 'get_forced_variations' do
+      it 'should log a message when there is no experiment key map for the experiment' do
+        expect { config.get_forced_variations('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
       end
     end
 
