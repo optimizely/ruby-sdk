@@ -231,7 +231,7 @@ describe Optimizely::ProjectConfig do
     end
   end
 
-  describe 'was_parsing_successful?' do
+  describe 'parsing_succeeded?' do
     let(:config_body_v1) { OptimizelySpec::V1_CONFIG_BODY }
     let(:config_body_v1_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
     let(:config_body_v2) { OptimizelySpec::V2_CONFIG_BODY }
@@ -240,12 +240,12 @@ describe Optimizely::ProjectConfig do
 
     it 'should be true for version 2' do
       project_config_v2 = Optimizely::ProjectConfig.new(config_body_v2_JSON, logger, error_handler)
-      expect(project_config_v2.was_parsing_successful?).to be(true)
+      expect(project_config_v2.parsing_succeeded?).to be(true)
     end
 
     it 'should be false for version 1' do
       project_config_v1 = Optimizely::ProjectConfig.new(config_body_v1_JSON, logger, error_handler)
-      expect(project_config_v1.was_parsing_successful?).to be(false)
+      expect(project_config_v1.parsing_succeeded?).to be(false)
     end
   end
 

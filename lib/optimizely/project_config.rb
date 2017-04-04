@@ -300,7 +300,7 @@ module Optimizely
       false
     end
 
-    def was_parsing_successful?
+    def parsing_succeeded?
       # Helper method to determine if parsing the datafile was successful.
       #
       # Returns Boolean depending on whether parsing the datafile succeeded or not.

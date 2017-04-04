@@ -74,7 +74,7 @@ module Optimizely
         return
       end
 
-      unless @config.was_parsing_successful?
+      unless @config.parsing_succeeded?
         @is_valid = false
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileVersionError.new.message)
