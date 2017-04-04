@@ -36,6 +36,11 @@ describe Optimizely::ProjectConfig do
     it 'should return true when the user is in a forced variation' do
       expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(true)
     end
+
+    it 'should return false when there is no forced variations' do
+      expect(config).to receive(:get_forced_variations).once.and_return(nil)
+      expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(false)
+    end
   end
 
   describe '.initialize' do
@@ -261,6 +266,14 @@ describe Optimizely::ProjectConfig do
       end
     end
 
+    describe '#get_experiment_group_id' do
+      it 'should return nil and log a message when there is no experiment' do
+        expect(config.get_experiment_group_id('group1_exp1_missing')).to be(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment key 'group1_exp1_missing' is not in datafile.")
+      end
+    end
+
     describe 'experiment_running?' do
       it 'should log a message when provided experiment key is invalid' do
         config.experiment_running?('invalid_key')
@@ -362,6 +375,13 @@ describe Optimizely::ProjectConfig do
       it 'should raise an error when provided experiment key is invalid' do
         expect { config.get_variation_key_from_id('invalid_key', 'some_variation') }
                .to raise_error(Optimizely::InvalidExperimentError)
+      end
+    end
+
+    describe 'get_variation_key_from_id' do
+      it 'should raise an error when provided variation key is invalid' do
+        expect { config.get_variation_key_from_id('test_experiment', 'invalid_variation') }
+               .to raise_error(Optimizely::InvalidVariationError)
       end
     end
 

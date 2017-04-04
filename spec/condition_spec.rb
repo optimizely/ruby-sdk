@@ -137,4 +137,10 @@ describe Optimizely::ConditionEvaluator do
     condition = JSON.load(condition)
     expect(@condition_evaluator.evaluate(condition)).to be false
   end
+
+  it 'should evaluate to true for evaluate when NOT conditions evaluate to true' do
+    condition = '["not", {"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]'
+    condition = JSON.load(condition)
+    expect(@condition_evaluator.evaluate(condition)).to be true
+  end
 end

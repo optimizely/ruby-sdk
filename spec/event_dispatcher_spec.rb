@@ -42,4 +42,34 @@ describe Optimizely::EventDispatcher do
     expect(a_request(:post, @url).
       with(:body => @params, :headers => @post_headers)).to have_been_made.once
   end
+
+  it 'should properly dispatch V2 (POST) events with timeout exception' do
+    stub_request(:post, @url)
+    event = Optimizely::Event.new(:post, @url, @params, @post_headers)
+    timeout_error = Timeout::Error.new
+    allow(HTTParty).to receive(:post).with(any_args).and_raise(timeout_error)
+    result = @event_dispatcher.dispatch_event(event)
+
+    expect(result).to eq(timeout_error)
+  end
+
+  it 'should properly dispatch V2 (GET) events' do
+    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    stub_request(:get, get_url)
+    event = Optimizely::Event.new(:get, get_url, @params, @post_headers)
+    @event_dispatcher.dispatch_event(event)
+
+    expect(a_request(:get, get_url)).to have_been_made.once
+  end
+
+  it 'should properly dispatch V2 (GET) events' do
+    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    stub_request(:get, get_url)
+    event = Optimizely::Event.new(:get, get_url, @params, @post_headers)
+    timeout_error = Timeout::Error.new
+    allow(HTTParty).to receive(:get).with(any_args).and_raise(timeout_error)
+    result = @event_dispatcher.dispatch_event(event)
+
+    expect(result).to eq(timeout_error)
+  end
 end

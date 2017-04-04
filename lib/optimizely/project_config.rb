@@ -131,26 +131,6 @@ module Optimizely
       nil
     end
 
-    def get_goal_keys
-      # Retrieves all goals in the project except 'Total Revenue'
-      #
-      # Returns array of all goal keys except 'Total Revenue'
-
-      goal_keys = @event_key_map.keys
-      goal_keys.delete(REVENUE_GOAL_KEY) if goal_keys.include?(REVENUE_GOAL_KEY)
-      goal_keys
-    end
-
-    def get_revenue_goal_id
-      # Get ID of the revenue goal for the project
-      #
-      # Returns revenue goal ID
-
-      revenue_goal = @event_key_map[REVENUE_GOAL_KEY]
-      return revenue_goal['id'] if revenue_goal
-      nil
-    end
-
     def get_experiment_ids_for_goal(goal_key)
       # Get experiment IDs for the provided goal key.
       #
@@ -274,14 +254,6 @@ module Optimizely
     def get_attribute_id(attribute_key)
       attribute = @attribute_key_map[attribute_key]
       return attribute['id'] if attribute
-      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
-      @error_handler.handle_error InvalidAttributeError
-      nil
-    end
-
-    def get_segment_id(attribute_key)
-      attribute = @attribute_key_map[attribute_key]
-      return attribute['segmentId'] if attribute
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil

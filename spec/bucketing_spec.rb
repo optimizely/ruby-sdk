@@ -91,6 +91,15 @@ describe Optimizely::Bucketer do
                       .with(Logger::INFO, "User 'test_user' is not in experiment 'group1_exp2' of group 101.")
   end
 
+  it 'should return nil when user is not bucketed into any bucket' do
+    expect(bucketer).to receive(:generate_bucket_value).once.and_return(3000)
+    expect(bucketer).to receive(:find_bucket).once.and_return(nil)
+
+    expect(bucketer.bucket('group1_exp2', 'test_user')).to be_nil
+    expect(spy_logger).to have_received(:log)
+                            .with(Logger::INFO, "User 'test_user' is in no experiment.")
+  end
+
   it 'should respect forced variations within mutually exclusive grouped experiments' do
     expect(bucketer).not_to receive(:generate_bucket_value)
 
