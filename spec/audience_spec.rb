@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ require 'spec_helper'
 
 describe Optimizely::Audience do
   before(:context) do
-    @config_body = OptimizelySpec::V1_CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::V1_CONFIG_BODY_JSON
+    @config_body = OptimizelySpec::V2_CONFIG_BODY
+    @config_body_JSON = OptimizelySpec::V2_CONFIG_BODY_JSON
   end
 
   before(:example) do
