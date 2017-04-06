@@ -102,7 +102,7 @@ module Optimizely
     end
 
     def get_forced_variation_id(experiment_key, user_id)
-      # Determine if a user is forced into a variation for the given experiment and return that variation.
+      # Determine if a user is forced into a variation for the given experiment and return the id of that variation.
       #
       # experiment_key - Key representing the experiment for which user is to be bucketed.
       # user_id - ID for the user.
