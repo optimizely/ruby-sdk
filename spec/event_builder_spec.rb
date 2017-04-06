@@ -29,8 +29,7 @@ describe Optimizely::EventBuilderV2 do
 
   before(:example) do
     config = Optimizely::ProjectConfig.new(@config_body_JSON, @logger, @error_handler)
-    bucketer = Optimizely::Bucketer.new(config)
-    @event_builder = Optimizely::EventBuilderV2.new(config, bucketer)
+    @event_builder = Optimizely::EventBuilderV2.new(config)
 
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)
@@ -102,7 +101,7 @@ describe Optimizely::EventBuilderV2 do
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called' do
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -117,7 +116,7 @@ describe Optimizely::EventBuilderV2 do
       'shouldIndex' => true,
     }]
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'}, nil, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'}, nil, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -139,7 +138,7 @@ describe Optimizely::EventBuilderV2 do
 
     event_tags = {'revenue' => 4200}
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -158,7 +157,7 @@ describe Optimizely::EventBuilderV2 do
 
     event_tags = {'revenue' => '4200'}
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -179,7 +178,7 @@ describe Optimizely::EventBuilderV2 do
       'nil_tag' => nil
     }
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment'  => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -199,7 +198,7 @@ describe Optimizely::EventBuilderV2 do
       'string_tag' => 'iamstring',
     }
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -219,7 +218,7 @@ describe Optimizely::EventBuilderV2 do
       'integer_tag' => 42,
     }
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)
@@ -239,7 +238,7 @@ describe Optimizely::EventBuilderV2 do
       'float_tag' => 42.01,
     }
 
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, ['test_experiment'])
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'test_experiment'  => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_conversion_url)
     expect(conversion_event.http_verb).to eq(:post)

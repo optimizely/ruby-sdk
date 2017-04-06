@@ -131,6 +131,20 @@ module Optimizely
       nil
     end
 
+    def get_experiment_key(experiment_id)
+      # Retrieves experiment key for a given ID
+      #
+      # experiment_id - String ID representing the experiment
+      #
+      # Returns String key
+
+      experiment = @experiment_id_map[experiment_id]
+      return experiment['key'] if experiment
+      @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
     def get_experiment_ids_for_goal(goal_key)
       # Get experiment IDs for the provided goal key.
       #

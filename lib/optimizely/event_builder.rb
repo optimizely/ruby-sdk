@@ -42,12 +42,10 @@ module Optimizely
 
   class BaseEventBuilder
     attr_reader :config
-    attr_reader :bucketer
     attr_accessor :params
 
-    def initialize(config, bucketer)
+    def initialize(config)
       @config = config
-      @bucketer = bucketer
       @params = {}
     end
 
@@ -90,14 +88,14 @@ module Optimizely
       Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
 
-    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_keys)
+    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_variation_map)
       # Create conversion Event to be sent to the logging endpoint.
       #
       # event_key - Event key representing the event which needs to be recorded.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
       # event_tags - Hash representing metadata associated with the event.
-      # experiment_keys - Array of valid experiment keys for the event
+      # experiment_variation_map - Map of experiment ID to the ID of the variation that the user is bucketed into.
       #
       # Returns event hash encapsulating the conversion event.
 
@@ -105,7 +103,7 @@ module Optimizely
       add_common_params(user_id, attributes)
       add_conversion_event(event_key)
       add_event_tags(event_tags)
-      add_layer_states(user_id, experiment_keys)
+      add_layer_states(experiment_variation_map)
       Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
 
@@ -206,14 +204,12 @@ module Optimizely
       @params['eventName'] = event_name
     end
 
-    def add_layer_states(user_id, experiment_keys)
+    def add_layer_states(experiments_map)
       @params['layerStates'] = []
 
-      experiment_keys.each do |experiment_key|
-        variation_id = @bucketer.bucket(experiment_key, user_id)
-        experiment_id = @config.experiment_key_map[experiment_key]['id']
+      experiments_map.each do |experiment_id, variation_id|
         layer_state = {
-          'layerId' => @config.experiment_key_map[experiment_key]['layerId'],
+          'layerId' => @config.experiment_id_map[experiment_id]['layerId'],
           'decision' => {
             'variationId' => variation_id,
             'experimentId' => experiment_id,

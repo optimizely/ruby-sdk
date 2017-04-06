@@ -57,7 +57,7 @@ module Optimizely
       @event_dispatcher = event_dispatcher || EventDispatcher.new
 
       begin
-        validate_inputs(datafile, skip_json_validation)
+        validate_instantiation_options(datafile, skip_json_validation)
       rescue InvalidInputError => e
         @is_valid = false
         logger = SimpleLogger.new
@@ -82,7 +82,7 @@ module Optimizely
       end
 
       @bucketer = Bucketer.new(@config)
-      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
+      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -101,24 +101,15 @@ module Optimizely
         return nil
       end
 
-      if attributes && !attributes_valid?(attributes)
-        @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
-        return nil
-      end
+      variation_key = get_variation(experiment_key, user_id, attributes)
 
-      unless preconditions_valid?(experiment_key, user_id, attributes)
-        @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
-        return nil
-      end
-
-      variation_id = @bucketer.bucket(experiment_key, user_id)
-
-      if not variation_id
+      unless variation_key
         @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
         return nil
       end
 
       # Create and dispatch impression event
+      variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
       impression_event = @event_builder.create_impression_event(experiment_key, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
@@ -129,7 +120,7 @@ module Optimizely
         @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
       end
 
-      @config.get_variation_key_from_id(experiment_key, variation_id)
+      variation_key
     end
 
     def get_variation(experiment_key, user_id, attributes = nil)
@@ -148,13 +139,19 @@ module Optimizely
         return nil
       end
 
-      if attributes && !attributes_valid?(attributes)
+      unless preconditions_valid?(experiment_key, attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
       end
 
-      unless preconditions_valid?(experiment_key, user_id, attributes)
-        @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
+      variation_id = @bucketer.get_forced_variation_id(experiment_key, user_id)
+      if variation_id
+        return @config.get_variation_key_from_id(experiment_key, variation_id)
+      end
+
+      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
+        @logger.log(Logger::INFO,
+                    "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
         return nil
       end
 
@@ -183,8 +180,7 @@ module Optimizely
         @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
       end
 
-      return nil if attributes && !attributes_valid?(attributes)
-      return nil if event_tags && !event_tags_valid?(event_tags)
+      return nil unless user_inputs_valid?(attributes, event_tags)
 
       experiment_ids = @config.get_experiment_ids_for_goal(event_key)
       if experiment_ids.empty?
@@ -193,24 +189,17 @@ module Optimizely
       end
 
       # Filter out experiments that are not running or that do not include the user in audience conditions
-      valid_experiment_keys = []
-      experiment_ids.each do |experiment_id|
-        experiment_key = @config.experiment_id_map[experiment_id]['key']
-        unless preconditions_valid?(experiment_key, user_id, attributes)
-          @config.logger.log(Logger::INFO, "Not tracking user '#{user_id}' for experiment '#{experiment_key}'.")
-          next
-        end
-        valid_experiment_keys.push(experiment_key)
-      end
+
+      experiment_variation_map = get_valid_experiments_for_event(event_key, user_id, attributes)
 
       # Don't track events without valid experiments attached
-      if valid_experiment_keys.empty?
+      if experiment_variation_map.empty?
         @logger.log(Logger::INFO, "There are no valid experiments for event '#{event_key}' to track.")
         return nil
       end
 
       conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
-                                                                event_tags, valid_experiment_keys)
+                                                                event_tags, experiment_variation_map)
       @logger.log(Logger::INFO,
                   'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
                                                                               conversion_event.params])
@@ -223,7 +212,35 @@ module Optimizely
 
     private
 
-    def preconditions_valid?(experiment_key, user_id, attributes)
+    def get_valid_experiments_for_event(event_key, user_id, attributes)
+      # Get the experiments that we should be tracking for the given event. A valid experiment
+      #
+      # event_key - Event key representing the event which needs to be recorded.
+      # user_id - String ID for user.
+      # attributes - Map of attributes of the user.
+      #
+      # Returns Map where each object contains the ID of the experiment to track and the ID of the variation the user
+      # is bucketed into.
+
+      valid_experiments = {}
+      experiment_ids = @config.get_experiment_ids_for_goal(event_key)
+      experiment_ids.each do |experiment_id|
+        experiment_key = @config.get_experiment_key(experiment_id)
+        variation_key = get_variation(experiment_key, user_id, attributes)
+
+        if variation_key.nil?
+          @logger.log(Logger::INFO, "Not tracking user '#{user_id}' for experiment '#{experiment_key}'.")
+          next
+        end
+
+        variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
+        valid_experiments[experiment_id] = variation_id
+      end
+
+      valid_experiments
+    end
+
+    def preconditions_valid?(experiment_key, attributes = nil, event_tags = nil)
       # Validates preconditions for bucketing a user.
       #
       # experiment_key - String key for an experiment.
@@ -232,22 +249,27 @@ module Optimizely
       #
       # Returns boolean representing whether all preconditions are valid.
 
+      return false unless user_inputs_valid?(attributes, event_tags)
+
       unless @config.experiment_running?(experiment_key)
         @logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
         return false
       end
 
-      if @config.user_in_forced_variation?(experiment_key, user_id)
-        return true
-      end
-
-      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-        @logger.log(Logger::INFO,
-                    "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
-        return false
-      end
-
       true
+    end
+
+    def user_inputs_valid?(attributes = nil, event_tags = nil)
+      # Helper method to validate user inputs.
+      #
+      # attributes - Dict representing user attributes.
+      # event_tags - Dict representing metadata associated with an event.
+      #
+      # Returns boolean True if inputs are valid. False otherwise.
+
+      return false if attributes && !attributes_valid?(attributes)
+      return false if event_tags && !event_tags_valid?(event_tags)
+
     end
 
     def attributes_valid?(attributes)
@@ -268,7 +290,7 @@ module Optimizely
       true
     end
 
-    def validate_inputs(datafile, skip_json_validation)
+    def validate_instantiation_options(datafile, skip_json_validation)
       unless skip_json_validation
         raise InvalidInputError.new('datafile') unless Helpers::Validator.datafile_valid?(datafile)
       end
