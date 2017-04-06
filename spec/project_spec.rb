@@ -540,7 +540,7 @@ describe 'OptimizelyV2' do
     end
 
     it 'should return nil and not call dispatch_event if experiment_ids list is empty' do
-      allow(project_instance.config).to receive(:get_experiment_ids_for_goal).with(any_args).and_return([])
+      allow(project_instance.config).to receive(:get_experiment_ids_for_event).with(any_args).and_return([])
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
       expect(project_instance.track('invalid_event', 'test_user')).to eq(nil)

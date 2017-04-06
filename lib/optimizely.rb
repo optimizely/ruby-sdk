@@ -162,7 +162,7 @@ module Optimizely
     def track(event_key, user_id, attributes = nil, event_tags = nil)
       # Send conversion event to Optimizely.
       #
-      # event_key - Goal key representing the event which needs to be recorded.
+      # event_key - Event key representing the event which needs to be recorded.
       # user_id - String ID for user.
       # attributes - Hash representing visitor attributes and values which need to be recorded.
       # event_tags - Hash representing metadata associated with the event.
@@ -182,7 +182,7 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes, event_tags)
 
-      experiment_ids = @config.get_experiment_ids_for_goal(event_key)
+      experiment_ids = @config.get_experiment_ids_for_event(event_key)
       if experiment_ids.empty?
         @config.logger.log(Logger::INFO, "Not tracking user '#{user_id}'.")
         return nil
@@ -223,7 +223,7 @@ module Optimizely
       # is bucketed into.
 
       valid_experiments = {}
-      experiment_ids = @config.get_experiment_ids_for_goal(event_key)
+      experiment_ids = @config.get_experiment_ids_for_event(event_key)
       experiment_ids.each do |experiment_id|
         experiment_key = @config.get_experiment_key(experiment_id)
         variation_key = get_variation(experiment_key, user_id, attributes)

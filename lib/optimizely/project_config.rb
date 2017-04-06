@@ -145,16 +145,16 @@ module Optimizely
       nil
     end
 
-    def get_experiment_ids_for_goal(goal_key)
-      # Get experiment IDs for the provided goal key.
+    def get_experiment_ids_for_event(event_key)
+      # Get experiment IDs for the provided event key.
       #
-      # goal_key - Goal key for which experiment IDs are to be retrieved.
+      # event_key - Event key for which experiment IDs are to be retrieved.
       #
-      # Returns array of all experiment IDs for the goal.
+      # Returns array of all experiment IDs for the event.
 
-      goal = @event_key_map[goal_key]
-      return goal['experimentIds'] if goal
-      @logger.log Logger::ERROR, "Event '#{goal_key}' is not in datafile."
+      event = @event_key_map[event_key]
+      return event['experimentIds'] if event
+      @logger.log Logger::ERROR, "Event '#{event_key}' is not in datafile."
       @error_handler.handle_error InvalidEventError
       []
     end
