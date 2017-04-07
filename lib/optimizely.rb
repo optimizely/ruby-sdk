@@ -103,7 +103,7 @@ module Optimizely
 
       variation_key = get_variation(experiment_key, user_id, attributes)
 
-      unless variation_key
+      if variation_key.nil?
         @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
         return nil
       end
@@ -145,7 +145,8 @@ module Optimizely
       end
 
       variation_id = @bucketer.get_forced_variation_id(experiment_key, user_id)
-      if variation_id
+
+      unless variation_id.nil?
         return @config.get_variation_key_from_id(experiment_key, variation_id)
       end
 
@@ -156,7 +157,10 @@ module Optimizely
       end
 
       variation_id = @bucketer.bucket(experiment_key, user_id)
-      @config.get_variation_key_from_id(experiment_key, variation_id)
+      unless variation_id.nil?
+        return @config.get_variation_key_from_id(experiment_key, variation_id)
+      end
+      nil
     end
 
     def track(event_key, user_id, attributes = nil, event_tags = nil)
@@ -267,9 +271,15 @@ module Optimizely
       #
       # Returns boolean True if inputs are valid. False otherwise.
 
-      return false if attributes && !attributes_valid?(attributes)
-      return false if event_tags && !event_tags_valid?(event_tags)
+      if !attributes.nil? and !attributes_valid?(attributes)
+        return false
+      end
 
+      if !event_tags.nil? and !event_tags_valid?(event_tags)
+        return false
+      end
+
+      true
     end
 
     def attributes_valid?(attributes)
