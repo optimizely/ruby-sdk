@@ -207,7 +207,7 @@ module Optimizely
     def add_layer_states(experiments_map)
       # Add layer states information to the event.
       #
-      # experiments_map Hash with experiment ID as a key and variation ID as a value.
+      # experiments_map - Hash with experiment ID as a key and variation ID as a value.
 
       @params['layerStates'] = []
 
