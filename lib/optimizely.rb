@@ -217,7 +217,7 @@ module Optimizely
     private
 
     def get_valid_experiments_for_event(event_key, user_id, attributes)
-      # Get the experiments that we should be tracking for the given event. A valid experiment
+      # Get the experiments that we should be tracking for the given event.
       #
       # event_key - Event key representing the event which needs to be recorded.
       # user_id - String ID for user.
@@ -271,11 +271,11 @@ module Optimizely
       #
       # Returns boolean True if inputs are valid. False otherwise.
 
-      if !attributes.nil? and !attributes_valid?(attributes)
+      if !attributes.nil? && !attributes_valid?(attributes)
         return false
       end
 
-      if !event_tags.nil? and !event_tags_valid?(event_tags)
+      if !event_tags.nil? && !event_tags_valid?(event_tags)
         return false
       end
 

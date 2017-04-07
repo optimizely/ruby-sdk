@@ -266,6 +266,14 @@ describe Optimizely::ProjectConfig do
       end
     end
 
+    describe 'get_experiment_key' do
+      it 'should log a message when provided experiment key is invalid' do
+        config.get_experiment_key('invalid_id')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment id 'invalid_id' is not in datafile.")
+      end
+    end
+
     describe '#get_experiment_group_id' do
       it 'should return nil and log a message when there is no experiment' do
         expect(config.get_experiment_group_id('group1_exp1_missing')).to be(nil)
