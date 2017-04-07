@@ -527,10 +527,21 @@ describe 'OptimizelyV2' do
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
 
+    it 'should return false when called with attributes in an invalid format' do
+      expect(project_instance.error_handler).to receive(:handle_error).with(any_args).once.and_return(nil)
+      project_instance.track('test_event', 'test_user', 'invalid')
+    end
+
     it 'should raise an exception when called with event tags in an invalid format' do
       expect { project_instance.track('test_event', 'test_user', nil, 'invalid_tags') }
              .to raise_error(Optimizely::InvalidEventTagFormatError)
     end
+
+    it 'should return false when called with event tags in an invalid format' do
+      expect(project_instance.error_handler).to receive(:handle_error).with(any_args).once.and_return(nil)
+      project_instance.track('test_event', 'test_user', nil, 'invalid_tags')
+    end
+
 
     it 'should return nil and not call dispatch_event for an invalid event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
@@ -540,7 +551,7 @@ describe 'OptimizelyV2' do
     end
 
     it 'should return nil and not call dispatch_event if experiment_ids list is empty' do
-      allow(project_instance.config).to receive(:get_experiment_ids_for_goal).with(any_args).and_return([])
+      allow(project_instance.config).to receive(:get_experiment_ids_for_event).with(any_args).and_return([])
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
       expect(project_instance.track('invalid_event', 'test_user')).to eq(nil)

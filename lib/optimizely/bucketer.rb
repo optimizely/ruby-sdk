@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -42,23 +42,6 @@ module Optimizely
       # user_id - String ID for user.
       #
       # Returns String variation ID in which visitor with ID user_id has been placed. Nil if no variation.
-
-      # handle forced variations if applicable
-      forced_variations = @config.get_forced_variations(experiment_key)
-      forced_variation_key = forced_variations[user_id]
-      if forced_variation_key
-        forced_variation_id = @config.get_variation_id_from_key(experiment_key, forced_variation_key)
-        if forced_variation_id
-          @config.logger.log(Logger::INFO, "User '#{user_id}' is forced in variation '#{forced_variation_key}'.")
-          return forced_variation_id
-        else
-          @config.logger.log(
-            Logger::INFO,
-            "Variation key '#{forced_variation_key}' is not in datafile. Not activating user '#{user_id}'."
-          )
-          return nil
-        end
-      end
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
       experiment_id = @config.get_experiment_id(experiment_key)
@@ -116,6 +99,36 @@ module Optimizely
 
       @config.logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
       nil
+    end
+
+    def get_forced_variation_id(experiment_key, user_id)
+      # Determine if a user is forced into a variation for the given experiment and return the id of that variation.
+      #
+      # experiment_key - Key representing the experiment for which user is to be bucketed.
+      # user_id - ID for the user.
+      #
+      # Returns variation ID in which the user with ID user_id is forced into. Nil if no variation.
+
+      forced_variations = @config.get_forced_variations(experiment_key)
+
+      return nil unless forced_variations
+
+      forced_variation_key = forced_variations[user_id]
+
+      return nil unless forced_variation_key
+
+      forced_variation_id = @config.get_variation_id_from_key(experiment_key, forced_variation_key)
+
+      unless forced_variation_id
+        @config.logger.log(
+          Logger::INFO,
+          "Variation key '#{forced_variation_key}' is not in datafile. Not activating user '#{user_id}'."
+        )
+        return nil
+      end
+
+      @config.logger.log(Logger::INFO, "User '#{user_id}' is forced in variation '#{forced_variation_key}'.")
+      forced_variation_id
     end
 
     private
