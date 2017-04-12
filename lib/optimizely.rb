@@ -37,10 +37,6 @@ module Optimizely
     attr_accessor :logger
     attr_accessor :error_handler
 
-    EVENT_BUILDERS_BY_VERSION = {
-      Optimizely::V2_CONFIG_VERSION => EventBuilderV2
-    }
-
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
       # Constructor for Projects.
       #
@@ -82,7 +78,7 @@ module Optimizely
       end
 
       @bucketer = Bucketer.new(@config)
-      @event_builder = EVENT_BUILDERS_BY_VERSION[@config.version].new(@config, @bucketer)
+      @event_builder = EventBuilderV2.new(@config, @bucketer)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
