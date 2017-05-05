@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ module Optimizely
   V1_CONFIG_VERSION = '1'
   V2_CONFIG_VERSION = '2'
 
+  SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
+  UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
+
   class ProjectConfig
     # Representation of the Optimizely project config.
 
@@ -32,6 +35,7 @@ module Optimizely
     attr_reader :error_handler
     attr_reader :logger
 
+    attr_reader :parsing_succeeded
     attr_reader :version
     attr_reader :account_id
     attr_reader :project_id
@@ -59,16 +63,18 @@ module Optimizely
 
       config = JSON.load(datafile)
 
+      @parsing_succeeded = false
       @error_handler = error_handler
       @logger = logger
       @version = config['version']
+
+      if UNSUPPORTED_VERSIONS.include?(@version)
+        return
+      end
+
       @account_id = config['accountId']
       @project_id = config['projectId']
-      if @version == V1_CONFIG_VERSION
-        @attributes = config['dimensions']
-      else
-        @attributes = config['attributes']
-      end
+      @attributes = config['attributes']
       @events = config['events']
       @experiments = config['experiments']
       @revision = config['revision']
@@ -95,6 +101,7 @@ module Optimizely
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
       end
+      @parsing_succeeded = true
     end
 
     def experiment_running?(experiment_key)
@@ -124,36 +131,30 @@ module Optimizely
       nil
     end
 
-    def get_goal_keys
-      # Retrieves all goals in the project except 'Total Revenue'
+    def get_experiment_key(experiment_id)
+      # Retrieves experiment key for a given ID.
       #
-      # Returns array of all goal keys except 'Total Revenue'
-
-      goal_keys = @event_key_map.keys
-      goal_keys.delete(REVENUE_GOAL_KEY) if goal_keys.include?(REVENUE_GOAL_KEY)
-      goal_keys
-    end
-
-    def get_revenue_goal_id
-      # Get ID of the revenue goal for the project
+      # experiment_id - String ID representing the experiment.
       #
-      # Returns revenue goal ID
+      # Returns String key.
 
-      revenue_goal = @event_key_map[REVENUE_GOAL_KEY]
-      return revenue_goal['id'] if revenue_goal
+      experiment = @experiment_id_map[experiment_id]
+      return experiment['key'] unless experiment.nil?
+      @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
       nil
     end
 
-    def get_experiment_ids_for_goal(goal_key)
-      # Get experiment IDs for the provided goal key.
+    def get_experiment_ids_for_event(event_key)
+      # Get experiment IDs for the provided event key.
       #
-      # goal_key - Goal key for which experiment IDs are to be retrieved.
+      # event_key - Event key for which experiment IDs are to be retrieved.
       #
-      # Returns array of all experiment IDs for the goal.
+      # Returns array of all experiment IDs for the event.
 
-      goal = @event_key_map[goal_key]
-      return goal['experimentIds'] if goal
-      @logger.log Logger::ERROR, "Event '#{goal_key}' is not in datafile."
+      event = @event_key_map[event_key]
+      return event['experimentIds'] if event
+      @logger.log Logger::ERROR, "Event '#{event_key}' is not in datafile."
       @error_handler.handle_error InvalidEventError
       []
     end
@@ -272,14 +273,6 @@ module Optimizely
       nil
     end
 
-    def get_segment_id(attribute_key)
-      attribute = @attribute_key_map[attribute_key]
-      return attribute['segmentId'] if attribute
-      @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
-      @error_handler.handle_error InvalidAttributeError
-      nil
-    end
-
     def user_in_forced_variation?(experiment_key, user_id)
       # Determines if a given user is in a forced variation
       #
@@ -291,6 +284,14 @@ module Optimizely
       forced_variations = get_forced_variations(experiment_key)
       return forced_variations.include?(user_id) if forced_variations
       false
+    end
+
+    def parsing_succeeded?
+      # Helper method to determine if parsing the datafile was successful.
+      #
+      # Returns Boolean depending on whether parsing the datafile succeeded or not.
+
+      @parsing_succeeded
     end
 
     private

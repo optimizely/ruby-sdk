@@ -1,5 +1,5 @@
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ require 'spec_helper'
 
 describe Optimizely::ConditionEvaluator do
   before(:context) do
-    @config_body = OptimizelySpec::V1_CONFIG_BODY
+    @config_body = OptimizelySpec::V2_CONFIG_BODY
   end
 
   before(:example) do
@@ -136,5 +136,11 @@ describe Optimizely::ConditionEvaluator do
                 '{"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]]]'
     condition = JSON.load(condition)
     expect(@condition_evaluator.evaluate(condition)).to be false
+  end
+
+  it 'should evaluate to true for evaluate when NOT conditions evaluate to true' do
+    condition = '["not", {"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]'
+    condition = JSON.load(condition)
+    expect(@condition_evaluator.evaluate(condition)).to be true
   end
 end
