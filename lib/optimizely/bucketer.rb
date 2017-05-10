@@ -101,36 +101,6 @@ module Optimizely
       nil
     end
 
-    def get_forced_variation_id(experiment_key, user_id)
-      # Determine if a user is forced into a variation for the given experiment and return the id of that variation.
-      #
-      # experiment_key - Key representing the experiment for which user is to be bucketed.
-      # user_id - ID for the user.
-      #
-      # Returns variation ID in which the user with ID user_id is forced into. Nil if no variation.
-
-      forced_variations = @config.get_forced_variations(experiment_key)
-
-      return nil unless forced_variations
-
-      forced_variation_key = forced_variations[user_id]
-
-      return nil unless forced_variation_key
-
-      forced_variation_id = @config.get_variation_id_from_key(experiment_key, forced_variation_key)
-
-      unless forced_variation_id
-        @config.logger.log(
-          Logger::INFO,
-          "Variation key '#{forced_variation_key}' is not in datafile. Not activating user '#{user_id}'."
-        )
-        return nil
-      end
-
-      @config.logger.log(Logger::INFO, "User '#{user_id}' is forced in variation '#{forced_variation_key}'.")
-      forced_variation_id
-    end
-
     private
 
     def find_bucket(bucket_value, traffic_allocations)

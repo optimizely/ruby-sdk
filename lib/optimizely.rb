@@ -15,6 +15,7 @@
 #
 require_relative 'optimizely/audience'
 require_relative 'optimizely/bucketer'
+require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
 require_relative 'optimizely/event_dispatcher'
@@ -31,7 +32,7 @@ module Optimizely
     attr_reader   :is_valid
 
     attr_accessor :config
-    attr_accessor :bucketer
+    attr_accessor :decision_service
     attr_accessor :event_builder
     attr_accessor :event_dispatcher
     attr_accessor :logger
@@ -77,7 +78,7 @@ module Optimizely
         return
       end
 
-      @bucketer = Bucketer.new(@config)
+      @decision_service = DecisionService.new(@config)
       @event_builder = EventBuilderV2.new(@config)
     end
 
@@ -135,24 +136,13 @@ module Optimizely
         return nil
       end
 
-      unless preconditions_valid?(experiment_key, attributes)
+      unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
       end
 
-      variation_id = @bucketer.get_forced_variation_id(experiment_key, user_id)
+      variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
 
-      unless variation_id.nil?
-        return @config.get_variation_key_from_id(experiment_key, variation_id)
-      end
-
-      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-        @logger.log(Logger::INFO,
-                    "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
-        return nil
-      end
-
-      variation_id = @bucketer.bucket(experiment_key, user_id)
       unless variation_id.nil?
         return @config.get_variation_key_from_id(experiment_key, variation_id)
       end
