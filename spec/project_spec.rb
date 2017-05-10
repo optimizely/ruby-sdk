@@ -136,7 +136,7 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                        .with('test_experiment')
@@ -146,7 +146,7 @@ describe 'OptimizelyV2' do
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
-      expect(project_instance.bucketer).to have_received(:bucket).once
+      expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
@@ -175,13 +175,13 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.bucketer).to receive(:bucket).and_return('122228')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('122228')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
-      expect(project_instance.bucketer).to have_received(:bucket).once
+      expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
     it 'should return nil when experiment status is not "Running"' do
@@ -201,7 +201,7 @@ describe 'OptimizelyV2' do
 
     it 'should return nil when user is in no variation' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
-      allow(project_instance.bucketer).to receive(:bucket).and_return(nil)
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(nil)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user'.")
@@ -226,7 +226,7 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                         .with('test_experiment')
@@ -237,7 +237,7 @@ describe 'OptimizelyV2' do
     end
 
     it 'should log when an exception has occurred during dispatching the impression event' do
-      allow(project_instance.bucketer).to receive(:bucket).and_return('111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Unable to dispatch impression event. Error: RuntimeError")
