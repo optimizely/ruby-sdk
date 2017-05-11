@@ -24,7 +24,7 @@ module Optimizely
       @bucketer = Bucketer.new(@config)
     end
 
-    def get_variation(experiment_key, user_id, attributes)
+    def get_variation(experiment_key, user_id, attributes = nil)
       # Check to make sure experiment is active
       # remember to come back and make sure this covers launched
       unless @config.experiment_running?(experiment_key)

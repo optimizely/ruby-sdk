@@ -25,25 +25,69 @@ describe Optimizely::DecisionService do
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:decision_service) { Optimizely::DecisionService.new(config) }
 
+  describe '#get_variation' do
+    before(:example) do
+      # stub out bucketer.bucket so we can make sure it is / isn't called
+      allow(decision_service.bucketer).to receive(:bucket).and_call_original
+    end
+
+    it 'should return the correct variation ID for a given user ID and key of a running experiment' do
+      expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO,"User 'test_user' is in variation 'control' of experiment 'test_experiment'.")
+      expect(decision_service.bucketer).to have_received(:bucket).once
+    end
+
+    it 'should return the correct variation ID for a user in a forced variation (even when audience conditions do not match' do
+      user_attributes = {'browser_type' => 'wrong_browser'}
+      expect(decision_service.get_variation('test_experiment_with_audience', 'forced_audience_user', user_attributes)).to eq('122229')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO,"User 'forced_audience_user' is forced in variation 'variation_with_audience'.")
+
+      # forced variations should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+    end
+
+    it 'should return nil if the user does not meet the audience conditions for a given experiment' do
+      user_attributes = {'browser_type' => 'chrome'}
+      expect(decision_service.get_variation('test_experiment_with_audience', 'test_user', user_attributes)).to eq(nil)
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO,"User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
+
+      # wrong audience conditions should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+    end
+
+    it 'should return nil if the given experiment is not running' do
+      expect(decision_service.get_variation('test_experiment_not_started', 'test_user')).to eq(nil)
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO,"Experiment 'test_experiment_not_started' is not running.")
+
+      # non-running experiments should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+    end
+  end
+
   describe '#get_forced_variation_id' do
     it 'should return correct variation ID if user ID is in forcedVariations and variation is valid' do
       expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user1')).to eq('111128')
       expect(spy_logger).to have_received(:log)
-                              .once.with(Logger::INFO, "User 'forced_user1' is forced in variation 'control'.")
+                            .once.with(Logger::INFO, "User 'forced_user1' is forced in variation 'control'.")
 
       expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user2')).to eq('111129')
       expect(spy_logger).to have_received(:log)
-                              .once.with(Logger::INFO, "User 'forced_user2' is forced in variation 'variation'.")
+                            .once.with(Logger::INFO, "User 'forced_user2' is forced in variation 'variation'.")
     end
 
-    it 'should return null if forced variation ID is not in the datafile' do
+    it 'should return nil if forced variation ID is not in the datafile' do
       expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user_with_invalid_variation')).to be_nil
     end
 
     it 'should respect forced variations within mutually exclusive grouped experiments' do
       expect(decision_service.get_forced_variation_id('group1_exp2', 'forced_group_user1')).to eq('130004')
       expect(spy_logger).to have_received(:log)
-                              .once.with(Logger::INFO, "User 'forced_group_user1' is forced in variation 'g1_e2_v2'.")
+                            .once.with(Logger::INFO, "User 'forced_group_user1' is forced in variation 'g1_e2_v2'.")
     end
   end
 end
