@@ -230,25 +230,6 @@ module Optimizely
       valid_experiments
     end
 
-    def preconditions_valid?(experiment_key, attributes = nil, event_tags = nil)
-      # Validates preconditions for bucketing a user.
-      #
-      # experiment_key - String key for an experiment.
-      # user_id - String ID of user.
-      # attributes - Hash of user attributes.
-      #
-      # Returns boolean representing whether all preconditions are valid.
-
-      return false unless user_inputs_valid?(attributes, event_tags)
-
-      unless @config.experiment_running?(experiment_key)
-        @logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
-        return false
-      end
-
-      true
-    end
-
     def user_inputs_valid?(attributes = nil, event_tags = nil)
       # Helper method to validate user inputs.
       #
