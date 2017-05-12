@@ -39,7 +39,20 @@ describe Optimizely::DecisionService do
       expect(decision_service.bucketer).to have_received(:bucket).once
     end
 
-    it 'should return the correct variation ID for a user in a forced variation (even when audience conditions do not match' do
+    it 'should return correct variation ID if user ID is in forcedVariations and variation is valid' do
+      expect(decision_service.get_variation('test_experiment', 'forced_user1')).to eq('111128')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO, "User 'forced_user1' is forced in variation 'control'.")
+
+      expect(decision_service.get_variation('test_experiment', 'forced_user2')).to eq('111129')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO, "User 'forced_user2' is forced in variation 'variation'.")
+
+      # forced variations should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+    end
+
+    it 'should return the correct variation ID for a user in a forced variation (even when audience conditions do not match)' do
       user_attributes = {'browser_type' => 'wrong_browser'}
       expect(decision_service.get_variation('test_experiment_with_audience', 'forced_audience_user', user_attributes)).to eq('122229')
       expect(spy_logger).to have_received(:log)
@@ -67,27 +80,14 @@ describe Optimizely::DecisionService do
       # non-running experiments should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
     end
-  end
-
-  describe '#get_forced_variation_id' do
-    it 'should return correct variation ID if user ID is in forcedVariations and variation is valid' do
-      expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user1')).to eq('111128')
-      expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO, "User 'forced_user1' is forced in variation 'control'.")
-
-      expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user2')).to eq('111129')
-      expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO, "User 'forced_user2' is forced in variation 'variation'.")
-    end
-
-    it 'should return nil if forced variation ID is not in the datafile' do
-      expect(decision_service.get_forced_variation_id('test_experiment', 'forced_user_with_invalid_variation')).to be_nil
-    end
 
     it 'should respect forced variations within mutually exclusive grouped experiments' do
-      expect(decision_service.get_forced_variation_id('group1_exp2', 'forced_group_user1')).to eq('130004')
+      expect(decision_service.get_variation('group1_exp2', 'forced_group_user1')).to eq('130004')
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO, "User 'forced_group_user1' is forced in variation 'g1_e2_v2'.")
+
+      # forced variations should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
     end
   end
 end

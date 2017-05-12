@@ -15,7 +15,16 @@
 #
 module Optimizely
   class DecisionService
-  
+    # Optimizely's decision service that determines into which variation of an experiment a user will be allocated.
+    #
+    # The decision service contains all logic relating to how a user bucketing decisions is made.
+    # This includes all of the following (in order):
+    #
+    # 1. Checking experiment status
+    # 2. Checking whitelisting
+    # 3. Checking audience targeting
+    # 4. Using Murmurhash3 to bucket the user
+
     attr_reader :bucketer
     attr_reader :config
 
@@ -25,8 +34,15 @@ module Optimizely
     end
 
     def get_variation(experiment_key, user_id, attributes = nil)
+      # Determines variation into which user will be bucketed.
+      #
+      # experiment_key - Experiment for which visitor variation needs to be determined
+      # user_id - String ID for user
+      # attributes - Hash representing user attributes
+      #
+      # Returns variation ID where visitor will be bucketed (nil if experiment is inactive or user does not meet audience conditions)
+
       # Check to make sure experiment is active
-      # remember to come back and make sure this covers launched
       unless @config.experiment_running?(experiment_key)
         @config.logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
         return nil
@@ -48,14 +64,15 @@ module Optimizely
       variation_id
     end
 
-    # consider making this private and testing implicitly
+    private
+    
     def get_forced_variation_id(experiment_key, user_id)
-      # Determine if a user is forced into a variation for the given experiment and return the ID of that variation.
+      # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
       #
-      # experiment_key - Key representing the experiment for which user is to be bucketed.
-      # user_id - ID for the user.
+      # experiment_key - Key representing the experiment for which user is to be bucketed
+      # user_id - ID for the user
       #
-      # Returns variation ID into which user_id is forced (nil if no variation).
+      # Returns variation ID into which user_id is forced (nil if no variation)
 
       forced_variations = @config.get_forced_variations(experiment_key)
 
