@@ -53,8 +53,10 @@ module Optimizely
 
       if variation_id.nil?
         unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-          @config.logger.log(Logger::INFO,
-                      "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
+          @config.logger.log(
+            Logger::INFO,
+            "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
+          )
           return nil
         end
 

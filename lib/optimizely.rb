@@ -29,14 +29,14 @@ module Optimizely
   class Project
 
     # Boolean representing if the instance represents a usable Optimizely Project
-    attr_reader   :is_valid
+    attr_reader :is_valid
 
     attr_reader :config
     attr_reader :decision_service
+    attr_reader :error_handler
     attr_reader :event_builder
     attr_reader :event_dispatcher
     attr_reader :logger
-    attr_reader :error_handler
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
       # Constructor for Projects.
