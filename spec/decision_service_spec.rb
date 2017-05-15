@@ -27,8 +27,10 @@ describe Optimizely::DecisionService do
 
   describe '#get_variation' do
     before(:example) do
-      # stub out bucketer.bucket so we can make sure it is / isn't called
+      # stub out bucketer and audience evaluator so we can make sure they are / aren't called
       allow(decision_service.bucketer).to receive(:bucket).and_call_original
+      allow(decision_service).to receive(:get_forced_variation_id).and_call_original
+      allow(Optimizely::Audience).to receive(:user_in_experiment?).and_call_original
     end
 
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
@@ -36,6 +38,7 @@ describe Optimizely::DecisionService do
 
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO,"User 'test_user' is in variation 'control' of experiment 'test_experiment'.")
+      expect(decision_service).to have_received(:get_forced_variation_id).once
       expect(decision_service.bucketer).to have_received(:bucket).once
     end
 
@@ -50,6 +53,8 @@ describe Optimizely::DecisionService do
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
+      # forced variations should short circuit audience evaluation
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
     it 'should return the correct variation ID for a user in a forced variation (even when audience conditions do not match)' do
@@ -63,6 +68,8 @@ describe Optimizely::DecisionService do
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
+      # forced variations should short circuit audience evaluation
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
     it 'should return nil if the user does not meet the audience conditions for a given experiment' do
@@ -71,6 +78,8 @@ describe Optimizely::DecisionService do
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO,"User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
 
+      # should have checked forced variations
+      expect(decision_service).to have_received(:get_forced_variation_id).once
       # wrong audience conditions should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
     end
@@ -80,6 +89,10 @@ describe Optimizely::DecisionService do
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO,"Experiment 'test_experiment_not_started' is not running.")
 
+      # non-running experiments should short circuit whitelisting
+      expect(decision_service).not_to have_received(:get_forced_variation_id)
+      # non-running experiments should short circuit audience evaluation
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
       # non-running experiments should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
     end
@@ -91,6 +104,8 @@ describe Optimizely::DecisionService do
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
+      # forced variations should short circuit audience evaluation
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
     it 'should bucket normally if user is whitelisted into a forced variation that is not in the datafile' do
