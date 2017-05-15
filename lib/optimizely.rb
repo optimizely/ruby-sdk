@@ -14,7 +14,6 @@
 #    limitations under the License.
 #
 require_relative 'optimizely/audience'
-require_relative 'optimizely/bucketer'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'

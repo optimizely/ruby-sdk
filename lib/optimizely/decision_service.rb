@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require_relative './bucketer'
+
 module Optimizely
   class DecisionService
     # Optimizely's decision service that determines into which variation of an experiment a user will be allocated.
@@ -89,12 +91,15 @@ module Optimizely
       unless forced_variation_id
         @config.logger.log(
           Logger::INFO,
-          "Variation key '#{forced_variation_key}' is not in datafile. Not activating user '#{user_id}'."
+          "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}', which is not in the datafile."
         )
         return nil
       end
 
-      @config.logger.log(Logger::INFO, "User '#{user_id}' is forced in variation '#{forced_variation_key}'.")
+      @config.logger.log(
+        Logger::INFO,
+        "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}' of experiment '#{experiment_key}'."
+      )
       forced_variation_id
     end
   end

@@ -42,11 +42,11 @@ describe Optimizely::DecisionService do
     it 'should return correct variation ID if user ID is in forcedVariations and variation is valid' do
       expect(decision_service.get_variation('test_experiment', 'forced_user1')).to eq('111128')
       expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO, "User 'forced_user1' is forced in variation 'control'.")
+                            .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'.")
 
       expect(decision_service.get_variation('test_experiment', 'forced_user2')).to eq('111129')
       expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO, "User 'forced_user2' is forced in variation 'variation'.")
+                            .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'.")
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
@@ -56,7 +56,10 @@ describe Optimizely::DecisionService do
       user_attributes = {'browser_type' => 'wrong_browser'}
       expect(decision_service.get_variation('test_experiment_with_audience', 'forced_audience_user', user_attributes)).to eq('122229')
       expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO,"User 'forced_audience_user' is forced in variation 'variation_with_audience'.")
+                            .once.with(
+                              Logger::INFO,
+                              "User 'forced_audience_user' is whitelisted into variation 'variation_with_audience' of experiment 'test_experiment_with_audience'."
+                            )
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
@@ -84,10 +87,21 @@ describe Optimizely::DecisionService do
     it 'should respect forced variations within mutually exclusive grouped experiments' do
       expect(decision_service.get_variation('group1_exp2', 'forced_group_user1')).to eq('130004')
       expect(spy_logger).to have_received(:log)
-                            .once.with(Logger::INFO, "User 'forced_group_user1' is forced in variation 'g1_e2_v2'.")
+                            .once.with(Logger::INFO, "User 'forced_group_user1' is whitelisted into variation 'g1_e2_v2' of experiment 'group1_exp2'.")
 
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
+    end
+
+    it 'should bucket normally if user is whitelisted into a forced variation that is not in the datafile' do
+      expect(decision_service.get_variation('test_experiment', 'forced_user_with_invalid_variation')).to eq('111128')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(
+                              Logger::INFO,
+                              "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile."
+                            )
+      # bucketing should have occured
+      expect(decision_service.bucketer).to have_received(:bucket).once.with('test_experiment', 'forced_user_with_invalid_variation')
     end
   end
 end
