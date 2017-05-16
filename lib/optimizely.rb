@@ -14,7 +14,7 @@
 #    limitations under the License.
 #
 require_relative 'optimizely/audience'
-require_relative 'optimizely/bucketer'
+require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
 require_relative 'optimizely/event_dispatcher'
@@ -28,14 +28,14 @@ module Optimizely
   class Project
 
     # Boolean representing if the instance represents a usable Optimizely Project
-    attr_reader   :is_valid
+    attr_reader :is_valid
 
-    attr_accessor :config
-    attr_accessor :bucketer
-    attr_accessor :event_builder
-    attr_accessor :event_dispatcher
-    attr_accessor :logger
-    attr_accessor :error_handler
+    attr_reader :config
+    attr_reader :decision_service
+    attr_reader :error_handler
+    attr_reader :event_builder
+    attr_reader :event_dispatcher
+    attr_reader :logger
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
       # Constructor for Projects.
@@ -77,7 +77,7 @@ module Optimizely
         return
       end
 
-      @bucketer = Bucketer.new(@config)
+      @decision_service = DecisionService.new(@config)
       @event_builder = EventBuilderV2.new(@config)
     end
 
@@ -135,24 +135,13 @@ module Optimizely
         return nil
       end
 
-      unless preconditions_valid?(experiment_key, attributes)
+      unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
       end
 
-      variation_id = @bucketer.get_forced_variation_id(experiment_key, user_id)
+      variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
 
-      unless variation_id.nil?
-        return @config.get_variation_key_from_id(experiment_key, variation_id)
-      end
-
-      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-        @logger.log(Logger::INFO,
-                    "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'.")
-        return nil
-      end
-
-      variation_id = @bucketer.bucket(experiment_key, user_id)
       unless variation_id.nil?
         return @config.get_variation_key_from_id(experiment_key, variation_id)
       end
@@ -238,25 +227,6 @@ module Optimizely
       end
 
       valid_experiments
-    end
-
-    def preconditions_valid?(experiment_key, attributes = nil, event_tags = nil)
-      # Validates preconditions for bucketing a user.
-      #
-      # experiment_key - String key for an experiment.
-      # user_id - String ID of user.
-      # attributes - Hash of user attributes.
-      #
-      # Returns boolean representing whether all preconditions are valid.
-
-      return false unless user_inputs_valid?(attributes, event_tags)
-
-      unless @config.experiment_running?(experiment_key)
-        @logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
-        return false
-      end
-
-      true
     end
 
     def user_inputs_valid?(attributes = nil, event_tags = nil)

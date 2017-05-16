@@ -42,7 +42,7 @@ module Optimizely
 
   class BaseEventBuilder
     attr_reader :config
-    attr_accessor :params
+    attr_reader :params
 
     def initialize(config)
       @config = config
