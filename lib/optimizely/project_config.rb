@@ -294,6 +294,22 @@ module Optimizely
       @parsing_succeeded
     end
 
+    def variation_id_exists?(experiment_id, variation_id)
+      experiment_key = get_experiment_key(experiment_id)
+      variation_id_map = @variation_id_map[experiment_key]
+      if variation_id_map
+        variation = variation_id_map[variation_id]
+        return true if variation
+        @logger.log Logger::ERROR, "Variation ID '#{variation_id}' is not in datafile."
+        @error_handler.handle_error InvalidVariationError
+        return false
+      end
+
+      @logger.log Logger::ERROR, "Experiment ID '#{experiment_id}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      false
+    end
+
     private
 
     def generate_key_map(array, key)

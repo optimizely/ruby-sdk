@@ -52,21 +52,37 @@ module Optimizely
         return nil
       end
 
+      experiment_id = @config.get_experiment_id(experiment_key)
+
       # Check if user is in a forced variation
-      variation_id = get_forced_variation_id(experiment_key, user_id)
+      forced_variation_id = get_forced_variation_id(experiment_key, user_id)
+      return forced_variation_id if forced_variation_id
 
-      if variation_id.nil?
-        unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-          @config.logger.log(
-            Logger::INFO,
-            "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
-          )
-          return nil
-        end
-
-        variation_id = @bucketer.bucket(experiment_key, user_id)
+      # Check for saved bucketing decisions
+      user_profile = get_user_profile(user_id)
+      saved_variation_id = get_saved_variation_id(experiment_id, user_profile)
+      if saved_variation_id
+        @config.logger.log(
+          Logger::INFO,
+          "Returning previously activated variation '${variation_id}' of experiment '${experiment_key}' for user '${user_id}' from user profile."
+        )
+        return saved_variation_id
       end
 
+      # Check audience conditions
+      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
+        @config.logger.log(
+          Logger::INFO,
+          "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
+        )
+        return nil
+      end
+
+      # Bucket normally
+      variation_id = @bucketer.bucket(experiment_key, user_id)
+
+      # Persist bucketing decision
+      save_user_profile(user_profile, experiment_id, variation_id)
       variation_id
     end
 
@@ -104,36 +120,48 @@ module Optimizely
       )
       forced_variation_id
     end
-  end
 
-  def get_user_profile(user_id)
-    user_profile = {
-      'user_id' => user_id,
-      'experiment_bucket_map' => experiment_bucket_map
-    }
+    def get_saved_variation_id(experiment_id, user_profile)
+      return nil unless user_profile['experiment_bucket_map']
 
-    return user_profile unless @user_profile_service
+      decision = user_profile['experiment_bucket_map'][experiment_id]
+      return nil unless decision
+      variation_id = decision['variation_id']
+      return variation_id
 
-    begin
-      user_profile = @user_profile_service.lookup(user_id) || user_profile
-    rescue
-      @config.logger.log(Logger::ERROR, 'lookup failed')
+      nil
     end
 
-    user_profile
-  end
-
-  def save_user_profile(user_profile, experiment_id, variation_id)
-    return unless @user_profile_service
-
-    begin
-      user_profile['experiment_bucket_map'][experiment_id] = {
-        'variation_id' => variation_id
+    def get_user_profile(user_id)
+      user_profile = {
+        'user_id' => user_id,
+        'experiment_bucket_map' => {}
       }
-      @user_profile_service.save(user_profile)
-      @config.logger.log(Logger::INFO, 'saved profile')
-    rescue
-      @config.logger.log(Logger::ERROR, 'error saving profile')
+
+      return user_profile unless @user_profile_service
+
+      begin
+        user_profile = @user_profile_service.lookup(user_id) || user_profile
+      rescue => e
+        @config.logger.log(Logger::ERROR, "Error while looking up user profile for user ID '${user_id}': ${e}.")
+      end
+
+      user_profile
+    end
+
+    def save_user_profile(user_profile, experiment_id, variation_id)
+      return nil unless @user_profile_service
+
+      begin
+        user_profile['experiment_bucket_map'][experiment_id] = {
+          'variation_id' => variation_id
+        }
+        @user_profile_service.save(user_profile)
+        @config.logger.log(Logger::INFO, "Saved variation '${variation_id}' of experiment '${experiment_id}' for user '${user_id}'.")
+      rescue => e
+        user_id = user_profile['user_id']
+        @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '${user_id}': ${e}.")
+      end
     end
   end
 end

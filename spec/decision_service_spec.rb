@@ -22,8 +22,9 @@ describe Optimizely::DecisionService do
   let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
+  let(:spy_user_profile_service) { spy('user_profile_service') }
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
-  let(:decision_service) { Optimizely::DecisionService.new(config) }
+  let(:decision_service) { Optimizely::DecisionService.new(config, spy_user_profile_service) }
 
   describe '#get_variation' do
     before(:example) do
@@ -31,6 +32,9 @@ describe Optimizely::DecisionService do
       allow(decision_service.bucketer).to receive(:bucket).and_call_original
       allow(decision_service).to receive(:get_forced_variation_id).and_call_original
       allow(Optimizely::Audience).to receive(:user_in_experiment?).and_call_original
+
+      # by default, spy user profile service should no-op. we override this behavior in specific tests
+      allow(spy_user_profile_service).to receive(:lookup).and_return(nil)
     end
 
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
@@ -117,6 +121,84 @@ describe Optimizely::DecisionService do
                             )
       # bucketing should have occured
       expect(decision_service.bucketer).to have_received(:bucket).once.with('test_experiment', 'forced_user_with_invalid_variation')
+    end
+
+    describe 'when a UserProfile service is provided' do
+      it 'should look up the UserProfile, bucket normally, and save the result if no saved profile is found' do
+        expected_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            '111127' => {
+              'variation_id' => '111128'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to receive(:lookup).and_return(nil)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+        # bucketing should have occurred
+        expect(decision_service.bucketer).to have_received(:bucket).once
+        # bucketing decision should have been saved
+        expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+      end
+
+      it 'should look up the UserProfile and skip normal bucketing if a profile with a saved decision is found' do
+        saved_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            '111127' => {
+              'variation_id' => '111129'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to receive(:lookup)
+                                        .with('test_user')
+                                        .and_return(saved_user_profile)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111129')
+
+        # saved user profiles should short circuit bucketing
+        expect(decision_service.bucketer).not_to have_received(:bucket)
+        # saved user profiles should short circuit audience evaluation
+        expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+        # the user profile should not be updated if bucketing did not take place
+        expect(spy_user_profile_service).not_to have_received(:save)
+      end
+
+      it 'should look up the UserProfile and bucket normally if a profile without a saved decision is found' do
+        saved_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            # saved decision, but not for this experiment
+            '122227' => {
+              'variation_id' => '122228'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to receive(:lookup)
+                                        .with('test_user')
+                                        .and_return(saved_user_profile)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+        # bucketing should have occurred
+        expect(decision_service.bucketer).to have_received(:bucket).once
+
+        # user profile should have been updated with bucketing decision
+        expected_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            '111127' => {
+              'variation_id' => '111128'
+            },
+            '122227' => {
+              'variation_id' => '122228'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+      end
     end
   end
 end
