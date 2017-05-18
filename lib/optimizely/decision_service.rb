@@ -122,6 +122,12 @@ module Optimizely
     end
 
     def get_saved_variation_id(experiment_id, user_profile)
+      # Retrieve variation ID of stored bucketing decision for a given experiment from a given user profile
+      #
+      # experiment_id - String experiment ID
+      # user_profile - Hash user profile
+      #
+      # Returns string variation ID (nil if no decision is found)
       return nil unless user_profile['experiment_bucket_map']
 
       decision = user_profile['experiment_bucket_map'][experiment_id]
@@ -133,6 +139,12 @@ module Optimizely
     end
 
     def get_user_profile(user_id)
+      # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
+      #
+      # user_id - String ID for the user
+      #
+      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
+
       user_profile = {
         'user_id' => user_id,
         'experiment_bucket_map' => {}
@@ -149,8 +161,15 @@ module Optimizely
       user_profile
     end
 
+
     def save_user_profile(user_profile, experiment_id, variation_id)
-      return nil unless @user_profile_service
+      # Save a given bucketing decision to a given user profile
+      #
+      # user_profile - Hash user profile
+      # experiment_id - String experiment ID
+      # variation_id - String variation ID
+
+      return unless @user_profile_service
 
       begin
         user_profile['experiment_bucket_map'][experiment_id] = {

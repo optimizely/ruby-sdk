@@ -295,6 +295,13 @@ module Optimizely
     end
 
     def variation_id_exists?(experiment_id, variation_id)
+      # Determines if a given experiment ID / variation ID pair exists in the datafile
+      #
+      # experiment_id - String experiment ID
+      # variation_id - String variation ID
+      #
+      # Returns true if variation is in datafile
+
       experiment_key = get_experiment_key(experiment_id)
       variation_id_map = @variation_id_map[experiment_key]
       if variation_id_map
