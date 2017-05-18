@@ -24,14 +24,16 @@ module Optimizely
     #
     # 1. Checking experiment status
     # 2. Checking whitelisting
+    # 3. Checking user profile service for past bucketing decisions (sticky bucketing)
     # 3. Checking audience targeting
     # 4. Using Murmurhash3 to bucket the user
 
     attr_reader :bucketer
     attr_reader :config
 
-    def initialize(config)
+    def initialize(config, user_profile_service = nil)
       @config = config
+      @user_profile_service = user_profile_service
       @bucketer = Bucketer.new(@config)
     end
 
@@ -101,6 +103,37 @@ module Optimizely
         "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}' of experiment '#{experiment_key}'."
       )
       forced_variation_id
+    end
+  end
+
+  def get_user_profile(user_id)
+    user_profile = {
+      'user_id' => user_id,
+      'experiment_bucket_map' => experiment_bucket_map
+    }
+
+    return user_profile unless @user_profile_service
+
+    begin
+      user_profile = @user_profile_service.lookup(user_id) || user_profile
+    rescue
+      @config.logger.log(Logger::ERROR, 'lookup failed')
+    end
+
+    user_profile
+  end
+
+  def save_user_profile(user_profile, experiment_id, variation_id)
+    return unless @user_profile_service
+
+    begin
+      user_profile['experiment_bucket_map'][experiment_id] = {
+        'variation_id' => variation_id
+      }
+      @user_profile_service.save(user_profile)
+      @config.logger.log(Logger::INFO, 'saved profile')
+    rescue
+      @config.logger.log(Logger::ERROR, 'error saving profile')
     end
   end
 end

@@ -37,20 +37,22 @@ module Optimizely
     attr_reader :event_dispatcher
     attr_reader :logger
 
-    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false)
+    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
       # Constructor for Projects.
       #
       # datafile - JSON string representing the project.
       # event_dispatcher - Provides a dispatch_event method which if given a URL and params sends a request to it.
-      # logger - Optional param which provides a log method to log messages. By default nothing would be logged.
-      # error_handler - Optional param which provides a handle_error method to handle exceptions.
+      # logger - Optional component which provides a log method to log messages. By default nothing would be logged.
+      # error_handler - Optional component which provides a handle_error method to handle exceptions.
       #                 By default all exceptions will be suppressed.
+      # user_profile_service - Optional component which provides methods to store and retreive user profiles.
       # skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
 
       @is_valid = true
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new
+      @user_profile_service = user_profile_service
 
       begin
         validate_instantiation_options(datafile, skip_json_validation)
@@ -77,7 +79,7 @@ module Optimizely
         return
       end
 
-      @decision_service = DecisionService.new(@config)
+      @decision_service = DecisionService.new(@config, @user_profile_service)
       @event_builder = EventBuilderV2.new(@config)
     end
 
