@@ -133,14 +133,14 @@ describe Optimizely::DecisionService do
             }
           }
         }
-        expect(spy_user_profile_service).to receive(:lookup).and_return(nil)
+        expect(spy_user_profile_service).to receive(:lookup).once.and_return(nil)
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
 
         # bucketing should have occurred
         expect(decision_service.bucketer).to have_received(:bucket).once
         # bucketing decision should have been saved
-        expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+        expect(spy_user_profile_service).to have_received(:save).once.with(expected_user_profile)
       end
 
       it 'should look up the user profile and skip normal bucketing if a profile with a saved decision is found' do
@@ -153,8 +153,7 @@ describe Optimizely::DecisionService do
           }
         }
         expect(spy_user_profile_service).to receive(:lookup)
-                                        .with('test_user')
-                                        .and_return(saved_user_profile)
+                                        .with('test_user').once.and_return(saved_user_profile)
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111129')
 
@@ -177,8 +176,7 @@ describe Optimizely::DecisionService do
           }
         }
         expect(spy_user_profile_service).to receive(:lookup)
-                                        .with('test_user')
-                                        .and_return(saved_user_profile)
+                                        .once.with('test_user').and_return(saved_user_profile)
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
 
@@ -197,10 +195,10 @@ describe Optimizely::DecisionService do
             }
           }
         }
-        expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+        expect(spy_user_profile_service).to have_received(:save).once.with(expected_user_profile)
       end
 
-      it 'should fall through to normal bucketing if the user profile contains a variation ID not in the datafile' do
+      it 'should bucket normally if the user profile contains a variation ID not in the datafile' do
         saved_user_profile = {
           'user_id' => 'test_user',
           'experiment_bucket_map' => {
@@ -211,8 +209,7 @@ describe Optimizely::DecisionService do
           }
         }
         expect(spy_user_profile_service).to receive(:lookup)
-                                        .with('test_user')
-                                        .and_return(saved_user_profile)
+                                        .once.with('test_user').and_return(saved_user_profile)
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
 
@@ -229,6 +226,15 @@ describe Optimizely::DecisionService do
           }
         }
         expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+      end
+
+      it 'should bucket normally if the user profile service throws an error during lookup' do
+        expect(spy_user_profile_service).to receive(:lookup).once.with('test_user').and_throw(:LookupError)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+        # bucketing should have occurred
+        expect(decision_service.bucketer).to have_received(:bucket).once
       end
     end
   end
