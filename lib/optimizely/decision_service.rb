@@ -133,7 +133,7 @@ module Optimizely
       decision = user_profile['experiment_bucket_map'][experiment_id]
       return nil unless decision
       variation_id = decision['variation_id']
-      return variation_id
+      return variation_id if @config.variation_id_exists?(experiment_id, variation_id)
 
       nil
     end

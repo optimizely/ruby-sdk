@@ -143,7 +143,7 @@ describe Optimizely::DecisionService do
         expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
       end
 
-      it 'should look up the UserProfile and skip normal bucketing if a profile with a saved decision is found' do
+      it 'should look up the user profile and skip normal bucketing if a profile with a saved decision is found' do
         saved_user_profile = {
           'user_id' => 'test_user',
           'experiment_bucket_map' => {
@@ -166,7 +166,7 @@ describe Optimizely::DecisionService do
         expect(spy_user_profile_service).not_to have_received(:save)
       end
 
-      it 'should look up the UserProfile and bucket normally if a profile without a saved decision is found' do
+      it 'should look up the user profile and bucket normally if a profile without a saved decision is found' do
         saved_user_profile = {
           'user_id' => 'test_user',
           'experiment_bucket_map' => {
@@ -194,6 +194,37 @@ describe Optimizely::DecisionService do
             },
             '122227' => {
               'variation_id' => '122228'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to have_received(:save).with(expected_user_profile)
+      end
+
+      it 'should fall through to normal bucketing if the user profile contains a variation ID not in the datafile' do
+        saved_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            # saved decision, but with invalid variation ID
+            '111127' => {
+              'variation_id' => '111111'
+            }
+          }
+        }
+        expect(spy_user_profile_service).to receive(:lookup)
+                                        .with('test_user')
+                                        .and_return(saved_user_profile)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+        # bucketing should have occurred
+        expect(decision_service.bucketer).to have_received(:bucket).once
+
+        # user profile should have been updated with bucketing decision
+        expected_user_profile = {
+          'user_id' => 'test_user',
+          'experiment_bucket_map' => {
+            '111127' => {
+              'variation_id' => '111128'
             }
           }
         }
