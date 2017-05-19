@@ -141,6 +141,8 @@ describe Optimizely::DecisionService do
         expect(decision_service.bucketer).to have_received(:bucket).once
         # bucketing decision should have been saved
         expect(spy_user_profile_service).to have_received(:save).once.with(expected_user_profile)
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::INFO, "Saved variation ID 111128 of experiment ID 111127 for user 'test_user'.")
       end
 
       it 'should look up the user profile and skip normal bucketing if a profile with a saved decision is found' do
@@ -156,6 +158,8 @@ describe Optimizely::DecisionService do
                                         .with('test_user').once.and_return(saved_user_profile)
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111129')
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::INFO, "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile.")
 
         # saved user profiles should short circuit bucketing
         expect(decision_service.bucketer).not_to have_received(:bucket)
@@ -233,8 +237,19 @@ describe Optimizely::DecisionService do
 
         expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
 
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::ERROR, "Error while looking up user profile for user ID 'test_user': uncaught throw :LookupError.")
         # bucketing should have occurred
         expect(decision_service.bucketer).to have_received(:bucket).once
+      end
+
+      it 'should log an error if the user profile service throws an error during save' do
+        expect(spy_user_profile_service).to receive(:save).once.and_throw(:SaveError)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
+
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::ERROR, "Error while saving user profile for user ID 'test_user': uncaught throw :SaveError.")
       end
     end
   end

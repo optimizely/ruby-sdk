@@ -64,7 +64,7 @@ module Optimizely
       if saved_variation_id
         @config.logger.log(
           Logger::INFO,
-          "Returning previously activated variation '${variation_id}' of experiment '${experiment_key}' for user '${user_id}' from user profile."
+          "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
         )
         return saved_variation_id
       end
@@ -155,7 +155,7 @@ module Optimizely
       begin
         user_profile = @user_profile_service.lookup(user_id) || user_profile
       rescue => e
-        @config.logger.log(Logger::ERROR, "Error while looking up user profile for user ID '${user_id}': ${e}.")
+        @config.logger.log(Logger::ERROR, "Error while looking up user profile for user ID '#{user_id}': #{e}.")
       end
 
       user_profile
@@ -171,15 +171,15 @@ module Optimizely
 
       return unless @user_profile_service
 
+      user_id = user_profile['user_id']
       begin
         user_profile['experiment_bucket_map'][experiment_id] = {
           'variation_id' => variation_id
         }
         @user_profile_service.save(user_profile)
-        @config.logger.log(Logger::INFO, "Saved variation '${variation_id}' of experiment '${experiment_id}' for user '${user_id}'.")
+        @config.logger.log(Logger::INFO, "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'.")
       rescue => e
-        user_id = user_profile['user_id']
-        @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '${user_id}': ${e}.")
+        @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '#{user_id}': #{e}.")
       end
     end
   end
