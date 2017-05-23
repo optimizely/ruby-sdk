@@ -128,11 +128,11 @@ module Optimizely
       # user_profile - Hash user profile
       #
       # Returns string variation ID (nil if no decision is found)
-      return nil unless user_profile['experiment_bucket_map']
+      return nil unless user_profile[:experiment_bucket_map]
 
-      decision = user_profile['experiment_bucket_map'][experiment_id]
+      decision = user_profile[:experiment_bucket_map][experiment_id]
       return nil unless decision
-      variation_id = decision['variation_id']
+      variation_id = decision[:variation_id]
       return variation_id if @config.variation_id_exists?(experiment_id, variation_id)
 
       nil
@@ -146,8 +146,8 @@ module Optimizely
       # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
 
       user_profile = {
-        'user_id' => user_id,
-        'experiment_bucket_map' => {}
+        :user_id => user_id,
+        :experiment_bucket_map => {}
       }
 
       return user_profile unless @user_profile_service
@@ -171,10 +171,10 @@ module Optimizely
 
       return unless @user_profile_service
 
-      user_id = user_profile['user_id']
+      user_id = user_profile[:user_id]
       begin
-        user_profile['experiment_bucket_map'][experiment_id] = {
-          'variation_id' => variation_id
+        user_profile[:experiment_bucket_map][experiment_id] = {
+          :variation_id => variation_id
         }
         @user_profile_service.save(user_profile)
         @config.logger.log(Logger::INFO, "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'.")

@@ -126,10 +126,10 @@ describe Optimizely::DecisionService do
     describe 'when a UserProfile service is provided' do
       it 'should look up the UserProfile, bucket normally, and save the result if no saved profile is found' do
         expected_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             '111127' => {
-              'variation_id' => '111128'
+              :variation_id => '111128'
             }
           }
         }
@@ -147,10 +147,10 @@ describe Optimizely::DecisionService do
 
       it 'should look up the user profile and skip normal bucketing if a profile with a saved decision is found' do
         saved_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             '111127' => {
-              'variation_id' => '111129'
+              :variation_id => '111129'
             }
           }
         }
@@ -171,11 +171,11 @@ describe Optimizely::DecisionService do
 
       it 'should look up the user profile and bucket normally if a profile without a saved decision is found' do
         saved_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             # saved decision, but not for this experiment
             '122227' => {
-              'variation_id' => '122228'
+              :variation_id => '122228'
             }
           }
         }
@@ -189,13 +189,13 @@ describe Optimizely::DecisionService do
 
         # user profile should have been updated with bucketing decision
         expected_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             '111127' => {
-              'variation_id' => '111128'
+              :variation_id => '111128'
             },
             '122227' => {
-              'variation_id' => '122228'
+              :variation_id => '122228'
             }
           }
         }
@@ -204,11 +204,11 @@ describe Optimizely::DecisionService do
 
       it 'should bucket normally if the user profile contains a variation ID not in the datafile' do
         saved_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             # saved decision, but with invalid variation ID
             '111127' => {
-              'variation_id' => '111111'
+              :variation_id => '111111'
             }
           }
         }
@@ -222,10 +222,10 @@ describe Optimizely::DecisionService do
 
         # user profile should have been updated with bucketing decision
         expected_user_profile = {
-          'user_id' => 'test_user',
-          'experiment_bucket_map' => {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
             '111127' => {
-              'variation_id' => '111128'
+              :variation_id => '111128'
             }
           }
         }
