@@ -24,14 +24,16 @@ module Optimizely
     #
     # 1. Checking experiment status
     # 2. Checking whitelisting
+    # 3. Checking user profile service for past bucketing decisions (sticky bucketing)
     # 3. Checking audience targeting
     # 4. Using Murmurhash3 to bucket the user
 
     attr_reader :bucketer
     attr_reader :config
 
-    def initialize(config)
+    def initialize(config, user_profile_service = nil)
       @config = config
+      @user_profile_service = user_profile_service
       @bucketer = Bucketer.new(@config)
     end
 
@@ -50,21 +52,37 @@ module Optimizely
         return nil
       end
 
+      experiment_id = @config.get_experiment_id(experiment_key)
+
       # Check if user is in a forced variation
-      variation_id = get_forced_variation_id(experiment_key, user_id)
+      forced_variation_id = get_forced_variation_id(experiment_key, user_id)
+      return forced_variation_id if forced_variation_id
 
-      if variation_id.nil?
-        unless Audience.user_in_experiment?(@config, experiment_key, attributes)
-          @config.logger.log(
-            Logger::INFO,
-            "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
-          )
-          return nil
-        end
-
-        variation_id = @bucketer.bucket(experiment_key, user_id)
+      # Check for saved bucketing decisions
+      user_profile = get_user_profile(user_id)
+      saved_variation_id = get_saved_variation_id(experiment_id, user_profile)
+      if saved_variation_id
+        @config.logger.log(
+          Logger::INFO,
+          "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
+        )
+        return saved_variation_id
       end
 
+      # Check audience conditions
+      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
+        @config.logger.log(
+          Logger::INFO,
+          "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
+        )
+        return nil
+      end
+
+      # Bucket normally
+      variation_id = @bucketer.bucket(experiment_key, user_id)
+
+      # Persist bucketing decision
+      save_user_profile(user_profile, experiment_id, variation_id)
       variation_id
     end
 
@@ -101,6 +119,72 @@ module Optimizely
         "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}' of experiment '#{experiment_key}'."
       )
       forced_variation_id
+    end
+
+    def get_saved_variation_id(experiment_id, user_profile)
+      # Retrieve variation ID of stored bucketing decision for a given experiment from a given user profile
+      #
+      # experiment_id - String experiment ID
+      # user_profile - Hash user profile
+      #
+      # Returns string variation ID (nil if no decision is found)
+      return nil unless user_profile[:experiment_bucket_map]
+
+      decision = user_profile[:experiment_bucket_map][experiment_id]
+      return nil unless decision
+      variation_id = decision[:variation_id]
+      return variation_id if @config.variation_id_exists?(experiment_id, variation_id)
+
+      @config.logger.log(
+        Logger::INFO,
+        "User '#{user_profile['user_id']}' was previously bucketed into variation ID '#{variation_id}' for experiment '#{experiment_id}', but no matching variation was found. Re-bucketing user."
+      )
+      nil
+    end
+
+    def get_user_profile(user_id)
+      # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
+      #
+      # user_id - String ID for the user
+      #
+      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
+
+      user_profile = {
+        :user_id => user_id,
+        :experiment_bucket_map => {}
+      }
+
+      return user_profile unless @user_profile_service
+
+      begin
+        user_profile = @user_profile_service.lookup(user_id) || user_profile
+      rescue => e
+        @config.logger.log(Logger::ERROR, "Error while looking up user profile for user ID '#{user_id}': #{e}.")
+      end
+
+      user_profile
+    end
+
+
+    def save_user_profile(user_profile, experiment_id, variation_id)
+      # Save a given bucketing decision to a given user profile
+      #
+      # user_profile - Hash user profile
+      # experiment_id - String experiment ID
+      # variation_id - String variation ID
+
+      return unless @user_profile_service
+
+      user_id = user_profile[:user_id]
+      begin
+        user_profile[:experiment_bucket_map][experiment_id] = {
+          :variation_id => variation_id
+        }
+        @user_profile_service.save(user_profile)
+        @config.logger.log(Logger::INFO, "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'.")
+      rescue => e
+        @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '#{user_id}': #{e}.")
+      end
     end
   end
 end
