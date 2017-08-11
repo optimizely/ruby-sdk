@@ -66,7 +66,7 @@ module Optimizely
     end
   end
 
-  class EventBuilderV2 < BaseEventBuilder
+  class EventBuilder < BaseEventBuilder
     CONVERSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/event'
     IMPRESSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/decision'
     POST_HEADERS = { 'Content-Type' => 'application/json' }

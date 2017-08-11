@@ -18,8 +18,8 @@ require 'optimizely/project_config'
 require 'optimizely/exceptions'
 
 describe Optimizely::ProjectConfig do
-  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
@@ -237,20 +237,12 @@ describe Optimizely::ProjectConfig do
   end
 
   describe 'parsing_succeeded?' do
-    let(:config_body_v1) { OptimizelySpec::V1_CONFIG_BODY }
-    let(:config_body_v1_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
-    let(:config_body_v2) { OptimizelySpec::V2_CONFIG_BODY }
-    let(:config_body_v2_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
-
+    let(:config_body_v2) { OptimizelySpec::VALID_CONFIG_BODY }
+    let(:config_body_v2_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
 
     it 'should be true for version 2' do
       project_config_v2 = Optimizely::ProjectConfig.new(config_body_v2_JSON, logger, error_handler)
       expect(project_config_v2.parsing_succeeded?).to be(true)
-    end
-
-    it 'should be false for version 1' do
-      project_config_v1 = Optimizely::ProjectConfig.new(config_body_v1_JSON, logger, error_handler)
-      expect(project_config_v1.parsing_succeeded?).to be(false)
     end
   end
 

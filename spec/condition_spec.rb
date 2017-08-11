@@ -18,7 +18,7 @@ require 'spec_helper'
 
 describe Optimizely::ConditionEvaluator do
   before(:context) do
-    @config_body = OptimizelySpec::V2_CONFIG_BODY
+    @config_body = OptimizelySpec::VALID_CONFIG_BODY
   end
 
   before(:example) do

@@ -25,10 +25,6 @@ module Optimizely
 
   class ProjectConfig
     # Representation of the Optimizely project config.
-
-    PROJECT_CONFIG_LINK_TEMPLATE = 'https://cdn.optimizely.com/json/%{project_id}.json'
-    REVENUE_GOAL_KEY = 'Total Revenue'
-    REQUEST_TIMEOUT = 10
     RUNNING_EXPERIMENT_STATUS = ['Running']
 
     # Gets project config attributes.
