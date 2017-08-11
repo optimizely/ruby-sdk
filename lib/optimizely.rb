@@ -80,7 +80,7 @@ module Optimizely
       end
 
       @decision_service = DecisionService.new(@config, @user_profile_service)
-      @event_builder = EventBuilderV2.new(@config)
+      @event_builder = EventBuilder.new(@config)
     end
 
     def activate(experiment_key, user_id, attributes = nil)

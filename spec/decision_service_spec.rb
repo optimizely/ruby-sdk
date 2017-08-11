@@ -18,8 +18,8 @@ require 'optimizely/error_handler'
 require 'optimizely/logger'
 
 describe Optimizely::DecisionService do
-  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:spy_user_profile_service) { spy('user_profile_service') }
