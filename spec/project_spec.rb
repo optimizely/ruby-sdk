@@ -21,9 +21,9 @@ require 'optimizely/exceptions'
 require 'optimizely/version'
 
 describe 'OptimizelyV2' do
-  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
-  let(:config_body_v1_JSON) { OptimizelySpec::V1_CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
+  let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
@@ -109,7 +109,7 @@ describe 'OptimizelyV2' do
     it 'should log an error when provided a datafile of unsupported version' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or earlier for datafile version 1.')
 
-      Optimizely::Project.new(config_body_v1_JSON, nil, nil, nil, true)
+      Optimizely::Project.new(config_body_invalid_JSON, nil, nil, nil, true)
     end
   end
 

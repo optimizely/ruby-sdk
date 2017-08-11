@@ -19,17 +19,17 @@ require 'optimizely/error_handler'
 require 'optimizely/event_builder'
 require 'optimizely/logger'
 
-describe Optimizely::EventBuilderV2 do
+describe Optimizely::EventBuilder do
   before(:context) do
-    @config_body = OptimizelySpec::V2_CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::V2_CONFIG_BODY_JSON
+    @config_body = OptimizelySpec::VALID_CONFIG_BODY
+    @config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
     @error_handler = Optimizely::NoOpErrorHandler.new
     @logger = Optimizely::SimpleLogger.new
   end
 
   before(:example) do
     config = Optimizely::ProjectConfig.new(@config_body_JSON, @logger, @error_handler)
-    @event_builder = Optimizely::EventBuilderV2.new(config)
+    @event_builder = Optimizely::EventBuilder.new(config)
 
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)

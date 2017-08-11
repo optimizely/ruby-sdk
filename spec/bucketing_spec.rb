@@ -18,8 +18,8 @@ require 'optimizely/error_handler'
 require 'optimizely/logger'
 
 describe Optimizely::Bucketer do
-  let(:config_body) { OptimizelySpec::V2_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::V2_CONFIG_BODY_JSON }
+  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
