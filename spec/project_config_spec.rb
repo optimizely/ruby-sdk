@@ -79,7 +79,10 @@ describe Optimizely::ProjectConfig do
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
-        'group2_exp2' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102')
+        'group2_exp2' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
+        '177770' => config_body['rollouts'][0]['experiments'][0],
+        '177772' => config_body['rollouts'][0]['experiments'][1],
+        '177774' => config_body['rollouts'][1]['experiments'][0],
       }
 
       expected_variation_id_map = {
@@ -233,6 +236,36 @@ describe Optimizely::ProjectConfig do
           '144446' => {
             'key' => 'g2_e2_v2',
             'id' => '144446'
+          }
+        },
+        '177770' => {
+          '177771' => {
+            'id' => '177771',
+            'key' => '177771',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'true'
+              }
+            ]
+          }
+        },
+        '177772' => {
+            '177773' => {
+            'id' => '177773',
+            'key' => '177773',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'false'
+              }
+            ]
+          }
+        },
+        '177774' => {
+            '177775' => {
+            'id' => '177775',
+            'key' => '177775',
           }
         }
       }
@@ -389,6 +422,36 @@ describe Optimizely::ProjectConfig do
             'key' => 'g2_e2_v2',
             'id' => '144446'
           }
+        },
+        '177770' => {
+          '177771' => {
+            'id' => '177771',
+            'key' => '177771',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'true'
+              }
+            ]
+          }
+        },
+        '177772' => {
+            '177773' => {
+            'id' => '177773',
+            'key' => '177773',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'false'
+              }
+            ]
+          }
+        },
+        '177774' => {
+            '177775' => {
+            'id' => '177775',
+            'key' => '177775',
+          }
         }
       }
 
@@ -431,7 +494,7 @@ describe Optimizely::ProjectConfig do
         'boolean_single_variable_feature' => {
           'id'=> '155554',
           'key'=> 'boolean_single_variable_feature',
-          'rolloutId'=> '',
+          'rolloutId'=> '166660',
           'experimentIds'=> [],
           'variables'=> [
             {
@@ -556,6 +619,85 @@ describe Optimizely::ProjectConfig do
             'id' => '155563',
             'value' => 'groupie_2_v2'
           }
+        },
+        '177771' => {
+          '155556' =>{
+            'id' => '155556',
+            'value' => 'true'
+          }
+        },
+        '177773' => {
+          '155556' =>{
+            'id' => '155556',
+            'value' => 'false'
+          }
+        }
+      }
+
+      expected_rollout_id_map = {
+        '166660' => {
+          'id' => '166660',
+          'policy' => 'rollout',
+          'experiments' => [{
+            'id' => '177770',
+            'key' => '177770',
+            'status' => 'Running',
+            'layerId' => '166660',
+            'audienceIds' => ['11154'],
+            'variations' => [{
+              'id' => '177771',
+              'key' => '177771',
+              'variables' => [
+                {
+                  'id' => '155556',
+                  'value' => 'true'
+                }
+              ]
+            }],
+            'trafficAllocation' => [{
+              'entityId' => '177771',
+              'endOfRange' => 1000
+            }]
+          }, {
+            'id' => '177772',
+            'key' => '177772',
+            'status' => 'Running',
+            'layerId' => '166660',
+            'audienceIds' => [],
+            'variations' => [{
+              'id' => '177773',
+              'key' => '177773',
+              'variables' => [
+                {
+                  'id' => '155556',
+                  'value' => 'false'
+                }
+              ]
+            }],
+            'trafficAllocation' => [{
+              'entityId' => '177773',
+              'endOfRange' => 10000
+            }]
+          }]
+        },
+        '166661' => {
+          'id' => '166661',
+          'policy' => 'rollout',
+          'experiments' => [{
+            'id' => '177774',
+            'key' => '177774',
+            'status' => 'Running',
+            'layerId' => '166661',
+            'audienceIds' => [],
+            'variations' => [{
+              'id' => '177775',
+              'key' => '177775'
+            }],
+            'trafficAllocation' => [{
+              'entityId' => '177775',
+              'endOfRange' => 1500
+            }]
+          }]
         }
       }
 
@@ -567,6 +709,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
+      expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
     end
   end
 

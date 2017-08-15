@@ -29,16 +29,17 @@ module Optimizely
     attr_reader :error_handler
     attr_reader :logger
 
-    attr_reader :parsing_succeeded
-    attr_reader :version
     attr_reader :account_id
-    attr_reader :project_id
     attr_reader :attributes
+    attr_reader :audiences
     attr_reader :events
     attr_reader :experiments
     attr_reader :groups
+    attr_reader :parsing_succeeded
+    attr_reader :project_id
     attr_reader :revision
-    attr_reader :audiences
+    attr_reader :rollouts
+    attr_reader :version
 
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
@@ -47,7 +48,7 @@ module Optimizely
     attr_reader :experiment_key_map
     attr_reader :feature_flag_key_map
     attr_reader :group_key_map
-    attr_reader :audience_id_map
+    attr_reader :rollout_id_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
@@ -69,14 +70,15 @@ module Optimizely
       end
 
       @account_id = config['accountId']
-      @project_id = config['projectId']
       @attributes = config['attributes']
+      @audiences = config['audiences']
       @events = config['events']
       @experiments = config['experiments']
       @feature_flags = config.fetch('featureFlags', [])
-      @revision = config['revision']
-      @audiences = config['audiences']
       @groups = config.fetch('groups', [])
+      @project_id = config['projectId']
+      @revision = config['revision']
+      @rollouts = config.fetch('rollouts', [])
 
       # Utility maps for quick lookup
       @attribute_key_map = generate_key_map(@attributes, 'key')
@@ -86,6 +88,13 @@ module Optimizely
         exps = group.fetch('experiments')
         exps.each do |exp|
           @experiments.push(exp.merge('groupId' => key))
+        end
+      end
+      @rollout_id_map = generate_key_map(@rollouts, 'id')
+      @rollout_id_map.each do |id, rollout|
+        exps = rollout.fetch('experiments')
+        exps.each do |exp|
+          @experiments.push(exp)
         end
       end
       @experiment_key_map = generate_key_map(@experiments, 'key')
