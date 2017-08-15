@@ -110,6 +110,80 @@ module OptimizelySpec
         'key' => 'variation_with_audience',
         'id' => '122229'
       }]
+    }, {
+      'key' => 'test_experiment_multivariate',
+      'status' => 'Running',
+      'layerId' => '4',
+      'audienceIds' => ['11154'],
+      'id' => '122230',
+      'percentageIncluded' => 10000,
+      'forcedVariations' => {},
+      'trafficAllocation' => [{
+        'entityId' => '122231',
+        'endOfRange' => 2500
+      }, {
+        'entityId' => '122232',
+        'endOfRange' => 5000
+      }, {
+        'entityId' => '122233',
+        'endOfRange' => 7500
+      }, {
+        'entityId' => '122234',
+        'endOfRange' => 10000
+      }],
+      'variations' => [{
+        'id' => '122231',
+        'key' => 'Fred',
+        'variables' => [
+          {
+            'id' => '155560',
+            'value' => 'F'
+          },
+          {
+            'id' => '155561',
+            'value' => 'red'
+          }
+        ]
+      }, {
+        'id' => '122232',
+        'key' => 'Feorge',
+        'variables' => [
+          {
+            'id' => '155560',
+            'value' => 'F'
+          },
+          {
+            'id' => '155561',
+            'value' => 'eorge'
+          }
+        ]
+      }, {
+        'id' => '122233',
+        'key' => 'Gred',
+        'variables' => [
+          {
+            'id' => '155560',
+            'value' => 'G'
+          },
+          {
+            'id' => '155561',
+            'value' => 'red'
+          }
+        ]
+      }, {
+        'id' => '122234',
+        'key' => 'George',
+        'variables' => [
+          {
+            'id' => '155560',
+            'value' => 'G'
+          },
+          {
+            'id' => '155561',
+            'value' => 'eorge'
+          }
+        ]
+      }],
     }],
     'attributes' => [{
       'key' => 'browser_type',
@@ -148,10 +222,22 @@ module OptimizelySpec
         'percentageIncluded' => 10000,
         'variations' => [{
           'key' => 'g1_e1_v1',
-          'id' => '130001'
+          'id' => '130001',
+          'variables' => [
+            {
+              'id' => '155563',
+              'value' => 'groupie_1_v1'
+            }
+          ]
         }, {
           'key' => 'g1_e1_v2',
-          'id' => '130002'
+          'id' => '130002',
+          'variables' => [
+            {
+              'id' => '155563',
+              'value' => 'groupie_1_v2'
+            }
+          ]
         }]
       }, {
         'id' => '133332',
@@ -172,10 +258,22 @@ module OptimizelySpec
         'percentageIncluded' => 10000,
         'variations' => [{
           'key' => 'g1_e2_v1',
-          'id' => '130003'
+          'id' => '130003',
+          'variables' => [
+            {
+              'id' => '155563',
+              'value' => 'groupie_2_v1'
+            }
+          ]
         }, {
           'key' => 'g1_e2_v2',
-          'id' => '130004'
+          'id' => '130004',
+          'variables' => [
+            {
+              'id' => '155563',
+              'value' => 'groupie_2_v2'
+            }
+          ]
         }]
       }]
     }, {
@@ -227,6 +325,97 @@ module OptimizelySpec
           'id' => '144446'
         }]
       }]
+    }],
+    'featureFlags' => [{
+      'id' => '155549',
+      'key' => 'boolean_feature',
+      'layerId' => '',
+      'experimentIds' => [],
+      'variables' => []
+    }, {
+      'id'=> '155550',
+      'key'=> 'double_single_variable_feature',
+      'layerId'=> '',
+      'experimentIds'=> [],
+      'variables'=> [
+        {
+          'id'=> '155551',
+          'key'=> 'double_variable',
+          'type'=> 'double',
+          'defaultValue'=> '14.99'
+        }
+      ]
+    }, {
+      'id'=> '155552',
+      'key'=> 'integer_single_variable_feature',
+      'layerId'=> '',
+      'experimentIds'=> [],
+      'variables'=> [
+        {
+          'id'=> '155553',
+          'key'=> 'integer_variable',
+          'type'=> 'integer',
+          'defaultValue'=> '7'
+        }
+      ]
+    }, {
+      'id'=> '155554',
+      'key'=> 'boolean_single_variable_feature',
+      'layerId'=> '',
+      'experimentIds'=> [],
+      'variables'=> [
+        {
+          'id'=> '155556',
+          'key'=> 'boolean_variable',
+          'type'=> 'boolean',
+          'defaultValue'=> 'true'
+        }
+      ]
+    }, {
+      'id'=> '155557',
+      'key'=> 'string_single_variable_feature',
+      'layerId'=> '',
+      'experimentIds'=> [],
+      'variables'=> [
+        {
+          'id'=> '155558',
+          'key'=> 'string_variable',
+          'type'=> 'string',
+          'defaultValue'=> 'wingardium leviosa'
+        }
+      ]
+    }, {
+      'id'=> '155559',
+      'key'=> 'multi_variate_feature',
+      'layerId'=> '',
+      'experimentIds'=> ['122230'],
+      'variables'=> [
+        {
+          'id'=> '155560',
+          'key'=> 'first_letter',
+          'type'=> 'string',
+          'defaultValue'=> 'H'
+        },
+        {
+          'id'=> '155561',
+          'key'=> 'rest_of_name',
+          'type'=> 'string',
+          'defaultValue'=> 'arry'
+        }
+      ]
+    }, {
+      'id'=> '155562',
+      'key'=> 'mutex_group_feature',
+      'layerId'=> '',
+      'experimentIds'=> ['133331', '133332'],
+      'variables'=> [
+        {
+          'id'=> '155563',
+          'key'=> 'correlating_variation_name',
+          'type'=> 'string',
+          'defaultValue'=> 'null'
+        }
+      ]
     }]
   }
 
