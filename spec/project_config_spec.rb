@@ -396,14 +396,14 @@ describe Optimizely::ProjectConfig do
         'boolean_feature' => {
           'id' => '155549',
           'key' => 'boolean_feature',
-          'layerId' => '',
+          'rolloutId' => '',
           'experimentIds'=> [],
           'variables'=> []
         },
         'double_single_variable_feature' => {
           'id'=> '155550',
           'key'=> 'double_single_variable_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> [],
           'variables'=> [
             {
@@ -417,7 +417,7 @@ describe Optimizely::ProjectConfig do
         'integer_single_variable_feature' => {
           'id'=> '155552',
           'key'=> 'integer_single_variable_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> [],
           'variables'=> [
             {
@@ -431,7 +431,7 @@ describe Optimizely::ProjectConfig do
         'boolean_single_variable_feature' => {
           'id'=> '155554',
           'key'=> 'boolean_single_variable_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> [],
           'variables'=> [
             {
@@ -445,7 +445,7 @@ describe Optimizely::ProjectConfig do
         'string_single_variable_feature' => {
           'id'=> '155557',
           'key'=> 'string_single_variable_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> [],
           'variables'=> [
             {
@@ -459,7 +459,7 @@ describe Optimizely::ProjectConfig do
         'multi_variate_feature' => {
           'id'=> '155559',
           'key'=> 'multi_variate_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> ['122230'],
           'variables'=> [
             {
@@ -479,7 +479,7 @@ describe Optimizely::ProjectConfig do
         'mutex_group_feature' => {
           'id'=> '155562',
           'key'=> 'mutex_group_feature',
-          'layerId'=> '',
+          'rolloutId'=> '',
           'experimentIds'=> ['133331', '133332'],
           'variables'=> [
             {

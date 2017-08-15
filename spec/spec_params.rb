@@ -329,13 +329,13 @@ module OptimizelySpec
     'featureFlags' => [{
       'id' => '155549',
       'key' => 'boolean_feature',
-      'layerId' => '',
+      'rolloutId' => '',
       'experimentIds' => [],
       'variables' => []
     }, {
       'id'=> '155550',
       'key'=> 'double_single_variable_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> [],
       'variables'=> [
         {
@@ -348,7 +348,7 @@ module OptimizelySpec
     }, {
       'id'=> '155552',
       'key'=> 'integer_single_variable_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> [],
       'variables'=> [
         {
@@ -361,7 +361,7 @@ module OptimizelySpec
     }, {
       'id'=> '155554',
       'key'=> 'boolean_single_variable_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> [],
       'variables'=> [
         {
@@ -374,7 +374,7 @@ module OptimizelySpec
     }, {
       'id'=> '155557',
       'key'=> 'string_single_variable_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> [],
       'variables'=> [
         {
@@ -387,7 +387,7 @@ module OptimizelySpec
     }, {
       'id'=> '155559',
       'key'=> 'multi_variate_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> ['122230'],
       'variables'=> [
         {
@@ -406,7 +406,7 @@ module OptimizelySpec
     }, {
       'id'=> '155562',
       'key'=> 'mutex_group_feature',
-      'layerId'=> '',
+      'rolloutId'=> '',
       'experimentIds'=> ['133331', '133332'],
       'variables'=> [
         {
