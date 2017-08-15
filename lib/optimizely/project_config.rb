@@ -73,7 +73,7 @@ module Optimizely
       @attributes = config['attributes']
       @events = config['events']
       @experiments = config['experiments']
-      @feature_flags = config['featureFlags']
+      @feature_flags = config.fetch('featureFlags', [])
       @revision = config['revision']
       @audiences = config['audiences']
       @groups = config.fetch('groups', [])
@@ -102,7 +102,9 @@ module Optimizely
         variations.each do |variation|
           variation_id = variation['id']
           variation_variables = variation['variables']
-          @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id') unless variation_variables.nil?
+          unless variation_variables.nil?
+            @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
+          end
         end
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
