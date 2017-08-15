@@ -75,6 +75,7 @@ describe Optimizely::ProjectConfig do
         'test_experiment' => config_body['experiments'][0],
         'test_experiment_not_started' => config_body['experiments'][1],
         'test_experiment_with_audience' => config_body['experiments'][2],
+        'test_experiment_multivariate' => config_body['experiments'][3],
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
@@ -112,24 +113,106 @@ describe Optimizely::ProjectConfig do
             'id' => '122229'
           }
         },
+        'test_experiment_multivariate' => {
+          '122231' => {
+            'key' => 'Fred',
+            'id' => '122231',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'F'
+              },
+              {
+                'id' => '155561',
+                'value' => 'red'
+              }
+            ]
+          },
+          '122232' => {
+            'key' => 'Feorge',
+            'id' => '122232',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'F'
+              },
+              {
+                'id' => '155561',
+                'value' => 'eorge'
+              }
+            ]
+          },
+          '122233' => {
+            'key' => 'Gred',
+            'id' => '122233',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'G'
+              },
+              {
+                'id' => '155561',
+                'value' => 'red'
+              }
+            ]
+          },
+          '122234' => {
+            'key' => 'George',
+            'id' => '122234',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'G'
+              },
+              {
+                'id' => '155561',
+                'value' => 'eorge'
+              }
+            ]
+          },
+        },
         'group1_exp1' => {
           '130001' => {
             'key' => 'g1_e1_v1',
-            'id' => '130001'
+            'id' => '130001',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_1_v1'
+              }
+            ]
           },
           '130002' => {
             'key' => 'g1_e1_v2',
-            'id' => '130002'
+            'id' => '130002',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_1_v2'
+              }
+            ]
           }
         },
         'group1_exp2' => {
           '130003' => {
             'key' => 'g1_e2_v1',
-            'id' => '130003'
+            'id' => '130003',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_2_v1'
+              }
+            ]
           },
           '130004' => {
             'key' => 'g1_e2_v2',
-            'id' => '130004'
+            'id' => '130004',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_2_v2'
+              }
+            ]
           }
         },
         'group2_exp1' => {
@@ -185,24 +268,106 @@ describe Optimizely::ProjectConfig do
             'id' => '122229'
           }
         },
+        'test_experiment_multivariate' => {
+          'Fred' => {
+            'key' => 'Fred',
+            'id' => '122231',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'F'
+              },
+              {
+                'id' => '155561',
+                'value' => 'red'
+              }
+            ]
+          },
+          'Feorge' => {
+            'key' => 'Feorge',
+            'id' => '122232',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'F'
+              },
+              {
+                'id' => '155561',
+                'value' => 'eorge'
+              }
+            ]
+          },
+          'Gred' => {
+            'key' => 'Gred',
+            'id' => '122233',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'G'
+              },
+              {
+                'id' => '155561',
+                'value' => 'red'
+              }
+            ]
+          },
+          'George' => {
+            'key' => 'George',
+            'id' => '122234',
+            'variables' => [
+              {
+                'id' => '155560',
+                'value' => 'G'
+              },
+              {
+                'id' => '155561',
+                'value' => 'eorge'
+              }
+            ]
+          },
+        },
         'group1_exp1' => {
           'g1_e1_v1' => {
             'key' => 'g1_e1_v1',
-            'id' => '130001'
+            'id' => '130001',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_1_v1'
+              }
+            ]
           },
           'g1_e1_v2' => {
             'key' => 'g1_e1_v2',
-            'id' => '130002'
+            'id' => '130002',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_1_v2'
+              }
+            ]
           }
         },
         'group1_exp2' => {
           'g1_e2_v1' => {
             'key' => 'g1_e2_v1',
-            'id' => '130003'
+            'id' => '130003',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_2_v1'
+              }
+            ]
           },
           'g1_e2_v2' => {
             'key' => 'g1_e2_v2',
-            'id' => '130004'
+            'id' => '130004',
+            'variables' => [
+              {
+                'id' => '155563',
+                'value' => 'groupie_2_v2'
+              }
+            ]
           }
         },
         'group2_exp1' => {
@@ -227,12 +392,181 @@ describe Optimizely::ProjectConfig do
         }
       }
 
+      expected_feature_flag_key_map = {
+        'boolean_feature' => {
+          'id' => '155549',
+          'key' => 'boolean_feature',
+          'rolloutId' => '',
+          'experimentIds'=> [],
+          'variables'=> []
+        },
+        'double_single_variable_feature' => {
+          'id'=> '155550',
+          'key'=> 'double_single_variable_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> [],
+          'variables'=> [
+            {
+              'id'=> '155551',
+              'key'=> 'double_variable',
+              'type'=> 'double',
+              'defaultValue'=> '14.99'
+            }
+          ]
+        },
+        'integer_single_variable_feature' => {
+          'id'=> '155552',
+          'key'=> 'integer_single_variable_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> [],
+          'variables'=> [
+            {
+              'id'=> '155553',
+              'key'=> 'integer_variable',
+              'type'=> 'integer',
+              'defaultValue'=> '7'
+            }
+          ]
+        },
+        'boolean_single_variable_feature' => {
+          'id'=> '155554',
+          'key'=> 'boolean_single_variable_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> [],
+          'variables'=> [
+            {
+              'id'=> '155556',
+              'key'=> 'boolean_variable',
+              'type'=> 'boolean',
+              'defaultValue'=> 'true'
+            }
+          ]
+        },
+        'string_single_variable_feature' => {
+          'id'=> '155557',
+          'key'=> 'string_single_variable_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> [],
+          'variables'=> [
+            {
+              'id'=> '155558',
+              'key'=> 'string_variable',
+              'type'=> 'string',
+              'defaultValue'=> 'wingardium leviosa'
+            }
+          ]
+        },
+        'multi_variate_feature' => {
+          'id'=> '155559',
+          'key'=> 'multi_variate_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> ['122230'],
+          'variables'=> [
+            {
+              'id'=> '155560',
+              'key'=> 'first_letter',
+              'type'=> 'string',
+              'defaultValue'=> 'H'
+            },
+            {
+              'id'=> '155561',
+              'key'=> 'rest_of_name',
+              'type'=> 'string',
+              'defaultValue'=> 'arry'
+            }
+          ]
+        },
+        'mutex_group_feature' => {
+          'id'=> '155562',
+          'key'=> 'mutex_group_feature',
+          'rolloutId'=> '',
+          'experimentIds'=> ['133331', '133332'],
+          'variables'=> [
+            {
+              'id'=> '155563',
+              'key'=> 'correlating_variation_name',
+              'type'=> 'string',
+              'defaultValue'=> 'null'
+            }
+          ]
+        }
+      }
+
+      expected_variation_id_to_variable_usage_map = {
+        '122231' => {
+          '155560' => {
+            'id' => '155560',
+            'value' => 'F'
+          },
+          '155561' => {
+            'id' => '155561',
+            'value' => 'red'
+          }
+        },
+        '122232' => {
+          '155560' => {
+            'id' => '155560',
+            'value' => 'F'
+          },
+          '155561' => {
+            'id' => '155561',
+            'value' => 'eorge'
+          }
+        },
+        '122233' => {
+          '155560' => {
+            'id' => '155560',
+            'value' => 'G'
+          },
+          '155561' => {
+            'id' => '155561',
+            'value' => 'red'
+          }
+        },
+        '122234' => {
+          '155560' => {
+            'id' => '155560',
+            'value' => 'G'
+          },
+          '155561' => {
+            'id' => '155561',
+            'value' => 'eorge'
+          }
+        },
+        '130001' => {
+          '155563' => {
+            'id' => '155563',
+            'value' => 'groupie_1_v1'
+          }
+        },
+        '130002' => {
+          '155563' => {
+            'id' => '155563',
+            'value' => 'groupie_1_v2'
+          }
+        },
+        '130003' => {
+          '155563' => {
+            'id' => '155563',
+            'value' => 'groupie_2_v1'
+          }
+        },
+        '130004' => {
+          '155563' => {
+            'id' => '155563',
+            'value' => 'groupie_2_v2'
+          }
+        }
+      }
+
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
       expect(project_config.event_key_map).to eq(expected_event_key_map)
       expect(project_config.experiment_key_map).to eq(expected_experiment_key_map)
       expect(project_config.variation_id_map).to eq(expected_variation_id_map)
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
+      expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
+      expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
     end
   end
 

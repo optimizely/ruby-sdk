@@ -18,9 +18,7 @@ require 'json'
 module Optimizely
 
   V1_CONFIG_VERSION = '1'
-  V2_CONFIG_VERSION = '2'
 
-  SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
   UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
 
   class ProjectConfig
@@ -47,9 +45,11 @@ module Optimizely
     attr_reader :event_key_map
     attr_reader :experiment_id_map
     attr_reader :experiment_key_map
+    attr_reader :feature_flag_key_map
     attr_reader :group_key_map
     attr_reader :audience_id_map
     attr_reader :variation_id_map
+    attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
 
     def initialize(datafile, logger, error_handler)
@@ -73,6 +73,7 @@ module Optimizely
       @attributes = config['attributes']
       @events = config['events']
       @experiments = config['experiments']
+      @feature_flags = config.fetch('featureFlags', [])
       @revision = config['revision']
       @audiences = config['audiences']
       @groups = config.fetch('groups', [])
@@ -92,11 +93,21 @@ module Optimizely
       @audience_id_map = generate_key_map(@audiences, 'id')
       @variation_id_map = {}
       @variation_key_map = {}
+      @variation_id_to_variable_usage_map = {}
       @experiment_key_map.each do |key, exp|
         variations = exp.fetch('variations')
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
+
+        variations.each do |variation|
+          variation_id = variation['id']
+          variation_variables = variation['variables']
+          unless variation_variables.nil?
+            @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
+          end
+        end
       end
+      @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
       @parsing_succeeded = true
     end
 
