@@ -29,16 +29,17 @@ module Optimizely
     attr_reader :error_handler
     attr_reader :logger
 
-    attr_reader :parsing_succeeded
-    attr_reader :version
     attr_reader :account_id
-    attr_reader :project_id
     attr_reader :attributes
+    attr_reader :audiences
     attr_reader :events
     attr_reader :experiments
     attr_reader :groups
+    attr_reader :parsing_succeeded
+    attr_reader :project_id
     attr_reader :revision
-    attr_reader :audiences
+    attr_reader :rollouts
+    attr_reader :version
 
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
@@ -47,7 +48,8 @@ module Optimizely
     attr_reader :experiment_key_map
     attr_reader :feature_flag_key_map
     attr_reader :group_key_map
-    attr_reader :audience_id_map
+    attr_reader :rollout_id_map
+    attr_reader :rollout_experiment_id_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
@@ -69,14 +71,15 @@ module Optimizely
       end
 
       @account_id = config['accountId']
-      @project_id = config['projectId']
-      @attributes = config['attributes']
-      @events = config['events']
+      @attributes = config.fetch('attributes', [])
+      @audiences = config.fetch('audiences', [])
+      @events = config.fetch('events', [])
       @experiments = config['experiments']
       @feature_flags = config.fetch('featureFlags', [])
-      @revision = config['revision']
-      @audiences = config['audiences']
       @groups = config.fetch('groups', [])
+      @project_id = config['projectId']
+      @revision = config['revision']
+      @rollouts = config.fetch('rollouts', [])
 
       # Utility maps for quick lookup
       @attribute_key_map = generate_key_map(@attributes, 'key')
@@ -94,7 +97,15 @@ module Optimizely
       @variation_id_map = {}
       @variation_key_map = {}
       @variation_id_to_variable_usage_map = {}
-      @experiment_key_map.each do |key, exp|
+      @rollout_id_map = generate_key_map(@rollouts, 'id')
+      # split out the experiment id map for rollouts
+      @rollout_experiment_id_map = {}
+      @rollout_id_map.each do |id, rollout|
+        exps = rollout.fetch('experiments')
+        @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+      end
+      @all_experiments = @experiment_key_map.merge(@rollout_experiment_id_map)
+      @all_experiments.each do |key, exp|
         variations = exp.fetch('variations')
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
