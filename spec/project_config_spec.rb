@@ -80,9 +80,6 @@ describe Optimizely::ProjectConfig do
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
         'group2_exp2' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
-        '177770' => config_body['rollouts'][0]['experiments'][0],
-        '177772' => config_body['rollouts'][0]['experiments'][1],
-        '177774' => config_body['rollouts'][1]['experiments'][0],
       }
 
       expected_variation_id_map = {
@@ -701,6 +698,12 @@ describe Optimizely::ProjectConfig do
         }
       }
 
+      expected_rollout_experiment_id_map = {
+        '177770' => config_body['rollouts'][0]['experiments'][0],
+        '177772' => config_body['rollouts'][0]['experiments'][1],
+        '177774' => config_body['rollouts'][1]['experiments'][0],
+      }
+
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
       expect(project_config.event_key_map).to eq(expected_event_key_map)
@@ -710,6 +713,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
+      expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
     end
   end
 

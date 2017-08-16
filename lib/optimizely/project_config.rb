@@ -49,6 +49,7 @@ module Optimizely
     attr_reader :feature_flag_key_map
     attr_reader :group_key_map
     attr_reader :rollout_id_map
+    attr_reader :rollout_experiment_id_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
@@ -70,9 +71,9 @@ module Optimizely
       end
 
       @account_id = config['accountId']
-      @attributes = config['attributes']
-      @audiences = config['audiences']
-      @events = config['events']
+      @attributes = config.fetch('attributes', [])
+      @audiences = config.fetch('audiences', [])
+      @events = config.fetch('events', [])
       @experiments = config['experiments']
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
@@ -90,20 +91,21 @@ module Optimizely
           @experiments.push(exp.merge('groupId' => key))
         end
       end
-      @rollout_id_map = generate_key_map(@rollouts, 'id')
-      @rollout_id_map.each do |id, rollout|
-        exps = rollout.fetch('experiments')
-        exps.each do |exp|
-          @experiments.push(exp)
-        end
-      end
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
       @variation_id_map = {}
       @variation_key_map = {}
       @variation_id_to_variable_usage_map = {}
-      @experiment_key_map.each do |key, exp|
+      @rollout_id_map = generate_key_map(@rollouts, 'id')
+      # split out the experiment id map for rollouts
+      @rollout_experiment_id_map = {}
+      @rollout_id_map.each do |id, rollout|
+        exps = rollout.fetch('experiments')
+        @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+      end
+      @all_experiments = @experiment_key_map.merge(@rollout_experiment_id_map)
+      @all_experiments.each do |key, exp|
         variations = exp.fetch('variations')
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
