@@ -14,6 +14,7 @@
 #    limitations under the License.
 #
 require_relative './bucketer'
+require 'pp'
 
 module Optimizely
   class DecisionService
@@ -86,8 +87,97 @@ module Optimizely
       variation_id
     end
 
+    def get_variation_for_feature(feature_flag, user_id, attributes = nil)
+      # Get the variation the user is bucketed into for the given FeatureFlag.
+      # This will bucket the user in the following order:
+      #
+      # A. The feature is associated with an experiment
+      #   1. Try to bucket the user into those experiments.
+      #   2. If the user is not bucketed in any experiments,
+      #      we check if the feature is part of a rollout.
+      #   3. If the feature is part of a rollout, we try to bucket the user into
+      #      the experiments in the rollout.
+      #   4. If the feature is not part of a rollout, we return nil.
+      #
+      # B. The feature is no associated with any experiments
+      #   1. If the feature is part of a rollout, we try to bucker the user into
+      #      the experiments in the rollout.
+      #   2. Else we return nil.
+      #
+      # feature_flag - The feature flag the user wants to access
+      # user_id - String ID for the user
+      # attributes - Hash representing user attributes
+      #
+      # Returns variation where visitor will be bucketed (nil if the user is not bucketed into any of the experiments in the feature)
+
+      feature_flag_key = feature_flag['key']
+      # check if the feature is being experiment on and whether the user is bucketed into the experiment
+      unless feature_flag['experimentIds'].empty?
+        feature_flag['experimentIds'].each do |experiment_id|
+          if @config.experiment_id_map.has_key?(experiment_id)
+            experiment = @config.experiment_id_map[experiment_id]
+            variation_id = get_variation(experiment['key'], user_id, attributes)
+            unless variation_id.nil?
+              return @config.variation_id_map[variation_id]
+            end
+          else
+            @config.logger.log(
+              Logger::DEBUG,
+              "Feature flag experiment with id '#{experiment_id}' is not in the datafile."
+            )
+          end
+        end
+        @config.logger.log(
+          Logger::INFO,
+          "The user '#{user_id}' is not bucketed into any of the experiments in the feature '#{feature_flag_key}'."
+        )
+      else
+        @config.logger.log(
+          Logger::DEBUG,
+          "The feature flag '#{feature_flag_key}' is not used in any experiments."
+        )
+      end
+
+      # next check if the user feature being rolled out and whether the user is part of the rollout
+      rollout_id = feature_flag['rolloutId']
+      unless rollout_id.nil? or rollout_id.empty?
+        if @config.rollout_id_map.has_key?(rollout_id)
+          rollout = @config.rollout_id_map[rollout_id]
+          rollout_experiments = rollout['experiments']
+          rollout_experiments.each do |experiment|
+            experiment_key = experiment['key']
+            variation_id = get_variation(experiment_key, user_id, attributes)
+            unless variation_id.nil?
+              @config.logger.log(
+                Logger::INFO,
+                "User '#{user_id}' is in rollout with id '#{rollout_id}' for feature flag '#{feature_flag_key}'."
+              )
+              variation = @config.variation_id_map[experiment_key][variation_id]
+              return variation
+            end
+          end
+          @config.logger.log(
+            Logger::INFO,
+            "User '#{user_id}' is not part of the rollout with id '#{rollout_id}' for feature flag '#{feature_flag_key}'."
+          )
+        else
+          @config.logger.log(
+            Logger::DEBUG,
+            "Rollout with id '#{rollout_id}' is not in the datafile."
+          )
+        end
+      else
+        @config.logger.log(
+          Logger::DEBUG,
+          "The feature flag '#{feature_flag_key}' is not part of a rollout."
+        )
+      end
+
+      return nil
+    end
+
     private
-    
+
     def get_forced_variation_id(experiment_key, user_id)
       # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
       #
@@ -147,7 +237,7 @@ module Optimizely
       #
       # user_id - String ID for the user
       #
-      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
+      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided)
 
       user_profile = {
         :user_id => user_id,

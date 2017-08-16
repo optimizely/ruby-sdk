@@ -116,7 +116,6 @@ module OptimizelySpec
       'layerId' => '4',
       'audienceIds' => ['11154'],
       'id' => '122230',
-      'percentageIncluded' => 10000,
       'forcedVariations' => {},
       'trafficAllocation' => [{
         'entityId' => '122231',
@@ -184,6 +183,35 @@ module OptimizelySpec
           }
         ]
       }],
+    }, {
+      'key' => 'test_experiment_with_feature_rollout',
+      'status' => 'Running',
+      'layerId' => '5',
+      'audienceIds' => [],
+      'id' => '122235',
+      'forcedVariations' => {},
+      'trafficAllocation' => [{
+        'entityId' => '122236',
+        'endOfRange' => 5000
+      }, {
+        'entityId' => '122237',
+        'endOfRange' => 10000
+      }],
+      'variations' => [{
+        'id' => '122236',
+        'key' => 'control',
+        'variables' => [{
+          'id' => '155558',
+          'value' => 'cta_1'
+        }]
+      }, {
+        'id' => '122237',
+        'key' => 'variation',
+        'variables' => [{
+          'id' => '155558',
+          'value' => 'cta_2'
+        }]
+      }]
     }],
     'attributes' => [{
       'key' => 'browser_type',
@@ -374,8 +402,8 @@ module OptimizelySpec
     }, {
       'id'=> '155557',
       'key'=> 'string_single_variable_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> [],
+      'rolloutId'=> '166661',
+      'experimentIds'=> ['122235'],
       'variables'=> [
         {
           'id'=> '155558',
