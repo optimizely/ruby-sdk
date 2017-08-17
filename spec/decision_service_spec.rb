@@ -255,155 +255,51 @@ describe Optimizely::DecisionService do
   end
 
   describe '#get_variation_for_feature' do
+    user_attributes = {}
+    user_id = 'user_1'
+
     describe 'when the feature flag\'s experiment ids array is empty' do
-      describe 'and the feature is not part of a rollout' do
-        it 'should return nil and log a message' do
-          user_attributes = {}
-          feature_flag = config.feature_flag_key_map['boolean_feature']
-          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
+      it 'should return nil and log a message' do
+        user_attributes = {}
+        feature_flag = config.feature_flag_key_map['double_single_variable_feature']
+        expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
 
-          expect(spy_logger).to have_received(:log).once
-                            .with(Logger::DEBUG, "The feature flag 'boolean_feature' is not used in any experiments.")
-
-          expect(spy_logger).to have_received(:log).once
-                            .with(Logger::DEBUG, "The feature flag 'boolean_feature' is not part of a rollout.")
-        end
-      end
-
-      describe 'and the feature is part of a rollout' do
-        expected_variation = nil
-
-        describe 'and the user is part of the rollout' do
-          before(:each) do
-            # mock and return the first variation of the `177770` experiment, which is attached to the `rollout` 166660
-            experiment = config.rollout_experiment_id_map['177770']
-            expected_variation = experiment['variations'][0]
-            allow(decision_service).to receive(:get_variation).and_return(expected_variation['id'])
-          end
-
-          it 'should return the variation the user is bucketed into for the rollout' do
-            user_attributes = {}
-            feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
-            expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_variation)
-
-            rollout_experiment = config_body['rollouts'][0]['experiments'][0]
-            expect(decision_service).to have_received(:get_variation).once
-                                    .with(rollout_experiment['key'], 'user_1', user_attributes)
-
-            expect(spy_logger).to have_received(:log).once
-                              .with(Logger::DEBUG, "The feature flag 'boolean_single_variable_feature' is not used in any experiments.")
-
-            expect(spy_logger).to have_received(:log).once
-                              .with(Logger::INFO, "User 'user_1' is in rollout with id '166660' for feature flag 'boolean_single_variable_feature'.")
-          end
-        end
-
-        describe 'and the user is not part of the rollout' do
-          before(:each) do
-            allow(decision_service).to receive(:get_variation).and_return(nil)
-          end
-
-          it 'should return nil and log a message' do
-            user_attributes = {}
-            feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
-            expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
-
-            rollout_experiment = config.rollouts[0]['experiments'][0]
-            expect(decision_service).to have_received(:get_variation).once
-                                    .with(rollout_experiment['key'], 'user_1', user_attributes)
-
-            expect(spy_logger).to have_received(:log).once
-                              .with(Logger::DEBUG, "The feature flag 'boolean_single_variable_feature' is not used in any experiments.")
-
-            expect(spy_logger).to have_received(:log).once
-                              .with(Logger::INFO, "User 'user_1' is not part of the rollout with id '166660' for feature flag 'boolean_single_variable_feature'.")
-          end
-        end
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::DEBUG, "The feature flag 'double_single_variable_feature' is not used in any experiments.")
       end
     end
 
-    describe 'when the feature flag is associated with experiments' do
-      describe 'and the user is not bucketed into any of the feauture flag\'s experiments' do
-        user_attributes = {}
+    describe 'when the feature flag is associated with a non-mutex experiment' do
+      describe 'and the experiment is not in the datafile' do
+        it 'should return nil and log a message' do
+          feature_flag = config.feature_flag_key_map['boolean_feature'].dup
+          feature_flag['experimentIds'] = ['1333333337'] # totally invalid exp id
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(nil)
 
-        describe 'and the feature flag is not part of a rollout' do
-          before(:each) do
-            multivariate_experiment = config.experiment_key_map['test_experiment_multivariate']
-
-            # make sure the user is not bucketed into the feature experiment
-            allow(decision_service).to receive(:get_variation)
-                                   .with(multivariate_experiment['key'], 'user_1', user_attributes)
-                                   .and_return(nil)
-          end
-          it 'should return nil and log a message' do
-            feature_flag = config.feature_flag_key_map['multi_variate_feature']
-            expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
-
-            expect(spy_logger).to have_received(:log).once
-                              .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments in the feature 'multi_variate_feature'.")
-
-            expect(spy_logger).to have_received(:log).once
-                            .with(Logger::DEBUG, "The feature flag 'multi_variate_feature' is not part of a rollout.")
-          end
-        end
-
-        describe 'and the feature flag is part of a rollout' do
-          expected_variation = nil
-          rollout_experiment = nil
-          before(:each) do
-            # make sure the user is not bucketed into the feature experiment
-            allow(decision_service).to receive(:get_variation)
-                                   .with('test_experiment_with_feature_rollout', 'user_1', user_attributes)
-                                   .and_return(nil)
-
-            rollout_experiment = config.rollouts[1]['experiments'][0]
-            expected_variation = rollout_experiment['variations'][0]
-          end
-
-          describe 'and the user is part of the rollout' do
-            before(:each) do
-              allow(decision_service).to receive(:get_variation)
-                                     .with(rollout_experiment['key'], 'user_1', user_attributes)
-                                     .and_return(expected_variation['key'])
-            end
-
-            it 'should return the rollout variation the user is bucketed into' do
-              feature_flag = config.feature_flag_key_map['string_single_variable_feature']
-              expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_variation)
-
-              expect(decision_service).to have_received(:get_variation).once
-                                      .with(rollout_experiment['key'], 'user_1', user_attributes)
-
-              expect(spy_logger).to have_received(:log).once
-                                .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments in the feature 'string_single_variable_feature'.")
-
-              expect(spy_logger).to have_received(:log).once
-                                .with(Logger::INFO, "User 'user_1' is in rollout with id '166661' for feature flag 'string_single_variable_feature'.")
-            end
-          end
-
-          describe 'and the user is not part of the rollout' do
-            before(:each) do
-              allow(decision_service).to receive(:get_variation)
-                                     .with(rollout_experiment['key'], 'user_1', user_attributes)
-                                     .and_return(nil)
-            end
-
-            it 'should return nil and log a message' do
-              feature_flag = config.feature_flag_key_map['string_single_variable_feature']
-              expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
-
-              expect(spy_logger).to have_received(:log).once
-                                .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments in the feature 'string_single_variable_feature'.")
-
-              expect(spy_logger).to have_received(:log).once
-                                .with(Logger::INFO, "User 'user_1' is not part of the rollout with id '166661' for feature flag 'string_single_variable_feature'.")
-            end
-          end
+          expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "Feature flag experiment with ID '1333333337' is not in the datafile.")
         end
       end
 
-      describe 'and the user is bucketed into a variation for the experiment in the feature flag' do
+      describe 'and the user is not bucketed into the feature flag\'s experiments' do
+        before(:each) do
+          multivariate_experiment = config.experiment_key_map['test_experiment_multivariate']
+
+          # make sure the user is not bucketed into the feature experiment
+          allow(decision_service).to receive(:get_variation)
+                                 .with(multivariate_experiment['key'], 'user_1', user_attributes)
+                                 .and_return(nil)
+        end
+        it 'should return nil and log a message' do
+          feature_flag = config.feature_flag_key_map['multi_variate_feature']
+          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
+
+          expect(spy_logger).to have_received(:log).once
+                            .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.")
+        end
+      end
+
+      describe 'and the user is bucketed into a variation for the experiment on the feature flag' do
         before(:each) do
           # mock and return the first variation of the `test_experiment_multivariate` experiment, which is attached to the `multi_variate_feature`
           allow(decision_service).to receive(:get_variation).and_return('122231')
@@ -412,8 +308,56 @@ describe Optimizely::DecisionService do
         it 'should return the variation' do
           user_attributes = {}
           feature_flag = config.feature_flag_key_map['multi_variate_feature']
-          expected_variation = config.variation_id_map['122231']
+          expected_variation = config.variation_id_map['test_experiment_multivariate']['122231']
           expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_variation)
+
+          expect(spy_logger).to have_received(:log).once
+                            .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'test_experiment_multivariate' of feature 'multi_variate_feature'.")
+        end
+      end
+    end
+
+    describe 'when the feature flag is associated with a mutex experiment' do
+      mutex_exp = nil
+      expected_variation = nil
+      describe 'and the user is bucketed into one of the experiments' do
+        before(:each) do
+          group_1 = config.group_key_map['101']
+          mutex_exp = config.experiment_key_map['group1_exp1']
+          expected_variation = mutex_exp['variations'][0]
+          allow(decision_service.bucketer).to receive(:find_bucket)
+                                          .with(user_id, group_1['id'], group_1['trafficAllocation'])
+                                          .and_return(mutex_exp['id'])
+
+          allow(decision_service).to receive(:get_variation)
+                                 .and_return(expected_variation['id'])
+        end
+
+        it 'should return the variation the user is bucketed into' do
+          feature_flag = config.feature_flag_key_map['boolean_feature']
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_variation)
+
+          expect(spy_logger).to have_received(:log).once
+                            .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'boolean_feature'.")
+        end
+      end
+
+      describe 'and the user is not bucketed into any of the mutex experiments' do
+        before(:each) do
+          group_1 = config.group_key_map['101']
+          mutex_exp = config.experiment_key_map['group1_exp1']
+          expected_variation = mutex_exp['variations'][0]
+          allow(decision_service.bucketer).to receive(:find_bucket)
+                                          .with(user_id, group_1['id'], group_1['trafficAllocation'])
+                                          .and_return(nil)
+        end
+
+        it 'should return nil and log a message' do
+          feature_flag = config.feature_flag_key_map['boolean_feature']
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(nil)
+
+          expect(spy_logger).to have_received(:log).once
+                            .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'boolean_feature'.")
         end
       end
     end
