@@ -97,7 +97,8 @@ module Optimizely
     def find_bucket(user_id, parent_id, traffic_allocations)
       # Helper function to find the matching entity ID for a given bucketing value in a list of traffic allocations.
       #
-      # bucket_value - Integer bucket value
+      # user_id - String ID for user
+      # parent_id - String entity ID to use for bucketing ID
       # traffic_allocations - Array of traffic allocations
       #
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
