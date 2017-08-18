@@ -615,9 +615,7 @@ describe 'OptimizelyV2' do
 
   describe '#get_variation' do
     it 'should have get_variation return expected variation when there are no audiences' do
-      expect(project_instance.config).to receive(:get_audience_ids_for_experiment)
-                                        .with('test_experiment')
-                                        .and_return([])
+      allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
       expect(project_instance.get_variation('test_experiment', 'test_user'))
              .to eq(config_body['experiments'][0]['variations'][0]['key'])
     end

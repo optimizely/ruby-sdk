@@ -122,28 +122,24 @@ module Optimizely
       @parsing_succeeded = true
     end
 
-    def experiment_running?(experiment_key)
+    def experiment_running?(experiment)
       # Determine if experiment corresponding to given key is running
       #
-      # experiment_key - String key representing the experiment
+      # experiment - Experiment
       #
       # Returns true if experiment is running
-      experiment = @experiment_key_map[experiment_key]
-      return RUNNING_EXPERIMENT_STATUS.include?(experiment['status']) if experiment
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
-      nil
+      return RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
     end
 
-    def get_experiment_id(experiment_key)
+    def get_experiment_from_key(experiment_key)
       # Retrieves experiment ID for a given key
       #
       # experiment_key - String key representing the experiment
       #
-      # Returns String ID
+      # Returns Experiment
 
       experiment = @experiment_key_map[experiment_key]
-      return experiment['id'] if experiment
+      return experiment if experiment
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
       nil
@@ -175,34 +171,6 @@ module Optimizely
       @logger.log Logger::ERROR, "Event '#{event_key}' is not in datafile."
       @error_handler.handle_error InvalidEventError
       []
-    end
-
-    def get_traffic_allocation(experiment_key)
-      # Retrieves traffic allocation for a given experiment Key
-      #
-      # experiment_key - String Key representing the experiment
-      #
-      # Returns traffic allocation for the experiment or nil
-
-      experiment = @experiment_key_map[experiment_key]
-      return experiment['trafficAllocation'] if experiment
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
-      nil
-    end
-
-    def get_audience_ids_for_experiment(experiment_key)
-      # Get audience IDs for the experiment
-      #
-      # experiment_key - Experiment key for which audience IDs are to be determined
-      #
-      # Returns audience IDs corresponding to the experiment.
-
-      experiment = @experiment_key_map[experiment_key]
-      return experiment['audienceIds'] if experiment
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
-      nil
     end
 
     def get_audience_conditions_from_id(audience_id)
@@ -276,32 +244,12 @@ module Optimizely
       @error_handler.handle_error InvalidExperimentError
     end
 
-    def get_experiment_group_id(experiment_key)
-      experiment = @experiment_key_map[experiment_key]
-      return experiment['groupId'] if experiment
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
-    end
-
     def get_attribute_id(attribute_key)
       attribute = @attribute_key_map[attribute_key]
       return attribute['id'] if attribute
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil
-    end
-
-    def user_in_forced_variation?(experiment_key, user_id)
-      # Determines if a given user is in a forced variation
-      #
-      # experiment_key - String experiment key
-      # user_id - String user ID
-      #
-      # Returns true if user is in a forced variation
-
-      forced_variations = get_forced_variations(experiment_key)
-      return forced_variations.include?(user_id) if forced_variations
-      false
     end
 
     def parsing_succeeded?

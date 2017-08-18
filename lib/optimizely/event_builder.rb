@@ -152,7 +152,8 @@ module Optimizely
     end
 
     def add_decision(experiment_key, variation_id)
-      experiment_id = @config.get_experiment_id(experiment_key)
+      experiment = @config.get_experiment_from_key(experiment_key)
+      experiment_id = experiment['id']
       @params['layerId'] = @config.experiment_key_map[experiment_key]['layerId']
       @params['decision'] = {
         'variationId' => variation_id,

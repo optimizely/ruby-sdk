@@ -120,7 +120,8 @@ describe Optimizely::DecisionService do
                               "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile."
                             )
       # bucketing should have occured
-      expect(decision_service.bucketer).to have_received(:bucket).once.with('test_experiment', 'forced_user_with_invalid_variation')
+      experiment = config.get_experiment_from_key('test_experiment')
+      expect(decision_service.bucketer).to have_received(:bucket).once.with(experiment, 'forced_user_with_invalid_variation')
     end
 
     describe 'when a UserProfile service is provided' do
