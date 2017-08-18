@@ -86,8 +86,91 @@ module Optimizely
       variation_id
     end
 
+    def get_variation_for_feature(feature_flag, user_id, attributes = nil)
+      # Get the variation the user is bucketed into for the given FeatureFlag.
+      #
+      # feature_flag - The feature flag the user wants to access
+      # user_id - String ID for the user
+      # attributes - Hash representing user attributes
+      #
+      # Returns variation where visitor will be bucketed (nil if the user is not bucketed into any of the experiments on the feature)
+
+      # check if the feature is being experiment on and whether the user is bucketed into the experiment
+      variation = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
+      return variation
+
+      # @TODO(mng) next check if the user feature being rolled out and whether the user is part of the rollout
+    end
+
     private
-    
+
+    def get_variation_for_feature_experiment(feature_flag, user_id, attributes = nil)
+      # Gets the variation the user is bucketed into for the feature flag's experiment
+      #
+      # feature_flag - The feature flag the user wants to access
+      # user_id - String ID for the user
+      # attributes - Hash representing user attributes
+      #
+      # Returns variation where visitor will be bucketed
+      # or nil if the user is not bucketed into any of the experiments on the feature
+
+      feature_flag_key = feature_flag['key']
+      unless feature_flag['experimentIds'].empty?
+        # check if experiment is part of mutex group
+        experiment_id = feature_flag['experimentIds'][0]
+        experiment = @config.experiment_id_map[experiment_id]
+        unless experiment
+          @config.logger.log(
+            Logger::DEBUG,
+            "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
+          )
+          return nil
+        end
+
+        group_id = experiment['groupId']
+        # if experiment is part of mutex group we first determine which experiment (if any) in the group the user is part of
+        if group_id and @config.group_key_map.has_key?(group_id)
+          group = @config.group_key_map[group_id]
+          bucketed_experiment_id = @bucketer.find_bucket(user_id, group_id, group['trafficAllocation'])
+          if bucketed_experiment_id.nil?
+            @config.logger.log(
+              Logger::INFO,
+              "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+            )
+            return nil
+          end
+        else
+          bucketed_experiment_id = experiment_id
+        end
+
+        if feature_flag['experimentIds'].include?(bucketed_experiment_id)
+          experiment = @config.experiment_id_map[bucketed_experiment_id]
+          experiment_key = experiment['key']
+          variation_id = get_variation(experiment_key, user_id, attributes)
+          unless variation_id.nil?
+            variation = @config.variation_id_map[experiment_key][variation_id]
+            @config.logger.log(
+              Logger::INFO,
+              "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
+            )
+            return variation
+          else
+            @config.logger.log(
+              Logger::INFO,
+              "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+            )
+          end
+        end
+      else
+        @config.logger.log(
+          Logger::DEBUG,
+          "The feature flag '#{feature_flag_key}' is not used in any experiments."
+        )
+      end
+
+      return nil
+    end
+
     def get_forced_variation_id(experiment_key, user_id)
       # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
       #
@@ -147,7 +230,7 @@ module Optimizely
       #
       # user_id - String ID for the user
       #
-      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
+      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided)
 
       user_profile = {
         :user_id => user_id,

@@ -76,6 +76,7 @@ describe Optimizely::ProjectConfig do
         'test_experiment_not_started' => config_body['experiments'][1],
         'test_experiment_with_audience' => config_body['experiments'][2],
         'test_experiment_multivariate' => config_body['experiments'][3],
+        'test_experiment_with_feature_rollout' => config_body['experiments'][4],
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
@@ -114,62 +115,14 @@ describe Optimizely::ProjectConfig do
           }
         },
         'test_experiment_multivariate' => {
-          '122231' => {
-            'key' => 'Fred',
-            'id' => '122231',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'F'
-              },
-              {
-                'id' => '155561',
-                'value' => 'red'
-              }
-            ]
-          },
-          '122232' => {
-            'key' => 'Feorge',
-            'id' => '122232',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'F'
-              },
-              {
-                'id' => '155561',
-                'value' => 'eorge'
-              }
-            ]
-          },
-          '122233' => {
-            'key' => 'Gred',
-            'id' => '122233',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'G'
-              },
-              {
-                'id' => '155561',
-                'value' => 'red'
-              }
-            ]
-          },
-          '122234' => {
-            'key' => 'George',
-            'id' => '122234',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'G'
-              },
-              {
-                'id' => '155561',
-                'value' => 'eorge'
-              }
-            ]
-          },
+          '122231' => config_body['experiments'][3]['variations'][0],
+          '122232' => config_body['experiments'][3]['variations'][1],
+          '122233' => config_body['experiments'][3]['variations'][2],
+          '122234' => config_body['experiments'][3]['variations'][3]
+        },
+        'test_experiment_with_feature_rollout' => {
+          '122236' => config_body['experiments'][4]['variations'][0],
+          '122237' => config_body['experiments'][4]['variations'][1]
         },
         'group1_exp1' => {
           '130001' => {
@@ -299,62 +252,14 @@ describe Optimizely::ProjectConfig do
           }
         },
         'test_experiment_multivariate' => {
-          'Fred' => {
-            'key' => 'Fred',
-            'id' => '122231',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'F'
-              },
-              {
-                'id' => '155561',
-                'value' => 'red'
-              }
-            ]
-          },
-          'Feorge' => {
-            'key' => 'Feorge',
-            'id' => '122232',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'F'
-              },
-              {
-                'id' => '155561',
-                'value' => 'eorge'
-              }
-            ]
-          },
-          'Gred' => {
-            'key' => 'Gred',
-            'id' => '122233',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'G'
-              },
-              {
-                'id' => '155561',
-                'value' => 'red'
-              }
-            ]
-          },
-          'George' => {
-            'key' => 'George',
-            'id' => '122234',
-            'variables' => [
-              {
-                'id' => '155560',
-                'value' => 'G'
-              },
-              {
-                'id' => '155561',
-                'value' => 'eorge'
-              }
-            ]
-          },
+          'Fred' => config_body['experiments'][3]['variations'][0],
+          'Feorge' => config_body['experiments'][3]['variations'][1],
+          'Gred' => config_body['experiments'][3]['variations'][2],
+          'George' => config_body['experiments'][3]['variations'][3]
+        },
+        'test_experiment_with_feature_rollout' => {
+          'control' => config_body['experiments'][4]['variations'][0],
+          'variation' => config_body['experiments'][4]['variations'][1]
         },
         'group1_exp1' => {
           'g1_e1_v1' => {
@@ -453,103 +358,13 @@ describe Optimizely::ProjectConfig do
       }
 
       expected_feature_flag_key_map = {
-        'boolean_feature' => {
-          'id' => '155549',
-          'key' => 'boolean_feature',
-          'rolloutId' => '',
-          'experimentIds'=> [],
-          'variables'=> []
-        },
-        'double_single_variable_feature' => {
-          'id'=> '155550',
-          'key'=> 'double_single_variable_feature',
-          'rolloutId'=> '',
-          'experimentIds'=> [],
-          'variables'=> [
-            {
-              'id'=> '155551',
-              'key'=> 'double_variable',
-              'type'=> 'double',
-              'defaultValue'=> '14.99'
-            }
-          ]
-        },
-        'integer_single_variable_feature' => {
-          'id'=> '155552',
-          'key'=> 'integer_single_variable_feature',
-          'rolloutId'=> '',
-          'experimentIds'=> [],
-          'variables'=> [
-            {
-              'id'=> '155553',
-              'key'=> 'integer_variable',
-              'type'=> 'integer',
-              'defaultValue'=> '7'
-            }
-          ]
-        },
-        'boolean_single_variable_feature' => {
-          'id'=> '155554',
-          'key'=> 'boolean_single_variable_feature',
-          'rolloutId'=> '166660',
-          'experimentIds'=> [],
-          'variables'=> [
-            {
-              'id'=> '155556',
-              'key'=> 'boolean_variable',
-              'type'=> 'boolean',
-              'defaultValue'=> 'true'
-            }
-          ]
-        },
-        'string_single_variable_feature' => {
-          'id'=> '155557',
-          'key'=> 'string_single_variable_feature',
-          'rolloutId'=> '',
-          'experimentIds'=> [],
-          'variables'=> [
-            {
-              'id'=> '155558',
-              'key'=> 'string_variable',
-              'type'=> 'string',
-              'defaultValue'=> 'wingardium leviosa'
-            }
-          ]
-        },
-        'multi_variate_feature' => {
-          'id'=> '155559',
-          'key'=> 'multi_variate_feature',
-          'rolloutId'=> '',
-          'experimentIds'=> ['122230'],
-          'variables'=> [
-            {
-              'id'=> '155560',
-              'key'=> 'first_letter',
-              'type'=> 'string',
-              'defaultValue'=> 'H'
-            },
-            {
-              'id'=> '155561',
-              'key'=> 'rest_of_name',
-              'type'=> 'string',
-              'defaultValue'=> 'arry'
-            }
-          ]
-        },
-        'mutex_group_feature' => {
-          'id'=> '155562',
-          'key'=> 'mutex_group_feature',
-          'rolloutId'=> '',
-          'experimentIds'=> ['133331', '133332'],
-          'variables'=> [
-            {
-              'id'=> '155563',
-              'key'=> 'correlating_variation_name',
-              'type'=> 'string',
-              'defaultValue'=> 'null'
-            }
-          ]
-        }
+        'boolean_feature' => config_body['featureFlags'][0],
+        'double_single_variable_feature' => config_body['featureFlags'][1],
+        'integer_single_variable_feature' => config_body['featureFlags'][2],
+        'boolean_single_variable_feature' => config_body['featureFlags'][3],
+        'string_single_variable_feature' => config_body['featureFlags'][4],
+        'multi_variate_feature' => config_body['featureFlags'][5],
+        'mutex_group_feature' => config_body['featureFlags'][6]
       }
 
       expected_variation_id_to_variable_usage_map = {
@@ -593,6 +408,18 @@ describe Optimizely::ProjectConfig do
             'value' => 'eorge'
           }
         },
+        '122236' => {
+          '155558' => {
+            'id' => '155558',
+            'value' => 'cta_1'
+          }
+        },
+        '122237' => {
+          '155558' => {
+            'id' => '155558',
+            'value' => 'cta_2'
+          }
+        },
         '130001' => {
           '155563' => {
             'id' => '155563',
@@ -632,70 +459,8 @@ describe Optimizely::ProjectConfig do
       }
 
       expected_rollout_id_map = {
-        '166660' => {
-          'id' => '166660',
-          'policy' => 'rollout',
-          'experiments' => [{
-            'id' => '177770',
-            'key' => '177770',
-            'status' => 'Running',
-            'layerId' => '166660',
-            'audienceIds' => ['11154'],
-            'variations' => [{
-              'id' => '177771',
-              'key' => '177771',
-              'variables' => [
-                {
-                  'id' => '155556',
-                  'value' => 'true'
-                }
-              ]
-            }],
-            'trafficAllocation' => [{
-              'entityId' => '177771',
-              'endOfRange' => 1000
-            }]
-          }, {
-            'id' => '177772',
-            'key' => '177772',
-            'status' => 'Running',
-            'layerId' => '166660',
-            'audienceIds' => [],
-            'variations' => [{
-              'id' => '177773',
-              'key' => '177773',
-              'variables' => [
-                {
-                  'id' => '155556',
-                  'value' => 'false'
-                }
-              ]
-            }],
-            'trafficAllocation' => [{
-              'entityId' => '177773',
-              'endOfRange' => 10000
-            }]
-          }]
-        },
-        '166661' => {
-          'id' => '166661',
-          'policy' => 'rollout',
-          'experiments' => [{
-            'id' => '177774',
-            'key' => '177774',
-            'status' => 'Running',
-            'layerId' => '166661',
-            'audienceIds' => [],
-            'variations' => [{
-              'id' => '177775',
-              'key' => '177775'
-            }],
-            'trafficAllocation' => [{
-              'entityId' => '177775',
-              'endOfRange' => 1500
-            }]
-          }]
-        }
+        '166660' => config_body['rollouts'][0],
+        '166661' => config_body['rollouts'][1],
       }
 
       expected_rollout_experiment_id_map = {
