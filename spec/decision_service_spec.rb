@@ -76,6 +76,13 @@ describe Optimizely::DecisionService do
       expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
+    it 'should return nil if the experiment key is invalid' do
+      expect(decision_service.get_variation('totally_invalid_experiment', 'test_user', {})).to eq(nil)
+
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::ERROR,"Experiment key 'totally_invalid_experiment' is not in datafile.")
+    end
+
     it 'should return nil if the user does not meet the audience conditions for a given experiment' do
       user_attributes = {'browser_type' => 'chrome'}
       expect(decision_service.get_variation('test_experiment_with_audience', 'test_user', user_attributes)).to eq(nil)

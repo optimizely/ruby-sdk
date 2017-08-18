@@ -278,8 +278,6 @@ module Optimizely
         return false
       end
 
-      @logger.log Logger::ERROR, "Experiment ID '#{experiment_id}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
       false
     end
 
