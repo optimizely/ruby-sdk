@@ -24,25 +24,6 @@ describe Optimizely::ProjectConfig do
   let(:logger) { Optimizely::NoOpLogger.new }
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
 
-  describe '#user_in_forced_variations' do
-    it 'should return false when the experiment has no forced variations' do
-      expect(config.user_in_forced_variation?('group1_exp1', 'test_user')).to be(false)
-    end
-
-    it 'should return false when the user is not in a forced variation' do
-      expect(config.user_in_forced_variation?('test_experiment', 'test_user')).to be(false)
-    end
-
-    it 'should return true when the user is in a forced variation' do
-      expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(true)
-    end
-
-    it 'should return false when there are no forced variations' do
-      expect(config).to receive(:get_forced_variations).once.and_return(nil)
-      expect(config.user_in_forced_variation?('test_experiment', 'forced_user1')).to be(false)
-    end
-  end
-
   describe '.initialize' do
     it 'should initialize properties correctly upon creating project' do
       project_config = Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)
@@ -496,9 +477,9 @@ describe Optimizely::ProjectConfig do
     let(:spy_logger) { spy('logger') }
     let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)}
 
-    describe 'get_experiment_id' do
+    describe 'get_experiment_from_key' do
       it 'should log a message when provided experiment key is invalid' do
-        config.get_experiment_id('invalid_key')
+        expect(config.get_experiment_from_key('invalid_key')).to eq(nil)
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment key 'invalid_key' is not in datafile.")
       end
@@ -512,42 +493,10 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe '#get_experiment_group_id' do
-      it 'should return nil and log a message when there is no experiment' do
-        expect(config.get_experiment_group_id('group1_exp1_missing')).to be(nil)
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment key 'group1_exp1_missing' is not in datafile.")
-      end
-    end
-
-    describe 'experiment_running?' do
-      it 'should log a message when provided experiment key is invalid' do
-        config.experiment_running?('invalid_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment key 'invalid_key' is not in datafile.")
-      end
-    end
-
     describe 'get_experiment_ids_for_event' do
       it 'should log a message when provided event key is invalid' do
         config.get_experiment_ids_for_event('invalid_key')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Event 'invalid_key' is not in datafile.")
-      end
-    end
-
-    describe 'get_traffic_allocation' do
-      it 'should log a message when provided experiment key is invalid' do
-        config.get_traffic_allocation('invalid_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment key 'invalid_key' is not in datafile.")
-      end
-    end
-
-    describe 'get_audience_ids_for_experiment' do
-      it 'should log a message when provided experiment key is invalid' do
-        config.get_audience_ids_for_experiment('invalid_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment key 'invalid_key' is not in datafile.")
       end
     end
 
@@ -598,34 +547,15 @@ describe Optimizely::ProjectConfig do
     let(:raise_error_handler) { Optimizely::RaiseErrorHandler.new }
     let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, raise_error_handler)}
 
-     describe 'get_experiment_id' do
+     describe 'get_experiment_from_key' do
       it 'should raise an error when provided experiment key is invalid' do
-        expect { config.get_experiment_id('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
-      end
-    end
-
-    describe 'experiment_running?' do
-      it 'should raise an error when provided experiment key is invalid' do
-        expect { config.experiment_running?('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
+        expect { config.get_experiment_from_key('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
       end
     end
 
     describe 'get_experiment_ids_for_event' do
       it 'should raise an error when provided event key is invalid' do
         expect { config.get_experiment_ids_for_event('invalid_key') }.to raise_error(Optimizely::InvalidEventError)
-      end
-    end
-
-    describe 'get_traffic_allocation' do
-      it 'should raise an error when provided experiment key is invalid' do
-        expect { config.get_traffic_allocation('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
-      end
-    end
-
-    describe 'get_audience_ids_for_experiment' do
-      it 'should raise an error when provided experiment key is invalid' do
-        expect { config.get_audience_ids_for_experiment('invalid_key') }
-               .to raise_error(Optimizely::InvalidExperimentError)
       end
     end
 
@@ -667,6 +597,20 @@ describe Optimizely::ProjectConfig do
       it 'should raise an error when provided attribute key is invalid' do
         expect { config.get_attribute_id('invalid_attr') }.to raise_error(Optimizely::InvalidAttributeError)
       end
+    end
+  end
+
+  describe '#experiment_running' do
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
+
+    it 'should return true if the experiment is running' do
+      experiment = config.get_experiment_from_key('test_experiment')
+      expect(config.experiment_running?(experiment)).to eq(true)
+    end
+
+    it 'should return false if the experiment is not running' do
+      experiment = config.get_experiment_from_key('test_experiment_not_started')
+      expect(config.experiment_running?(experiment)).to eq(false)
     end
   end
 end

@@ -35,17 +35,18 @@ module Optimizely
       @config = config
     end
 
-    def bucket(experiment_key, user_id)
+    def bucket(experiment, user_id)
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
-      # experiment_key - String Key representing experiment for which visitor is to be bucketed.
+      # experiment - Experiment for which visitor is to be bucketed.
       # user_id - String ID for user.
       #
       # Returns String variation ID in which visitor with ID user_id has been placed. Nil if no variation.
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
-      experiment_id = @config.get_experiment_id(experiment_key)
-      group_id = @config.get_experiment_group_id(experiment_key)
+      experiment_id = experiment['id']
+      experiment_key = experiment['key']
+      group_id = experiment['groupId']
       if group_id
         group = @config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
@@ -74,7 +75,7 @@ module Optimizely
         end
       end
 
-      traffic_allocations = @config.get_traffic_allocation(experiment_key)
+      traffic_allocations = experiment['trafficAllocation']
       variation_id = find_bucket(user_id, experiment_id, traffic_allocations)
       if variation_id && variation_id != ''
         variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
