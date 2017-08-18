@@ -71,10 +71,10 @@ module Optimizely
     IMPRESSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/decision'
     POST_HEADERS = { 'Content-Type' => 'application/json' }
 
-    def create_impression_event(experiment_key, variation_id, user_id, attributes)
+    def create_impression_event(experiment, variation_id, user_id, attributes)
       # Create conversion Event to be sent to the logging endpoint.
       #
-      # experiment_key - Experiment for which impression needs to be recorded.
+      # experiment - Experiment for which impression needs to be recorded.
       # variation_id - ID for variation which would be presented to user.
       # user_id - ID for user.
       # attributes - Hash representing user attributes and values which need to be recorded.
@@ -83,7 +83,7 @@ module Optimizely
 
       @params = {}
       add_common_params(user_id, attributes)
-      add_decision(experiment_key, variation_id)
+      add_decision(experiment, variation_id)
       add_attributes(attributes)
       Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params, POST_HEADERS)
     end
@@ -151,8 +151,8 @@ module Optimizely
       end
     end
 
-    def add_decision(experiment_key, variation_id)
-      experiment = @config.get_experiment_from_key(experiment_key)
+    def add_decision(experiment, variation_id)
+      experiment_key = experiment['key']
       experiment_id = experiment['id']
       @params['layerId'] = @config.experiment_key_map[experiment_key]['layerId']
       @params['decision'] = {

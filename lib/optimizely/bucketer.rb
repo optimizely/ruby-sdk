@@ -46,7 +46,7 @@ module Optimizely
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
       experiment_id = experiment['id']
       experiment_key = experiment['key']
-      group_id = experiment['group_id']
+      group_id = experiment['groupId']
       if group_id
         group = @config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
