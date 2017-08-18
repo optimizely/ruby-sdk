@@ -35,17 +35,18 @@ module Optimizely
       @config = config
     end
 
-    def bucket(experiment_key, user_id)
+    def bucket(experiment, user_id)
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
-      # experiment_key - String Key representing experiment for which visitor is to be bucketed.
+      # experiment - Experiment for which visitor is to be bucketed.
       # user_id - String ID for user.
       #
       # Returns String variation ID in which visitor with ID user_id has been placed. Nil if no variation.
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
-      experiment_id = @config.get_experiment_id(experiment_key)
-      group_id = @config.get_experiment_group_id(experiment_key)
+      experiment_id = experiment['id']
+      experiment_key = experiment['key']
+      group_id = experiment['groupId']
       if group_id
         group = @config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
@@ -78,11 +79,9 @@ module Optimizely
         end
       end
 
-      bucketing_id = sprintf(BUCKETING_ID_TEMPLATE, user_id: user_id, entity_id: experiment_id)
-      bucket_value = generate_bucket_value(bucketing_id)
-      @config.logger.log(Logger::DEBUG, "Assigned variation bucket #{bucket_value} to user '#{user_id}'.")
-      traffic_allocations = @config.get_traffic_allocation(experiment_key)
-      variation_id = find_bucket(bucket_value, traffic_allocations)
+      traffic_allocations = experiment['trafficAllocation']
+      variation_id = find_bucket(user_id, experiment_id, traffic_allocations)
+
       if variation_id && variation_id != ''
         variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
         @config.logger.log(
@@ -103,13 +102,18 @@ module Optimizely
 
     private
 
-    def find_bucket(bucket_value, traffic_allocations)
+    def find_bucket(user_id, parent_id, traffic_allocations)
       # Helper function to find the matching entity ID for a given bucketing value in a list of traffic allocations.
       #
-      # bucket_value - Integer bucket value
+      # user_id - String ID for user
+      # parent_id - String entity ID to use for bucketing ID
       # traffic_allocations - Array of traffic allocations
       #
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
+
+      bucketing_id = sprintf(BUCKETING_ID_TEMPLATE, user_id: user_id, entity_id: parent_id)
+      bucket_value = generate_bucket_value(bucketing_id)
+      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}'.")
 
       traffic_allocations.each do |traffic_allocation|
         current_end_of_range = traffic_allocation['endOfRange']

@@ -108,7 +108,8 @@ module Optimizely
 
       # Create and dispatch impression event
       variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
-      impression_event = @event_builder.create_impression_event(experiment_key, variation_id, user_id, attributes)
+      experiment = @config.get_experiment_from_key(experiment_key)
+      impression_event = @event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
                                                                               impression_event.params])

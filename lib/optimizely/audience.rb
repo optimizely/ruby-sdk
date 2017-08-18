@@ -20,17 +20,17 @@ module Optimizely
   module Audience
     module_function
 
-    def user_in_experiment?(config, experiment_key, attributes)
+    def user_in_experiment?(config, experiment, attributes)
       # Determine for given experiment if user satisfies the audiences for the experiment.
       #
       # config - Representation of the Optimizely project config.
-      # experiment_key - Key representing experiment for which visitor is to be bucketed.
+      # experiment - Experiment for which visitor is to be bucketed.
       # attributes - Hash representing user attributes which will be used in determining if
       #              the audience conditions are met.
       #
       # Returns boolean representing if user satisfies audience conditions for any of the audiences or not.
 
-      audience_ids = config.get_audience_ids_for_experiment(experiment_key)
+      audience_ids = experiment['audienceIds']
 
       # Return true if there are no audiences
       return true if audience_ids.empty?

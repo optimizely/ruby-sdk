@@ -47,12 +47,16 @@ module Optimizely
       # Returns variation ID where visitor will be bucketed (nil if experiment is inactive or user does not meet audience conditions)
 
       # Check to make sure experiment is active
-      unless @config.experiment_running?(experiment_key)
-        @config.logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
+      experiment = @config.get_experiment_from_key(experiment_key)
+      if experiment.nil?
         return nil
       end
 
-      experiment_id = @config.get_experiment_id(experiment_key)
+      experiment_id = experiment['id']
+      unless @config.experiment_running?(experiment)
+        @config.logger.log(Logger::INFO, "Experiment '#{experiment_key}' is not running.")
+        return nil
+      end
 
       # Check if user is in a forced variation
       forced_variation_id = get_forced_variation_id(experiment_key, user_id)
@@ -70,7 +74,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      unless Audience.user_in_experiment?(@config, experiment_key, attributes)
+      unless Audience.user_in_experiment?(@config, experiment, attributes)
         @config.logger.log(
           Logger::INFO,
           "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -79,7 +83,7 @@ module Optimizely
       end
 
       # Bucket normally
-      variation_id = @bucketer.bucket(experiment_key, user_id)
+      variation_id = @bucketer.bucket(experiment, user_id)
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id)

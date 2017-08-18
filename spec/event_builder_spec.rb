@@ -20,6 +20,7 @@ require 'optimizely/event_builder'
 require 'optimizely/logger'
 
 describe Optimizely::EventBuilder do
+  config = nil
   before(:context) do
     @config_body = OptimizelySpec::VALID_CONFIG_BODY
     @config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
@@ -79,7 +80,8 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid V2 Event when create_impression_event is called' do
-    impression_event = @event_builder.create_impression_event('test_experiment', '111128', 'test_user', nil)
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', nil)
     expect(impression_event.params).to eq(@expected_impression_params)
     expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
@@ -94,7 +96,8 @@ describe Optimizely::EventBuilder do
       'shouldIndex' => true,
     }]
 
-    impression_event = @event_builder.create_impression_event('test_experiment', '111128', 'test_user', {'browser_type' => 'firefox'})
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', {'browser_type' => 'firefox'})
     expect(impression_event.params).to eq(@expected_impression_params)
     expect(impression_event.url).to eq(@expected_impression_url)
     expect(impression_event.http_verb).to eq(:post)
