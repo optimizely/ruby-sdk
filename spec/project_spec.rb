@@ -666,4 +666,59 @@ describe 'OptimizelyV2' do
       invalid_project.get_variation('test_exp', 'test_user')
     end
   end
+
+  describe '#is_feature_enabled' do
+    before(:example) do
+      allow(Time).to receive(:now).and_return(time_now)
+    end
+
+    it 'should return false when the feature flag key is invalid' do
+      expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "No feature flag was found for key 'totally_invalid_feature_key'.")
+    end
+
+    it 'should return false when the user is not bucketed into any variation' do
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+
+      expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
+    end
+
+    it 'should return true but not send an impression if the user is not bucketed into a feature experiment' do
+      variation_to_return = config_body['rollouts'][0]['experiments'][0]['variations'][0]
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(variation_to_return)
+
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
+    end
+
+    it 'should return true and send an impression if the user is bucketed into a feature experiment' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      variation_to_return = config_body['experiments'][3]['variations'][0]
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(variation_to_return)
+
+      expected_params = {
+        "projectId"=>"111001",
+        "accountId"=>"12001",
+        "visitorId"=>"test_user",
+        "userFeatures"=>[],
+        "clientEngine"=>"ruby-sdk",
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        "isGlobalHoldback"=>false,
+        "layerId"=>"4",
+        "decision"=>{
+          "variationId"=>"122231",
+          "experimentId"=>"122230",
+          "isLayerHoldback"=>false
+        }
+      }
+
+      expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/log/decision with params #{expected_params}.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
+    end
+  end
 end

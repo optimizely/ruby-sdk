@@ -32,6 +32,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
       expect(project_config.events).to eq(config_body['events'])
+      expect(project_config.feature_flags).to eq(config_body['featureFlags'])
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
@@ -439,6 +440,29 @@ describe Optimizely::ProjectConfig do
         }
       }
 
+      expected_variation_id_to_experiment_map = {
+        '111128' => config_body['experiments'][0],
+        '111129' => config_body['experiments'][0],
+        '100028' => config_body['experiments'][1],
+        '100029' => config_body['experiments'][1],
+        '122228' => config_body['experiments'][2],
+        '122229' => config_body['experiments'][2],
+        '122231' => config_body['experiments'][3],
+        '122232' => config_body['experiments'][3],
+        '122233' => config_body['experiments'][3],
+        '122234' => config_body['experiments'][3],
+        '122236' => config_body['experiments'][4],
+        '122237' => config_body['experiments'][4],
+        '130001' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
+        '130002' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
+        '130003' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
+        '130004' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
+        '144443' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
+        '144444' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
+        '144445' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
+        '144446' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
+      }
+
       expected_rollout_id_map = {
         '166660' => config_body['rollouts'][0],
         '166661' => config_body['rollouts'][1],
@@ -458,6 +482,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
+      expect(project_config.variation_id_to_experiment_map).to eq(expected_variation_id_to_experiment_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
     end
@@ -541,6 +566,14 @@ describe Optimizely::ProjectConfig do
                                                        "Attribute key 'invalid_attr' is not in datafile.")
       end
     end
+
+    describe 'get_feature_flag_from_key' do
+      it 'should log a message when provided feature flag key is invalid' do
+        config.get_feature_flag_from_key('totally_invalid_feature_key')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+      end
+    end
   end
 
   describe '@error_handler' do
@@ -611,6 +644,13 @@ describe Optimizely::ProjectConfig do
     it 'should return false if the experiment is not running' do
       experiment = config.get_experiment_from_key('test_experiment_not_started')
       expect(config.experiment_running?(experiment)).to eq(false)
+    end
+  end
+
+  describe '#get_feature_flag_from_key' do
+    it 'should return the feature flag associated with the given feature flag key' do
+      feature_flag = config.get_feature_flag_from_key('boolean_feature')
+      expect(feature_flag).to eq(config_body['featureFlags'][0])
     end
   end
 end
