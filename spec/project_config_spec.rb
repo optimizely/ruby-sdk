@@ -32,6 +32,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
       expect(project_config.events).to eq(config_body['events'])
+      expect(project_config.feature_flags).to eq(config_body['featureFlags'])
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
@@ -541,6 +542,14 @@ describe Optimizely::ProjectConfig do
                                                        "Attribute key 'invalid_attr' is not in datafile.")
       end
     end
+
+    describe 'get_feature_flag_from_key' do
+      it 'should log a message when provided feature flag key is invalid' do
+        config.get_feature_flag_from_key('totally_invalid_feature_key')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+      end
+    end
   end
 
   describe '@error_handler' do
@@ -611,6 +620,13 @@ describe Optimizely::ProjectConfig do
     it 'should return false if the experiment is not running' do
       experiment = config.get_experiment_from_key('test_experiment_not_started')
       expect(config.experiment_running?(experiment)).to eq(false)
+    end
+  end
+
+  describe '#get_feature_flag_from_key' do
+    it 'should return the feature flag associated with the given feature flag key' do
+      feature_flag = config.get_feature_flag_from_key('boolean_feature')
+      expect(feature_flag).to eq(config_body['featureFlags'][0])
     end
   end
 end

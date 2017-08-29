@@ -34,6 +34,7 @@ module Optimizely
     attr_reader :audiences
     attr_reader :events
     attr_reader :experiments
+    attr_reader :feature_flags
     attr_reader :groups
     attr_reader :parsing_succeeded
     attr_reader :project_id
@@ -97,6 +98,15 @@ module Optimizely
       @variation_id_map = {}
       @variation_key_map = {}
       @variation_id_to_variable_usage_map = {}
+      @variation_id_to_experiment_map = {}
+      @experiment_key_map.each do |key, exp|
+        # Excludes experiments from rollouts
+        variations = exp.fetch('variations')
+        variations.each do |variation|
+          variation_id = variation['id']
+          @variation_id_to_experiment_map[variation_id] = exp
+        end
+      end
       @rollout_id_map = generate_key_map(@rollouts, 'id')
       # split out the experiment id map for rollouts
       @rollout_experiment_id_map = {}
@@ -136,7 +146,7 @@ module Optimizely
       #
       # experiment_key - String key representing the experiment
       #
-      # Returns Experiment
+      # Returns Experiment or nil if not found
 
       experiment = @experiment_key_map[experiment_key]
       return experiment if experiment
@@ -279,6 +289,18 @@ module Optimizely
       end
 
       false
+    end
+
+    def get_feature_flag_from_key(feature_flag_key)
+      # Retrieves the feature flag with the given key
+      #
+      # feature_flag_key - String feature key
+      #
+      # Returns feature flag if found, otherwise nil
+      feature_flag = @feature_flag_key_map[feature_flag_key]
+      return feature_flag if feature_flag
+      @logger.log Logger::ERROR, "Feature flag key '#{feature_flag_key}' is not in datafile."
+      nil
     end
 
     private
