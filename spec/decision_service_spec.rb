@@ -316,8 +316,11 @@ describe Optimizely::DecisionService do
         it 'should return the variation' do
           user_attributes = {}
           feature_flag = config.feature_flag_key_map['multi_variate_feature']
-          expected_variation = config.variation_id_map['test_experiment_multivariate']['122231']
-          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_variation)
+          expected_decision = {
+            'experiment' => config.experiment_key_map['test_experiment_multivariate'],
+            'variation' => config.variation_id_map['test_experiment_multivariate']['122231']
+          }
+          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'test_experiment_multivariate' of feature 'multi_variate_feature'.")
@@ -327,12 +330,16 @@ describe Optimizely::DecisionService do
 
     describe 'when the feature flag is associated with a mutex experiment' do
       mutex_exp = nil
-      expected_variation = nil
+      expected_decision = nil
       describe 'and the user is bucketed into one of the experiments' do
         before(:each) do
           group_1 = config.group_key_map['101']
           mutex_exp = config.experiment_key_map['group1_exp1']
           expected_variation = mutex_exp['variations'][0]
+          expected_decision = {
+            'experiment' => mutex_exp,
+            'variation' => expected_variation
+          }
           allow(decision_service.bucketer).to receive(:find_bucket)
                                           .with(user_id, group_1['id'], group_1['trafficAllocation'])
                                           .and_return(mutex_exp['id'])
@@ -343,7 +350,7 @@ describe Optimizely::DecisionService do
 
         it 'should return the variation the user is bucketed into' do
           feature_flag = config.feature_flag_key_map['boolean_feature']
-          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_variation)
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'boolean_feature'.")

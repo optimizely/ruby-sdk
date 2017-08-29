@@ -686,8 +686,13 @@ describe 'OptimizelyV2' do
     end
 
     it 'should return true but not send an impression if the user is not bucketed into a feature experiment' do
-      variation_to_return = config_body['rollouts'][0]['experiments'][0]['variations'][0]
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(variation_to_return)
+      experiment_to_return = config_body['rollouts'][0]['experiments'][0]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = {
+        'experiment' => nil,
+        'variation' => variation_to_return
+      }
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
@@ -696,8 +701,13 @@ describe 'OptimizelyV2' do
 
     it 'should return true and send an impression if the user is bucketed into a feature experiment' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      variation_to_return = config_body['experiments'][3]['variations'][0]
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(variation_to_return)
+      experiment_to_return = config_body['experiments'][3]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = {
+        'experiment' => experiment_to_return,
+        'variation' => variation_to_return
+      }
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expected_params = {
         "projectId"=>"111001",

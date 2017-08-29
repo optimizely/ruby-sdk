@@ -53,7 +53,6 @@ module Optimizely
     attr_reader :rollout_experiment_id_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
-    attr_reader :variation_id_to_experiment_map
     attr_reader :variation_key_map
 
     def initialize(datafile, logger, error_handler)
@@ -167,17 +166,6 @@ module Optimizely
       return experiment['key'] unless experiment.nil?
       @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
-      nil
-    end
-
-    def get_experiment_from_variation(variation)
-      # Retrieve the experiment the given variation is part of.
-      #
-      # variation - The variation.
-      #
-      # Returns Experiment or nil if not found.
-      experiment = variation_id_to_experiment_map[variation['id']]
-      return experiment if experiment
       nil
     end
 

@@ -440,29 +440,6 @@ describe Optimizely::ProjectConfig do
         }
       }
 
-      expected_variation_id_to_experiment_map = {
-        '111128' => config_body['experiments'][0],
-        '111129' => config_body['experiments'][0],
-        '100028' => config_body['experiments'][1],
-        '100029' => config_body['experiments'][1],
-        '122228' => config_body['experiments'][2],
-        '122229' => config_body['experiments'][2],
-        '122231' => config_body['experiments'][3],
-        '122232' => config_body['experiments'][3],
-        '122233' => config_body['experiments'][3],
-        '122234' => config_body['experiments'][3],
-        '122236' => config_body['experiments'][4],
-        '122237' => config_body['experiments'][4],
-        '130001' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
-        '130002' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
-        '130003' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
-        '130004' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
-        '144443' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
-        '144444' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
-        '144445' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
-        '144446' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
-      }
-
       expected_rollout_id_map = {
         '166660' => config_body['rollouts'][0],
         '166661' => config_body['rollouts'][1],
@@ -482,7 +459,6 @@ describe Optimizely::ProjectConfig do
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
-      expect(project_config.variation_id_to_experiment_map).to eq(expected_variation_id_to_experiment_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
     end

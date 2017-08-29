@@ -217,9 +217,10 @@ module Optimizely
         return false
       end
 
-      variation = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-      unless variation.nil?
-        experiment = @config.get_experiment_from_variation(variation)
+      decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+      unless decision.nil?
+        variation = decision['variation']
+        experiment = decision['experiment']
         unless experiment.nil?
           send_impression(experiment, variation['key'], user_id, attributes)
         else

@@ -97,11 +97,11 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns variation where visitor will be bucketed (nil if the user is not bucketed into any of the experiments on the feature)
+      # Returns hash with the experiment and variation where visitor will be bucketed (nil if the user is not bucketed into any of the experiments on the feature)
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
-      variation = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
-      return variation
+      decision = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
+      return decision
 
       # @TODO(mng) next check if the user feature being rolled out and whether the user is part of the rollout
     end
@@ -115,7 +115,7 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns variation where visitor will be bucketed
+      # Returns a hash with the experiment and variation where visitor will be bucketed
       # or nil if the user is not bucketed into any of the experiments on the feature
 
       feature_flag_key = feature_flag['key']
@@ -157,7 +157,10 @@ module Optimizely
               Logger::INFO,
               "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
             )
-            return variation
+            return {
+              'variation' => variation,
+              'experiment' => experiment
+            }
           else
             @config.logger.log(
               Logger::INFO,
