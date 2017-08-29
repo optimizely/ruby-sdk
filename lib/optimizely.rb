@@ -107,7 +107,8 @@ module Optimizely
       end
 
       # Create and dispatch impression event
-      send_impression(experiment_key, variation_key, user_id, attributes)
+      experiment = @config.get_experiment_from_key(experiment_key)
+      send_impression(experiment, variation_key, user_id, attributes)
 
       variation_key
     end
@@ -193,7 +194,7 @@ module Optimizely
     end
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
-      # Determine whether a boolean feature is enabled.
+      # Determine whether a feature is enabled.
       # Sends an impression event if the user is bucketed into an experiment using the feature.
       #
       # feature_flag_key - String unique key of the feature.
@@ -220,7 +221,7 @@ module Optimizely
       unless variation.nil?
         experiment = @config.get_experiment_from_variation(variation)
         unless experiment.nil?
-          send_impression(experiment['key'], variation['key'], user_id, attributes)
+          send_impression(experiment, variation['key'], user_id, attributes)
         else
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
@@ -312,9 +313,9 @@ module Optimizely
       raise InvalidInputError.new('event_dispatcher') unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
     end
 
-    def send_impression(experiment_key, variation_key, user_id, attributes = nil)
+    def send_impression(experiment, variation_key, user_id, attributes = nil)
+      experiment_key = experiment['key']
       variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
-      experiment = @config.get_experiment_from_key(experiment_key)
       impression_event = @event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
                   'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
