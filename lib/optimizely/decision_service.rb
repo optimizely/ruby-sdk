@@ -105,8 +105,8 @@ module Optimizely
         return decision
       end
 
-      variation = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
       feature_flag_key = feature_flag['key']
+      variation = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
       if variation
         @config.logger.log(
           Logger::INFO,
@@ -128,7 +128,7 @@ module Optimizely
     end
 
     def get_variation_for_feature_experiment(feature_flag, user_id, attributes = nil)
-      # Gets the variation the user is bucketed into for the feature flag's experiment
+      # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # feature_flag - The feature flag the user wants to access
       # user_id - String ID for the user
@@ -205,7 +205,7 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns the variation the user is bucketed into or nil if not bucketed into any of the
+      # Returns the variation the user is bucketed into or nil if not bucketed into any of the targeting rules
 
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? or rollout_id.empty?
