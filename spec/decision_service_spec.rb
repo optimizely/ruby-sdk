@@ -262,7 +262,7 @@ describe Optimizely::DecisionService do
     end
   end
 
-  describe '#get_variation_for_feature' do
+  describe '#get_variation_for_feature_experiment' do
     user_attributes = {}
     user_id = 'user_1'
 
@@ -270,7 +270,7 @@ describe Optimizely::DecisionService do
       it 'should return nil and log a message' do
         user_attributes = {}
         feature_flag = config.feature_flag_key_map['double_single_variable_feature']
-        expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
+        expect(decision_service.get_variation_for_feature_experiment(feature_flag, 'user_1', user_attributes)).to eq(nil)
 
         expect(spy_logger).to have_received(:log).once
                           .with(Logger::DEBUG, "The feature flag 'double_single_variable_feature' is not used in any experiments.")
@@ -282,7 +282,7 @@ describe Optimizely::DecisionService do
         it 'should return nil and log a message' do
           feature_flag = config.feature_flag_key_map['boolean_feature'].dup
           feature_flag['experimentIds'] = ['1333333337'] # totally invalid exp id
-          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(nil)
+          expect(decision_service.get_variation_for_feature_experiment(feature_flag, user_id, user_attributes)).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::DEBUG, "Feature flag experiment with ID '1333333337' is not in the datafile.")
@@ -298,9 +298,10 @@ describe Optimizely::DecisionService do
                                  .with(multivariate_experiment['key'], 'user_1', user_attributes)
                                  .and_return(nil)
         end
+
         it 'should return nil and log a message' do
           feature_flag = config.feature_flag_key_map['multi_variate_feature']
-          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(nil)
+          expect(decision_service.get_variation_for_feature_experiment(feature_flag, 'user_1', user_attributes)).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.")
@@ -320,7 +321,7 @@ describe Optimizely::DecisionService do
             'experiment' => config.experiment_key_map['test_experiment_multivariate'],
             'variation' => config.variation_id_map['test_experiment_multivariate']['122231']
           }
-          expect(decision_service.get_variation_for_feature(feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
+          expect(decision_service.get_variation_for_feature_experiment(feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'test_experiment_multivariate' of feature 'multi_variate_feature'.")
@@ -350,7 +351,7 @@ describe Optimizely::DecisionService do
 
         it 'should return the variation the user is bucketed into' do
           feature_flag = config.feature_flag_key_map['boolean_feature']
-          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_decision)
+          expect(decision_service.get_variation_for_feature_experiment(feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'boolean_feature'.")
@@ -369,10 +370,221 @@ describe Optimizely::DecisionService do
 
         it 'should return nil and log a message' do
           feature_flag = config.feature_flag_key_map['boolean_feature']
-          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(nil)
+          expect(decision_service.get_variation_for_feature_experiment(feature_flag, user_id, user_attributes)).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
                             .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'boolean_feature'.")
+        end
+      end
+    end
+  end
+
+  describe '#get_variation_for_feature_rollout' do
+    user_attributes = {}
+    user_id = 'user_1'
+
+    describe 'when the feature flag is not associated with a rollout' do
+      it 'should log a message and return nil' do
+        feature_flag = config.feature_flag_key_map['boolean_feature']
+        expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(nil)
+
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::DEBUG, "Feature flag 'boolean_feature' is not part of a rollout.")
+      end
+    end
+
+    describe 'when the rollout is not in the datafile' do
+      it 'should log a message and return nil' do
+        feature_flag = config.feature_flag_key_map['boolean_feature'].dup
+        feature_flag['rolloutId'] = 'invalid_rollout_id'
+        expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(nil)
+
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::ERROR, "Rollout with ID 'invalid_rollout_id' is not in the datafile.")
+      end
+    end
+
+    describe 'when the rollout does not have any experiments' do
+      it 'should return nil' do
+        experimentless_rollout = config.rollouts[0].dup
+        experimentless_rollout['experiments'] = []
+        allow(config).to receive(:get_rollout_from_id).and_return(experimentless_rollout)
+        feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
+        expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(nil)
+      end
+    end
+
+    describe 'when the user qualifies for targeting rule' do
+      describe 'and the user is bucketed into the targeting rule' do
+        it 'should return the variation the user is bucketed into' do
+          feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
+          rollout_experiment = config.rollout_id_map[feature_flag['rolloutId']]['experiments'][0]
+          expected_variation = rollout_experiment['variations'][0]
+
+          allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+          allow(decision_service.bucketer).to receive(:bucket)
+                                        .with(rollout_experiment, user_id)
+                                        .and_return(expected_variation)
+          expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(expected_variation)
+
+          expect(spy_logger).to have_received(:log).once
+                          .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule '1'.")
+          expect(spy_logger).to have_received(:log).once
+                          .with(Logger::DEBUG, "User 'user_1' is in variation '177771' of experiment '177770'.")
+        end
+      end
+
+      describe 'and the user is not bucketed into the targeting rule' do
+        describe 'and the user is not bucketed into the "Everyone Else" rule' do
+          it 'should log and return nil' do
+            feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
+            rollout = config.rollout_id_map[feature_flag['rolloutId']]
+            everyone_else_experiment = rollout['experiments'][2]
+
+            allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+            allow(decision_service.bucketer).to receive(:bucket)
+                                                  .with(rollout['experiments'][0], user_id)
+                                                  .and_return(nil)
+            allow(decision_service.bucketer).to receive(:bucket)
+                                                  .with(everyone_else_experiment, user_id)
+                                                  .and_return(nil)
+
+            expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(nil)
+
+            # make sure we only checked the audience for the first rule
+            expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
+                            .with(config, rollout['experiments'][0], user_attributes)
+            expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+                            .with(config, rollout['experiments'][1], user_attributes)
+
+
+            # verify log messages
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule '1'.")
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' is not in the traffic group for the targeting rule. Checking 'Eveyrone Else' rule now.")
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' does not meet conditions for targeting rule 'Everyone Else'.")
+          end
+        end
+
+        describe 'and the user is bucketed into the "Everyone Else" rule' do
+          it 'should return the variation the user is bucketed into' do
+            feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
+            rollout = config.rollout_id_map[feature_flag['rolloutId']]
+            everyone_else_experiment = rollout['experiments'][2]
+            expected_variation = everyone_else_experiment['variations'][0]
+
+            allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+            allow(decision_service.bucketer).to receive(:bucket)
+                                                  .with(rollout['experiments'][0], user_id)
+                                                  .and_return(nil)
+            allow(decision_service.bucketer).to receive(:bucket)
+                                                  .with(everyone_else_experiment, user_id)
+                                                  .and_return(expected_variation)
+
+            expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(expected_variation)
+
+            # make sure we only checked the audience for the first rule
+            expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
+                            .with(config, rollout['experiments'][0], user_attributes)
+            expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+                            .with(config, rollout['experiments'][1], user_attributes)
+
+
+            # verify log messages
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule '1'.")
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' is not in the traffic group for the targeting rule. Checking 'Eveyrone Else' rule now.")
+            expect(spy_logger).to have_received(:log).once
+                            .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule 'Everyone Else'.")
+          end
+        end
+      end
+    end
+
+    describe 'when the user is not bucketed into any targeting rules' do
+      it 'should try to bucket the user into the "Everyone Else" rule' do
+        feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
+        rollout = config.rollout_id_map[feature_flag['rolloutId']]
+        everyone_else_experiment = rollout['experiments'][2]
+        expected_variation = everyone_else_experiment['variations'][0]
+
+        allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(false)
+        allow(decision_service.bucketer).to receive(:bucket)
+                                              .with(everyone_else_experiment, user_id)
+                                              .and_return(expected_variation)
+
+        expect(decision_service.get_variation_for_feature_rollout(feature_flag, user_id, user_attributes)).to eq(expected_variation)
+
+        # verify we tried to bucket in all targeting rules except for the everyone else rule
+        expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
+                        .with(config, rollout['experiments'][0], user_attributes)
+        expect(Optimizely::Audience).to have_received(:user_in_experiment?)
+                        .with(config, rollout['experiments'][1], user_attributes)
+        expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+                        .with(config, rollout['experiments'][2], user_attributes)
+
+
+        # verify log messages
+        expect(spy_logger).to have_received(:log).once
+                        .with(Logger::DEBUG, "User 'user_1' does not meet the conditions to be in experiment '177770'.")
+        expect(spy_logger).to have_received(:log).once
+                        .with(Logger::DEBUG, "User 'user_1' does not meet the conditions to be in experiment '177772'.")
+        expect(spy_logger).to have_received(:log).once
+                        .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule 'Everyone Else'.")
+      end
+    end
+  end
+
+  describe '#get_variation_for_feature' do
+    user_attributes = {}
+    user_id = 'user_1'
+
+    describe 'when the user is bucketed into the feature experiment' do
+      it 'should return the bucketed experiment and variation' do
+        feature_flag = config.feature_flag_key_map['string_single_variable_feature']
+        expected_experiment = config.experiment_id_map[feature_flag['experimentIds'][0]]
+        expected_variation = expected_experiment['variations'][0]
+        expected_decision = {
+          'experiment' => expected_experiment,
+          'variation' => expected_variation
+        }
+        allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(expected_decision)
+
+        expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_decision)
+      end
+    end
+
+    describe 'when then user is not bucketed into the feature experiment' do
+      describe 'and the user is bucketed into the feature rollout' do
+        it 'should return the bucketed variation and nil experiment' do
+          feature_flag = config.feature_flag_key_map['string_single_variable_feature']
+          rollout = config.rollout_id_map[feature_flag['rolloutId']]
+          expected_variation = rollout['experiments'][0]['variations'][0]
+          expected_decision = {
+            'experiment' => nil,
+            'variation' => expected_variation
+          }
+          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
+          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_variation)
+
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(expected_decision)
+          expect(spy_logger).to have_received(:log).once
+                        .with(Logger::INFO, "User 'user_1' is in the rollout for feature flag 'string_single_variable_feature'.")
+        end
+      end
+
+      describe 'and the user is not bucketed into the feature rollout' do
+        it 'should log a message and return nil' do
+          feature_flag = config.feature_flag_key_map['string_single_variable_feature']
+          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
+          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(nil)
+
+          expect(decision_service.get_variation_for_feature(feature_flag, user_id, user_attributes)).to eq(nil)
+          expect(spy_logger).to have_received(:log).once
+                        .with(Logger::INFO, "User 'user_1' is not in the rollout for feature flag 'string_single_variable_feature'.")
         end
       end
     end

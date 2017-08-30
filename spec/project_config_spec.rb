@@ -43,7 +43,8 @@ describe Optimizely::ProjectConfig do
       }
 
       expected_audience_id_map = {
-        '11154' => config_body['audiences'][0]
+        '11154' => config_body['audiences'][0],
+        '11155' => config_body['audiences'][1]
       }
 
       expected_event_key_map = {
@@ -183,7 +184,7 @@ describe Optimizely::ProjectConfig do
           }
         },
         '177772' => {
-            '177773' => {
+          '177773' => {
             'id' => '177773',
             'key' => '177773',
             'variables' => [
@@ -195,9 +196,27 @@ describe Optimizely::ProjectConfig do
           }
         },
         '177774' => {
-            '177775' => {
+          '177775' => {
             'id' => '177775',
             'key' => '177775',
+          }
+        },
+        '177776' => {
+          '177778' => {
+            'id' => '177778',
+            'key' => '177778',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'false'
+              }
+            ]
+          }
+        },
+        '177779' => {
+          '177780' => {
+            'id' => '177780',
+            'key' => '177780',
           }
         }
       }
@@ -320,7 +339,7 @@ describe Optimizely::ProjectConfig do
           }
         },
         '177772' => {
-            '177773' => {
+          '177773' => {
             'id' => '177773',
             'key' => '177773',
             'variables' => [
@@ -332,9 +351,27 @@ describe Optimizely::ProjectConfig do
           }
         },
         '177774' => {
-            '177775' => {
+          '177775' => {
             'id' => '177775',
             'key' => '177775',
+          }
+        },
+        '177776' => {
+          '177778' => {
+            'id' => '177778',
+            'key' => '177778',
+            'variables' => [
+              {
+                'id' => '155556',
+                'value' => 'false'
+              }
+            ]
+          }
+        },
+        '177779' => {
+          '177780' => {
+            'id' => '177780',
+            'key' => '177780',
           }
         }
       }
@@ -437,6 +474,12 @@ describe Optimizely::ProjectConfig do
             'id' => '155556',
             'value' => 'false'
           }
+        },
+        '177778' => {
+          '155556' =>{
+            'id' => '155556',
+            'value' => 'false'
+          }
         }
       }
 
@@ -448,7 +491,9 @@ describe Optimizely::ProjectConfig do
       expected_rollout_experiment_id_map = {
         '177770' => config_body['rollouts'][0]['experiments'][0],
         '177772' => config_body['rollouts'][0]['experiments'][1],
+        '177776' => config_body['rollouts'][0]['experiments'][2],
         '177774' => config_body['rollouts'][1]['experiments'][0],
+        '177779' => config_body['rollouts'][1]['experiments'][1],
       }
 
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)

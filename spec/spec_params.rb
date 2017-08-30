@@ -222,6 +222,11 @@ module OptimizelySpec
       'conditions' => '["and", ["or", ["or", '\
                       '{"name": "browser_type", "type": "custom_attribute", "value": "firefox"}]]]',
       'id' => '11154'
+    }, {
+      'name' => 'Chrome users',
+      'conditions' => '["and", ["or", ["or", '\
+                      '{"name": "browser_type", "type": "custom_attribute", "value": "chrome"}]]]',
+      'id' => '11155'
     }],
     'groups' => [{
       'id' => '101',
@@ -473,7 +478,7 @@ module OptimizelySpec
         'key' => '177772',
         'status' => 'Running',
         'layerId' => '166660',
-        'audienceIds' => [],
+        'audienceIds' => ['11155'],
         'variations' => [{
           'id' => '177773',
           'key' => '177773',
@@ -488,6 +493,26 @@ module OptimizelySpec
           'entityId' => '177773',
           'endOfRange' => 10000
         }]
+      }, {
+        'id' => '177776',
+        'key' => '177776',
+        'status' => 'Running',
+        'layerId' => '166660',
+        'audienceIds' => [],
+        'variations' => [{
+          'id' => '177778',
+          'key' => '177778',
+          'variables' => [
+            {
+              'id' => '155556',
+              'value' => 'false'
+            }
+          ]
+        }],
+        'trafficAllocation' => [{
+          'entityId' => '177778',
+          'endOfRange' => 10000
+        }]
       }]
     }, {
       'id' => '166661',
@@ -497,13 +522,27 @@ module OptimizelySpec
         'key' => '177774',
         'status' => 'Running',
         'layerId' => '166661',
-        'audienceIds' => [],
+        'audienceIds' => ['11154'],
         'variations' => [{
           'id' => '177775',
           'key' => '177775'
         }],
         'trafficAllocation' => [{
           'entityId' => '177775',
+          'endOfRange' => 1500
+        }]
+      }, {
+        'id' => '177779',
+        'key' => '177779',
+        'status' => 'Running',
+        'layerId' => '166661',
+        'audienceIds' => [],
+        'variations' => [{
+          'id' => '177780',
+          'key' => '177780'
+        }],
+        'trafficAllocation' => [{
+          'entityId' => '177780',
           'endOfRange' => 1500
         }]
       }]

@@ -101,12 +101,31 @@ module Optimizely
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
       decision = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
-      return decision
+      unless decision.nil?
+        return decision
+      end
 
-      # @TODO(mng) next check if the user feature being rolled out and whether the user is part of the rollout
+      variation = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
+      feature_flag_key = feature_flag['key']
+      if variation
+        @config.logger.log(
+          Logger::INFO,
+          "User '#{user_id}' is in the rollout for feature flag '#{feature_flag_key}'."
+        )
+        # return decision with nil experiment so we don't track impressions for it
+        return {
+          'experiment' => nil,
+          'variation' => variation
+        }
+      else
+        @config.logger.log(
+          Logger::INFO,
+          "User '#{user_id}' is not in the rollout for feature flag '#{feature_flag_key}'."
+        )
+      end
+
+      return nil
     end
-
-    private
 
     def get_variation_for_feature_experiment(feature_flag, user_id, attributes = nil)
       # Gets the variation the user is bucketed into for the feature flag's experiment
@@ -177,6 +196,90 @@ module Optimizely
 
       return nil
     end
+
+    def get_variation_for_feature_rollout(feature_flag, user_id, attributes = nil)
+      # Determine which variation the user is in for a given rollout.
+      # Returns the variation of the first experiment the user qualifies for.
+      #
+      # feature_flag - The feature flag the user wants to access
+      # user_id - String ID for the user
+      # attributes - Hash representing user attributes
+      #
+      # Returns the variation the user is bucketed into or nil if not bucketed into any of the
+
+      rollout_id = feature_flag['rolloutId']
+      if rollout_id.nil? or rollout_id.empty?
+        feature_flag_key = feature_flag['key']
+        @config.logger.log(
+          Logger::DEBUG,
+          "Feature flag '#{feature_flag_key}' is not part of a rollout."
+        )
+        return nil
+      end
+
+      rollout = @config.get_rollout_from_id(rollout_id)
+      unless rollout.nil? or rollout['experiments'].empty?
+        rollout_experiments = rollout['experiments']
+        number_of_rules = rollout_experiments.length - 1
+
+        # Go through each experiment in order and try to get the variation for the user
+        for index in (0...number_of_rules)
+          experiment = rollout_experiments[index]
+          experiment_key = experiment['key']
+
+          # Check that user meets audience conditions for targeting rule
+          unless Audience.user_in_experiment?(@config, experiment, attributes)
+            @config.logger.log(
+              Logger::DEBUG,
+              "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
+            )
+            # move onto the next targeting rule
+            next
+          end
+
+          @config.logger.log(
+            Logger::DEBUG,
+            "User '#{user_id}' meets conditions for targeting rule '#{index + 1}'."
+          )
+          variation = @bucketer.bucket(experiment, user_id)
+          unless variation.nil?
+            variation_key = variation['key']
+            @config.logger.log(
+              Logger::DEBUG,
+              "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
+            )
+            return variation
+          end
+
+          # User failed traffic allocation, jump to Everyone Else rule
+          @config.logger.log(
+            Logger::DEBUG,
+            "User '#{user_id}' is not in the traffic group for the targeting rule. Checking 'Eveyrone Else' rule now."
+          )
+          break
+        end
+
+        # Evalute the "Everyone Else" rule, which is the last rule.
+        everyone_else_experiment = rollout_experiments[number_of_rules]
+        variation = @bucketer.bucket(everyone_else_experiment, user_id)
+        unless variation.nil?
+          @config.logger.log(
+            Logger::DEBUG,
+            "User '#{user_id}' meets conditions for targeting rule 'Everyone Else'."
+          )
+          return variation
+        end
+
+        @config.logger.log(
+          Logger::DEBUG,
+          "User '#{user_id}' does not meet conditions for targeting rule 'Everyone Else'."
+        )
+      end
+
+      return nil
+    end
+
+    private
 
     def get_forced_variation_id(experiment_key, user_id)
       # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
