@@ -303,6 +303,18 @@ module Optimizely
       nil
     end
 
+    def get_rollout_from_id(rollout_id)
+      # Retrieves the rollout with the given ID
+      #
+      # rollout_id - String rollout ID
+      #
+      # Returns the rollout if found, otherwise nil
+      rollout = @rollout_id_map[rollout_id]
+      return rollout if rollout
+      @logger.log Logger::ERROR, "Rollout with ID '#{rollout_id}' is not in the datafile."
+      nil
+    end
+
     private
 
     def generate_key_map(array, key)
