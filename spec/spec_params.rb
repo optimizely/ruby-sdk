@@ -452,7 +452,6 @@ module OptimizelySpec
     }],
     'rollouts' => [{
       'id' => '166660',
-      'policy' => 'rollout',
       'experiments' => [{
         'id' => '177770',
         'key' => '177770',
@@ -516,7 +515,6 @@ module OptimizelySpec
       }]
     }, {
       'id' => '166661',
-      'policy' => 'rollout',
       'experiments' => [{
         'id' => '177774',
         'key' => '177774',
@@ -525,7 +523,8 @@ module OptimizelySpec
         'audienceIds' => ['11154'],
         'variations' => [{
           'id' => '177775',
-          'key' => '177775'
+          'key' => '177775',
+          'variables' => []
         }],
         'trafficAllocation' => [{
           'entityId' => '177775',
@@ -539,7 +538,8 @@ module OptimizelySpec
         'audienceIds' => [],
         'variations' => [{
           'id' => '177780',
-          'key' => '177780'
+          'key' => '177780',
+          'variables' => []
         }],
         'trafficAllocation' => [{
           'entityId' => '177780',

@@ -298,6 +298,13 @@ module Optimizely
           'revision'
         ]
       }
+
+      VARIABLE_TYPES = {
+        'BOOLEAN' => 'boolean',
+        'DOUBLE' => 'double',
+        'INTEGER' => 'integer',
+        'STRING' => 'string'
+      }
     end
   end
 end

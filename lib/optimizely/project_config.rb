@@ -48,6 +48,7 @@ module Optimizely
     attr_reader :experiment_id_map
     attr_reader :experiment_key_map
     attr_reader :feature_flag_key_map
+    attr_reader :feature_variable_key_map
     attr_reader :group_key_map
     attr_reader :rollout_id_map
     attr_reader :rollout_experiment_id_map
@@ -129,6 +130,10 @@ module Optimizely
         end
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
+      @feature_variable_key_map = {}
+      @feature_flag_key_map.each do |key, feature_flag|
+        @feature_variable_key_map[key] = generate_key_map(feature_flag['variables'], 'key')
+      end
       @parsing_succeeded = true
     end
 
@@ -300,6 +305,20 @@ module Optimizely
       feature_flag = @feature_flag_key_map[feature_flag_key]
       return feature_flag if feature_flag
       @logger.log Logger::ERROR, "Feature flag key '#{feature_flag_key}' is not in datafile."
+      nil
+    end
+
+    def get_feature_variable(feature_flag, variable_key)
+      # Retrieves the variable with the given key for the given feature
+      #
+      # feature_flag - The feature flag for which we are retrieving the variable
+      # variable_key - String variable key
+      #
+      # Returns variable if found, otherwise nil
+      feature_flag_key = feature_flag['key']
+      variable = @feature_variable_key_map[feature_flag_key][variable_key]
+      return variable if variable
+      @logger.log Logger::ERROR, "No feature variable was found for key '#{variable_key}' in feature flag '#{feature_flag_key}'."
       nil
     end
 
