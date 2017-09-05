@@ -60,6 +60,8 @@ describe Optimizely::ProjectConfig do
         'test_experiment_with_audience' => config_body['experiments'][2],
         'test_experiment_multivariate' => config_body['experiments'][3],
         'test_experiment_with_feature_rollout' => config_body['experiments'][4],
+        'test_experiment_double_feature' => config_body['experiments'][5],
+        'test_experiment_integer_feature' => config_body['experiments'][6],
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
@@ -106,6 +108,14 @@ describe Optimizely::ProjectConfig do
         'test_experiment_with_feature_rollout' => {
           '122236' => config_body['experiments'][4]['variations'][0],
           '122237' => config_body['experiments'][4]['variations'][1]
+        },
+        'test_experiment_double_feature' => {
+          '122239' => config_body['experiments'][5]['variations'][0],
+          '122240' => config_body['experiments'][5]['variations'][1]
+        },
+        'test_experiment_integer_feature' => {
+          '122242' => config_body['experiments'][6]['variations'][0],
+          '122243' => config_body['experiments'][6]['variations'][1]
         },
         'group1_exp1' => {
           '130001' => {
@@ -264,6 +274,14 @@ describe Optimizely::ProjectConfig do
           'control' => config_body['experiments'][4]['variations'][0],
           'variation' => config_body['experiments'][4]['variations'][1]
         },
+        'test_experiment_double_feature' => {
+          'control' => config_body['experiments'][5]['variations'][0],
+          'variation' => config_body['experiments'][5]['variations'][1],
+        },
+        'test_experiment_integer_feature' => {
+          'control' => config_body['experiments'][6]['variations'][0],
+          'variation' => config_body['experiments'][6]['variations'][1],
+        },
         'group1_exp1' => {
           'g1_e1_v1' => {
             'key' => 'g1_e1_v1',
@@ -387,7 +405,8 @@ describe Optimizely::ProjectConfig do
         'boolean_single_variable_feature' => config_body['featureFlags'][3],
         'string_single_variable_feature' => config_body['featureFlags'][4],
         'multi_variate_feature' => config_body['featureFlags'][5],
-        'mutex_group_feature' => config_body['featureFlags'][6]
+        'mutex_group_feature' => config_body['featureFlags'][6],
+        'empty_feature' => config_body['featureFlags'][7]
       }
 
       expected_feature_variable_key_map = {
@@ -445,7 +464,8 @@ describe Optimizely::ProjectConfig do
             'type'=> 'string',
             'defaultValue'=> 'null'
           }
-        }
+        },
+        'empty_feature' => {}
       }
 
       expected_variation_id_to_variable_usage_map = {
@@ -499,6 +519,30 @@ describe Optimizely::ProjectConfig do
           '155558' => {
             'id' => '155558',
             'value' => 'cta_2'
+          }
+        },
+        '122239' => {
+          '155551' => {
+            'id' => '155551',
+            'value' => '42.42'
+          }
+        },
+        '122240' => {
+          '155551' => {
+            'id' => '155551',
+            'value' => '13.37'
+          }
+        },
+        '122242' => {
+          '155553' => {
+            'id' => '155553',
+            'value' => '42'
+          }
+        },
+        '122243' => {
+          '155553' => {
+            'id' => '155553',
+            'value' => '13'
           }
         },
         '130001' => {

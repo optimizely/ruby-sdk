@@ -851,4 +851,84 @@ describe 'OptimizelyV2' do
       end
     end
   end
+
+  describe '#get_feature_variable_boolean' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return the variable value for the variation for the user is bucketed into' do
+      boolean_feature = project_instance.config.feature_flag_key_map['boolean_single_variable_feature']
+      rollout = project_instance.config.rollout_id_map[boolean_feature['rolloutId']]
+      variation_to_return = rollout['experiments'][0]['variations'][0]
+      decision_to_return = {
+        'experiment' => nil,
+        'variation' => variation_to_return
+      }
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
+        .to eq(true)
+
+      expect(spy_logger).to have_received(:log).once
+      expect(spy_logger).to have_received(:log).once
+        .with(
+          Logger::INFO,
+          "Got variable value 'true' for variable 'boolean_variable' of feature flag 'boolean_single_variable_feature'."
+        )
+    end
+  end
+
+  describe '#get_feature_variable_double' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return the variable value for the variation for the user is bucketed into' do
+      double_feature = project_instance.config.feature_flag_key_map['double_single_variable_feature']
+      experiment_to_return = project_instance.config.experiment_id_map[double_feature['experimentIds'][0]]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = {
+        'experiment' => experiment_to_return,
+        'variation' => variation_to_return
+      }
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
+        .to eq(42.42)
+
+      expect(spy_logger).to have_received(:log).once
+      expect(spy_logger).to have_received(:log).once
+        .with(
+          Logger::INFO,
+          "Got variable value '42.42' for variable 'double_variable' of feature flag 'double_single_variable_feature'."
+        )
+    end
+  end
+
+  describe '#get_feature_variable_integer' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return the variable value for the variation for the user is bucketed into' do
+      integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = {
+        'experiment' => experiment_to_return,
+        'variation' => variation_to_return
+      }
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
+        .to eq(42)
+
+      expect(spy_logger).to have_received(:log).once
+      expect(spy_logger).to have_received(:log).once
+        .with(
+          Logger::INFO,
+          "Got variable value '42' for variable 'integer_variable' of feature flag 'integer_single_variable_feature'."
+        )
+    end
+  end
 end

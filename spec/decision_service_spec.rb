@@ -269,11 +269,11 @@ describe Optimizely::DecisionService do
     describe 'when the feature flag\'s experiment ids array is empty' do
       it 'should return nil and log a message' do
         user_attributes = {}
-        feature_flag = config.feature_flag_key_map['double_single_variable_feature']
+        feature_flag = config.feature_flag_key_map['empty_feature']
         expect(decision_service.get_variation_for_feature_experiment(feature_flag, 'user_1', user_attributes)).to eq(nil)
 
         expect(spy_logger).to have_received(:log).once
-                          .with(Logger::DEBUG, "The feature flag 'double_single_variable_feature' is not used in any experiments.")
+                          .with(Logger::DEBUG, "The feature flag 'empty_feature' is not used in any experiments.")
       end
     end
 

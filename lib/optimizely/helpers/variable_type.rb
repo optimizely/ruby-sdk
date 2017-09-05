@@ -36,13 +36,13 @@ module Optimizely
           begin
             return_value = Float(value)
           rescue => e
-            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}'.")
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}': #{e.message}.")
           end
         when "integer"
           begin
             return_value = Integer(value)
           rescue => e
-            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}'.")
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}': #{e.message}.")
           end
         else
           # default case is string

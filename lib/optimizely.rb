@@ -261,6 +261,72 @@ module Optimizely
       return variable_value
     end
 
+    def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Boolean value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the boolean variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["BOOLEAN"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
+    def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Double value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the double variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["DOUBLE"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
+    def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Integer value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the integer variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["INTEGER"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
     private
 
     def get_feature_variable_for_type(feature_flag_key, variable_key, variable_type, user_id, attributes = nil)

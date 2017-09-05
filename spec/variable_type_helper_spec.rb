@@ -50,18 +50,18 @@ describe 'VariableTypeHelper' do
       expect(Optimizely::Helpers::VariableType::cast_value_to_type('not a double', 'double', spy_logger)).to eq(nil)
       expect(Optimizely::Helpers::VariableType::cast_value_to_type('false', 'double', spy_logger)).to eq(nil)
       expect(spy_logger).to have_received(:log)
-                      .once.with(Logger::ERROR, "Unable to cast variable value 'not a double' to type 'double'.")
+                      .once.with(Logger::ERROR, "Unable to cast variable value 'not a double' to type 'double': invalid value for Float(): \"not a double\".")
       expect(spy_logger).to have_received(:log)
-                      .once.with(Logger::ERROR, "Unable to cast variable value 'false' to type 'double'.")
+                      .once.with(Logger::ERROR, "Unable to cast variable value 'false' to type 'double': invalid value for Float(): \"false\".")
     end
 
     it 'should return nil if cannot cast value to integer' do
       expect(Optimizely::Helpers::VariableType::cast_value_to_type('not an integer', 'integer', spy_logger)).to eq(nil)
       expect(Optimizely::Helpers::VariableType::cast_value_to_type('13.37', 'integer', spy_logger)).to eq(nil)
       expect(spy_logger).to have_received(:log)
-                      .once.with(Logger::ERROR, "Unable to cast variable value 'not an integer' to type 'integer'.")
+                      .once.with(Logger::ERROR, "Unable to cast variable value 'not an integer' to type 'integer': invalid value for Integer(): \"not an integer\".")
       expect(spy_logger).to have_received(:log)
-                      .once.with(Logger::ERROR, "Unable to cast variable value '13.37' to type 'integer'.")
+                      .once.with(Logger::ERROR, "Unable to cast variable value '13.37' to type 'integer': invalid value for Integer(): \"13.37\".")
     end
   end
 end
