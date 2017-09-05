@@ -60,6 +60,8 @@ describe Optimizely::ProjectConfig do
         'test_experiment_with_audience' => config_body['experiments'][2],
         'test_experiment_multivariate' => config_body['experiments'][3],
         'test_experiment_with_feature_rollout' => config_body['experiments'][4],
+        'test_experiment_double_feature' => config_body['experiments'][5],
+        'test_experiment_integer_feature' => config_body['experiments'][6],
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
@@ -106,6 +108,14 @@ describe Optimizely::ProjectConfig do
         'test_experiment_with_feature_rollout' => {
           '122236' => config_body['experiments'][4]['variations'][0],
           '122237' => config_body['experiments'][4]['variations'][1]
+        },
+        'test_experiment_double_feature' => {
+          '122239' => config_body['experiments'][5]['variations'][0],
+          '122240' => config_body['experiments'][5]['variations'][1]
+        },
+        'test_experiment_integer_feature' => {
+          '122242' => config_body['experiments'][6]['variations'][0],
+          '122243' => config_body['experiments'][6]['variations'][1]
         },
         'group1_exp1' => {
           '130001' => {
@@ -199,6 +209,7 @@ describe Optimizely::ProjectConfig do
           '177775' => {
             'id' => '177775',
             'key' => '177775',
+            'variables' => []
           }
         },
         '177776' => {
@@ -217,6 +228,7 @@ describe Optimizely::ProjectConfig do
           '177780' => {
             'id' => '177780',
             'key' => '177780',
+            'variables' => []
           }
         }
       }
@@ -261,6 +273,14 @@ describe Optimizely::ProjectConfig do
         'test_experiment_with_feature_rollout' => {
           'control' => config_body['experiments'][4]['variations'][0],
           'variation' => config_body['experiments'][4]['variations'][1]
+        },
+        'test_experiment_double_feature' => {
+          'control' => config_body['experiments'][5]['variations'][0],
+          'variation' => config_body['experiments'][5]['variations'][1],
+        },
+        'test_experiment_integer_feature' => {
+          'control' => config_body['experiments'][6]['variations'][0],
+          'variation' => config_body['experiments'][6]['variations'][1],
         },
         'group1_exp1' => {
           'g1_e1_v1' => {
@@ -354,6 +374,7 @@ describe Optimizely::ProjectConfig do
           '177775' => {
             'id' => '177775',
             'key' => '177775',
+            'variables' => []
           }
         },
         '177776' => {
@@ -372,6 +393,7 @@ describe Optimizely::ProjectConfig do
           '177780' => {
             'id' => '177780',
             'key' => '177780',
+            'variables' => []
           }
         }
       }
@@ -383,7 +405,67 @@ describe Optimizely::ProjectConfig do
         'boolean_single_variable_feature' => config_body['featureFlags'][3],
         'string_single_variable_feature' => config_body['featureFlags'][4],
         'multi_variate_feature' => config_body['featureFlags'][5],
-        'mutex_group_feature' => config_body['featureFlags'][6]
+        'mutex_group_feature' => config_body['featureFlags'][6],
+        'empty_feature' => config_body['featureFlags'][7]
+      }
+
+      expected_feature_variable_key_map = {
+        'boolean_feature' => {},
+        'double_single_variable_feature' => {
+          'double_variable' => {
+            'id'=> '155551',
+            'key'=> 'double_variable',
+            'type'=> 'double',
+            'defaultValue'=> '14.99'
+          }
+        },
+        'integer_single_variable_feature' => {
+          'integer_variable' => {
+            'id'=> '155553',
+            'key'=> 'integer_variable',
+            'type'=> 'integer',
+            'defaultValue'=> '7'
+          }
+        },
+        'boolean_single_variable_feature' => {
+          'boolean_variable' => {
+            'id'=> '155556',
+            'key'=> 'boolean_variable',
+            'type'=> 'boolean',
+            'defaultValue'=> 'true'
+          }
+        },
+        'string_single_variable_feature' => {
+            'string_variable' => {
+            'id'=> '155558',
+            'key'=> 'string_variable',
+            'type'=> 'string',
+            'defaultValue'=> 'wingardium leviosa'
+          }
+        },
+        'multi_variate_feature' => {
+          'first_letter' => {
+            'id'=> '155560',
+            'key'=> 'first_letter',
+            'type'=> 'string',
+            'defaultValue'=> 'H'
+          },
+          'rest_of_name' => {
+            'id'=> '155561',
+            'key'=> 'rest_of_name',
+            'type'=> 'string',
+            'defaultValue'=> 'arry'
+          }
+        },
+        'mutex_group_feature' => {
+          'correlating_variation_name' => {
+            'id'=> '155563',
+            'key'=> 'correlating_variation_name',
+            'type'=> 'string',
+            'defaultValue'=> 'null'
+          }
+        },
+        'empty_feature' => {}
       }
 
       expected_variation_id_to_variable_usage_map = {
@@ -439,6 +521,30 @@ describe Optimizely::ProjectConfig do
             'value' => 'cta_2'
           }
         },
+        '122239' => {
+          '155551' => {
+            'id' => '155551',
+            'value' => '42.42'
+          }
+        },
+        '122240' => {
+          '155551' => {
+            'id' => '155551',
+            'value' => '13.37'
+          }
+        },
+        '122242' => {
+          '155553' => {
+            'id' => '155553',
+            'value' => '42'
+          }
+        },
+        '122243' => {
+          '155553' => {
+            'id' => '155553',
+            'value' => '13'
+          }
+        },
         '130001' => {
           '155563' => {
             'id' => '155563',
@@ -475,12 +581,14 @@ describe Optimizely::ProjectConfig do
             'value' => 'false'
           }
         },
+        '177775' => {},
         '177778' => {
           '155556' =>{
             'id' => '155556',
             'value' => 'false'
           }
-        }
+        },
+        '177780' => {}
       }
 
       expected_rollout_id_map = {
@@ -500,9 +608,10 @@ describe Optimizely::ProjectConfig do
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
       expect(project_config.event_key_map).to eq(expected_event_key_map)
       expect(project_config.experiment_key_map).to eq(expected_experiment_key_map)
+      expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
+      expect(project_config.feature_variable_key_map).to eq(expected_feature_variable_key_map)
       expect(project_config.variation_id_map).to eq(expected_variation_id_map)
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
-      expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
@@ -593,6 +702,15 @@ describe Optimizely::ProjectConfig do
         config.get_feature_flag_from_key('totally_invalid_feature_key')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+      end
+    end
+
+    describe 'get_feature_variable' do
+      it 'should log a message when variable with key is not found' do
+        feature_flag = config.feature_flag_key_map['double_single_variable_feature']
+        config.get_feature_variable(feature_flag, 'nonexistent_variable_key')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "No feature variable was found for key 'nonexistent_variable_key' in feature flag 'double_single_variable_feature'.")
       end
     end
   end

@@ -19,8 +19,10 @@ require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
 require_relative 'optimizely/event_dispatcher'
 require_relative 'optimizely/exceptions'
+require_relative 'optimizely/helpers/constants'
 require_relative 'optimizely/helpers/group'
 require_relative 'optimizely/helpers/validator'
+require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/project_config'
 
@@ -237,7 +239,153 @@ module Optimizely
       false
     end
 
+    def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the String value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the string variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["STRING"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
+    def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Boolean value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the boolean variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["BOOLEAN"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
+    def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Double value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the double variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["DOUBLE"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
+    def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
+      # Get the Integer value of the specified variable in the feature flag.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the integer variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES["INTEGER"],
+        user_id,
+        attributes
+      )
+
+      return variable_value
+    end
+
     private
+
+    def get_feature_variable_for_type(feature_flag_key, variable_key, variable_type, user_id, attributes = nil)
+      # Get the variable value for the given feature variable and cast it to the specified type
+      # The default value is returned if the feature flag is not enabled for the user.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # variable_key - String key of variable for which we are getting the string value
+      # variable_type - String requested type for feature variable
+      # user_id - String user ID
+      # attributes - Hash representing visitor attributes and values which need to be recorded.
+      #
+      # Returns the type-casted variable value.
+      # Returns nil if the feature flag or variable are not found.
+
+      feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
+      unless feature_flag
+        @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
+        return nil
+      end
+
+      variable_value = nil
+      variable = @config.get_feature_variable(feature_flag, variable_key)
+      unless variable.nil?
+        variable_value = variable['defaultValue']
+
+        decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+        unless decision
+          @logger.log(Logger::INFO,
+            "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
+        else
+          variation = decision['variation']
+          variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
+          variable_id = variable['id']
+          unless variation_variable_usages.key?(variable_id)
+            variation_key = variation['key']
+            @logger.log(Logger::DEBUG,
+              "Variable '#{variable_key}' is not used in variation '#{variation_key}'. Returning the default variable value '#{variable_value}'."
+            )
+          else
+            variable_value = variation_variable_usages[variable_id]['value']
+            @logger.log(Logger::INFO,
+              "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+          end
+        end
+      end
+
+      unless variable_value.nil?
+        actual_variable_type = variable['type']
+        unless variable_type == actual_variable_type
+          @logger.log(Logger::WARN,
+            "Requested variable type '#{variable_type}' but variable '#{variable_key}' is of type '#{actual_variable_type}'.")
+        end
+
+        variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
+      end
+
+      return variable_value
+    end
 
     def get_valid_experiments_for_event(event_key, user_id, attributes)
       # Get the experiments that we should be tracking for the given event.
