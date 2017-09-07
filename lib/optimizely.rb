@@ -139,7 +139,10 @@ module Optimizely
       variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
 
       unless variation_id.nil?
-        return @config.get_variation_key_from_id(experiment_key, variation_id)
+        variation = @config.get_variation_from_id(experiment_key, variation_id)
+        if variation
+          return variation['key']
+        end
       end
       nil
     end
@@ -361,7 +364,7 @@ module Optimizely
           variation = decision['variation']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
-          unless variation_variable_usages.key?(variable_id)
+          unless variation_variable_usages and variation_variable_usages.key?(variable_id)
             variation_key = variation['key']
             @logger.log(Logger::DEBUG,
               "Variable '#{variable_key}' is not used in variation '#{variation_key}'. Returning the default variable value '#{variable_value}'."

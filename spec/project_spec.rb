@@ -20,7 +20,7 @@ require 'optimizely/helpers/validator'
 require 'optimizely/exceptions'
 require 'optimizely/version'
 
-describe 'OptimizelyV2' do
+describe 'Optimizely' do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
@@ -136,7 +136,8 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                        .with('test_experiment')
@@ -175,7 +176,8 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('122228')
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
@@ -226,7 +228,8 @@ describe 'OptimizelyV2' do
         }
       }
 
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                         .with('test_experiment')
@@ -237,7 +240,8 @@ describe 'OptimizelyV2' do
     end
 
     it 'should log when an exception has occurred during dispatching the impression event' do
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return('111128')
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Unable to dispatch impression event. Error: RuntimeError")

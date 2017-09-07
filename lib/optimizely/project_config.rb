@@ -202,18 +202,18 @@ module Optimizely
       nil
     end
 
-    def get_variation_key_from_id(experiment_key, variation_id)
-      # Get variation key given experiment key and variation ID
+    def get_variation_from_id(experiment_key, variation_id)
+      # Get variation given experiment key and variation ID
       #
       # experiment_key - Key representing parent experiment of variation
       # variation_id - ID of the variation
       #
-      # Returns key of the variation
+      # Returns the variation or nil if not found
 
       variation_id_map = @variation_id_map[experiment_key]
       if variation_id_map
         variation = variation_id_map[variation_id]
-        return variation['key'] if variation
+        return variation if variation
         @logger.log Logger::ERROR, "Variation id '#{variation_id}' is not in datafile."
         @error_handler.handle_error InvalidVariationError
         return nil

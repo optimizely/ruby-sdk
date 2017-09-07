@@ -41,7 +41,7 @@ module Optimizely
       # experiment - Experiment for which visitor is to be bucketed.
       # user_id - String ID for user.
       #
-      # Returns String variation ID in which visitor with ID user_id has been placed. Nil if no variation.
+      # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
       experiment_id = experiment['id']
@@ -78,12 +78,13 @@ module Optimizely
       traffic_allocations = experiment['trafficAllocation']
       variation_id = find_bucket(user_id, experiment_id, traffic_allocations)
       if variation_id && variation_id != ''
-        variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
+        variation = @config.get_variation_from_id(experiment_key, variation_id)
+        variation_key = variation ? variation['key'] : nil
         @config.logger.log(
           Logger::INFO,
           "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
         )
-        return variation_id
+        return variation
       end
 
       # Handle the case when the traffic range is empty due to sticky bucketing
