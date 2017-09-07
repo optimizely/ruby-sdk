@@ -429,8 +429,6 @@ describe Optimizely::DecisionService do
 
           expect(spy_logger).to have_received(:log).once
                           .with(Logger::DEBUG, "User 'user_1' meets conditions for targeting rule '1'.")
-          expect(spy_logger).to have_received(:log).once
-                          .with(Logger::DEBUG, "User 'user_1' is in variation '177771' of experiment '177770'.")
         end
       end
 
