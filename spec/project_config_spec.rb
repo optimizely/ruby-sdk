@@ -662,14 +662,14 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_variation_key_from_id' do
+    describe 'get_variation_from_id' do
       it 'should log a message when provided experiment key is invalid' do
-        config.get_variation_key_from_id('invalid_key', 'some_variation')
+        config.get_variation_from_id('invalid_key', 'some_variation')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment key 'invalid_key' is not in datafile.")
       end
       it 'should return nil when provided variation key is invalid' do
-        expect(config.get_variation_key_from_id('test_experiment', 'invalid_variation')).to eq(nil)
+        expect(config.get_variation_from_id('test_experiment', 'invalid_variation')).to eq(nil)
       end
     end
 
@@ -738,16 +738,16 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_variation_key_from_id' do
+    describe 'get_variation_from_id' do
       it 'should raise an error when provided experiment key is invalid' do
-        expect { config.get_variation_key_from_id('invalid_key', 'some_variation') }
+        expect { config.get_variation_from_id('invalid_key', 'some_variation') }
                .to raise_error(Optimizely::InvalidExperimentError)
       end
     end
 
-    describe 'get_variation_key_from_id' do
+    describe 'get_variation_from_id' do
       it 'should raise an error when provided variation key is invalid' do
-        expect { config.get_variation_key_from_id('test_experiment', 'invalid_variation') }
+        expect { config.get_variation_from_id('test_experiment', 'invalid_variation') }
                .to raise_error(Optimizely::InvalidVariationError)
       end
     end

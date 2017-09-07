@@ -83,7 +83,8 @@ module Optimizely
       end
 
       # Bucket normally
-      variation_id = @bucketer.bucket(experiment, user_id)
+      variation = @bucketer.bucket(experiment, user_id)
+      variation_id = variation ? variation['id'] : nil
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id)
@@ -244,10 +245,6 @@ module Optimizely
           variation = @bucketer.bucket(experiment, user_id)
           unless variation.nil?
             variation_key = variation['key']
-            @config.logger.log(
-              Logger::DEBUG,
-              "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
-            )
             return variation
           end
 

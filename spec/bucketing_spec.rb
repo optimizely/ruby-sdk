@@ -36,10 +36,12 @@ describe Optimizely::Bucketer do
     experiment = config.get_experiment_from_key('test_experiment')
 
     # Variation 1
-    expect(bucketer.bucket(experiment, 'test_user')).to eq('111128')
+    expected_variation_1 = config.get_variation_from_id('test_experiment', '111128')
+    expect(bucketer.bucket(experiment, 'test_user')).to eq(expected_variation_1)
 
     # Variation 2
-    expect(bucketer.bucket(experiment, 'test_user')).to eq('111129')
+    expected_variation_2 = config.get_variation_from_id('test_experiment','111129')
+    expect(bucketer.bucket(experiment, 'test_user')).to eq(expected_variation_2)
 
     # No matching variation
     expect(bucketer.bucket(experiment, 'test_user')).to be_nil
@@ -58,7 +60,8 @@ describe Optimizely::Bucketer do
     expect(bucketer).to receive(:generate_bucket_value).twice.and_return(3000)
 
     experiment = config.get_experiment_from_key('group1_exp1')
-    expect(bucketer.bucket(experiment, 'test_user')).to eq('130001')
+    expected_variation = config.get_variation_from_id('group1_exp1','130001')
+    expect(bucketer.bucket(experiment, 'test_user')).to eq(expected_variation)
     expect(spy_logger).to have_received(:log).exactly(4).times
     expect(spy_logger).to have_received(:log).twice
                       .with(Logger::DEBUG, "Assigned bucket 3000 to user 'test_user'.")
@@ -92,7 +95,8 @@ describe Optimizely::Bucketer do
     expect(bucketer).to receive(:generate_bucket_value).once.and_return(3000)
 
     experiment = config.get_experiment_from_key('group2_exp1')
-    expect(bucketer.bucket(experiment, 'test_user')).to eq('144443')
+    expected_variation = config.get_variation_from_id('group2_exp1','144443')
+    expect(bucketer.bucket(experiment, 'test_user')).to eq(expected_variation)
     expect(spy_logger).to have_received(:log).twice
     expect(spy_logger).to have_received(:log)
       .with(Logger::DEBUG, "Assigned bucket 3000 to user 'test_user'.")
