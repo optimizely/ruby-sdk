@@ -223,7 +223,6 @@ module Optimizely
         rollout_experiments = rollout['experiments']
         number_of_rules = rollout_experiments.length - 1
 
-        variation = nil
         # Go through each experiment in order and try to get the variation for the user
         for index in (0...number_of_rules)
           experiment = rollout_experiments[index]
