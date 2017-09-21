@@ -169,7 +169,7 @@ module Optimizely
       return if event_tags.nil?
 
       event_tags.each_pair do |event_tag_key, event_tag_value|
-        next unless !event_tag_value.nil?
+        next if event_tag_value.nil?
 
         event_feature = {
           'name' => event_tag_key,
