@@ -132,9 +132,8 @@ module Optimizely
       return if attributes.nil?
 
       attributes.keys.each do |attribute_key|
-        # Omit falsy attribute values
+        # Omit falsy or nil attribute values
         attribute_value = attributes[attribute_key]
-
         next unless attribute_value
 
         # Skip attributes not in the datafile
