@@ -134,6 +134,7 @@ module Optimizely
       attributes.keys.each do |attribute_key|
         # Omit falsy attribute values
         attribute_value = attributes[attribute_key]
+
         next unless attribute_value
 
         # Skip attributes not in the datafile
@@ -169,7 +170,7 @@ module Optimizely
       return if event_tags.nil?
 
       event_tags.each_pair do |event_tag_key, event_tag_value|
-        next if event_tag_value.nil?
+        next unless !event_tag_value.nil?
 
         event_feature = {
           'name' => event_tag_key,
