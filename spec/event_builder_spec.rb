@@ -122,6 +122,18 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
+  it 'should create a valid V2 Event when create_conversion_event is called when an attribute value is nil' do
+    @expected_conversion_params['userFeatures'] = [
+    ]
+
+    attributes = {'browser_type' => nil}
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', attributes, nil, {'111127' => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
   it 'should create a valid V2 Event when create_conversion_event is called with revenue event tag' do
     @expected_conversion_params['eventMetrics'] = [{
       'name' => 'revenue',
@@ -137,6 +149,24 @@ describe Optimizely::EventBuilder do
     ]
 
     event_tags = {'revenue' => 4200}
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_conversion_event is called when an event tag value is nil' do
+    @expected_conversion_params['eventFeatures'] = [
+      {
+        'name' => 'purchasePrice',
+        'type' => 'custom',
+        'value' => 64.32,
+        'shouldIndex' => false
+      },
+    ]
+
+    event_tags = {'category' => nil,'purchasePrice' => 64.32}
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
