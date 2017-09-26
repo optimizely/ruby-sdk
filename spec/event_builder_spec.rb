@@ -34,246 +34,334 @@ describe Optimizely::EventBuilder do
 
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)
+    allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
 
-    @expected_impression_url = 'https://logx.optimizely.com/log/decision'
+    @expected_endpoint = 'https://logx.optimizely.com/v1/events'
     @expected_impression_params = {
-      'visitorId' => 'test_user',
-      'timestamp' => (time_now.to_f * 1000).to_i,
-      'isGlobalHoldback' => false,
-      'projectId' => '111001',
-      'decision' => {
-        'variationId' => '111128',
-        'experimentId' => '111127',
-        'isLayerHoldback' => false,
-      },
-      'layerId' => '1',
-      'accountId' => '12001',
-      'clientEngine' => 'ruby-sdk',
-      'clientVersion' => Optimizely::VERSION,
-      'userFeatures' => [],
+      account_id: '12001',
+      project_id: '111001',
+      visitors: [{
+        attributes: [],
+        visitor_id: 'test_user',
+        snapshots: [{
+          decisions: [{
+            campaign_id: '1',
+            experiment_id: '111127',
+            variation_id: '111128'
+          }],
+          events: [{
+            entity_id: '1',
+            timestamp: (time_now.to_f * 1000).to_i,
+            uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            key: 'campaign_activated'
+          }]
+        }]
+      }],
+      revision: '42',
+      client_name: Optimizely::CLIENT_ENGINE,
+      client_version: Optimizely::VERSION
+    }
+    @expected_conversion_params = {
+      account_id: '12001',
+      project_id: '111001',
+      visitors: [{
+        attributes: [],
+        visitor_id: 'test_user',
+        snapshots: [{
+          decisions: [{
+            campaign_id: '1',
+            experiment_id: '111127',
+            variation_id: '111128'
+          }],
+          events: [{
+            entity_id: '111095',
+            timestamp: (time_now.to_f * 1000).to_i,
+            uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            key: 'test_event'
+          }]
+        }]
+      }],
+      revision: '42',
+      client_name: Optimizely::CLIENT_ENGINE,
+      client_version: Optimizely::VERSION
     }
 
-    @expected_conversion_url = 'https://logx.optimizely.com/log/event'
-    @expected_conversion_params = {
-      'visitorId' => 'test_user',
-      'timestamp' => (time_now.to_f * 1000).to_i,
-      'isGlobalHoldback' => false,
-      'projectId' => '111001',
-      'accountId' => '12001',
-      'clientEngine' => 'ruby-sdk',
-      'clientVersion' => Optimizely::VERSION,
-      'userFeatures' => [],
-      'eventMetrics' => [],
-      'eventFeatures' => [],
-      'eventName' => 'test_event',
-      'eventEntityId' => '111095',
-      'layerStates' => [{
-        'layerId' => '1',
-        'decision' => {
-          'variationId' => '111128',
-          'experimentId' => '111127',
-          'isLayerHoldback' => false,
-        },
-        'actionTriggered' => true,
-      }],
-    }
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called' do
+  it 'should create valid V2 Event when create_impression_event is called without attributes' do
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', nil)
     expect(impression_event.params).to eq(@expected_impression_params)
-    expect(impression_event.url).to eq(@expected_impression_url)
+    expect(impression_event.url).to eq(@expected_endpoint)
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called with attributes' do
-    @expected_impression_params['userFeatures'] = [{
-      'id' => '111094',
-      'name' => 'browser_type',
-      'type' => 'custom',
-      'value' => 'firefox',
-      'shouldIndex' => true,
+  it 'should create a valid V2 Event when create_impression_event is called with attributes as a string value' do
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox',
     }]
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', {'browser_type' => 'firefox'})
     expect(impression_event.params).to eq(@expected_impression_params)
-    expect(impression_event.url).to eq(@expected_impression_url)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_impression_event is called with attributes as a false value' do
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: false,
+    }]
+
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', {'browser_type' => false})
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_impression_event is called with attributes as a zero value' do
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 0,
+    }]
+
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', {'browser_type' => 0})
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_impression_event is called with attributes is not in the datafile' do
+    @expected_impression_params[:visitors][0][:attributes] = []
+
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', {invalid_attribute: 'sorry_not_sorry'})
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
     expect(impression_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called' do
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with attributes' do
-    @expected_conversion_params['userFeatures'] = [{
-      'id' => '111094',
-      'name' => 'browser_type',
-      'type' => 'custom',
-      'value' => 'firefox',
-      'shouldIndex' => true,
+    @expected_conversion_params[:visitors][0][:attributes] = [{
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox',
     }]
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'}, nil, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
-    expect(conversion_event.http_verb).to eq(:post)
-  end
-
-  it 'should create a valid V2 Event when create_conversion_event is called when an attribute value is nil' do
-    @expected_conversion_params['userFeatures'] = [
-    ]
-
-    attributes = {'browser_type' => nil}
-
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', attributes, nil, {'111127' => '111128'})
-    expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with revenue event tag' do
-    @expected_conversion_params['eventMetrics'] = [{
-      'name' => 'revenue',
-      'value' => 4200,
-    }]
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'revenue',
-        'type' => 'custom',
-        'value' => 4200,
-        'shouldIndex' => false
-      },
-    ]
+    event_tags = { 'revenue' => 4200 }
 
-    event_tags = {'revenue' => 4200}
+    @expected_conversion_params[:visitors][0][:attributes] = []
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      revenue: 4200,
+      tags: event_tags
+    })
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called when an event tag value is nil' do
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'purchasePrice',
-        'type' => 'custom',
-        'value' => 64.32,
-        'shouldIndex' => false
-      },
-    ]
+  it 'should create a valid V2 Event when create_conversion_event is called with invalid revenue event tag' do
+    event_tags = { 'revenue' => '4200' }
 
-    event_tags = {'category' => nil,'purchasePrice' => 64.32}
-
+    @expected_conversion_params[:visitors][0][:attributes] = []
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with revenue event tag' do
-    @expected_conversion_params['eventMetrics'] = []
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'revenue',
-        'type' => 'custom',
-        'value' => "4200",
-        'shouldIndex' => false
-      },
-    ]
+  it 'should create a valid V2 Event when create_conversion_event is called with invalid revenue event tag' do
+    event_tags = { 'revenue' => 'invalid revenue' }
 
-    event_tags = {'revenue' => '4200'}
+    @expected_conversion_params[:visitors][0][:attributes] = []
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with non-revenue event tag' do
+    event_tags = { 'non-revenue' => 4200 }
+
+    @expected_conversion_params[:visitors][0][:attributes] = []
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with revenue and non-revenue event tags' do
+    event_tags = { 
+      'revenue' => 4200,
+      'non-revenue' => 4200
+    }
+
+    @expected_conversion_params[:visitors][0][:attributes] = []
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      revenue: 4200,
+      tags: event_tags
+    })
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with boolean event tag' do
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'boolean_tag',
-        'type' => 'custom',
-        'value' => false,
-        'shouldIndex' => false
-      },
-    ]
-
     event_tags = {
       'boolean_tag' => false,
       'nil_tag' => nil
     }
 
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127'  => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with string event tag' do
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'string_tag',
-        'type' => 'custom',
-        'value' => 'iamstring',
-        'shouldIndex' => false
-      },
-    ]
-
     event_tags = {
       'string_tag' => 'iamstring',
     }
 
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with integer event tag' do
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'integer_tag',
-        'type' => 'custom',
-        'value' => 42,
-        'shouldIndex' => false
-      },
-    ]
-
     event_tags ={
       'integer_tag' => 42,
     }
 
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
   it 'should create a valid V2 Event when create_conversion_event is called with float event tag' do
-    @expected_conversion_params['eventFeatures'] = [
-      {
-        'name' => 'float_tag',
-        'type' => 'custom',
-        'value' => 42.01,
-        'shouldIndex' => false
-      },
-    ]
-
     event_tags = {
       'float_tag' => 42.01,
     }
 
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127'  => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_conversion_url)
+    expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with value event tag' do
+    event_tags = {
+      'value' => '13.37',
+    }
+
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      value: 13.37,
+      tags: event_tags
+    })
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127'  => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with invalid value event tag' do
+    event_tags = {
+      'value' => 'invalid value',
+    }
+
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      tags: event_tags
+    })
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags, {'111127'  => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid V2 Event when create_conversion_event is called with attributes and event tags for revenue, value and other tag' do
+    event_tags = {
+      'revenue' => 4200,
+      'value' => 13.37,
+      'other' => 'some value'
+    }
+
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!({
+      revenue: 4200,
+      value: 13.37,
+      tags: event_tags
+    })
+
+    @expected_conversion_params[:visitors][0][:attributes] = [{
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox',
+    }]
+
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'}, event_tags, {'111127'  => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
 end

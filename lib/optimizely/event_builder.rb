@@ -17,6 +17,7 @@ require_relative './audience'
 require_relative './params'
 require_relative './version'
 require_relative '../optimizely/helpers/event_tag_utils'
+require 'securerandom'
 
 module Optimizely
   class Event
@@ -41,198 +42,198 @@ module Optimizely
   end
 
   class BaseEventBuilder
+    CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
+
     attr_reader :config
-    attr_reader :params
 
     def initialize(config)
       @config = config
-      @params = {}
     end
 
     private
 
-    def add_common_params(user_id, attributes)
-      # Add params which are used in both conversion and impression events.
-      #
-      # user_id - ID for user.
-      # attributes - Hash representing user attributes and values which need to be recorded.
+    def get_common_params(user_id, attributes)
+      # Get params which are used in both conversion and impression events.
+      # 
+      # user_id -    +String+ ID for user
+      # attributes - +Hash+ representing user attributes and values which need to be recorded.
+      # 
+      # Returns +Hash+ Common event params
 
-      add_project_id
-      add_account_id
-      add_user_id(user_id)
-      add_attributes(attributes)
-      add_source
-      add_time
-    end
-  end
+      visitor_attributes = []
 
-  class EventBuilder < BaseEventBuilder
-    CONVERSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/event'
-    IMPRESSION_EVENT_ENDPOINT = 'https://logx.optimizely.com/log/decision'
-    POST_HEADERS = { 'Content-Type' => 'application/json' }
+      unless attributes.nil?
 
-    def create_impression_event(experiment, variation_id, user_id, attributes)
-      # Create conversion Event to be sent to the logging endpoint.
-      #
-      # experiment - Experiment for which impression needs to be recorded.
-      # variation_id - ID for variation which would be presented to user.
-      # user_id - ID for user.
-      # attributes - Hash representing user attributes and values which need to be recorded.
-      #
-      # Returns event hash encapsulating the impression event.
-
-      @params = {}
-      add_common_params(user_id, attributes)
-      add_decision(experiment, variation_id)
-      add_attributes(attributes)
-      Event.new(:post, IMPRESSION_EVENT_ENDPOINT, @params, POST_HEADERS)
-    end
-
-    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_variation_map)
-      # Create conversion Event to be sent to the logging endpoint.
-      #
-      # event_key - Event key representing the event which needs to be recorded.
-      # user_id - ID for user.
-      # attributes - Hash representing user attributes and values which need to be recorded.
-      # event_tags - Hash representing metadata associated with the event.
-      # experiment_variation_map - Map of experiment ID to the ID of the variation that the user is bucketed into.
-      #
-      # Returns event hash encapsulating the conversion event.
-
-      @params = {}
-      add_common_params(user_id, attributes)
-      add_conversion_event(event_key)
-      add_event_tags(event_tags)
-      add_layer_states(experiment_variation_map)
-      Event.new(:post, CONVERSION_EVENT_ENDPOINT, @params, POST_HEADERS)
-    end
-
-    private
-
-    def add_common_params(user_id, attributes)
-      super
-      @params['isGlobalHoldback'] = false
-    end
-
-    def add_project_id
-      @params['projectId'] = @config.project_id
-    end
-
-    def add_account_id
-      @params['accountId'] = @config.account_id
-    end
-
-    def add_user_id(user_id)
-      @params['visitorId'] = user_id
-    end
-
-    def add_attributes(attributes)
-      @params['userFeatures'] = []
-
-      return if attributes.nil?
-
-      attributes.keys.each do |attribute_key|
-        # Omit falsy or nil attribute values
+        attributes.keys.each do |attribute_key|
+        # Omit null attribute value
         attribute_value = attributes[attribute_key]
-        next unless attribute_value
+        next if attribute_value.nil?
 
         # Skip attributes not in the datafile
         attribute_id = @config.get_attribute_id(attribute_key)
         next unless attribute_id
 
         feature = {
-          'id' => attribute_id,
-          'name' => attribute_key,
-          'type' => 'custom',
-          'value' => attribute_value,
-          'shouldIndex' => true,
+          entity_id: attribute_id,
+          key: attribute_key,
+          type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+          value: attribute_value
         }
-        @params['userFeatures'].push(feature)
-      end
+
+        visitor_attributes.push(feature)
+        end
+      end 
+
+      common_params = {
+        account_id: @config.account_id,
+        project_id: @config.project_id,
+        visitors: [
+          {
+            attributes: visitor_attributes,
+            snapshots: [],
+            visitor_id: user_id
+          }
+          ],
+          revision: @config.revision,
+          client_name: CLIENT_ENGINE,
+          client_version: VERSION
+        }
+
+      common_params
+    end
+  end
+
+  class EventBuilder < BaseEventBuilder
+    ENDPOINT = 'https://logx.optimizely.com/v1/events'
+    POST_HEADERS = { 'Content-Type' => 'application/json' }
+    ACTIVATE_EVENT_KEY = 'campaign_activated'
+
+    def create_impression_event(experiment, variation_id, user_id, attributes)
+      # Create impression Event to be sent to the logging endpoint.
+      #
+      # experiment -   +Object+ Experiment for which impression needs to be recorded.
+      # variation_id - +String+ ID for variation which would be presented to user.
+      # user_id -      +String+ ID for user.
+      # attributes -   +Hash+ representing user attributes and values which need to be recorded.
+      #
+      # Returns +Event+ encapsulating the impression event.
+
+      event_params = get_common_params(user_id, attributes)
+      impression_params = get_impression_params(experiment, variation_id)
+      event_params[:visitors][0][:snapshots].push(impression_params)
+
+      Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
 
-    def add_decision(experiment, variation_id)
+    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_variation_map)
+      # Create conversion Event to be sent to the logging endpoint.
+      #
+      # event_key -                +String+ Event key representing the event which needs to be recorded.
+      # user_id -                  +String+ ID for user.
+      # attributes -               +Hash+ representing user attributes and values which need to be recorded.
+      # event_tags -               +Hash+ representing metadata associated with the event.
+      # experiment_variation_map - +Map+ of experiment ID to the ID of the variation that the user is bucketed into.
+      #
+      # Returns +Event+ encapsulating the conversion event.
+
+      event_params = get_common_params(user_id, attributes)
+      conversion_params = get_conversion_params(event_key, event_tags, experiment_variation_map)
+      event_params[:visitors][0][:snapshots] = conversion_params;
+      
+      Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
+    end
+
+    private
+
+    def get_impression_params(experiment, variation_id)
+      # Creates object of params specific to impression events
+      #
+      # experiment -   +Hash+ experiment for which impression needs to be recorded
+      # variation_id - +string+ ID for variation which would be presented to user
+      #
+      # Returns +Hash+ Impression event params
+
       experiment_key = experiment['key']
       experiment_id = experiment['id']
-      @params['layerId'] = @config.experiment_key_map[experiment_key]['layerId']
-      @params['decision'] = {
-        'variationId' => variation_id,
-        'experimentId' => experiment_id,
-        'isLayerHoldback' => false,
+
+      impressionEventParams = {
+        decisions: [{
+          campaign_id: @config.experiment_key_map[experiment_key]['layerId'],
+          experiment_id: experiment_id,
+          variation_id: variation_id,
+        }],
+        events: [{
+          entity_id: @config.experiment_key_map[experiment_key]['layerId'],
+          timestamp: get_timestamp(),
+          key: ACTIVATE_EVENT_KEY,
+          uuid: get_uuid()
+        }]
       }
+
+      impressionEventParams;
     end
 
-    def add_event_tags(event_tags)
-      @params['eventFeatures'] ||= []
-      @params['eventMetrics'] ||= []
-
-      return if event_tags.nil?
-
-      event_tags.each_pair do |event_tag_key, event_tag_value|
-        next if event_tag_value.nil?
-
-        event_feature = {
-          'name' => event_tag_key,
-          'type' => 'custom',
-          'value' => event_tag_value,
-          'shouldIndex' => false,
-        }
-        @params['eventFeatures'].push(event_feature)
-
-      end
-
-      event_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
-
-      if event_value
-        event_metric = {
-          'name' => 'revenue',
-          'value' => event_value
-        }
-        @params['eventMetrics'].push(event_metric)
-      end
-
-    end
-
-    def add_conversion_event(event_key)
-      # Add conversion event information to the event.
+    def get_conversion_params(event_key, event_tags, experiment_variation_map)
+      # Creates object of params specific to conversion events
       #
-      # event_key - Event key representing the event which needs to be recorded.
-
-      event_id = @config.event_key_map[event_key]['id']
-      event_name = @config.event_key_map[event_key]['key']
-
-      @params['eventEntityId'] = event_id
-      @params['eventName'] = event_name
-    end
-
-    def add_layer_states(experiments_map)
-      # Add layer states information to the event.
+      # event_key -                +String+ Key representing the event which needs to be recorded
+      # event_tags -               +Hash+ Values associated with the event.
+      # experiment_variation_map - +Hash+ Map of experiment IDs to bucketed variation IDs
       #
-      # experiments_map - Hash with experiment ID as a key and variation ID as a value.
+      # Returns +Hash+ Impression event params
 
-      @params['layerStates'] = []
+      conversionEventParams = []
 
-      experiments_map.each do |experiment_id, variation_id|
-        layer_state = {
-          'layerId' => @config.experiment_id_map[experiment_id]['layerId'],
-          'decision' => {
-            'variationId' => variation_id,
-            'experimentId' => experiment_id,
-            'isLayerHoldback' => false,
-          },
-          'actionTriggered' => true,
+      experiment_variation_map.each do |experiment_id, variation_id|
+
+        single_snapshot = {
+          decisions: [{
+            campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
+            experiment_id: experiment_id,
+            variation_id: variation_id,
+          }],
+          events: [],
         }
-        @params['layerStates'].push(layer_state)
+
+        event_object = {
+          entity_id: @config.event_key_map[event_key]['id'],
+          timestamp: get_timestamp(),
+          uuid: get_uuid(),
+          key: event_key,
+        }
+
+        if event_tags
+          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
+          if revenue_value
+            event_object[:revenue] = revenue_value
+          end
+
+          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags)
+          if numeric_value
+            event_object[:value] = numeric_value
+          end
+
+          event_object[:tags] = event_tags
+        end
+
+        single_snapshot[:events] = [event_object]
+
+        conversionEventParams.push(single_snapshot)
       end
+    
+      conversionEventParams
     end
 
-    def add_source
-      @params['clientEngine'] = 'ruby-sdk'
-      @params['clientVersion'] = VERSION
+    def get_timestamp
+      # Returns +Integer+ Current timestamp
+
+      (Time.now.to_f * 1000).to_i
     end
 
-    def add_time
-      @params['timestamp'] = (Time.now.to_f * 1000).to_i
+    def get_uuid
+      # Returns +String+ Random UUID
+
+      SecureRandom.uuid
     end
   end
 end

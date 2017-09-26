@@ -14,5 +14,8 @@
 #    limitations under the License.
 #
 module Optimizely
-  VERSION = '2.0.0.beta'.freeze
+  
+ CLIENT_ENGINE = 'ruby-sdk'.freeze
+ VERSION = '2.0.0.beta'.freeze
+  
 end
