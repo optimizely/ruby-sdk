@@ -23,10 +23,11 @@ module Optimizely
     # This includes all of the following (in order):
     #
     # 1. Checking experiment status
-    # 2. Checking whitelisting
-    # 3. Checking user profile service for past bucketing decisions (sticky bucketing)
-    # 3. Checking audience targeting
-    # 4. Using Murmurhash3 to bucket the user
+    # 2. Checking force bucketing
+    # 3. Checking whitelisting
+    # 4. Checking user profile service for past bucketing decisions (sticky bucketing)
+    # 5. Checking audience targeting
+    # 6. Using Murmurhash3 to bucket the user
 
     attr_reader :bucketer
     attr_reader :config
@@ -58,9 +59,13 @@ module Optimizely
         return nil
       end
 
-      # Check if user is in a forced variation
-      forced_variation_id = get_forced_variation_id(experiment_key, user_id)
-      return forced_variation_id if forced_variation_id
+      # Check if a forced variation is set for the user
+      forced_variation = @config.get_forced_variation(experiment_key, user_id)
+      return forced_variation['id'] if forced_variation
+
+      # Check if user is in a white-listed variation
+      whitelisted_variation_id = get_whitelisted_variation_id(experiment_key, user_id)
+      return whitelisted_variation_id if whitelisted_variation_id
 
       # Check for saved bucketing decisions
       user_profile = get_user_profile(user_id)
@@ -278,37 +283,37 @@ module Optimizely
 
     private
 
-    def get_forced_variation_id(experiment_key, user_id)
-      # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
+    def get_whitelisted_variation_id(experiment_key, user_id)
+      # Determine if a user is white-listed into a variation for the given experiment and return the ID of that variation
       #
       # experiment_key - Key representing the experiment for which user is to be bucketed
       # user_id - ID for the user
       #
-      # Returns variation ID into which user_id is forced (nil if no variation)
+      # Returns variation ID into which user_id is white-listed (nil if no variation)
 
-      forced_variations = @config.get_forced_variations(experiment_key)
+      whitelisted_variations = @config.get_whitelisted_variations(experiment_key)
 
-      return nil unless forced_variations
+      return nil unless whitelisted_variations
 
-      forced_variation_key = forced_variations[user_id]
+      whitelisted_variation_key = whitelisted_variations[user_id]
 
-      return nil unless forced_variation_key
+      return nil unless whitelisted_variation_key
 
-      forced_variation_id = @config.get_variation_id_from_key(experiment_key, forced_variation_key)
+      whitelisted_variation_id = @config.get_variation_id_from_key(experiment_key, whitelisted_variation_key)
 
-      unless forced_variation_id
+      unless whitelisted_variation_id
         @config.logger.log(
           Logger::INFO,
-          "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}', which is not in the datafile."
+          "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}', which is not in the datafile."
         )
         return nil
       end
 
       @config.logger.log(
         Logger::INFO,
-        "User '#{user_id}' is whitelisted into variation '#{forced_variation_key}' of experiment '#{experiment_key}'."
+        "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}' of experiment '#{experiment_key}'."
       )
-      forced_variation_id
+      whitelisted_variation_id
     end
 
     def get_saved_variation_id(experiment_id, user_profile)

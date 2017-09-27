@@ -150,6 +150,38 @@ describe 'Optimizely' do
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
+    it 'should properly activate a user, invoke Event object with right params, and return variation after a forced variation call' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'test_user',
+        'userFeatures' => [],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'layerId' => '1',
+        'decision' => {
+          'variationId' => '111128',
+          'experimentId' => '111127',
+          'isLayerHoldback' => false,
+        }
+      }
+
+      project_instance.config.set_forced_variation('test_experiment','test_user','control')
+      variation_to_return = project_instance.config.get_forced_variation('test_experiment','test_user')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
+                                       .with('test_experiment')
+                                       .and_return([])
+
+      stub_request(:post, impression_log_url).with(:query => params)
+
+      expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+    end
+
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
       params = {
         'projectId' => '111001',
@@ -184,6 +216,42 @@ describe 'Optimizely' do
         .to eq('control_with_audience')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
+    end
+
+    it 'should properly activate a user, (with attributes provided) when there is an audience match after a force variation call' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'test_user',
+        'userFeatures' => [
+          {
+            'id' => '111094',
+            'name' => 'browser_type',
+            'type' => 'custom',
+            'value' => 'firefox',
+            'shouldIndex' => true,
+          }
+        ],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'layerId' => '3',
+        'decision' => {
+          'variationId' => '122229',
+          'experimentId' => '122227',
+          'isLayerHoldback' => false,
+        }
+      }
+
+      project_instance.config.set_forced_variation('test_experiment_with_audience','test_user','variation_with_audience')
+      variation_to_return = project_instance.config.get_forced_variation('test_experiment','test_user')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+      expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
+        .to eq('variation_with_audience')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
     it 'should return nil when experiment status is not "Running"' do
@@ -331,6 +399,38 @@ describe 'Optimizely' do
         ]
       }
 
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event', 'test_user')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+    end
+
+    it 'should properly track an event by calling dispatch_event with right params after forced variation' do
+      params = {
+        'projectId' => '111001',
+        'accountId' => '12001',
+        'visitorId' => 'test_user',
+        'userFeatures' => [],
+        'clientEngine' => 'ruby-sdk',
+        'clientVersion' => version,
+        'timestamp' => (time_now.to_f * 1000).to_i,
+        'isGlobalHoldback' => false,
+        'eventEntityId' => '111095',
+        'eventFeatures' => [],
+        'eventName' => 'test_event',
+        'eventMetrics' => [],
+        'layerStates' => [
+          {
+            'layerId' => '1',
+            'decision' => {
+              'variationId' => '111129',
+              'experimentId' => '111127',
+              'isLayerHoldback' => false,
+            },
+            'actionTriggered' => true,
+          }
+        ]
+      }
+      project_instance.config.set_forced_variation('test_experiment','test_user','variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
@@ -933,6 +1033,40 @@ describe 'Optimizely' do
           Logger::INFO,
           "Got variable value '42' for variable 'integer_variable' of feature flag 'integer_single_variable_feature'."
         )
+    end
+  end
+
+  describe 'when forced variation is used' do
+    # setForcedVariation on a paused experiment and then call getVariation.
+    it 'should return null when getVariation is called on a paused experiment after setForcedVariation' do
+      project_instance.set_forced_variation('test_experiment_not_started','test_user','control_not_started')
+      expect(project_instance.get_variation('test_experiment_not_started','test_user')). to eq(nil)
+    end
+
+    # setForcedVariation on a running experiment and then call getVariation.
+    it 'should return expected variation id  when getVariation is called on a running experiment after setForcedVariation' do
+      project_instance.set_forced_variation('test_experiment','test_user','variation')
+      expect(project_instance.get_variation('test_experiment','test_user')). to eq('variation')
+    end
+
+    # setForcedVariation on a whitelisted user on the variation that they are not forced into and then call getVariation on the user.
+    it 'should return expected forced variation id  when getVariation is called on a running experiment after setForcedVariation is called on a whitelisted user' do
+      project_instance.set_forced_variation('test_experiment','forced_user1','variation')
+      expect(project_instance.get_variation('test_experiment','forced_user1')). to eq('variation')
+    end
+
+    # setForcedVariation on a running experiment with a previously set variation (different from the one set by setForcedVariation) and then call getVariation.
+    it 'should return latest set variation when different variations are set on the same experiment' do
+      project_instance.set_forced_variation('test_experiment','test_user','control')
+      project_instance.set_forced_variation('test_experiment','test_user','variation')
+      expect(project_instance.get_variation('test_experiment','test_user')). to eq('variation')
+    end
+
+    # setForcedVariation on a running experiment with audience enabled and then call getVariation on that same experiment with invalid attributes. 
+    it 'should return nil when getVariation called on audience enabled running experiment with invalid attributes' do
+      project_instance.set_forced_variation('test_experiment_with_audience','test_user','control_with_audience')
+      expect { project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid') }
+             .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
   end
 end

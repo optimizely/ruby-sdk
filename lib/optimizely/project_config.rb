@@ -56,6 +56,12 @@ module Optimizely
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
 
+    # Hash of user IDs to a Hash
+    # of experiments to variations. This contains all the forced variations
+    # set by the user by calling setForcedVariation (it is not the same as the
+    # whitelisting forcedVariations data structure in the Experiments class).
+    attr_reader :forced_variation_map
+
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
       #
@@ -98,6 +104,7 @@ module Optimizely
       @audience_id_map = generate_key_map(@audiences, 'id')
       @variation_id_map = {}
       @variation_key_map = {}
+      @forced_variation_map = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
       @experiment_key_map.each do |key, exp|
@@ -246,17 +253,120 @@ module Optimizely
       nil
     end
 
-    def get_forced_variations(experiment_key)
-      # Retrieves forced variations for a given experiment Key
+    def get_whitelisted_variations(experiment_key)
+      # Retrieves white-listed variations for a given experiment Key
       #
       # experiment_key - String Key representing the experiment
       #
-      # Returns forced variations for the experiment or nil
+      # Returns white-listed variations for the experiment or nil
 
       experiment = @experiment_key_map[experiment_key]
       return experiment['forcedVariations'] if experiment
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
+    end
+
+    def get_forced_variation(experiment_key, user_id)
+      # Gets the forced variation for the given user and experiment.
+      #
+      # experiment_key - String Key for experiment.
+      # user_id - String ID for user
+      #
+      # Returns Variation The variation which the given user and experiment should be forced into.
+
+      # check for nil and empty string user ID
+      if user_id.nil? or user_id.empty?
+        @logger.log(Logger::DEBUG, "User ID is invalid")
+        return nil
+      end
+
+      unless @forced_variation_map[user_id].present?
+        @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
+        return nil
+      end
+
+      experimentToVariationMap = @forced_variation_map[user_id]
+      experiment = get_experiment_from_key(experiment_key)
+      experiment_id = experiment["id"] if experiment
+      # check for nil and empty string experiment ID
+      if experiment_id.nil? or experiment_id.empty?
+        # this case is logged in get_experiment_from_key
+        return nil
+      end
+
+      unless experimentToVariationMap[experiment_id].present?
+        @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map.")
+        return nil
+      end
+
+      variation_id = experimentToVariationMap[experiment_id]
+      # check for nil and empty string variation ID
+      if variation_id.nil? or variation_id.empty?
+        @logger.log(Logger::DEBUG, "No variation mapped to experiment '#{experiment_key}' in the forced variation map.")
+        return nil
+      end
+
+      variation_key = ""
+      variation_id_map = @variation_id_map[experiment_key]
+      if variation_id_map
+        variation = get_variation_from_id(experiment_key,variation_id)
+        variation_key = variation["key"] if variation
+      end
+
+      # check if the variation exists in the datafile
+      if variation_key.empty?
+        # this case is logged in get_variation_from_id
+        return nil
+      end
+
+      @logger.log(Logger::DEBUG, "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map")
+      
+      variation
+    end
+
+    def set_forced_variation(experiment_key, user_id, variation_key)
+      # Sets a Hash of user IDs to a Hash of experiments to forced variations.
+      #
+      # experiment_key - String Key for experiment.
+      # user_id - String ID for user.
+      # variation_key - String Key for variation. If null, then clear the existing experiment-to-variation mapping.
+      #
+      # Returns a boolean value that indicates if the set completed successfully.
+
+      #  check for null and empty string user ID
+      if user_id.nil? or user_id.empty?
+        @logger.log(Logger::DEBUG, "User ID is invalid")
+        return false
+      end
+
+      experiment = get_experiment_from_key(experiment_key)
+      experiment_id = experiment["id"] if experiment
+      #  check if the experiment exists in the datafile
+      if experiment_id.nil? or experiment_id.empty?
+        return false
+      end
+
+      #  clear the forced variation if the variation key is null
+      if variation_key.nil? or variation_key.empty?
+        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map[user_id].present?
+        @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user '#{user_id}'.")
+        return true
+      end
+
+      variation_id = get_variation_id_from_key(experiment_key, variation_key)
+
+      #  check if the variation exists in the datafile
+      unless variation_id
+        #  this case is logged in get_variation_id_from_key
+        return false
+      end
+
+      unless @forced_variation_map.has_key? user_id 
+        @forced_variation_map[user_id] = {}
+      end
+      @forced_variation_map[user_id][experiment_id] = variation_id
+      @logger.log(Logger::DEBUG, "Set variation '#{variation_id}' for experiment '#{experiment_id}' and user '#{user_id}' in the forced variation map.")
+      return true
     end
 
     def get_attribute_id(attribute_key)
