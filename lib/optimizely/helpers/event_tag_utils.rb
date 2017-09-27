@@ -36,7 +36,7 @@ module Optimizely
         # Returns revenue value as an integer number
         # Returns nil if revenue can't be retrieved from the event tags.
 
-        if event_tags.nil? or !Helpers::Validator.attributes_valid?(event_tags)
+        if event_tags.nil? or !Helpers::Validator.event_tags_valid?(event_tags)
           return nil
         end
 
@@ -96,7 +96,7 @@ module Optimizely
           return nil
         end
 
-        if raw_value.is_a? Array or  raw_value.is_a? Hash or raw_value.to_f.nan? or  raw_value.to_f.infinite?
+        if raw_value.is_a? Array or  raw_value.is_a? Hash or raw_value.to_f.nan? or raw_value.to_f.infinite?
             logger.log(Logger::DEBUG,"Provided numeric value is in an invalid format.")
             return nil
         end

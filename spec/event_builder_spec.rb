@@ -88,7 +88,7 @@ describe Optimizely::EventBuilder do
 
   end
 
-  it 'should create valid V2 Event when create_impression_event is called without attributes' do
+  it 'should create valid Event when create_impression_event is called without attributes' do
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', nil)
     expect(impression_event.params).to eq(@expected_impression_params)
@@ -96,7 +96,7 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called with attributes as a string value' do
+  it 'should create a valid Event when create_impression_event is called with attributes as a string value' do
     @expected_impression_params[:visitors][0][:attributes] = [{
       entity_id: '111094',
       key: 'browser_type',
@@ -111,7 +111,7 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called with attributes as a false value' do
+  it 'should create a valid Event when create_impression_event is called with attributes as a false value' do
     @expected_impression_params[:visitors][0][:attributes] = [{
       entity_id: '111094',
       key: 'browser_type',
@@ -126,7 +126,7 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called with attributes as a zero value' do
+  it 'should create a valid Event when create_impression_event is called with attributes as a zero value' do
     @expected_impression_params[:visitors][0][:attributes] = [{
       entity_id: '111094',
       key: 'browser_type',
@@ -141,7 +141,7 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_impression_event is called with attributes is not in the datafile' do
+  it 'should create a valid Event when create_impression_event is called with attributes is not in the datafile' do
     @expected_impression_params[:visitors][0][:attributes] = []
 
     experiment = config.get_experiment_from_key('test_experiment')
@@ -151,14 +151,14 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called' do
+  it 'should create a valid Event when create_conversion_event is called' do
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, {'111127' => '111128'})
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with attributes' do
+  it 'should create a valid Event when create_conversion_event is called with attributes' do
     @expected_conversion_params[:visitors][0][:attributes] = [{
       entity_id: '111094',
       key: 'browser_type',
@@ -172,7 +172,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with revenue event tag' do
+  it 'should create a valid Event when create_conversion_event is called with revenue event tag' do
     event_tags = { 'revenue' => 4200 }
 
     @expected_conversion_params[:visitors][0][:attributes] = []
@@ -187,7 +187,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with invalid revenue event tag' do
+  it 'should create a valid Event when create_conversion_event is called with invalid revenue event tag' do
     event_tags = { 'revenue' => '4200' }
 
     @expected_conversion_params[:visitors][0][:attributes] = []
@@ -200,7 +200,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with invalid revenue event tag' do
+  it 'should create a valid Event when create_conversion_event is called with invalid revenue event tag' do
     event_tags = { 'revenue' => 'invalid revenue' }
 
     @expected_conversion_params[:visitors][0][:attributes] = []
@@ -214,7 +214,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with non-revenue event tag' do
+  it 'should create a valid Event when create_conversion_event is called with non-revenue event tag' do
     event_tags = { 'non-revenue' => 4200 }
 
     @expected_conversion_params[:visitors][0][:attributes] = []
@@ -228,7 +228,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with revenue and non-revenue event tags' do
+  it 'should create a valid Event when create_conversion_event is called with revenue and non-revenue event tags' do
     event_tags = { 
       'revenue' => 4200,
       'non-revenue' => 4200
@@ -246,7 +246,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with boolean event tag' do
+  it 'should create a valid Event when create_conversion_event is called with boolean event tag' do
     event_tags = {
       'boolean_tag' => false,
       'nil_tag' => nil
@@ -262,7 +262,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with string event tag' do
+  it 'should create a valid Event when create_conversion_event is called with string event tag' do
     event_tags = {
       'string_tag' => 'iamstring',
     }
@@ -277,7 +277,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with integer event tag' do
+  it 'should create a valid Event when create_conversion_event is called with integer event tag' do
     event_tags ={
       'integer_tag' => 42,
     }
@@ -292,7 +292,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with float event tag' do
+  it 'should create a valid Event when create_conversion_event is called with float event tag' do
     event_tags = {
       'float_tag' => 42.01,
     }
@@ -307,7 +307,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with value event tag' do
+  it 'should create a valid Event when create_conversion_event is called with value event tag' do
     event_tags = {
       'value' => '13.37',
     }
@@ -323,7 +323,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with invalid value event tag' do
+  it 'should create a valid Event when create_conversion_event is called with invalid value event tag' do
     event_tags = {
       'value' => 'invalid value',
     }
@@ -338,7 +338,7 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid V2 Event when create_conversion_event is called with attributes and event tags for revenue, value and other tag' do
+  it 'should create a valid Event when create_conversion_event is called with attributes and event tags for revenue, value and other tag' do
     event_tags = {
       'revenue' => 4200,
       'value' => 13.37,
