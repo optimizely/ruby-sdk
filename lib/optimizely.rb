@@ -169,7 +169,6 @@ module Optimizely
       # Returns String|nil The forced variation key.
 
       forced_variation_key = nil
-
       forced_variation = @config.get_forced_variation(experiment_key, user_id);
       if forced_variation
         forced_variation_key = forced_variation['key']

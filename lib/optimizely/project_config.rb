@@ -300,18 +300,9 @@ module Optimizely
       end
 
       variation_id = experimentToVariationMap[experiment_id]
-      # check for nil and empty string variation ID
-      if variation_id.nil? or variation_id.empty?
-        @logger.log(Logger::DEBUG, "No variation mapped to experiment '#{experiment_key}' in the forced variation map.")
-        return nil
-      end
-
       variation_key = ""
-      variation_id_map = @variation_id_map[experiment_key]
-      if variation_id_map
-        variation = get_variation_from_id(experiment_key,variation_id)
-        variation_key = variation["key"] if variation
-      end
+      variation = get_variation_from_id(experiment_key,variation_id)
+      variation_key = variation["key"] if variation
 
       # check if the variation exists in the datafile
       if variation_key.empty?
@@ -400,7 +391,6 @@ module Optimizely
         return true if variation
         @logger.log Logger::ERROR, "Variation ID '#{variation_id}' is not in datafile."
         @error_handler.handle_error InvalidVariationError
-        return false
       end
 
       false

@@ -776,6 +776,12 @@ describe 'Optimizely' do
       allow(Time).to receive(:now).and_return(time_now)
     end
 
+    it 'should return nil when called with invalid project config' do
+      invalid_project = Optimizely::Project.new('invalid',nil,spy_logger)
+      expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be nil
+      
+    end
+    
     it 'should return false when the feature flag key is invalid' do
       expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
@@ -1068,5 +1074,16 @@ describe 'Optimizely' do
       expect { project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
+
+    # Adding this test case to cover this in code coverage. All test cases for getForceVariation are present in
+    # project_config_spec.rb which test the get_force_variation method in project_config. The one in optimizely.rb
+    # only calls the other one
+    
+    # getForceVariation on a running experiment after setforcevariation
+    it 'should return expected variation id  when get_forced_variation is called on a running experiment after setForcedVariation' do
+      project_instance.set_forced_variation('test_experiment','test_user','variation')
+      expect(project_instance.get_forced_variation('test_experiment','test_user')). to eq('variation')
+    end
+
   end
 end
