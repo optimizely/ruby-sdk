@@ -164,7 +164,7 @@ module Optimizely
       # Gets the forced variation for a given user and experiment.
       #
       # experiment_key - String - Key identifying the experiment.
-      # user_id - String -  IThe user ID to be used for bucketing.
+      # user_id - String - The user ID to be used for bucketing.
       #
       # Returns String|nil The forced variation key.
 

@@ -22,12 +22,12 @@ module Optimizely
     # The decision service contains all logic relating to how a user bucketing decisions is made.
     # This includes all of the following (in order):
     #
-    # 1. Checking experiment status
-    # 2. Checking force bucketing
-    # 3. Checking whitelisting
-    # 4. Checking user profile service for past bucketing decisions (sticky bucketing)
-    # 5. Checking audience targeting
-    # 6. Using Murmurhash3 to bucket the user
+    # 1. Check experiment status
+    # 2. Check forced bucketing
+    # 3. Check whitelisting
+    # 4. Check user profile service for past bucketing decisions (sticky bucketing)
+    # 5. Check audience targeting
+    # 6. Use Murmurhash3 to bucket the user
 
     attr_reader :bucketer
     attr_reader :config
@@ -284,12 +284,12 @@ module Optimizely
     private
 
     def get_whitelisted_variation_id(experiment_key, user_id)
-      # Determine if a user is white-listed into a variation for the given experiment and return the ID of that variation
+      # Determine if a user is whitelisted into a variation for the given experiment and return the ID of that variation
       #
       # experiment_key - Key representing the experiment for which user is to be bucketed
       # user_id - ID for the user
       #
-      # Returns variation ID into which user_id is white-listed (nil if no variation)
+      # Returns variation ID into which user_id is whitelisted (nil if no variation)
 
       whitelisted_variations = @config.get_whitelisted_variations(experiment_key)
 

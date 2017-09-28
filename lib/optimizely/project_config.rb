@@ -254,11 +254,11 @@ module Optimizely
     end
 
     def get_whitelisted_variations(experiment_key)
-      # Retrieves white-listed variations for a given experiment Key
+      # Retrieves whitelisted variations for a given experiment Key
       #
       # experiment_key - String Key representing the experiment
       #
-      # Returns white-listed variations for the experiment or nil
+      # Returns whitelisted variations for the experiment or nil
 
       experiment = @experiment_key_map[experiment_key]
       return experiment['forcedVariations'] if experiment

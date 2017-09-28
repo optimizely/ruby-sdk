@@ -806,7 +806,7 @@ describe Optimizely::ProjectConfig do
       @valid_experiment = {id: '111127', key: "test_experiment"}
       @valid_variation = {id: '111128', key: "control"}
     end
-    # User ID is null
+    # User ID is nil
     it 'should log a message and return nil when user_id is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
@@ -818,7 +818,7 @@ describe Optimizely::ProjectConfig do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
        "User ID is invalid")
     end
-    # User ID is not defined in the force-variation map
+    # User ID is not defined in the forced variation map
     it 'should log a message and return nil when user is not in forced variation map' do
       expect(config.get_forced_variation(@valid_experiment[:key], @user_id)).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
@@ -828,7 +828,7 @@ describe Optimizely::ProjectConfig do
     it 'should return nil when experiment key is not in datafile' do
       expect(config.get_forced_variation(@invalid_experiment_key, @user_id)).to eq(nil)
     end
-    # Experiment key is null
+    # Experiment key is nil
     it 'should return nil when experiment_key is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(nil, @user_id)).to eq(nil)
     end
@@ -853,7 +853,7 @@ describe Optimizely::ProjectConfig do
       @valid_variation = {id: '111128', key: "control"}
     end
 
-    # User ID is null
+    # User ID is nil
     it 'should log a message when user_id is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
@@ -865,7 +865,7 @@ describe Optimizely::ProjectConfig do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
        "User ID is invalid")
     end
-    # Experiment key is null
+    # Experiment key is nil
     it 'should return false when experiment_key is passed as nil' do
       expect(config.set_forced_variation(nil, @user_id, @valid_variation[:key])).to eq(false)
     end
@@ -877,7 +877,7 @@ describe Optimizely::ProjectConfig do
     it 'return nil when experiment key is not in datafile' do
       expect(config.set_forced_variation(@invalid_experiment_key, @user_id, @valid_variation[:key])).to eq(false)
     end
-    # Variation key is null
+    # Variation key is nil
     it 'should delete forced varaition maping, log a message and return true when variation_key is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, nil)).to eq(true)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
