@@ -87,6 +87,11 @@ module Optimizely
 
         logger.respond_to?(:log)
       end
+
+      def string_numeric?(str)
+        Float(str) != nil rescue false
+      end
+      
     end
   end
 end
