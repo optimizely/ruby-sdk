@@ -27,14 +27,18 @@ describe 'Optimizely' do
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
-  let(:impression_log_url) { 'https://logx.optimizely.com/log/decision' }
-  let(:conversion_log_url) { 'https://logx.optimizely.com/log/event' }
+  let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
+  let(:conversion_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:time_now) { Time.now }
   let(:post_headers) { { 'Content-Type' => 'application/json' } }
 
   it 'has a version number' do
-    expect(Optimizely::VERSION).not_to be nil
+    expect(Optimizely::VERSION).not_to be_nil
+  end
+
+  it 'has engine value' do
+    expect(Optimizely::CLIENT_ENGINE).not_to be_nil
   end
 
   describe '.initialize' do
@@ -116,25 +120,36 @@ describe 'Optimizely' do
   describe '#activate' do
     before(:example) do
       allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
+      
+      @expected_activate_params = {
+        account_id: '12001',
+        project_id: '111001',
+        visitors: [{
+          attributes: [],
+          snapshots: [{
+            decisions: [{
+              campaign_id: '1',
+              experiment_id: '111127',
+              variation_id: '111128'
+            }],
+            events: [{
+              entity_id: '1',
+              timestamp: (time_now.to_f * 1000).to_i,
+              key: 'campaign_activated',
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+            }]
+          }],
+          visitor_id: 'test_user'
+        }],
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        client_version: Optimizely::VERSION
+      }
     end
 
     it 'should properly activate a user, invoke Event object with right params, and return variation' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'layerId' => '1',
-        'decision' => {
-          'variationId' => '111128',
-          'experimentId' => '111127',
-          'isLayerHoldback' => false,
-        }
-      }
+      params = @expected_activate_params
 
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -151,30 +166,19 @@ describe 'Optimizely' do
     end
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [
-          {
-            'id' => '111094',
-            'name' => 'browser_type',
-            'type' => 'custom',
-            'value' => 'firefox',
-            'shouldIndex' => true,
-          }
-        ],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'layerId' => '3',
-        'decision' => {
-          'variationId' => '122228',
-          'experimentId' => '122227',
-          'isLayerHoldback' => false,
-        }
-      }
+      params = @expected_activate_params
+      params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox',
+      }]
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122228'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -211,22 +215,7 @@ describe 'Optimizely' do
     end
 
     it 'should log when an impression event is dispatched' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'layerId' => '1',
-        'decision' => {
-          'variationId' => '111128',
-          'experimentId' => '111127',
-          'isLayerHoldback' => false,
-        }
-      }
+      params = @expected_activate_params
 
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -253,30 +242,20 @@ describe 'Optimizely' do
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'forced_audience_user',
-        'userFeatures' => [
-          {
-            'id' => '111094',
-            'name' => 'browser_type',
-            'type' => 'custom',
-            'value' => 'wrong_browser',
-            'shouldIndex' => true,
-          },
-        ],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'layerId' => '3',
-        'decision' => {
-          'variationId' => '122229',
-          'experimentId' => '122227',
-          'isLayerHoldback' => false,
-        }
-      }
+      params = @expected_activate_params
+      params[:visitors][0][:visitor_id] = 'forced_audience_user'
+      params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'wrong_browser',
+      }]
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122229'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
@@ -302,34 +281,36 @@ describe 'Optimizely' do
   describe '#track' do
     before(:example) do
       allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
+      
+      @expected_track_event_params = {
+        account_id: '12001',
+        project_id: '111001',
+        visitors: [{
+          attributes: [],
+          snapshots: [{
+            decisions: [{
+              campaign_id: '1',
+              experiment_id: '111127',
+              variation_id: '111128'
+            }],
+            events: [{
+              entity_id: '111095',
+              timestamp: (time_now.to_f * 1000).to_i,
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              key: 'test_event'
+            }]
+          }],
+          visitor_id: 'test_user'
+        }],
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        client_version: Optimizely::VERSION
+      }
     end
 
     it 'should properly track an event by calling dispatch_event with right params' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111095',
-        'eventFeatures' => [],
-        'eventName' => 'test_event',
-        'eventMetrics' => [],
-        'layerStates' => [
-          {
-            'layerId' => '1',
-            'decision' => {
-              'variationId' => '111128',
-              'experimentId' => '111127',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
@@ -343,43 +324,11 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111095',
-        'eventFeatures' => [
-          {
-            'name' => 'revenue',
-            'type' => 'custom',
-            'value' => 42,
-            'shouldIndex' => false
-          }
-        ],
-        'eventName' => 'test_event',
-        'eventMetrics' => [
-          {
-            'name' => 'revenue',
-            'value' => 42,
-          }
-        ],
-        'layerStates' => [
-          {
-            'layerId' => '1',
-            'decision' => {
-              'variationId' => '111128',
-              'experimentId' => '111127',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
+      params[:visitors][0][:snapshots][0][:events][0].merge!({
+        revenue: 42,
+        tags: {'revenue' => 42}
+      })
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
@@ -387,43 +336,11 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params with deprecated revenue provided' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111095',
-        'eventFeatures' => [
-          {
-            'name' => 'revenue',
-            'type' => 'custom',
-            'value' => 42,
-            'shouldIndex' => false
-          }
-        ],
-        'eventName' => 'test_event',
-        'eventMetrics' => [
-          {
-            'name' => 'revenue',
-            'value' => 42,
-          }
-        ],
-        'layerStates' => [
-          {
-            'layerId' => '1',
-            'decision' => {
-              'variationId' => '111128',
-              'experimentId' => '111127',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
+      params[:visitors][0][:snapshots][0][:events][0].merge!({
+        revenue: 42,
+        tags: {'revenue' => 42}
+      })
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
@@ -432,39 +349,20 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [
-          {
-            'id' => '111094',
-            'name' => 'browser_type',
-            'type' => 'custom',
-            'value' => 'firefox',
-            'shouldIndex' => true,
-          }
-        ],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111097',
-        'eventFeatures' => [],
-        'eventName' => 'test_event_with_audience',
-        'eventMetrics' => [],
-        'layerStates' => [
-          {
-            'layerId' => '3',
-            'decision' => {
-              'variationId' => '122228',
-              'experimentId' => '122227',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
+      params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox',
+      }]
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122228'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111097'
+      params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_with_audience'
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
@@ -484,41 +382,11 @@ describe 'Optimizely' do
     end
 
     it 'should log when a conversion event is dispatched' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'test_user',
-        'userFeatures' => [],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111095',
-        'eventName' => 'test_event',
-        'eventFeatures' => [
-          {
-            'name' => 'revenue',
-            'type' => 'custom',
-            'value' => 42,
-            'shouldIndex' => false
-          }
-        ],
-        'eventMetrics' => [
-          'name' => 'revenue',
-          'value' => 42,
-        ],
-        'layerStates' => [
-          {
-            'layerId' => '1',
-            'decision' => {
-              'variationId' => '111128',
-              'experimentId' => '111127',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
+      params[:visitors][0][:snapshots][0][:events][0].merge!({
+        revenue: 42,
+        tags: {'revenue' => 42}
+      })
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
@@ -564,39 +432,22 @@ describe 'Optimizely' do
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
-      params = {
-        'projectId' => '111001',
-        'accountId' => '12001',
-        'visitorId' => 'forced_audience_user',
-        'userFeatures' => [
-          {
-            'id' => '111094',
-            'name' => 'browser_type',
-            'type' => 'custom',
-            'value' => 'wrong_browser',
-            'shouldIndex' => true,
-          }
-        ],
-        'clientEngine' => 'ruby-sdk',
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        'isGlobalHoldback' => false,
-        'eventEntityId' => '111097',
-        'eventFeatures' => [],
-        'eventName' => 'test_event_with_audience',
-        'eventMetrics' => [],
-        'layerStates' => [
-          {
-            'layerId' => '3',
-            'decision' => {
-              'variationId' => '122229',
-              'experimentId' => '122227',
-              'isLayerHoldback' => false,
-            },
-            'actionTriggered' => true,
-          }
-        ]
-      }
+      params = @expected_track_event_params
+      params[:visitors][0][:visitor_id] = 'forced_audience_user'
+      params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'wrong_browser',
+      }]
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122229'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111097'
+      params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_with_audience'
+
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
@@ -674,6 +525,32 @@ describe 'Optimizely' do
   describe '#is_feature_enabled' do
     before(:example) do
       allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
+
+      @expected_bucketed_params = {
+        account_id: '12001',
+        project_id: '111001',
+        visitors: [{
+          attributes: [],
+          snapshots: [{
+            decisions: [{
+              campaign_id: '4',
+              experiment_id: '122230',
+              variation_id: '122231'
+            }],
+            events: [{
+              entity_id: '4',
+              timestamp: (time_now.to_f * 1000).to_i,
+              key: 'campaign_activated',
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+            }]
+          }],
+          visitor_id: 'test_user'
+        }],
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        client_version: Optimizely::VERSION
+      }
     end
 
     it 'should return false when the feature flag key is invalid' do
@@ -713,25 +590,10 @@ describe 'Optimizely' do
       }
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-      expected_params = {
-        "projectId"=>"111001",
-        "accountId"=>"12001",
-        "visitorId"=>"test_user",
-        "userFeatures"=>[],
-        "clientEngine"=>"ruby-sdk",
-        'clientVersion' => version,
-        'timestamp' => (time_now.to_f * 1000).to_i,
-        "isGlobalHoldback"=>false,
-        "layerId"=>"4",
-        "decision"=>{
-          "variationId"=>"122231",
-          "experimentId"=>"122230",
-          "isLayerHoldback"=>false
-        }
-      }
+      expected_params = @expected_bucketed_params
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/log/decision with params #{expected_params}.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/v1/events with params #{expected_params}.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
   end
