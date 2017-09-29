@@ -132,7 +132,7 @@ module Optimizely
       end
 
       unless user_id.is_a? String
-        logger.log(Logger::ERROR, "User id: #{user_id} is not a string")
+        @logger.log(Logger::ERROR, "User id: #{user_id} is not a string")
         return nil
       end
 
