@@ -280,7 +280,7 @@ module Optimizely
         return nil
       end
 
-      unless @forced_variation_map[user_id].present?
+      unless @forced_variation_map.has_key? (user_id)
         @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
         return nil
       end
@@ -294,7 +294,7 @@ module Optimizely
         return nil
       end
 
-      unless experimentToVariationMap[experiment_id].present?
+      unless experimentToVariationMap.has_key? (experiment_id)
         @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map.")
         return nil
       end
@@ -339,7 +339,7 @@ module Optimizely
 
       #  clear the forced variation if the variation key is null
       if variation_key.nil? or variation_key.empty?
-        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map[user_id].present?
+        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map.has_key? (user_id)
         @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user '#{user_id}'.")
         return true
       end
