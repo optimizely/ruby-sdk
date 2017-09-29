@@ -131,6 +131,11 @@ module Optimizely
         return nil
       end
 
+      unless user_id.is_a? String
+        logger.log(Logger::ERROR, "User id: #{user_id} is not a string")
+        return nil
+      end
+
       unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
