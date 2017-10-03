@@ -1,4 +1,32 @@
 -------------------------------------------------------------------------------
+## 1.4.0
+October 3, 2017
+
+### New Features
+* Introduce Numeric Metrics - This allows you to include a floating point value that is used to track numeric values in your experiments.
+```
+event_tags = {
+  'category' => 'shoes',
+  'value' => 13.37 # reserved 'value' tag
+}
+optimizely_client.track(event_key, user_id, attributes, event_tags)
+```
+
+* Introduce Forced Variation - This allows you to force users into variations programmatically in real time for QA purposes without requiring datafile downloads from the network. 
+```
+result = optimizely_client.set_forced_variation(experiment_key, user_id, forced_variation_key)
+```
+
+* Upgrade to use new [event API](https://developers.optimizely.com/x/events/api/index.html).
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+2.0.0.beta
+* Introduce feature flags and feature rollouts support.
+* Introduce variable support via feature flags.
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 1.3.0
 * Introduce user profile service support.
 -------------------------------------------------------------------------------
