@@ -30,11 +30,20 @@ describe Optimizely::DecisionService do
     before(:example) do
       # stub out bucketer and audience evaluator so we can make sure they are / aren't called
       allow(decision_service.bucketer).to receive(:bucket).and_call_original
-      allow(decision_service).to receive(:get_forced_variation_id).and_call_original
+      allow(decision_service).to receive(:get_whitelisted_variation_id).and_call_original
       allow(Optimizely::Audience).to receive(:user_in_experiment?).and_call_original
 
       # by default, spy user profile service should no-op. we override this behavior in specific tests
       allow(spy_user_profile_service).to receive(:lookup).and_return(nil)
+    end
+
+    it 'should return the correct variation ID for a given user for whom a variation has been forced' do
+      config.set_forced_variation('test_experiment','test_user', 'variation')
+      expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111129')
+      # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
+      expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
@@ -42,11 +51,11 @@ describe Optimizely::DecisionService do
 
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO,"User 'test_user' is in variation 'control' of experiment 'test_experiment'.")
-      expect(decision_service).to have_received(:get_forced_variation_id).once
+      expect(decision_service).to have_received(:get_whitelisted_variation_id).once
       expect(decision_service.bucketer).to have_received(:bucket).once
     end
 
-    it 'should return correct variation ID if user ID is in forcedVariations and variation is valid' do
+    it 'should return correct variation ID if user ID is in whitelisted Variations and variation is valid' do
       expect(decision_service.get_variation('test_experiment', 'forced_user1')).to eq('111128')
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'.")
@@ -55,13 +64,13 @@ describe Optimizely::DecisionService do
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'.")
 
-      # forced variations should short circuit bucketing
+      # whitelisted variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
-      # forced variations should short circuit audience evaluation
+      # whitelisted variations should short circuit audience evaluation
       expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
-    it 'should return the correct variation ID for a user in a forced variation (even when audience conditions do not match)' do
+    it 'should return the correct variation ID for a user in a whitelisted variation (even when audience conditions do not match)' do
       user_attributes = {'browser_type' => 'wrong_browser'}
       expect(decision_service.get_variation('test_experiment_with_audience', 'forced_audience_user', user_attributes)).to eq('122229')
       expect(spy_logger).to have_received(:log)
@@ -90,7 +99,7 @@ describe Optimizely::DecisionService do
                             .once.with(Logger::INFO,"User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
 
       # should have checked forced variations
-      expect(decision_service).to have_received(:get_forced_variation_id).once
+      expect(decision_service).to have_received(:get_whitelisted_variation_id).once
       # wrong audience conditions should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
     end
@@ -101,7 +110,7 @@ describe Optimizely::DecisionService do
                             .once.with(Logger::INFO,"Experiment 'test_experiment_not_started' is not running.")
 
       # non-running experiments should short circuit whitelisting
-      expect(decision_service).not_to have_received(:get_forced_variation_id)
+      expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       # non-running experiments should short circuit audience evaluation
       expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
       # non-running experiments should short circuit bucketing

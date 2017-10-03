@@ -138,6 +138,11 @@ module Optimizely
         return nil
       end
 
+      unless user_id.is_a? String
+        @logger.log(Logger::ERROR, "User id: #{user_id} is not a string")
+        return nil
+      end
+
       unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
@@ -149,6 +154,36 @@ module Optimizely
         return @config.get_variation_key_from_id(experiment_key, variation_id)
       end
       nil
+    end
+
+    def set_forced_variation(experiment_key, user_id, variation_key)
+      # Force a user into a variation for a given experiment.
+      #
+      # experiment_key - String - key identifying the experiment.
+      # user_id - String - The user ID to be used for bucketing.
+      # variation_key - The variation key specifies the variation which the user will 
+      #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
+      #
+      # Returns - Boolean - indicates if the set completed successfully.
+
+      @config.set_forced_variation(experiment_key, user_id, variation_key);
+    end
+
+    def get_forced_variation(experiment_key, user_id)
+      # Gets the forced variation for a given user and experiment.
+      #
+      # experiment_key - String - Key identifying the experiment.
+      # user_id - String - The user ID to be used for bucketing.
+      #
+      # Returns String|nil The forced variation key.
+
+      forced_variation_key = nil
+      forced_variation = @config.get_forced_variation(experiment_key, user_id);
+      if forced_variation
+        forced_variation_key = forced_variation['key']
+      end
+
+      forced_variation_key
     end
 
     def track(event_key, user_id, attributes = nil, event_tags = nil)
