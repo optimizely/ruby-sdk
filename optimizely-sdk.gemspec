@@ -4,7 +4,7 @@ require_relative 'lib/optimizely/version'
 Gem::Specification.new do |spec|
   spec.name          = "optimizely-sdk"
   spec.version       = Optimizely::VERSION
-  spec.authors       = ["Andrew Delikat", "Haley Bash", "Optimizely"]
+  spec.authors       = ["Optimizely"]
   spec.email         = ["developers@optimizely.com"]
 
   spec.summary       = "Ruby SDK for Optimizely's testing framework"
