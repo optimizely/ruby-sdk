@@ -196,6 +196,28 @@ module Optimizely
       nil
     end
 
+    def get_variation_from_id(experiment_key, variation_id)
+      # Get variation given experiment key and variation ID
+      #
+      # experiment_key - Key representing parent experiment of variation
+      # variation_id - ID of the variation
+      #
+      # Returns the variation or nil if not found
+
+      variation_id_map = @variation_id_map[experiment_key]
+      if variation_id_map
+        variation = variation_id_map[variation_id]
+        return variation if variation
+        @logger.log Logger::ERROR, "Variation id '#{variation_id}' is not in datafile."
+        @error_handler.handle_error InvalidVariationError
+        return nil
+      end
+
+      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
     def get_variation_id_from_key(experiment_key, variation_key)
       # Get variation ID given experiment key and variation key
       #
@@ -276,7 +298,7 @@ module Optimizely
       end
 
       @logger.log(Logger::DEBUG, "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map")
-      
+
       variation
     end
 
@@ -317,7 +339,7 @@ module Optimizely
         return false
       end
 
-      unless @forced_variation_map.has_key? user_id 
+      unless @forced_variation_map.has_key? user_id
         @forced_variation_map[user_id] = {}
       end
       @forced_variation_map[user_id][experiment_id] = variation_id
