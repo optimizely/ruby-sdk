@@ -88,7 +88,8 @@ module Optimizely
       end
 
       # Bucket normally
-      variation_id = @bucketer.bucket(experiment, user_id)
+      variation = @bucketer.bucket(experiment, user_id)
+      variation_id = variation ? variation['id'] : nil
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id)
@@ -156,7 +157,7 @@ module Optimizely
       #
       # user_id - String ID for the user
       #
-      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided) 
+      # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided)
 
       user_profile = {
         :user_id => user_id,

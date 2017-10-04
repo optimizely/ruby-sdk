@@ -41,7 +41,7 @@ module Optimizely
       # experiment - Experiment for which visitor is to be bucketed.
       # user_id - String ID for user.
       #
-      # Returns String variation ID in which visitor with ID user_id has been placed. Nil if no variation.
+      # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
       experiment_id = experiment['id']
@@ -50,12 +50,8 @@ module Optimizely
       if group_id
         group = @config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
-          bucketing_id = sprintf(BUCKETING_ID_TEMPLATE, user_id: user_id, entity_id: group_id)
           traffic_allocations = group.fetch('trafficAllocation')
-          bucket_value = generate_bucket_value(bucketing_id)
-          @config.logger.log(Logger::DEBUG, "Assigned experiment bucket #{bucket_value} to user '#{user_id}'.")
-          bucketed_experiment_id = find_bucket(bucket_value, traffic_allocations)
-
+          bucketed_experiment_id = find_bucket(user_id, group_id, traffic_allocations)
           # return if the user is not bucketed into any experiment
           unless bucketed_experiment_id
             @config.logger.log(Logger::INFO, "User '#{user_id}' is in no experiment.")
@@ -81,14 +77,14 @@ module Optimizely
 
       traffic_allocations = experiment['trafficAllocation']
       variation_id = find_bucket(user_id, experiment_id, traffic_allocations)
-
       if variation_id && variation_id != ''
-        variation_key = @config.get_variation_key_from_id(experiment_key, variation_id)
+        variation = @config.get_variation_from_id(experiment_key, variation_id)
+        variation_key = variation ? variation['key'] : nil
         @config.logger.log(
           Logger::INFO,
           "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
         )
-        return variation_id
+        return variation
       end
 
       # Handle the case when the traffic range is empty due to sticky bucketing
@@ -99,8 +95,6 @@ module Optimizely
       @config.logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
       nil
     end
-
-    private
 
     def find_bucket(user_id, parent_id, traffic_allocations)
       # Helper function to find the matching entity ID for a given bucketing value in a list of traffic allocations.
@@ -125,6 +119,8 @@ module Optimizely
 
       nil
     end
+
+    private
 
     def generate_bucket_value(bucketing_id)
       # Helper function to generate bucket value in half-closed interval [0, MAX_TRAFFIC_VALUE).
