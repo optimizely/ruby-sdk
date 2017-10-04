@@ -57,6 +57,7 @@ describe Optimizely::EventBuilder do
           }]
         }]
       }],
+      anonymize_ip: false,
       revision: '42',
       client_name: Optimizely::CLIENT_ENGINE,
       client_version: Optimizely::VERSION
@@ -81,6 +82,7 @@ describe Optimizely::EventBuilder do
           }]
         }]
       }],
+      anonymize_ip: false,
       revision: '42',
       client_name: Optimizely::CLIENT_ENGINE,
       client_version: Optimizely::VERSION
