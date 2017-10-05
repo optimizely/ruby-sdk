@@ -93,7 +93,7 @@ module Optimizely
             snapshots: [],
             visitor_id: user_id
           }
-          ],
+        ],
         anonymize_ip: @config.anonymize_ip,
         revision: @config.revision,
         client_name: CLIENT_ENGINE,
