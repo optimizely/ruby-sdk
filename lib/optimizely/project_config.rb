@@ -39,7 +39,7 @@ module Optimizely
     attr_reader :parsing_succeeded
     attr_reader :project_id
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
-    attr_reader :should_anonymize_ip
+    attr_reader :anonymize_ip
     attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
@@ -88,7 +88,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
-      @should_anonymize_ip = config['anonymizeIP']
+      @anonymize_ip = config['anonymizeIP']
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 

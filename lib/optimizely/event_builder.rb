@@ -94,7 +94,7 @@ module Optimizely
             visitor_id: user_id
           }
           ],
-        anonymize_ip: @config.should_anonymize_ip,
+        anonymize_ip: @config.anonymize_ip,
         revision: @config.revision,
         client_name: CLIENT_ENGINE,
         client_version: VERSION
