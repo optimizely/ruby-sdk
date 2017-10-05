@@ -88,7 +88,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
-      @anonymize_ip = config['anonymizeIP']
+      @anonymize_ip = (config.has_key? 'anonymizeIP')? config['anonymizeIP'] :false
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
