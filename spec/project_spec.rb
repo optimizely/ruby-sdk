@@ -142,6 +142,7 @@ describe 'Optimizely' do
           }],
           visitor_id: 'test_user'
         }],
+        anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         client_version: Optimizely::VERSION
@@ -345,6 +346,7 @@ describe 'Optimizely' do
           }],
           visitor_id: 'test_user'
         }],
+        anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         client_version: Optimizely::VERSION
@@ -628,6 +630,7 @@ describe 'Optimizely' do
           }],
           visitor_id: 'test_user'
         }],
+        anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         client_version: Optimizely::VERSION

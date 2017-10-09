@@ -99,15 +99,16 @@ module Optimizely
     end 
 
     common_params = {
-      account_id: @config.account_id,
-      project_id: @config.project_id,
-      visitors: [
-        {
-          attributes: visitor_attributes,
-          snapshots: [],
-          visitor_id: user_id
-        }
+        account_id: @config.account_id,
+        project_id: @config.project_id,
+        visitors: [
+          {
+            attributes: visitor_attributes,
+            snapshots: [],
+            visitor_id: user_id
+          }
         ],
+        anonymize_ip: @config.anonymize_ip,
         revision: @config.revision,
         client_name: CLIENT_ENGINE,
         client_version: VERSION

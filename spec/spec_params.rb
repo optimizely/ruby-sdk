@@ -21,6 +21,7 @@ module OptimizelySpec
   VALID_CONFIG_BODY = {
     'accountId' => '12001',
     'projectId' => '111001',
+    'anonymizeIP'=> false,
     'revision' => '42',
     'version' => '2',
     'events' => [{
