@@ -20,7 +20,7 @@ module Optimizely
   class Bucketer
     # Optimizely bucketing algorithm that evenly distributes visitors.
 
-    BUCKETING_ID_TEMPLATE = '%{user_id}%{entity_id}'
+    BUCKETING_ID_TEMPLATE = '%{bucketing_id}%{entity_id}'
     HASH_SEED = 1
     MAX_HASH_VALUE = 2**32
     MAX_TRAFFIC_VALUE = 10_000
@@ -35,13 +35,15 @@ module Optimizely
       @config = config
     end
 
-    def bucket(experiment, user_id)
+    def bucket(experiment, bucketing_id, user_id)
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
       # experiment - Experiment for which visitor is to be bucketed.
+      # bucketing_id - String A customer-assigned value used to generate bucketing key
       # user_id - String ID for user.
       #
       # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.
+      return nil if experiment.nil?
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
       experiment_id = experiment['id']
@@ -51,7 +53,7 @@ module Optimizely
         group = @config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
           traffic_allocations = group.fetch('trafficAllocation')
-          bucketed_experiment_id = find_bucket(user_id, group_id, traffic_allocations)
+          bucketed_experiment_id = find_bucket(bucketing_id, user_id, group_id, traffic_allocations)
           # return if the user is not bucketed into any experiment
           unless bucketed_experiment_id
             @config.logger.log(Logger::INFO, "User '#{user_id}' is in no experiment.")
@@ -76,7 +78,7 @@ module Optimizely
       end
 
       traffic_allocations = experiment['trafficAllocation']
-      variation_id = find_bucket(user_id, experiment_id, traffic_allocations)
+      variation_id = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
       if variation_id && variation_id != ''
         variation = @config.get_variation_from_id(experiment_key, variation_id)
         variation_key = variation ? variation['key'] : nil
@@ -96,18 +98,18 @@ module Optimizely
       nil
     end
 
-    def find_bucket(user_id, parent_id, traffic_allocations)
+    def find_bucket(bucketing_id, user_id, parent_id, traffic_allocations)
       # Helper function to find the matching entity ID for a given bucketing value in a list of traffic allocations.
       #
+      # bucketing_id - String A customer-assigned value user to generate bucketing key
       # user_id - String ID for user
       # parent_id - String entity ID to use for bucketing ID
       # traffic_allocations - Array of traffic allocations
       #
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
-
-      bucketing_id = sprintf(BUCKETING_ID_TEMPLATE, user_id: user_id, entity_id: parent_id)
-      bucket_value = generate_bucket_value(bucketing_id)
-      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}'.")
+      bucketing_key = sprintf(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
+      bucket_value = generate_bucket_value(bucketing_key)
+      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' with bucketing ID: '#{bucketing_id}'.")
 
       traffic_allocations.each do |traffic_allocation|
         current_end_of_range = traffic_allocation['endOfRange']
@@ -122,25 +124,25 @@ module Optimizely
 
     private
 
-    def generate_bucket_value(bucketing_id)
+    def generate_bucket_value(bucketing_key)
       # Helper function to generate bucket value in half-closed interval [0, MAX_TRAFFIC_VALUE).
       #
-      # bucketing_id - String ID for bucketing.
+      # bucketing_key - String - Value used to generate bucket value
       #
-      # Returns bucket value corresponding to the provided bucketing ID.
+      # Returns bucket value corresponding to the provided bucketing key.
 
-      ratio = (generate_unsigned_hash_code_32_bit(bucketing_id)).to_f / MAX_HASH_VALUE
+      ratio = (generate_unsigned_hash_code_32_bit(bucketing_key)).to_f / MAX_HASH_VALUE
       (ratio * MAX_TRAFFIC_VALUE).to_i
     end
 
-    def generate_unsigned_hash_code_32_bit(bucketing_id)
+    def generate_unsigned_hash_code_32_bit(bucketing_key)
       # Helper function to retreive hash code
       #
-      # bucketing_id - String ID for bucketing.
+      # bucketing_key - String - Value used for the key of the murmur hash
       #
       # Returns hash code which is a 32 bit unsigned integer.
 
-      MurmurHash3::V32.str_hash(bucketing_id, @bucket_seed) & UNSIGNED_MAX_32_BIT_VALUE
+      MurmurHash3::V32.str_hash(bucketing_key, @bucket_seed) & UNSIGNED_MAX_32_BIT_VALUE
     end
   end
 end

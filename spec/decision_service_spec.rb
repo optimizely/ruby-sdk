@@ -46,6 +46,19 @@ describe Optimizely::DecisionService do
       expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
     end
 
+    it 'should return the correct variation ID (using Bucketing ID attrbiute) for a given user for whom a variation has been forced' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      } 
+      config.set_forced_variation('test_experiment_with_audience','test_user', 'control_with_audience')
+      expect(decision_service.get_variation('test_experiment_with_audience', 'test_user', user_attributes)).to eq('122228')
+      # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
+      expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+    end
+
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
       expect(decision_service.get_variation('test_experiment', 'test_user')).to eq('111128')
 
@@ -61,6 +74,25 @@ describe Optimizely::DecisionService do
                             .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'.")
 
       expect(decision_service.get_variation('test_experiment', 'forced_user2')).to eq('111129')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'.")
+
+      # whitelisted variations should short circuit bucketing
+      expect(decision_service.bucketer).not_to have_received(:bucket)
+      # whitelisted variations should short circuit audience evaluation
+      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+    end
+
+    it 'should return correct variation ID (using Bucketing ID attrbiute) if user ID is in whitelisted Variations and variation is valid' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      } 
+      expect(decision_service.get_variation('test_experiment', 'forced_user1',user_attributes)).to eq('111128')
+      expect(spy_logger).to have_received(:log)
+                            .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'.")
+
+      expect(decision_service.get_variation('test_experiment', 'forced_user2',user_attributes)).to eq('111129')
       expect(spy_logger).to have_received(:log)
                             .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'.")
 
@@ -137,7 +169,8 @@ describe Optimizely::DecisionService do
                             )
       # bucketing should have occured
       experiment = config.get_experiment_from_key('test_experiment')
-      expect(decision_service.bucketer).to have_received(:bucket).once.with(experiment, 'forced_user_with_invalid_variation')
+      # since we do not pass bucketing id attribute, bucketer will recieve user id as the bucketing id
+      expect(decision_service.bucketer).to have_received(:bucket).once.with(experiment,'forced_user_with_invalid_variation','forced_user_with_invalid_variation')
     end
 
     describe 'when a UserProfile service is provided' do
@@ -160,6 +193,31 @@ describe Optimizely::DecisionService do
         expect(spy_user_profile_service).to have_received(:save).once.with(expected_user_profile)
         expect(spy_logger).to have_received(:log).once
                           .with(Logger::INFO, "Saved variation ID 111128 of experiment ID 111127 for user 'test_user'.")
+      end
+
+       it 'should look up the UserProfile, bucket normally (using Bucketing ID attrbiute), and save the result if no saved profile is found' do
+        expected_user_profile = {
+          :user_id => 'test_user',
+          :experiment_bucket_map => {
+            '111127' => {
+              :variation_id => '111129'
+            }
+          }
+        }
+        user_attributes = {
+        'browser_type' => 'firefox',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      } 
+        expect(spy_user_profile_service).to receive(:lookup).once.and_return(nil)
+
+        expect(decision_service.get_variation('test_experiment', 'test_user',user_attributes)).to eq('111129')
+
+        # bucketing should have occurred
+        expect(decision_service.bucketer).to have_received(:bucket).once
+        # bucketing decision should have been saved
+        expect(spy_user_profile_service).to have_received(:save).once.with(expected_user_profile)
+        expect(spy_logger).to have_received(:log).once
+                          .with(Logger::INFO, "Saved variation ID 111129 of experiment ID 111127 for user 'test_user'.")
       end
 
       it 'should look up the user profile and skip normal bucketing if a profile with a saved decision is found' do
