@@ -39,7 +39,7 @@ module Optimizely
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
       # experiment - Experiment for which visitor is to be bucketed.
-      # bucketing_id - String A customer-assigned value used to generate bucketing key
+      # bucketing_id - String A customer-assigned value used to generate the bucketing key
       # user_id - String ID for user.
       #
       # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.

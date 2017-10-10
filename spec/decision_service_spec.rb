@@ -195,7 +195,7 @@ describe Optimizely::DecisionService do
                           .with(Logger::INFO, "Saved variation ID 111128 of experiment ID 111127 for user 'test_user'.")
       end
 
-       it 'should look up the UserProfile, bucket normally (using Bucketing ID attrbiute), and save the result if no saved profile is found' do
+       it 'should look up the UserProfile, bucket normally (using Bucketing ID attribute), and save the result if no saved profile is found' do
         expected_user_profile = {
           :user_id => 'test_user',
           :experiment_bucket_map => {
