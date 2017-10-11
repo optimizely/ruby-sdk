@@ -147,14 +147,15 @@ describe Optimizely::Bucketer do
 
   describe 'Bucketing with Bucketing Id' do
     # Bucketing with bucketing ID
+    # Make sure that the bucketing ID is used for the bucketing and not the user ID
     it 'should bucket to a variation different than the one expected with the userId' do
       experiment = config.get_experiment_from_key('test_experiment')
 
-      # Bucketing with user id as bucketing id - 'test_user111127' produces bucket value < 5000
+      # Bucketing with user id as bucketing id - 'test_user111127' produces bucket value < 5000 thus buckets to control
       expected_variation = config.get_variation_from_id('test_experiment','111128')
       expect(bucketer.bucket(experiment,'test_user', 'test_user')).to be(expected_variation)
 
-      # Bucketing with bucketing id - 'any_string789111127' produces bucket value btw 5000 to 10,000
+      # Bucketing with bucketing id - 'any_string789111127' produces bucket value btw 5000 to 10,000 thus buckets to variation
       expected_variation = config.get_variation_from_id('test_experiment','111129')
       expect(bucketer.bucket(experiment,'any_string789', 'test_user')).to be(expected_variation)
     end
@@ -165,11 +166,12 @@ describe Optimizely::Bucketer do
     end
 
     # Bucketing with grouped experiments and bucketing ID
-    it 'should bucket expectedly when bucketing id in grouped experiments'  do
+    # Make sure that the bucketing ID is used for the bucketing and not the user ID
+    it 'should bucket to a variation different than the one expected with the userId in grouped experiments'  do
       experiment = config.get_experiment_from_key('group1_exp1')
 
-      expected_variation = config.get_variation_from_id('group1_exp1','130001')
-      expect(bucketer.bucket(experiment,'pid', 'test_user')).to be(expected_variation)
+      expected_variation = nil
+      expect(bucketer.bucket(experiment,'test_user', 'test_user')).to be(expected_variation)
 
       expected_variation = config.get_variation_from_id('group1_exp1','130002')
       expect(bucketer.bucket(experiment,'123456789', 'test_user')).to be(expected_variation)
