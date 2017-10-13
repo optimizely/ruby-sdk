@@ -524,9 +524,13 @@ describe 'Optimizely' do
 
   describe '#get_variation' do
     it 'should have get_variation return expected variation when there are no audiences' do
-      allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
       expect(project_instance.get_variation('test_experiment', 'test_user'))
              .to eq(config_body['experiments'][0]['variations'][0]['key'])
+    end
+
+    it 'should have get_variation return expected variation with bucketing id attribute when there are no audiences' do
+      expect(project_instance.get_variation('test_experiment', 'test_user',nil))
+            .to eq(config_body['experiments'][0]['variations'][0]['key'])
     end
 
     it 'should have get_variation return expected variation when audience conditions match' do
@@ -534,6 +538,15 @@ describe 'Optimizely' do
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
              .to eq('control_with_audience')
     end
+    
+    it 'should have get_variation return expected variation with bucketing id attribute when audience conditions match' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      } 
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
+            .to eq('control_with_audience')
+    end    
 
     it 'should have get_variation return nil when attributes are invalid' do
       allow(project_instance).to receive(:attributes_valid?).and_return(false)
@@ -547,8 +560,24 @@ describe 'Optimizely' do
              .to eq(nil)
     end
 
+    it 'should have get_variation return nil with bucketing id attribute when audience conditions do not match' do
+      user_attributes = {'browser_type' => 'chrome',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      }
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
+      .to eq(nil)
+    end
+
     it 'should have get_variation return nil when experiment is not Running' do
       expect(project_instance.get_variation('test_experiment_not_started', 'test_user')).to eq(nil)
+    end
+
+    it 'should have get_variation return nil with bucketing id attribute when experiment is not Running' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+      } 
+      expect(project_instance.get_variation('test_experiment_not_started', 'test_user',user_attributes)).to eq(nil)
     end
 
     it 'should raise an exception when called with invalid attributes' do

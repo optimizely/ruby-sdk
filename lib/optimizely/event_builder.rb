@@ -20,6 +20,9 @@ require_relative '../optimizely/helpers/event_tag_utils'
 require 'securerandom'
 
 module Optimizely
+
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = "optimizely_bucketing_id".freeze
+
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
@@ -69,22 +72,33 @@ module Optimizely
         attribute_value = attributes[attribute_key]
         next if attribute_value.nil?
 
-        # Skip attributes not in the datafile
-        attribute_id = @config.get_attribute_id(attribute_key)
-        next unless attribute_id
+        if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
+          # TODO (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so 
+          # that custom attributes are not overloaded          
+          feature = {
+            entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
+            key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+            value: attribute_value
+          }         
+        else
+          # Skip attributes not in the datafile
+          attribute_id = @config.get_attribute_id(attribute_key)
+          next unless attribute_id
 
-        feature = {
-          entity_id: attribute_id,
-          key: attribute_key,
-          type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-          value: attribute_value
-        }
+          feature = {
+            entity_id: attribute_id,
+            key: attribute_key,
+            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+            value: attribute_value
+          }
 
-        visitor_attributes.push(feature)
         end
-      end 
+        visitor_attributes.push(feature)
+      end
+    end 
 
-      common_params = {
+    common_params = {
         account_id: @config.account_id,
         project_id: @config.project_id,
         visitors: [
@@ -98,7 +112,7 @@ module Optimizely
         revision: @config.revision,
         client_name: CLIENT_ENGINE,
         client_version: VERSION
-        }
+      }
 
       common_params
     end

@@ -366,4 +366,53 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
+  # Create impression event with bucketing ID
+  it 'should create valid Event when create_impression_event is called with Bucketing ID attribute' do
+    @expected_impression_params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox' 
+      },{
+        entity_id: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
+        key: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+        type: 'custom',
+        value: 'variation'
+      }]
+
+    user_attributes = {
+      'browser_type' => 'firefox',
+      OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'variation'
+    }
+    experiment = config.get_experiment_from_key('test_experiment')
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', user_attributes)
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  # Create conversion event with bucketing ID
+  it 'should create valid Event when create_conversion_event is called with Bucketing ID attribute' do
+    @expected_conversion_params[:visitors][0][:attributes] = [{
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox' 
+      },{
+        entity_id: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
+        key: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+        type: 'custom',
+        value: 'variation'
+      }]
+
+    user_attributes = {
+      'browser_type' => 'firefox',
+      OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'variation'
+    }
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', user_attributes, nil, {'111127' => '111128'})
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
 end

@@ -16,6 +16,9 @@
 require_relative './bucketer'
 
 module Optimizely
+
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id".freeze
+
   class DecisionService
     # Optimizely's decision service that determines into which variation of an experiment a user will be allocated.
     #
@@ -46,6 +49,17 @@ module Optimizely
       # attributes - Hash representing user attributes
       #
       # Returns variation ID where visitor will be bucketed (nil if experiment is inactive or user does not meet audience conditions)
+
+      # By default, the bucketing ID should be the user ID
+      bucketing_id = user_id;
+
+      # If the bucketing ID key is defined in attributes, then use that in place of the userID
+      if attributes and attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a? String 
+        unless attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].empty?
+          bucketing_id = attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID]
+          @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
+        end
+      end
 
       # Check to make sure experiment is active
       experiment = @config.get_experiment_from_key(experiment_key)
@@ -88,7 +102,7 @@ module Optimizely
       end
 
       # Bucket normally
-      variation = @bucketer.bucket(experiment, user_id)
+      variation = @bucketer.bucket(experiment, bucketing_id, user_id)
       variation_id = variation ? variation['id'] : nil
 
       # Persist bucketing decision
