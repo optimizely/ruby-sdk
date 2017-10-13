@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -40,9 +41,9 @@ module Optimizely
       elsif event.http_verb == :post
         begin
           HTTParty.post(event.url,
-                   body: event.params.to_json,
-                   headers: event.headers,
-                   timeout: REQUEST_TIMEOUT)
+                        body: event.params.to_json,
+                        headers: event.headers,
+                        timeout: REQUEST_TIMEOUT)
         rescue Timeout::Error => e
           return e
         end

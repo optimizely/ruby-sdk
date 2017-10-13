@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -109,7 +110,8 @@ module Optimizely
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
       bucketing_key = sprintf(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
       bucket_value = generate_bucket_value(bucketing_key)
-      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' with bucketing ID: '#{bucketing_id}'.")
+      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' "\
+                         "with bucketing ID: '#{bucketing_id}'.")
 
       traffic_allocations.each do |traffic_allocation|
         current_end_of_range = traffic_allocation['endOfRange']
@@ -131,7 +133,7 @@ module Optimizely
       #
       # Returns bucket value corresponding to the provided bucketing key.
 
-      ratio = (generate_unsigned_hash_code_32_bit(bucketing_key)).to_f / MAX_HASH_VALUE
+      ratio = generate_unsigned_hash_code_32_bit(bucketing_key).to_f / MAX_HASH_VALUE
       (ratio * MAX_TRAFFIC_VALUE).to_i
     end
 

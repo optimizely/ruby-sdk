@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -22,7 +23,7 @@ describe Optimizely::ProjectConfig do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
-  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
+  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
 
   describe '.initialize' do
     it 'should initialize properties correctly upon creating project' do
@@ -65,7 +66,7 @@ describe Optimizely::ProjectConfig do
         'group1_exp1' => config_body['groups'][0]['experiments'][0].merge('groupId' => '101'),
         'group1_exp2' => config_body['groups'][0]['experiments'][1].merge('groupId' => '101'),
         'group2_exp1' => config_body['groups'][1]['experiments'][0].merge('groupId' => '102'),
-        'group2_exp2' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102'),
+        'group2_exp2' => config_body['groups'][1]['experiments'][1].merge('groupId' => '102')
       }
 
       expected_variation_id_map = {
@@ -82,7 +83,7 @@ describe Optimizely::ProjectConfig do
         'test_experiment_not_started' => {
           '100028' => {
             'key' => 'control_not_started',
-            'id'=>'100028'
+            'id' => '100028'
           },
           '100029' => {
             'key' => 'variation_not_started',
@@ -247,7 +248,7 @@ describe Optimizely::ProjectConfig do
         'test_experiment_not_started' => {
           'control_not_started' => {
             'key' => 'control_not_started',
-            'id'=>'100028'
+            'id' => '100028'
           },
           'variation_not_started' => {
             'key' => 'variation_not_started',
@@ -276,11 +277,11 @@ describe Optimizely::ProjectConfig do
         },
         'test_experiment_double_feature' => {
           'control' => config_body['experiments'][5]['variations'][0],
-          'variation' => config_body['experiments'][5]['variations'][1],
+          'variation' => config_body['experiments'][5]['variations'][1]
         },
         'test_experiment_integer_feature' => {
           'control' => config_body['experiments'][6]['variations'][0],
-          'variation' => config_body['experiments'][6]['variations'][1],
+          'variation' => config_body['experiments'][6]['variations'][1]
         },
         'group1_exp1' => {
           'g1_e1_v1' => {
@@ -413,56 +414,56 @@ describe Optimizely::ProjectConfig do
         'boolean_feature' => {},
         'double_single_variable_feature' => {
           'double_variable' => {
-            'id'=> '155551',
-            'key'=> 'double_variable',
-            'type'=> 'double',
-            'defaultValue'=> '14.99'
+            'id' => '155551',
+            'key' => 'double_variable',
+            'type' => 'double',
+            'defaultValue' => '14.99'
           }
         },
         'integer_single_variable_feature' => {
           'integer_variable' => {
-            'id'=> '155553',
-            'key'=> 'integer_variable',
-            'type'=> 'integer',
-            'defaultValue'=> '7'
+            'id' => '155553',
+            'key' => 'integer_variable',
+            'type' => 'integer',
+            'defaultValue' => '7'
           }
         },
         'boolean_single_variable_feature' => {
           'boolean_variable' => {
-            'id'=> '155556',
-            'key'=> 'boolean_variable',
-            'type'=> 'boolean',
-            'defaultValue'=> 'true'
+            'id' => '155556',
+            'key' => 'boolean_variable',
+            'type' => 'boolean',
+            'defaultValue' => 'true'
           }
         },
         'string_single_variable_feature' => {
-            'string_variable' => {
-            'id'=> '155558',
-            'key'=> 'string_variable',
-            'type'=> 'string',
-            'defaultValue'=> 'wingardium leviosa'
+          'string_variable' => {
+            'id' => '155558',
+            'key' => 'string_variable',
+            'type' => 'string',
+            'defaultValue' => 'wingardium leviosa'
           }
         },
         'multi_variate_feature' => {
           'first_letter' => {
-            'id'=> '155560',
-            'key'=> 'first_letter',
-            'type'=> 'string',
-            'defaultValue'=> 'H'
+            'id' => '155560',
+            'key' => 'first_letter',
+            'type' => 'string',
+            'defaultValue' => 'H'
           },
           'rest_of_name' => {
-            'id'=> '155561',
-            'key'=> 'rest_of_name',
-            'type'=> 'string',
-            'defaultValue'=> 'arry'
+            'id' => '155561',
+            'key' => 'rest_of_name',
+            'type' => 'string',
+            'defaultValue' => 'arry'
           }
         },
         'mutex_group_feature' => {
           'correlating_variation_name' => {
-            'id'=> '155563',
-            'key'=> 'correlating_variation_name',
-            'type'=> 'string',
-            'defaultValue'=> 'null'
+            'id' => '155563',
+            'key' => 'correlating_variation_name',
+            'type' => 'string',
+            'defaultValue' => 'null'
           }
         },
         'empty_feature' => {}
@@ -570,20 +571,20 @@ describe Optimizely::ProjectConfig do
           }
         },
         '177771' => {
-          '155556' =>{
+          '155556' => {
             'id' => '155556',
             'value' => 'true'
           }
         },
         '177773' => {
-          '155556' =>{
+          '155556' => {
             'id' => '155556',
             'value' => 'false'
           }
         },
         '177775' => {},
         '177778' => {
-          '155556' =>{
+          '155556' => {
             'id' => '155556',
             'value' => 'false'
           }
@@ -593,7 +594,7 @@ describe Optimizely::ProjectConfig do
 
       expected_rollout_id_map = {
         '166660' => config_body['rollouts'][0],
-        '166661' => config_body['rollouts'][1],
+        '166661' => config_body['rollouts'][1]
       }
 
       expected_rollout_experiment_id_map = {
@@ -601,7 +602,7 @@ describe Optimizely::ProjectConfig do
         '177772' => config_body['rollouts'][0]['experiments'][1],
         '177776' => config_body['rollouts'][0]['experiments'][2],
         '177774' => config_body['rollouts'][1]['experiments'][0],
-        '177779' => config_body['rollouts'][1]['experiments'][1],
+        '177779' => config_body['rollouts'][1]['experiments'][1]
       }
 
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
@@ -630,7 +631,7 @@ describe Optimizely::ProjectConfig do
 
   describe '@logger' do
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     describe 'get_experiment_from_key' do
       it 'should log a message when provided experiment key is invalid' do
@@ -700,8 +701,8 @@ describe Optimizely::ProjectConfig do
     describe 'get_feature_flag_from_key' do
       it 'should log a message when provided feature flag key is invalid' do
         config.get_feature_flag_from_key('totally_invalid_feature_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+        expect(spy_logger).to have_received(:log)
+          .with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
       end
     end
 
@@ -709,17 +710,17 @@ describe Optimizely::ProjectConfig do
       it 'should log a message when variable with key is not found' do
         feature_flag = config.feature_flag_key_map['double_single_variable_feature']
         config.get_feature_variable(feature_flag, 'nonexistent_variable_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "No feature variable was found for key 'nonexistent_variable_key' in feature flag 'double_single_variable_feature'.")
+        expect(spy_logger).to have_received(:log)
+          .with(Logger::ERROR, "No feature variable was found for key 'nonexistent_variable_key' in "\
+                               "feature flag 'double_single_variable_feature'.")
       end
     end
   end
-
   describe '@error_handler' do
     let(:raise_error_handler) { Optimizely::RaiseErrorHandler.new }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, raise_error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, raise_error_handler) }
 
-     describe 'get_experiment_from_key' do
+    describe 'get_experiment_from_key' do
       it 'should raise an error when provided experiment key is invalid' do
         expect { config.get_experiment_from_key('invalid_key') }.to raise_error(Optimizely::InvalidExperimentError)
       end
@@ -734,21 +735,21 @@ describe Optimizely::ProjectConfig do
     describe 'get_audience_conditions_from_id' do
       it 'should raise an error when provided audience ID is invalid' do
         expect { config.get_audience_conditions_from_id('invalid_key') }
-               .to raise_error(Optimizely::InvalidAudienceError)
+          .to raise_error(Optimizely::InvalidAudienceError)
       end
     end
 
     describe 'get_variation_from_id' do
       it 'should raise an error when provided experiment key is invalid' do
         expect { config.get_variation_from_id('invalid_key', 'some_variation') }
-               .to raise_error(Optimizely::InvalidExperimentError)
+          .to raise_error(Optimizely::InvalidExperimentError)
       end
     end
 
     describe 'get_variation_from_id' do
       it 'should raise an error when provided variation key is invalid' do
         expect { config.get_variation_from_id('test_experiment', 'invalid_variation') }
-               .to raise_error(Optimizely::InvalidVariationError)
+          .to raise_error(Optimizely::InvalidVariationError)
       end
     end
 
@@ -773,7 +774,7 @@ describe Optimizely::ProjectConfig do
   end
 
   describe '#experiment_running' do
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
 
     it 'should return true if the experiment is running' do
       experiment = config.get_experiment_from_key('test_experiment')
@@ -794,35 +795,35 @@ describe Optimizely::ProjectConfig do
   end
 
   # Only those log messages have been asserted, which are directly logged in these methods.
-  # Messages that are logged in some internal function calls, are asserted in their respective function test cases. 
+  # Messages that are logged in some internal function calls, are asserted in their respective function test cases.
   describe 'get_forced_variation' do
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     before(:example) do
-      @user_id = "test_user"
-      @invalid_experiment_key = "invalid_experiment"
-      @invalid_variation_key = "invalid_variation"
-      @valid_experiment = {id: '111127', key: "test_experiment"}
-      @valid_variation = {id: '111128', key: "control"}
+      @user_id = 'test_user'
+      @invalid_experiment_key = 'invalid_experiment'
+      @invalid_variation_key = 'invalid_variation'
+      @valid_experiment = {id: '111127', key: 'test_experiment'}
+      @valid_variation = {id: '111128', key: 'control'}
     end
     # User ID is nil
     it 'should log a message and return nil when user_id is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "User ID is invalid")
+                                                     'User ID is invalid')
     end
     # User ID is an empty string
     it 'should log a message and return nil when user_id is passed as empty string for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], '')).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "User ID is invalid")
+                                                     'User ID is invalid')
     end
     # User ID is not defined in the forced variation map
     it 'should log a message and return nil when user is not in forced variation map' do
       expect(config.get_forced_variation(@valid_experiment[:key], @user_id)).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "User '#{@user_id}' is not in the forced variation map.")
+                                                     "User '#{@user_id}' is not in the forced variation map.")
     end
     # Experiment key does not exist in the datafile
     it 'should return nil when experiment key is not in datafile' do
@@ -836,34 +837,33 @@ describe Optimizely::ProjectConfig do
     it 'should return nil when experiment_key is passed as empty string for get_forced_variation' do
       expect(config.get_forced_variation('', @user_id)).to eq(nil)
     end
-
   end
 
   # Only those log messages have been asserted, which are directly logged in these methods.
   # Messages that are logged in some internal function calls, are asserted in their respective function test cases.
   describe 'set_forced_variation' do
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     before(:example) do
-      @user_id = "test_user"
-      @invalid_experiment_key = "invalid_experiment"
-      @invalid_variation_key = "invalid_variation"
-      @valid_experiment = {id: '111127', key: "test_experiment"}
-      @valid_variation = {id: '111128', key: "control"}
+      @user_id = 'test_user'
+      @invalid_experiment_key = 'invalid_experiment'
+      @invalid_variation_key = 'invalid_variation'
+      @valid_experiment = {id: '111127', key: 'test_experiment'}
+      @valid_variation = {id: '111128', key: 'control'}
     end
 
     # User ID is nil
     it 'should log a message when user_id is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "User ID is invalid")
+                                                     'User ID is invalid')
     end
     # User ID is an empty string
     it 'should log a message and return false when user_id is passed as empty string' do
       expect(config.set_forced_variation(@valid_experiment[:key], '', @valid_variation[:key])).to eq(false)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "User ID is invalid")
+                                                     'User ID is invalid')
     end
     # Experiment key is nil
     it 'should return false when experiment_key is passed as nil' do
@@ -880,14 +880,17 @@ describe Optimizely::ProjectConfig do
     # Variation key is nil
     it 'should delete forced varaition maping, log a message and return true when variation_key is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, nil)).to eq(true)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "Variation mapped to experiment '#{@valid_experiment[:key]}' has been removed for user '#{@user_id}'.")
+      expect(spy_logger).to have_received(:log)
+        .with(Logger::DEBUG, "Variation mapped to experiment '#{@valid_experiment[:key]}' has been "\
+                             "removed for user '#{@user_id}'.")
     end
     # Variation key is an empty string
-    it 'should delete forced varaition maping, log a message and return true when variation_key is passed as empty string' do
+    it 'should delete forced varaition maping, log a message and return true when '\
+       'variation_key is passed as empty string' do
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, '')).to eq(true)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-       "Variation mapped to experiment '#{@valid_experiment[:key]}' has been removed for user '#{@user_id}'.")
+      expect(spy_logger).to have_received(:log)
+        .with(Logger::DEBUG, "Variation mapped to experiment '#{@valid_experiment[:key]}' has been "\
+                             "removed for user '#{@user_id}'.")
     end
     # Variation key does not exist in the datafile
     it 'return false when variation_key is not in datafile' do
@@ -896,35 +899,35 @@ describe Optimizely::ProjectConfig do
   end
 
   describe 'set/get forced variations multiple calls' do
-
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)}
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     before(:example) do
-      @user_id = "test_user"
-      @user_id_2 = "test_user_2"
-      @invalid_experiment_key = "invalid_experiment"
-      @invalid_variation_key = "invalid_variation"
-      @valid_experiment = {id: '111127', key: "test_experiment"}
-      @valid_variation = {id: '111128', key: "control"}
-      @valid_variation_2 = {id: '111129', key: "variation"}
-      @valid_experiment_2 = {id: '122227', key: "test_experiment_with_audience"}
-      @valid_variation_for_exp_2 = {id: '122228', key: "control_with_audience"}
+      @user_id = 'test_user'
+      @user_id_2 = 'test_user_2'
+      @invalid_experiment_key = 'invalid_experiment'
+      @invalid_variation_key = 'invalid_variation'
+      @valid_experiment = {id: '111127', key: 'test_experiment'}
+      @valid_variation = {id: '111128', key: 'control'}
+      @valid_variation_2 = {id: '111129', key: 'variation'}
+      @valid_experiment_2 = {id: '122227', key: 'test_experiment_with_audience'}
+      @valid_variation_for_exp_2 = {id: '122228', key: 'control_with_audience'}
     end
 
     # Call set variation with different variations on one user/experiment to confirm that each set is expected.
-    it 'should set and return expected variations when different variations are set and removed for one user/experiment' do
+    it 'should set and return expected variations when different variations are set and '\
+       'removed for one user/experiment' do
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, @valid_variation[:key])).to eq(true)
-      variation = config.get_forced_variation(@valid_experiment[:key], @user_id)                                          
+      variation = config.get_forced_variation(@valid_experiment[:key], @user_id)
       expect(variation['id']).to eq(@valid_variation[:id])
-      expect(variation['key']).to eq(@valid_variation[:key])      
+      expect(variation['key']).to eq(@valid_variation[:key])
 
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, @valid_variation_2[:key])).to eq(true)
       variation = config.get_forced_variation(@valid_experiment[:key], @user_id)
       expect(variation['id']).to eq(@valid_variation_2[:id])
-      expect(variation['key']).to eq(@valid_variation_2[:key])                                   
+      expect(variation['key']).to eq(@valid_variation_2[:key])
 
-      expect(config.set_forced_variation(@valid_experiment[:key], @user_id,  '')).to eq(true)
+      expect(config.set_forced_variation(@valid_experiment[:key], @user_id, '')).to eq(true)
       expect(config.get_forced_variation(@valid_experiment[:key], @user_id)).to eq(nil)
     end
 
@@ -935,7 +938,8 @@ describe Optimizely::ProjectConfig do
       expect(variation['id']).to eq(@valid_variation[:id])
       expect(variation['key']).to eq(@valid_variation[:key])
 
-      expect(config.set_forced_variation(@valid_experiment_2[:key], @user_id, @valid_variation_for_exp_2[:key])).to eq(true)
+      expect(config.set_forced_variation(@valid_experiment_2[:key], @user_id, @valid_variation_for_exp_2[:key]))
+        .to eq(true)
       variation = config.get_forced_variation(@valid_experiment_2[:key], @user_id)
       expect(variation['id']).to eq(@valid_variation_for_exp_2[:id])
       expect(variation['key']).to eq(@valid_variation_for_exp_2[:key])
@@ -943,7 +947,6 @@ describe Optimizely::ProjectConfig do
 
     # Set variations for multiple users.
     it 'should set and return expected variations when variations are set for multiple users' do
-
       expect(config.set_forced_variation(@valid_experiment[:key], @user_id, @valid_variation[:key])).to eq(true)
       variation = config.get_forced_variation(@valid_experiment[:key], @user_id)
       expect(variation['id']).to eq(@valid_variation[:id])
@@ -954,6 +957,5 @@ describe Optimizely::ProjectConfig do
       expect(variation['id']).to eq(@valid_variation[:id])
       expect(variation['key']).to eq(@valid_variation[:key])
     end
-
   end
 end

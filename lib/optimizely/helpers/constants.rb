@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -16,7 +17,6 @@
 module Optimizely
   module Helpers
     module Constants
-
       JSON_SCHEMA_V2 = {
         'type' => 'object',
         'properties' => {
@@ -271,11 +271,11 @@ module Optimizely
                 },
                 'key' => {
                   'type' => 'string'
-                },
+                }
               },
               'required' => [
                 'id',
-                'key',
+                'key'
               ]
             }
           },
@@ -297,14 +297,14 @@ module Optimizely
           'version',
           'revision'
         ]
-      }
+      }.freeze
 
       VARIABLE_TYPES = {
         'BOOLEAN' => 'boolean',
         'DOUBLE' => 'double',
         'INTEGER' => 'integer',
         'STRING' => 'string'
-      }
+      }.freeze
     end
   end
 end

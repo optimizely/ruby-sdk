@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -28,7 +29,6 @@ require_relative 'optimizely/project_config'
 
 module Optimizely
   class Project
-
     # Boolean representing if the instance represents a usable Optimizely Project
     attr_reader :is_valid
 
@@ -39,7 +39,8 @@ module Optimizely
     attr_reader :event_dispatcher
     attr_reader :logger
 
-    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
+    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false,
+                   user_profile_service = nil)
       # Constructor for Projects.
       #
       # datafile - JSON string representing the project.
@@ -145,9 +146,7 @@ module Optimizely
 
       unless variation_id.nil?
         variation = @config.get_variation_from_id(experiment_key, variation_id)
-        if variation
-          return variation['key']
-        end
+        return variation['key'] if variation
       end
       nil
     end
@@ -157,12 +156,12 @@ module Optimizely
       #
       # experiment_key - String - key identifying the experiment.
       # user_id - String - The user ID to be used for bucketing.
-      # variation_key - The variation key specifies the variation which the user will 
+      # variation_key - The variation key specifies the variation which the user will
       #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
       #
       # Returns - Boolean - indicates if the set completed successfully.
 
-      @config.set_forced_variation(experiment_key, user_id, variation_key);
+      @config.set_forced_variation(experiment_key, user_id, variation_key)
     end
 
     def get_forced_variation(experiment_key, user_id)
@@ -174,10 +173,8 @@ module Optimizely
       # Returns String|nil The forced variation key.
 
       forced_variation_key = nil
-      forced_variation = @config.get_forced_variation(experiment_key, user_id);
-      if forced_variation
-        forced_variation_key = forced_variation['key']
-      end
+      forced_variation = @config.get_forced_variation(experiment_key, user_id)
+      forced_variation_key = forced_variation['key'] if forced_variation
 
       forced_variation_key
     end
@@ -196,11 +193,12 @@ module Optimizely
         return nil
       end
 
-      if event_tags and event_tags.is_a? Numeric
+      if event_tags && event_tags.is_a?(Numeric)
         event_tags = {
           'revenue' => event_tags
         }
-        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
+        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in '\
+                    'revenue value instead.')
       end
 
       return nil unless user_inputs_valid?(attributes, event_tags)
@@ -261,11 +259,11 @@ module Optimizely
       unless decision.nil?
         variation = decision['variation']
         experiment = decision['experiment']
-        unless experiment.nil?
-          send_impression(experiment, variation['key'], user_id, attributes)
-        else
+        if experiment.nil?
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
+        else
+          send_impression(experiment, variation['key'], user_id, attributes)
         end
 
         @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
@@ -291,12 +289,12 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES["STRING"],
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['STRING'],
         user_id,
         attributes
       )
 
-      return variable_value
+      variable_value
     end
 
     def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
@@ -313,12 +311,12 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES["BOOLEAN"],
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['BOOLEAN'],
         user_id,
         attributes
       )
 
-      return variable_value
+      variable_value
     end
 
     def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
@@ -335,12 +333,12 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES["DOUBLE"],
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['DOUBLE'],
         user_id,
         attributes
       )
 
-      return variable_value
+      variable_value
     end
 
     def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
@@ -357,12 +355,12 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES["INTEGER"],
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['INTEGER'],
         user_id,
         attributes
       )
 
-      return variable_value
+      variable_value
     end
 
     private
@@ -392,23 +390,25 @@ module Optimizely
         variable_value = variable['defaultValue']
 
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-        unless decision
-          @logger.log(Logger::INFO,
-            "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
-        else
+        if decision
           variation = decision['variation']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
-          unless variation_variable_usages and variation_variable_usages.key?(variable_id)
-            variation_key = variation['key']
-            @logger.log(Logger::DEBUG,
-              "Variable '#{variable_key}' is not used in variation '#{variation_key}'. Returning the default variable value '#{variable_value}'."
-            )
-          else
+          if variation_variable_usages && variation_variable_usages.key?(variable_id)
             variable_value = variation_variable_usages[variable_id]['value']
             @logger.log(Logger::INFO,
-              "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+                        "Got variable value '#{variable_value}' for variable '#{variable_key}' of "\
+                        "feature flag '#{feature_flag_key}'.")
+          else
+            variation_key = variation['key']
+            @logger.log(Logger::DEBUG,
+                        "Variable '#{variable_key}' is not used in variation '#{variation_key}'. "\
+                        "Returning the default variable value '#{variable_value}'.")
           end
+        else
+          @logger.log(Logger::INFO,
+                      "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'."\
+                      " Returning the default variable value '#{variable_value}'.")
         end
       end
 
@@ -416,13 +416,14 @@ module Optimizely
         actual_variable_type = variable['type']
         unless variable_type == actual_variable_type
           @logger.log(Logger::WARN,
-            "Requested variable type '#{variable_type}' but variable '#{variable_key}' is of type '#{actual_variable_type}'.")
+                      "Requested variable type '#{variable_type}' but variable '#{variable_key}' is of "\
+                      "type '#{actual_variable_type}'.")
         end
 
         variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
       end
 
-      return variable_value
+      variable_value
     end
 
     def get_valid_experiments_for_event(event_key, user_id, attributes)
@@ -461,13 +462,9 @@ module Optimizely
       #
       # Returns boolean True if inputs are valid. False otherwise.
 
-      if !attributes.nil? && !attributes_valid?(attributes)
-        return false
-      end
+      return false if !attributes.nil? && !attributes_valid?(attributes)
 
-      if !event_tags.nil? && !event_tags_valid?(event_tags)
-        return false
-      end
+      return false if !event_tags.nil? && !event_tags_valid?(event_tags)
 
       true
     end
@@ -492,12 +489,12 @@ module Optimizely
 
     def validate_instantiation_options(datafile, skip_json_validation)
       unless skip_json_validation
-        raise InvalidInputError.new('datafile') unless Helpers::Validator.datafile_valid?(datafile)
+        raise InvalidInputError, 'datafile' unless Helpers::Validator.datafile_valid?(datafile)
       end
 
-      raise InvalidInputError.new('logger') unless Helpers::Validator.logger_valid?(@logger)
-      raise InvalidInputError.new('error_handler') unless Helpers::Validator.error_handler_valid?(@error_handler)
-      raise InvalidInputError.new('event_dispatcher') unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
+      raise InvalidInputError, 'logger' unless Helpers::Validator.logger_valid?(@logger)
+      raise InvalidInputError, 'error_handler' unless Helpers::Validator.error_handler_valid?(@error_handler)
+      raise InvalidInputError, 'event_dispatcher' unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
     end
 
     def send_impression(experiment, variation_key, user_id, attributes = nil)

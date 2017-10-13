@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2017, Optimizely and contributors
 #
@@ -30,26 +31,28 @@ module Optimizely
         return_value = nil
 
         case variable_type
-        when "boolean"
-          return_value = value == "true"
-        when "double"
+        when 'boolean'
+          return_value = value == 'true'
+        when 'double'
           begin
             return_value = Float(value)
           rescue => e
-            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}': #{e.message}.")
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
+                                      "'#{variable_type}': #{e.message}.")
           end
-        when "integer"
+        when 'integer'
           begin
             return_value = Integer(value)
           rescue => e
-            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type '#{variable_type}': #{e.message}.")
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
+                                      "'#{variable_type}': #{e.message}.")
           end
         else
           # default case is string
           return_value = value
         end
 
-        return return_value
+        return_value
       end
     end
   end

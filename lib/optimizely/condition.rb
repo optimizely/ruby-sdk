@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -27,7 +28,7 @@ module Optimizely
       ConditionalOperatorTypes::AND,
       ConditionalOperatorTypes::OR,
       ConditionalOperatorTypes::NOT
-    ]
+    ].freeze
 
     attr_reader :user_attributes
 

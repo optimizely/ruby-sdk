@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -89,9 +90,10 @@ module Optimizely
       end
 
       def string_numeric?(str)
-        Float(str) != nil rescue false
+        !Float(str).nil?
+      rescue
+        false
       end
-      
     end
   end
 end

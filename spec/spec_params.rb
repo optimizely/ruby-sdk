@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -16,12 +17,12 @@
 require 'json'
 
 module OptimizelySpec
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id".freeze
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = "optimizely_bucketing_id".freeze
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id"
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = 'optimizely_bucketing_id'
   VALID_CONFIG_BODY = {
     'accountId' => '12001',
     'projectId' => '111001',
-    'anonymizeIP'=> false,
+    'anonymizeIP' => false,
     'revision' => '42',
     'version' => '2',
     'events' => [{
@@ -51,7 +52,7 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '111129',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'forcedVariations' => {
         'forced_user1' => 'control',
@@ -59,7 +60,7 @@ module OptimizelySpec
         'forced_user_with_invalid_variation' => 'invalid_variation'
       },
       'id' => '111127',
-      'percentageIncluded' => 10000,
+      'percentageIncluded' => 10_000,
       'variations' => [{
         'key' => 'control',
         'id' => '111128'
@@ -77,11 +78,11 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '100029',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'forcedVariations' => {},
       'id' => '100027',
-      'percentageIncluded' => 10000,
+      'percentageIncluded' => 10_000,
       'variations' => [{
         'key' => 'control_not_started',
         'id' => '100028'
@@ -99,13 +100,13 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '122229',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'forcedVariations' => {
-        'forced_audience_user' => 'variation_with_audience',
+        'forced_audience_user' => 'variation_with_audience'
       },
       'id' => '122227',
-      'percentageIncluded' => 10000,
+      'percentageIncluded' => 10_000,
       'variations' => [{
         'key' => 'control_with_audience',
         'id' => '122228'
@@ -131,7 +132,7 @@ module OptimizelySpec
         'endOfRange' => 7500
       }, {
         'entityId' => '122234',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'variations' => [{
         'id' => '122231',
@@ -185,7 +186,7 @@ module OptimizelySpec
             'value' => 'eorge'
           }
         ]
-      }],
+      }]
     }, {
       'key' => 'test_experiment_with_feature_rollout',
       'status' => 'Running',
@@ -198,7 +199,7 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '122237',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'variations' => [{
         'id' => '122236',
@@ -227,7 +228,7 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '122240',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'variations' => [{
         'id' => '122239',
@@ -247,7 +248,7 @@ module OptimizelySpec
             'value' => '13.37'
           }
         ]
-      }],
+      }]
     }, {
       'key' => 'test_experiment_integer_feature',
       'status' => 'Running',
@@ -260,7 +261,7 @@ module OptimizelySpec
         'endOfRange' => 5000
       }, {
         'entityId' => '122243',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'variations' => [{
         'id' => '122242',
@@ -280,11 +281,11 @@ module OptimizelySpec
             'value' => '13'
           }
         ]
-      }],
+      }]
     }],
     'attributes' => [{
       'key' => 'browser_type',
-      'id' => '111094',
+      'id' => '111094'
     }],
     'audiences' => [{
       'name' => 'Firefox users',
@@ -305,7 +306,7 @@ module OptimizelySpec
         'endOfRange' => 4000
       }, {
         'entityId' => '133332',
-        'endOfRange' => 10000
+        'endOfRange' => 10_000
       }],
       'experiments' => [{
         'id' => '133331',
@@ -318,10 +319,10 @@ module OptimizelySpec
           'endOfRange' => 5000
         }, {
           'entityId' => '130002',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }],
         'forcedVariations' => {},
-        'percentageIncluded' => 10000,
+        'percentageIncluded' => 10_000,
         'variations' => [{
           'key' => 'g1_e1_v1',
           'id' => '130001',
@@ -352,12 +353,12 @@ module OptimizelySpec
           'endOfRange' => 5000
         }, {
           'entityId' => '130004',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }],
         'forcedVariations' => {
           'forced_group_user1' => 'g1_e2_v2'
         },
-        'percentageIncluded' => 10000,
+        'percentageIncluded' => 10_000,
         'variations' => [{
           'key' => 'g1_e2_v1',
           'id' => '130003',
@@ -393,10 +394,10 @@ module OptimizelySpec
           'endOfRange' => 5000
         }, {
           'entityId' => '144444',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }],
         'forcedVariations' => {},
-        'percentageIncluded' => 10000,
+        'percentageIncluded' => 10_000,
         'variations' => [{
           'key' => 'g2_e1_v1',
           'id' => '144443'
@@ -415,10 +416,10 @@ module OptimizelySpec
           'endOfRange' => 5000
         }, {
           'entityId' => '144446',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }],
         'forcedVariations' => {},
-        'percentageIncluded' => 10000,
+        'percentageIncluded' => 10_000,
         'variations' => [{
           'key' => 'g2_e2_v1',
           'id' => '144445'
@@ -435,95 +436,95 @@ module OptimizelySpec
       'experimentIds' => ['133331', '133332'],
       'variables' => []
     }, {
-      'id'=> '155550',
-      'key'=> 'double_single_variable_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> ['122238'],
-      'variables'=> [
+      'id' => '155550',
+      'key' => 'double_single_variable_feature',
+      'rolloutId' => '',
+      'experimentIds' => ['122238'],
+      'variables' => [
         {
-          'id'=> '155551',
-          'key'=> 'double_variable',
-          'type'=> 'double',
-          'defaultValue'=> '14.99'
+          'id' => '155551',
+          'key' => 'double_variable',
+          'type' => 'double',
+          'defaultValue' => '14.99'
         }
       ]
     }, {
-      'id'=> '155552',
-      'key'=> 'integer_single_variable_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> ['122241'],
-      'variables'=> [
+      'id' => '155552',
+      'key' => 'integer_single_variable_feature',
+      'rolloutId' => '',
+      'experimentIds' => ['122241'],
+      'variables' => [
         {
-          'id'=> '155553',
-          'key'=> 'integer_variable',
-          'type'=> 'integer',
-          'defaultValue'=> '7'
+          'id' => '155553',
+          'key' => 'integer_variable',
+          'type' => 'integer',
+          'defaultValue' => '7'
         }
       ]
     }, {
-      'id'=> '155554',
-      'key'=> 'boolean_single_variable_feature',
-      'rolloutId'=> '166660',
-      'experimentIds'=> [],
-      'variables'=> [
+      'id' => '155554',
+      'key' => 'boolean_single_variable_feature',
+      'rolloutId' => '166660',
+      'experimentIds' => [],
+      'variables' => [
         {
-          'id'=> '155556',
-          'key'=> 'boolean_variable',
-          'type'=> 'boolean',
-          'defaultValue'=> 'true'
+          'id' => '155556',
+          'key' => 'boolean_variable',
+          'type' => 'boolean',
+          'defaultValue' => 'true'
         }
       ]
     }, {
-      'id'=> '155557',
-      'key'=> 'string_single_variable_feature',
-      'rolloutId'=> '166661',
-      'experimentIds'=> ['122235'],
-      'variables'=> [
+      'id' => '155557',
+      'key' => 'string_single_variable_feature',
+      'rolloutId' => '166661',
+      'experimentIds' => ['122235'],
+      'variables' => [
         {
-          'id'=> '155558',
-          'key'=> 'string_variable',
-          'type'=> 'string',
-          'defaultValue'=> 'wingardium leviosa'
+          'id' => '155558',
+          'key' => 'string_variable',
+          'type' => 'string',
+          'defaultValue' => 'wingardium leviosa'
         }
       ]
     }, {
-      'id'=> '155559',
-      'key'=> 'multi_variate_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> ['122230'],
-      'variables'=> [
+      'id' => '155559',
+      'key' => 'multi_variate_feature',
+      'rolloutId' => '',
+      'experimentIds' => ['122230'],
+      'variables' => [
         {
-          'id'=> '155560',
-          'key'=> 'first_letter',
-          'type'=> 'string',
-          'defaultValue'=> 'H'
+          'id' => '155560',
+          'key' => 'first_letter',
+          'type' => 'string',
+          'defaultValue' => 'H'
         },
         {
-          'id'=> '155561',
-          'key'=> 'rest_of_name',
-          'type'=> 'string',
-          'defaultValue'=> 'arry'
+          'id' => '155561',
+          'key' => 'rest_of_name',
+          'type' => 'string',
+          'defaultValue' => 'arry'
         }
       ]
     }, {
-      'id'=> '155562',
-      'key'=> 'mutex_group_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> ['133331', '133332'],
-      'variables'=> [
+      'id' => '155562',
+      'key' => 'mutex_group_feature',
+      'rolloutId' => '',
+      'experimentIds' => ['133331', '133332'],
+      'variables' => [
         {
-          'id'=> '155563',
-          'key'=> 'correlating_variation_name',
-          'type'=> 'string',
-          'defaultValue'=> 'null'
+          'id' => '155563',
+          'key' => 'correlating_variation_name',
+          'type' => 'string',
+          'defaultValue' => 'null'
         }
       ]
     }, {
-      'id'=> '155564',
-      'key'=> 'empty_feature',
-      'rolloutId'=> '',
-      'experimentIds'=> [],
-      'variables'=> []
+      'id' => '155564',
+      'key' => 'empty_feature',
+      'rolloutId' => '',
+      'experimentIds' => [],
+      'variables' => []
     }],
     'rollouts' => [{
       'id' => '166660',
@@ -565,7 +566,7 @@ module OptimizelySpec
         }],
         'trafficAllocation' => [{
           'entityId' => '177773',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }]
       }, {
         'id' => '177776',
@@ -585,7 +586,7 @@ module OptimizelySpec
         }],
         'trafficAllocation' => [{
           'entityId' => '177778',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }]
       }]
     }, {
@@ -622,7 +623,7 @@ module OptimizelySpec
         }]
       }]
     }]
-  }
+  }.freeze
 
   VALID_CONFIG_BODY_JSON = JSON.dump(VALID_CONFIG_BODY)
 

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -104,6 +105,6 @@ module OptimizelyBenchmark
       10 => 'optimizely_user',
       25 => 'yes',
       50 => 'test'
-    },
-  }
+    }
+  }.freeze
 end

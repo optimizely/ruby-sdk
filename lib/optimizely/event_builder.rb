@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -20,8 +21,7 @@ require_relative '../optimizely/helpers/event_tag_utils'
 require 'securerandom'
 
 module Optimizely
-
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = "optimizely_bucketing_id".freeze
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = 'optimizely_bucketing_id'
 
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
@@ -39,8 +39,8 @@ module Optimizely
     end
 
     # Override equality operator to make two events with the same contents equal for testing purposes
-    def ==(event)
-      @http_verb == event.http_verb && @url == event.url && @params == event.params && @headers == event.headers
+    def ==(other)
+      @http_verb == other.http_verb && @url == other.url && @params == other.params && @headers == other.headers
     end
   end
 
@@ -57,10 +57,10 @@ module Optimizely
 
     def get_common_params(user_id, attributes)
       # Get params which are used in both conversion and impression events.
-      # 
+      #
       # user_id -    +String+ ID for user
       # attributes - +Hash+ representing user attributes and values which need to be recorded.
-      # 
+      #
       # Returns +Hash+ Common event params
 
       visitor_attributes = []
@@ -68,37 +68,37 @@ module Optimizely
       unless attributes.nil?
 
         attributes.keys.each do |attribute_key|
-        # Omit null attribute value
-        attribute_value = attributes[attribute_key]
-        next if attribute_value.nil?
+          # Omit null attribute value
+          attribute_value = attributes[attribute_key]
+          next if attribute_value.nil?
 
-        if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
-          # TODO (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so 
-          # that custom attributes are not overloaded          
-          feature = {
-            entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
-            key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
-            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-            value: attribute_value
-          }         
-        else
-          # Skip attributes not in the datafile
-          attribute_id = @config.get_attribute_id(attribute_key)
-          next unless attribute_id
+          if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
+            # TODO: (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so
+            # that custom attributes are not overloaded
+            feature = {
+              entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
+              key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+              value: attribute_value
+            }
+          else
+            # Skip attributes not in the datafile
+            attribute_id = @config.get_attribute_id(attribute_key)
+            next unless attribute_id
 
-          feature = {
-            entity_id: attribute_id,
-            key: attribute_key,
-            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-            value: attribute_value
-          }
+            feature = {
+              entity_id: attribute_id,
+              key: attribute_key,
+              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+              value: attribute_value
+            }
 
+          end
+          visitor_attributes.push(feature)
         end
-        visitor_attributes.push(feature)
       end
-    end 
 
-    common_params = {
+      common_params = {
         account_id: @config.account_id,
         project_id: @config.project_id,
         visitors: [
@@ -120,7 +120,7 @@ module Optimizely
 
   class EventBuilder < BaseEventBuilder
     ENDPOINT = 'https://logx.optimizely.com/v1/events'
-    POST_HEADERS = { 'Content-Type' => 'application/json' }
+    POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
     def create_impression_event(experiment, variation_id, user_id, attributes)
@@ -153,8 +153,8 @@ module Optimizely
 
       event_params = get_common_params(user_id, attributes)
       conversion_params = get_conversion_params(event_key, event_tags, experiment_variation_map)
-      event_params[:visitors][0][:snapshots] = conversion_params;
-      
+      event_params[:visitors][0][:snapshots] = conversion_params
+
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
 
@@ -171,21 +171,21 @@ module Optimizely
       experiment_key = experiment['key']
       experiment_id = experiment['id']
 
-      impressionEventParams = {
+      impression_event_params = {
         decisions: [{
           campaign_id: @config.experiment_key_map[experiment_key]['layerId'],
           experiment_id: experiment_id,
-          variation_id: variation_id,
+          variation_id: variation_id
         }],
         events: [{
           entity_id: @config.experiment_key_map[experiment_key]['layerId'],
-          timestamp: get_timestamp(),
+          timestamp: get_timestamp,
           key: ACTIVATE_EVENT_KEY,
-          uuid: get_uuid()
+          uuid: get_uuid
         }]
       }
 
-      impressionEventParams;
+      impression_event_params
     end
 
     def get_conversion_params(event_key, event_tags, experiment_variation_map)
@@ -197,46 +197,41 @@ module Optimizely
       #
       # Returns +Hash+ Impression event params
 
-      conversionEventParams = []
+      conversion_event_params = []
 
       experiment_variation_map.each do |experiment_id, variation_id|
-
         single_snapshot = {
           decisions: [{
             campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
             experiment_id: experiment_id,
-            variation_id: variation_id,
+            variation_id: variation_id
           }],
-          events: [],
+          events: []
         }
 
         event_object = {
           entity_id: @config.event_key_map[event_key]['id'],
-          timestamp: get_timestamp(),
-          uuid: get_uuid(),
-          key: event_key,
+          timestamp: get_timestamp,
+          uuid: get_uuid,
+          key: event_key
         }
 
         if event_tags
           revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
-          if revenue_value
-            event_object[:revenue] = revenue_value
-          end
+          event_object[:revenue] = revenue_value if revenue_value
 
           numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags)
-          if numeric_value
-            event_object[:value] = numeric_value
-          end
+          event_object[:value] = numeric_value if numeric_value
 
           event_object[:tags] = event_tags
         end
 
         single_snapshot[:events] = [event_object]
 
-        conversionEventParams.push(single_snapshot)
+        conversion_event_params.push(single_snapshot)
       end
-    
-      conversionEventParams
+
+      conversion_event_params
     end
 
     def get_timestamp
