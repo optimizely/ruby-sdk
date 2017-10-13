@@ -273,7 +273,7 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
-    it 'should log when an impression event is dispatched' do
+    it 'should log when an impression event is dispatched' do 
       params = @expected_activate_params
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
