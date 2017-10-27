@@ -112,9 +112,7 @@ module Optimizely
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
       decision = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
-      unless decision.nil?
-        return decision
-      end
+      return decision unless decision.nil?
 
       feature_flag_key = feature_flag['key']
       variation = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
@@ -135,7 +133,7 @@ module Optimizely
         )
       end
 
-      return nil
+      nil
     end
 
     def get_variation_for_feature_experiment(feature_flag, user_id, attributes = nil)
@@ -167,17 +165,15 @@ module Optimizely
           end
           experiment_key = experiment['key']
           variation_id = get_variation(experiment_key, user_id, attributes)
-          if variation_id
-            variation = @config.variation_id_map[experiment_key][variation_id]
-            @config.logger.log(
-                Logger::INFO,
-                "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
-            )
-            return {
-                'experiment' => experiment,
-                'variation' => variation
-            }
-          end
+          next unless variation_id
+          variation = @config.variation_id_map[experiment_key][variation_id]
+          @config.logger.log(Logger::INFO,
+                             "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature "\
+                             "'#{feature_flag_key}'.")
+          return {
+            'experiment' => experiment,
+            'variation' => variation
+          }
         end
         @config.logger.log(
           Logger::INFO,
@@ -211,18 +207,21 @@ module Optimizely
       end
 
       rollout = @config.get_rollout_from_id(rollout_id)
-      if rollout.nil? || rollout['experiments'].empty?
+      if rollout.nil?
         @config.logger.log(
           Logger::DEBUG,
           "Rollout with ID '#{rollout_id}' is not in the datafile '#{feature_flag['key']}'"
         )
         return nil
       end
+
+      return nil if rollout['experiments'].empty?
+
       rollout_rules = rollout['experiments']
       number_of_rules = rollout_rules.length - 1
 
       # Go through each experiment in order and try to get the variation for the user
-      for index in (0...number_of_rules)
+      number_of_rules.times do |index|
         rollout_rule = rollout_rules[index]
         experiment_key = rollout_rule['key']
 
@@ -247,23 +246,21 @@ module Optimizely
         # User failed traffic allocation, jump to Everyone Else rule
         @config.logger.log(
           Logger::DEBUG,
-          "User '#{user_id}' was excluded due to traffic allocation. Checking 'Eveyrone Else' rule now."
+          "User '#{user_id}' was excluded due to traffic allocation. Checking 'Everyone Else' rule now."
         )
         break
       end
 
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
-      variation = @bucketer.bucket(everyone_else_experiment, bucketing_id ,user_id)
-      if variation.nil?
-        @config.logger.log(
-          Logger::DEBUG,
-          "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
-        )
-        return nil
-      else
-        return variation
-      end
+      variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
+      return variation unless variation.nil?
+
+      @config.logger.log(
+        Logger::DEBUG,
+        "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
+      )
+      nil
     end
 
     private
@@ -365,18 +362,24 @@ module Optimizely
         @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '#{user_id}': #{e}.")
       end
     end
+
     def get_bucketing_id(user_id, attributes)
+      # Gets the Bucketing Id for Bucketing
+      #
+      # user_id - String user ID
+      # attributes - Hash user attributes
+
       # By default, the bucketing ID should be the user ID
       bucketing_id = user_id
 
       # If the bucketing ID key is defined in attributes, then use that in place of the userID
-      if attributes and attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a? String
+      if attributes && attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a?(String)
         unless attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].empty?
           bucketing_id = attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID]
           @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
         end
       end
-      return bucketing_id
+      bucketing_id
     end
   end
 end
