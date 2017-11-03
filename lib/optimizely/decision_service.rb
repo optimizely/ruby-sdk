@@ -374,7 +374,7 @@ module Optimizely
     def get_bucketing_id(user_id, attributes)
       # Gets the Bucketing Id for Bucketing
       #
-      # user_id - String user ID
+      # user_id - String user ID 
       # attributes - Hash user attributes
 
       # By default, the bucketing ID should be the user ID
