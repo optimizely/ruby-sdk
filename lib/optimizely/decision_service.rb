@@ -223,13 +223,15 @@ module Optimizely
       # Go through each experiment in order and try to get the variation for the user
       number_of_rules.times do |index|
         rollout_rule = rollout_rules[index]
-        experiment_key = rollout_rule['key']
+        audience_id = rollout_rule['audienceIds'][0]
+        audience = @config.get_audience_from_id(audience_id)
+        audience_name = audience['name']
 
         # Check that user meets audience conditions for targeting rule
         unless Audience.user_in_experiment?(@config, rollout_rule, attributes)
           @config.logger.log(
             Logger::DEBUG,
-            "User '#{user_id}' does not meet the audience conditions to be in rollout rule '#{experiment_key}'."
+            "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
           )
           # move onto the next targeting rule
           next
@@ -237,7 +239,7 @@ module Optimizely
 
         @config.logger.log(
           Logger::DEBUG,
-          "Attempting to bucket user '#{user_id}' into rollout rule '#{experiment_key}'."
+          "Attempting to bucket user '#{user_id}' into rollout rule for audience '#{audience_name}'."
         )
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation = @bucketer.bucket(rollout_rule, bucketing_id, user_id)
