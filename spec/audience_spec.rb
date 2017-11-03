@@ -19,11 +19,11 @@ require 'spec_helper'
 describe Optimizely::Audience do
   before(:context) do
     @config_body = OptimizelySpec::VALID_CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    @config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
   end
 
   before(:example) do
-    @project_instance = Optimizely::Project.new(@config_body_JSON)
+    @project_instance = Optimizely::Project.new(@config_body_json)
   end
 
   it 'should return true for user_in_experiment? if there are no audiences and no attributes' do

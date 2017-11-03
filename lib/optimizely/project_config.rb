@@ -196,15 +196,15 @@ module Optimizely
       []
     end
 
-    def get_audience_conditions_from_id(audience_id)
-      # Get audience conditions for the provided audience ID
+    def get_audience_from_id(audience_id)
+      # Get audience for the provided audience ID
       #
       # audience_id - ID of the audience
       #
-      # Returns conditions for the audience
+      # Returns the audience
 
       audience = @audience_id_map[audience_id]
-      return audience['conditions'] if audience
+      return audience if audience
       @logger.log Logger::ERROR, "Audience '#{audience_id}' is not in datafile."
       @error_handler.handle_error InvalidAudienceError
       nil
@@ -286,7 +286,7 @@ module Optimizely
         return nil
       end
 
-      experimentToVariationMap = @forced_variation_map[user_id]
+      experiment_to_variation_map = @forced_variation_map[user_id]
       experiment = get_experiment_from_key(experiment_key)
       experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
@@ -295,13 +295,13 @@ module Optimizely
         return nil
       end
 
-      unless experimentToVariationMap.key? experiment_id
+      unless experiment_to_variation_map.key? experiment_id
         @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' "\
                     'in the forced variation map.')
         return nil
       end
 
-      variation_id = experimentToVariationMap[experiment_id]
+      variation_id = experiment_to_variation_map[experiment_id]
       variation_key = ''
       variation = get_variation_from_id(experiment_key, variation_id)
       variation_key = variation['key'] if variation

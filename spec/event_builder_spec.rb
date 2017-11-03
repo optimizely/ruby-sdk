@@ -24,13 +24,13 @@ describe Optimizely::EventBuilder do
   config = nil
   before(:context) do
     @config_body = OptimizelySpec::VALID_CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    @config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
     @error_handler = Optimizely::NoOpErrorHandler.new
     @logger = Optimizely::SimpleLogger.new
   end
 
   before(:example) do
-    config = Optimizely::ProjectConfig.new(@config_body_JSON, @logger, @error_handler)
+    config = Optimizely::ProjectConfig.new(@config_body_json, @logger, @error_handler)
     @event_builder = Optimizely::EventBuilder.new(config)
 
     time_now = Time.now
