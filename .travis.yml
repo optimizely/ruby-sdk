@@ -5,6 +5,6 @@ before_install: gem install bundler -v 1.10.6
 install:
   - bundle install
   - bundle exec rake install
-before-script: "rubocop"
+before_script: "rubocop"
 script: "rake spec"
 after_success: "coveralls"
