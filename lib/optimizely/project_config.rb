@@ -198,15 +198,15 @@ module Optimizely
       []
     end
 
-    def get_audience_conditions_from_id(audience_id)
-      # Get audience conditions for the provided audience ID
+    def get_audience_from_id(audience_id)
+      # Get audience for the provided audience ID
       #
       # audience_id - ID of the audience
       #
-      # Returns conditions for the audience
+      # Returns the audience
 
       audience = @audience_id_map[audience_id]
-      return audience['conditions'] if audience
+      return audience if audience
       @logger.log Logger::ERROR, "Audience '#{audience_id}' is not in datafile."
       @error_handler.handle_error InvalidAudienceError
       nil
