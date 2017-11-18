@@ -41,7 +41,8 @@ module Optimizely
       # Return true if any one of the audience conditions are met
       @condition_evaluator = ConditionEvaluator.new(attributes)
       audience_ids.each do |audience_id|
-        audience_conditions = config.get_audience_conditions_from_id(audience_id)
+        audience = config.get_audience_from_id(audience_id)
+        audience_conditions = audience['conditions']
         audience_conditions = JSON.load(audience_conditions)
         return true if @condition_evaluator.evaluate(audience_conditions)
       end

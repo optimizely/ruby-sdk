@@ -655,9 +655,9 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_audience_conditions_from_id' do
+    describe 'get_audience_from_id' do
       it 'should log a message when provided audience ID is invalid' do
-        config.get_audience_conditions_from_id('invalid_id')
+        config.get_audience_from_id('invalid_id')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Audience 'invalid_id' is not in datafile.")
       end
     end
@@ -731,9 +731,9 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_audience_conditions_from_id' do
+    describe 'get_audience_from_id' do
       it 'should raise an error when provided audience ID is invalid' do
-        expect { config.get_audience_conditions_from_id('invalid_key') }
+        expect { config.get_audience_from_id('invalid_key') }
                .to raise_error(Optimizely::InvalidAudienceError)
       end
     end
