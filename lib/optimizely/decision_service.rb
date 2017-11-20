@@ -16,7 +16,6 @@
 require_relative './bucketer'
 
 module Optimizely
-
   RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id".freeze
 
   class DecisionService
@@ -54,9 +53,7 @@ module Optimizely
       bucketing_id = get_bucketing_id(user_id, attributes)
       # Check to make sure experiment is active
       experiment = @config.get_experiment_from_key(experiment_key)
-      if experiment.nil?
-        return nil
-      end
+      return nil if experiment.nil?
 
       experiment_id = experiment['id']
       unless @config.experiment_running?(experiment)
@@ -152,34 +149,33 @@ module Optimizely
           "The feature flag '#{feature_flag_key}' is not used in any experiments."
         )
         return nil
-      else
-        # Evaluate each experiment and return the first bucketed experiment variation
-        feature_flag['experimentIds'].each do |experiment_id|
-          experiment = @config.experiment_id_map[experiment_id]
-          unless experiment
-            @config.logger.log(
-              Logger::DEBUG,
-              "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
-            )
-            return nil
-          end
-          experiment_key = experiment['key']
-          variation_id = get_variation(experiment_key, user_id, attributes)
-          next unless variation_id
-          variation = @config.variation_id_map[experiment_key][variation_id]
-          @config.logger.log(Logger::INFO,
-                             "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature "\
-                             "'#{feature_flag_key}'.")
-          return {
-            'experiment' => experiment,
-            'variation' => variation
-          }
-        end
-        @config.logger.log(
-          Logger::INFO,
-          "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
-        )
       end
+      # Evaluate each experiment and return the first bucketed experiment variation
+      feature_flag['experimentIds'].each do |experiment_id|
+        experiment = @config.experiment_id_map[experiment_id]
+        unless experiment
+          @config.logger.log(
+            Logger::DEBUG,
+            "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
+          )
+          return nil
+        end
+        experiment_key = experiment['key']
+        variation_id = get_variation(experiment_key, user_id, attributes)
+        next unless variation_id
+        variation = @config.variation_id_map[experiment_key][variation_id]
+        @config.logger.log(Logger::INFO,
+                           "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature "\
+                           "'#{feature_flag_key}'.")
+        return {
+          'experiment' => experiment,
+          'variation' => variation
+        }
+      end
+      @config.logger.log(
+        Logger::INFO,
+        "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+      )
 
       nil
     end
@@ -250,21 +246,21 @@ module Optimizely
           Logger::DEBUG,
           "User '#{user_id}' was excluded due to traffic allocation. Checking 'Everyone Else' rule now."
         )
+
         break
       end
 
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
-      variation = @bucketer.bucket(everyone_else_experiment, bucketing_id ,user_id)
-      if variation.nil?
-        @config.logger.log(
-          Logger::DEBUG,
-          "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
-        )
-        return nil
-      else
-        return variation
-      end
+      variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
+      return variation unless variation.nil?
+
+      @config.logger.log(
+        Logger::DEBUG,
+        "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
+      )
+
+      nil
     end
 
     private
@@ -331,8 +327,8 @@ module Optimizely
       # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided)
 
       user_profile = {
-        :user_id => user_id,
-        :experiment_bucket_map => {}
+        user_id: user_id,
+        experiment_bucket_map: {}
       }
 
       return user_profile unless @user_profile_service
@@ -372,6 +368,7 @@ module Optimizely
       #
       # user_id - String user ID
       # attributes - Hash user attributes
+
       # By default, the bucketing ID should be the user ID
       bucketing_id = user_id
 
