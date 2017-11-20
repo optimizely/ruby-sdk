@@ -260,9 +260,9 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
       unless decision.nil?
         variation = decision['variation']
-        experiment = decision['experiment']
-        unless experiment.nil?
-          send_impression(experiment, variation['key'], user_id, attributes)
+        # Send event if Decision came from an experiment.
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          send_impression(decision.experiment, variation['key'], user_id, attributes)
         else
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
@@ -273,7 +273,7 @@ module Optimizely
       end
 
       @logger.log(Logger::INFO,
-                  "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
       false
     end
 
