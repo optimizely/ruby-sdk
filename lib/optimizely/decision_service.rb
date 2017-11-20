@@ -150,33 +150,35 @@ module Optimizely
           "The feature flag '#{feature_flag_key}' is not used in any experiments."
         )
         return nil
-      else
-        # Evaluate each experiment and return the first bucketed experiment variation
-        feature_flag['experimentIds'].each do |experiment_id|
-          experiment = @config.experiment_id_map[experiment_id]
-          unless experiment
-            @config.logger.log(
-              Logger::DEBUG,
-              "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
-            )
-            return nil
-          end
-          experiment_key = experiment['key']
-          variation_id = get_variation(experiment_key, user_id, attributes)
+      end
 
-          next unless variation_id
-          variation = @config.variation_id_map[experiment_key][variation_id]
+      # Evaluate each experiment and return the first bucketed experiment variation
+      feature_flag['experimentIds'].each do |experiment_id|
+        experiment = @config.experiment_id_map[experiment_id]
+        unless experiment
           @config.logger.log(
-            Logger::INFO,
-            "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
+            Logger::DEBUG,
+            "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
           )
-          return Decision.new(experiment, variation, DECISION_SOURCE_EXPERIMENT)
+          return nil
         end
+        
+        experiment_key = experiment['key']
+        variation_id = get_variation(experiment_key, user_id, attributes)
+
+        next unless variation_id
+        variation = @config.variation_id_map[experiment_key][variation_id]
         @config.logger.log(
           Logger::INFO,
-          "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+          "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
         )
+        return Decision.new(experiment, variation, DECISION_SOURCE_EXPERIMENT)
       end
+      
+      @config.logger.log(
+        Logger::INFO,
+        "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+      )
 
       nil
     end
@@ -247,6 +249,7 @@ module Optimizely
           Logger::DEBUG,
           "User '#{user_id}' was excluded due to traffic allocation. Checking 'Everyone Else' rule now."
         )
+
         break
       end
 
@@ -259,6 +262,7 @@ module Optimizely
         Logger::DEBUG,
         "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
       )
+
       nil
     end
 

@@ -728,6 +728,7 @@ describe 'Optimizely' do
 
             expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
               .to eq(nil)
+
             expect(spy_logger).to have_received(:log).once
               .with(
                 Logger::WARN,
@@ -749,6 +750,7 @@ describe 'Optimizely' do
 
             expect(project_instance.get_feature_variable_string('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
               .to eq(nil)
+
             expect(spy_logger).to have_received(:log).once
               .with(
                 Logger::WARN,
