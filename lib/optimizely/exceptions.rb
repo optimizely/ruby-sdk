@@ -95,4 +95,13 @@ module Optimizely
       super("Provided #{type} is in an invalid format.")
     end
   end
+  
+  class InvalidNotificationType < Error
+    # Raised when an invalid notification type is provided
+  
+    def initialize(msg = 'Provided notification type is invalid.')
+      super
+    end
+  end
+  
 end

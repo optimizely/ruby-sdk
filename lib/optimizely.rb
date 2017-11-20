@@ -24,6 +24,7 @@ require_relative 'optimizely/helpers/group'
 require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
+require_relative 'optimizely/notification_center'
 require_relative 'optimizely/project_config'
 
 module Optimizely
@@ -38,6 +39,7 @@ module Optimizely
     attr_reader :event_builder
     attr_reader :event_dispatcher
     attr_reader :logger
+    attr_reader :notification_center
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
       # Constructor for Projects.
@@ -83,6 +85,7 @@ module Optimizely
 
       @decision_service = DecisionService.new(@config, @user_profile_service)
       @event_builder = EventBuilder.new(@config)
+      @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -231,6 +234,10 @@ module Optimizely
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
       end
+      @notification_center.fire_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          event_key, user_id, attributes, event_tags, conversion_event
+      )
     end
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
@@ -260,10 +267,26 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
       unless decision.nil?
         variation = decision['variation']
-        experiment = decision['experiment']
-        unless experiment.nil?
-          send_impression(experiment, variation['key'], user_id, attributes)
+        # Send event if Decision came from an experiment.
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          send_impression(decision.experiment, variation['key'], user_id, attributes)
+          @notification_center.fire_notifications(
+           NotificationCenter::NOTIFICATION_TYPES[:FEATURE_EXPERIMENT],
+           feature_flag_key, user_id, attributes, decision.experiment, variation
+          )
         else
+          audience = nil
+          if decision.experiment
+            audience_ids = decision.experiment['audienceIds']
+            if audience_ids
+              audience_id = audience_ids[0]
+              audience = @config.get_audience_from_id(audience_id)
+            end
+          end
+          @notification_center.fire_notifications(
+           NotificationCenter::NOTIFICATION_TYPES[:FEATURE_ROLLOUT],
+           feature_flag_key, user_id, attributes, [audience]
+          )
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
         end
@@ -273,7 +296,7 @@ module Optimizely
       end
 
       @logger.log(Logger::INFO,
-                  "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
       false
     end
 
@@ -378,51 +401,64 @@ module Optimizely
       # attributes - Hash representing visitor attributes and values which need to be recorded.
       #
       # Returns the type-casted variable value.
-      # Returns nil if the feature flag or variable are not found.
+      # Returns nil if the feature flag or variable or user ID is empty
+      #             in case of variable type mismatch
+
+      unless feature_flag_key
+        @logger.log(Logger::ERROR, "Feature flag key cannot be empty.")
+        return nil
+      end
+
+      unless variable_key
+        @logger.log(Logger::ERROR, "Variable key cannot be empty.")
+        return nil
+      end
+
+      unless user_id
+        @logger.log(Logger::ERROR, "User ID cannot be empty.")
+        return nil
+      end
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
         return nil
       end
-
-      variable_value = nil
+      
       variable = @config.get_feature_variable(feature_flag, variable_key)
-      unless variable.nil?
-        variable_value = variable['defaultValue']
 
+      # Error message logged in ProjectConfig- get_feature_flag_from_key
+      return nil if variable.nil?
+
+      # Returns nil if type differs
+      if variable['type'] != variable_type
+        @logger.log(Logger::WARN,
+          "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
+        return nil
+      else
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-        unless decision
-          @logger.log(Logger::INFO,
-            "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
-        else
+        variable_value = variable['defaultValue']
+        if decision
           variation = decision['variation']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
-          unless variation_variable_usages and variation_variable_usages.key?(variable_id)
-            variation_key = variation['key']
-            @logger.log(Logger::DEBUG,
-              "Variable '#{variable_key}' is not used in variation '#{variation_key}'. Returning the default variable value '#{variable_value}'."
-            )
-          else
+          if variation_variable_usages and variation_variable_usages.key?(variable_id)
             variable_value = variation_variable_usages[variable_id]['value']
             @logger.log(Logger::INFO,
               "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+          else
+            @logger.log(Logger::DEBUG,
+              "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
           end
+        else
+          @logger.log(Logger::INFO,
+            "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
         end
       end
 
-      unless variable_value.nil?
-        actual_variable_type = variable['type']
-        unless variable_type == actual_variable_type
-          @logger.log(Logger::WARN,
-            "Requested variable type '#{variable_type}' but variable '#{variable_key}' is of type '#{actual_variable_type}'.")
-        end
+      variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
 
-        variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
-      end
-
-      return variable_value
+      variable_value
     end
 
     def get_valid_experiments_for_event(event_key, user_id, attributes)
@@ -512,6 +548,11 @@ module Optimizely
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
       end
+      variation = @config.get_variation_from_id(experiment_key, variation_id)
+      @notification_center.fire_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+          experiment,user_id, attributes, variation, impression_event
+      )
     end
   end
 end
