@@ -713,7 +713,7 @@ describe 'Optimizely' do
       end
 
       describe 'and a variable usage instance is found' do
-        describe 'and the variable type is not a string' do
+        describe 'and the variable type boolean is not a string' do
           it 'should log a warning' do
             variation_to_return = project_instance.config.rollout_id_map['166660']['experiments'][0]['variations'][0]
             decision_to_return = {
@@ -723,18 +723,34 @@ describe 'Optimizely' do
             allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
             expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
-              .to eq('true')
+              .to eq(nil)
 
-            expect(spy_logger).to have_received(:log).twice
-            expect(spy_logger).to have_received(:log).once
-              .with(
-                Logger::INFO,
-                "Got variable value 'true' for variable 'boolean_variable' of feature flag 'boolean_single_variable_feature'."
-              )
             expect(spy_logger).to have_received(:log).once
               .with(
                 Logger::WARN,
-                "Requested variable type 'string' but variable 'boolean_variable' is of type 'boolean'."
+                "Requested variable as type 'string' but variable 'boolean_variable' is of type 'boolean'."
+              )
+          end
+        end
+
+        describe 'and the variable type integer is not a string' do
+          it 'should log a warning' do
+            integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+            experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+            variation_to_return = experiment_to_return['variations'][0]
+            decision_to_return = {
+                'experiment' => experiment_to_return,
+                'variation' => variation_to_return
+            }
+            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+            expect(project_instance.get_feature_variable_string('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
+              .to eq(nil)
+            
+            expect(spy_logger).to have_received(:log).once
+              .with(
+                Logger::WARN,
+                "Requested variable as type 'string' but variable 'integer_variable' is of type 'integer'."
               )
           end
         end
@@ -885,6 +901,33 @@ describe 'Optimizely' do
           Logger::INFO,
           "Got variable value '42' for variable 'integer_variable' of feature flag 'integer_single_variable_feature'."
         )
+    end
+  end
+
+
+  describe '#get_feature_variable_for_type with empty params' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return nil if feature_flag_key is nil' do
+
+      expect(project_instance.get_feature_variable_integer(nil, 'integer_variable', user_id, user_attributes))
+          .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR,"Feature flag key cannot be empty.")
+    end
+
+    it 'should return nil if variable_key is nil' do
+
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', nil, user_id, user_attributes))
+          .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR,"Variable key cannot be empty.")
+    end
+
+    it 'should return nil if user_id is nil' do
+
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
+          .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR,"User ID cannot be empty.")
     end
   end
 

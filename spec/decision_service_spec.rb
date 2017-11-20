@@ -534,7 +534,6 @@ describe Optimizely::DecisionService do
               .with(Logger::DEBUG, "User '#{user_id}' was excluded due to traffic allocation. Checking 'Everyone Else' rule now.")
             expect(spy_logger).to have_received(:log).once
               .with(Logger::DEBUG, "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag")
-
           end
         end
 
