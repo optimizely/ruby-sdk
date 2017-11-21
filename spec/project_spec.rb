@@ -675,7 +675,6 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
       )
-
       audience = nil
       if experiment_to_return
         audience_id = experiment_to_return['audienceIds'][0]
@@ -704,7 +703,7 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
       )
-
+      
       expect(project_instance.notification_center).to receive(:fire_notifications)
       .with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_EXPERIMENT],
@@ -717,7 +716,7 @@ describe 'Optimizely' do
         experiment_to_return, 'test_user', nil, variation_to_return,
         instance_of(Optimizely::Event)
       )
-
+      
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expected_params = @expected_bucketed_params

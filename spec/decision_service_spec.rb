@@ -488,7 +488,6 @@ describe Optimizely::DecisionService do
           audience_id = rollout_experiment['audienceIds'][0]
           audience_name = config.get_audience_from_id(audience_id)['name']
           expected_decision = Optimizely::DecisionService::Decision.new(rollout_experiment, variation, Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT)
-
           allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
           allow(decision_service.bucketer).to receive(:bucket)
             .with(rollout_experiment, user_id, user_id)
@@ -582,7 +581,6 @@ describe Optimizely::DecisionService do
         everyone_else_experiment = rollout['experiments'][2]
         variation = everyone_else_experiment['variations'][0]
         expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT)
-
         allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(false)
         allow(decision_service.bucketer).to receive(:bucket)
           .with(everyone_else_experiment, user_id, user_id)
@@ -644,7 +642,6 @@ describe Optimizely::DecisionService do
             variation,
             Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
           )
-
           allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_decision)
 
