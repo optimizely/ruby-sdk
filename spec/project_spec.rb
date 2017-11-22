@@ -666,7 +666,7 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
 
-    it 'should send feature rollout notification return true but not send an impression if the user is not bucketed into a feature experiment' do
+    it 'should return true but not send an impression if the user is not bucketed into a feature experiment' do
       experiment_to_return = config_body['rollouts'][0]['experiments'][0]
       variation_to_return = experiment_to_return['variations'][0]
 
@@ -675,18 +675,6 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
       )
-      audience = nil
-      if experiment_to_return
-        audience_id = experiment_to_return['audienceIds'][0]
-        audience = project_instance.config.get_audience_from_id(audience_id)
-      end
-
-      expect(project_instance.notification_center).to receive(:fire_notifications)
-      .with(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_ROLLOUT],
-       'boolean_single_variable_feature', 'test_user', nil, [audience]
-      )
-      
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
@@ -694,7 +682,7 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return true, send notifications and an impression if the user is bucketed into a feature experiment' do
+    it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][0]
@@ -702,12 +690,6 @@ describe 'Optimizely' do
           experiment_to_return,
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-      )
-      
-      expect(project_instance.notification_center).to receive(:fire_notifications)
-      .with(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_EXPERIMENT],
-        'multi_variate_feature', 'test_user', nil, experiment_to_return, variation_to_return
       )
       
       expect(project_instance.notification_center).to receive(:fire_notifications)

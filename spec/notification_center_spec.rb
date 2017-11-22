@@ -367,16 +367,6 @@ describe Optimizely::NotificationCenter do
                  @callback_reference_second
         )).to eq(5)
 
-        expect(@inner_notification_center.add_notification_listener(
-                 Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_ROLLOUT],
-                 @callback_reference
-        )).to eq(6)
-
-        expect(@inner_notification_center.add_notification_listener(
-                 Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_EXPERIMENT],
-                 @callback_reference
-        )).to eq(7)
-
         # verify that notifications length for each type reflects the just added callbacks
 
         expect(@inner_notification_center.notifications[
@@ -384,12 +374,6 @@ describe Optimizely::NotificationCenter do
 
         expect(@inner_notification_center.notifications[
          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK]].length).to eq(2)
-
-        expect(@inner_notification_center.notifications[
-         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_ROLLOUT]].length).to eq(1)
-
-        expect(@inner_notification_center.notifications[
-         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:FEATURE_EXPERIMENT]].length).to eq(1)
       end
 
       it 'should remove all notifications for each notification type' do
