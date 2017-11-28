@@ -234,7 +234,7 @@ module Optimizely
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
       end
-      @notification_center.fire_notifications(
+      @notification_center.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:TRACK],
           event_key, user_id, attributes, event_tags, conversion_event
       )
@@ -533,7 +533,7 @@ module Optimizely
         @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
       end
       variation = @config.get_variation_from_id(experiment_key, variation_id)
-      @notification_center.fire_notifications(
+      @notification_center.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
           experiment,user_id, attributes, variation, impression_event
       )

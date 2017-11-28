@@ -440,14 +440,14 @@ describe Optimizely::NotificationCenter do
       it 'should return nil when notification type not valid' do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
         notification_center.add_notification_listener(notification_type, invitation.method(:deliver_one))
-        expect { notification_center.fire_notifications('test_type', @args) }
+        expect { notification_center.send_notifications('test_type', @args) }
           .to raise_error(Optimizely::InvalidNotificationType)
       end
 
       it 'should return nil and log when args are invalid' do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
         notification_center.add_notification_listener(notification_type, invitation.method(:deliver_one))
-        expect(notification_center.fire_notifications(notification_type)).to eq(nil)
+        expect(notification_center.send_notifications(notification_type)).to eq(nil)
         expect(spy_logger).to_not have_received(:log)
           .with(Logger::INFO, 'delivered one.')
         expect(spy_logger).to have_received(:log).once
@@ -461,7 +461,7 @@ describe Optimizely::NotificationCenter do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
         notification_center.add_notification_listener(notification_type, invitation.method(:deliver_one))
         notification_center.add_notification_listener(notification_type, invitation.method(:deliver_two))
-        notification_center.fire_notifications(notification_type, @args)
+        notification_center.send_notifications(notification_type, @args)
         expect(spy_logger).to have_received(:log).once
           .with(Logger::INFO, 'delivered one.')
         expect(spy_logger).to have_received(:log).once
@@ -476,7 +476,7 @@ describe Optimizely::NotificationCenter do
         notification_center.add_notification_listener(notification_type_decision, invitation.method(:deliver_two))
         notification_center.add_notification_listener(notification_type_track, invitation.method(:deliver_three))
 
-        notification_center.fire_notifications(notification_type_decision, @args)
+        notification_center.send_notifications(notification_type_decision, @args)
         expect(spy_logger).to have_received(:log).once
           .with(Logger::INFO, 'delivered one.')
         expect(spy_logger).to have_received(:log).once

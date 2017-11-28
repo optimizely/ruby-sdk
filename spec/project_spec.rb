@@ -265,7 +265,7 @@ describe 'Optimizely' do
                                         .with('test_experiment')
                                         .and_return([])
       experiment = project_instance.config.get_experiment_from_key('test_experiment')
-      expect(project_instance.notification_center).to receive(:fire_notifications).with(
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
        experiment,'test_user',nil,variation_to_return,
        instance_of(Optimizely::Event)
@@ -390,7 +390,7 @@ describe 'Optimizely' do
       })
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
-      expect(project_instance.notification_center).to receive(:fire_notifications)
+      expect(project_instance.notification_center).to receive(:send_notifications)
        .with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
         'test_event','test_user', nil, {'revenue' => 42}, conversion_event
@@ -692,7 +692,7 @@ describe 'Optimizely' do
           Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
       )
       
-      expect(project_instance.notification_center).to receive(:fire_notifications)
+      expect(project_instance.notification_center).to receive(:send_notifications)
       .with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment_to_return, 'test_user', nil, variation_to_return,

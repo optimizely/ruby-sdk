@@ -36,7 +36,7 @@ module Optimizely
 
       # Args:
       #  notification_type: one of the constants in NOTIFICATION_TYPES
-      #  notification_callback: function to call when the event is fired
+      #  notification_callback: function to call when the event is sent
 
       # Returns:
       #  notification ID used to remove the notification
@@ -101,9 +101,9 @@ module Optimizely
       @notifications.keys.each { |key| @notifications[key] = [] }
     end
 
-    def fire_notifications(notification_type, *args)
-      # Fires off the notification for the specific event.  Uses var args to pass in a
-      # arbitrary list of parameters according to which notification type was fired
+    def send_notifications(notification_type, *args)
+      # Sends off the notification for the specific event.  Uses var args to pass in a
+      # arbitrary list of parameters according to which notification type was sent
 
       # Args:
       #  notification_type: one of the constants in NOTIFICATION_TYPES
