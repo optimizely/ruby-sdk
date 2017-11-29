@@ -48,7 +48,8 @@ module Optimizely
       # user_id - String ID for user
       # attributes - Hash representing user attributes
       #
-      # Returns variation ID where visitor will be bucketed (nil if experiment is inactive or user does not meet audience conditions)
+      # Returns variation ID where visitor will be bucketed
+      #   (nil if experiment is inactive or user does not meet audience conditions)
 
       # By default, the bucketing ID should be the user ID
       bucketing_id = user_id;
@@ -142,9 +143,14 @@ module Optimizely
           Logger::INFO,
           "User '#{user_id}' is not in the rollout for feature flag '#{feature_flag_key}'."
         )
+        return decision
       end
+      @config.logger.log(
+        Logger::INFO,
+        "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag_key}'."
+      )
 
-      return nil
+      nil
     end
 
     def get_variation_for_feature_experiment(feature_flag, user_id, attributes = nil)
@@ -225,8 +231,8 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns the variation the user is bucketed into or nil if not bucketed into any of the targeting rules
-
+      # Returns the Decision struct or nil if not bucketed into any of the targeting rules
+      bucketing_id = get_bucketing_id(user_id, attributes)
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? or rollout_id.empty?
         feature_flag_key = feature_flag['key']
@@ -291,8 +297,17 @@ module Optimizely
           "User '#{user_id}' does not meet conditions for targeting rule 'Everyone Else'."
         )
       end
+      
+      # get last rule which is the everyone else rule
+      everyone_else_experiment = rollout_rules[number_of_rules]
+      variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
+      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
 
-      return nil
+      @config.logger.log(
+        Logger::DEBUG,
+        "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
+      )
+      nil
     end
 
     private
@@ -394,6 +409,24 @@ module Optimizely
       rescue => e
         @config.logger.log(Logger::ERROR, "Error while saving user profile for user ID '#{user_id}': #{e}.")
       end
+    end
+
+    def get_bucketing_id(user_id, attributes)
+      # Gets the Bucketing Id for Bucketing
+      #
+      # user_id - String user ID
+      # attributes - Hash user attributes
+      # By default, the bucketing ID should be the user ID
+      bucketing_id = user_id
+
+      # If the bucketing ID key is defined in attributes, then use that in place of the userID
+      if attributes && attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a?(String)
+        unless attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].empty?
+          bucketing_id = attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID]
+          @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
+        end
+      end
+      bucketing_id
     end
   end
 end
