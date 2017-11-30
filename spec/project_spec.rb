@@ -257,16 +257,22 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
-    it 'should log when an impression event is dispatched' do
+    it 'should log and send activate notification when an impression event is dispatched' do
       params = @expected_activate_params
-
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
                                         .with('test_experiment')
                                         .and_return([])
+      experiment = project_instance.config.get_experiment_from_key('test_experiment')
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+       Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+       experiment,'test_user',nil,variation_to_return,
+       instance_of(Optimizely::Event)
+      )
       project_instance.activate('test_experiment', 'test_user')
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching impression event to" \
                                                                                 " URL #{impression_log_url} with params #{params}"))
     end
@@ -377,14 +383,19 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Unable to dispatch conversion event. Error: RuntimeError")
     end
 
-    it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
+    it 'should send track notification and properly track an event by calling dispatch_event with right params with revenue provided' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0].merge!({
         revenue: 42,
         tags: {'revenue' => 42}
       })
-
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
+      expect(project_instance.notification_center).to receive(:send_notifications)
+       .with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+        'test_event','test_user', nil, {'revenue' => 42}, conversion_event
+       ).once
       project_instance.track('test_event', 'test_user', nil, {'revenue' => 42})
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
@@ -672,7 +683,7 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return true and send an impression if the user is bucketed into a feature experiment' do
+    it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][0]
@@ -680,6 +691,13 @@ describe 'Optimizely' do
           experiment_to_return,
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+
+      expect(project_instance.notification_center).to receive(:send_notifications)
+      .with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+        experiment_to_return, 'test_user', nil, variation_to_return,
+        instance_of(Optimizely::Event)
       )
 
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
@@ -728,7 +746,6 @@ describe 'Optimizely' do
 
             expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
               .to eq(nil)
-
             expect(spy_logger).to have_received(:log).once
               .with(
                 Logger::WARN,
@@ -750,7 +767,6 @@ describe 'Optimizely' do
 
             expect(project_instance.get_feature_variable_string('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
               .to eq(nil)
-
             expect(spy_logger).to have_received(:log).once
               .with(
                 Logger::WARN,

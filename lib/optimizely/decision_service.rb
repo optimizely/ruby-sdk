@@ -51,7 +51,8 @@ module Optimizely
       # user_id - String ID for user
       # attributes - Hash representing user attributes
       #
-      # Returns variation ID where visitor will be bucketed (nil if experiment is inactive or user does not meet audience conditions)
+      # Returns variation ID where visitor will be bucketed
+      #   (nil if experiment is inactive or user does not meet audience conditions)
 
       # By default, the bucketing ID should be the user ID
       bucketing_id = get_bucketing_id(user_id, attributes)
@@ -122,10 +123,8 @@ module Optimizely
           Logger::INFO,
           "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag_key}'."
         )
-
         return decision
       end
-
       @config.logger.log(
         Logger::INFO,
         "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag_key}'."
@@ -192,7 +191,6 @@ module Optimizely
       # attributes - Hash representing user attributes
       #
       # Returns the Decision struct or nil if not bucketed into any of the targeting rules
-
       bucketing_id = get_bucketing_id(user_id, attributes)
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? || rollout_id.empty?
@@ -262,7 +260,6 @@ module Optimizely
         Logger::DEBUG,
         "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
       )
-
       nil
     end
 
@@ -371,7 +368,6 @@ module Optimizely
       #
       # user_id - String user ID
       # attributes - Hash user attributes
-
       # By default, the bucketing ID should be the user ID
       bucketing_id = user_id
 
