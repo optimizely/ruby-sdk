@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project_id: 
+  experiment_key: 
+  event_key: 
+  project_configuration_json: 
+
+two:
+  project_id: 
+  experiment_key: 
+  event_key: 
+  project_configuration_json: 
