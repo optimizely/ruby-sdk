@@ -121,6 +121,7 @@ describe 'Optimizely' do
     before(:example) do
       allow(Time).to receive(:now).and_return(time_now)
       allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
+
       @expected_activate_params = {
         account_id: '12001',
         project_id: '111001',
@@ -271,7 +272,7 @@ describe 'Optimizely' do
        instance_of(Optimizely::Event)
       )
       project_instance.activate('test_experiment', 'test_user')
-      
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include("Dispatching impression event to" \
                                                                                 " URL #{impression_log_url} with params #{params}"))
     end
@@ -288,7 +289,7 @@ describe 'Optimizely' do
       expect { project_instance.activate('test_experiment', 'test_user', 'invalid') }
              .to raise_error(Optimizely::InvalidAttributeFormatError)
     end
-    
+
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       params = @expected_activate_params
       params[:visitors][0][:visitor_id] = 'forced_audience_user'
@@ -330,7 +331,7 @@ describe 'Optimizely' do
     before(:example) do
       allow(Time).to receive(:now).and_return(time_now)
       allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c');
-      
+
       @expected_track_event_params = {
         account_id: '12001',
         project_id: '111001',
@@ -365,7 +366,7 @@ describe 'Optimizely' do
       project_instance.track('test_event', 'test_user')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
-    
+
     it 'should properly track an event by calling dispatch_event with right params after forced variation' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:decisions][0][:variation_id] = '111129'
@@ -548,15 +549,15 @@ describe 'Optimizely' do
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
              .to eq('control_with_audience')
     end
-    
+
     it 'should have get_variation return expected variation with bucketing id attribute when audience conditions match' do
       user_attributes = {
         'browser_type' => 'firefox',
         OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
-      } 
+      }
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
             .to eq('control_with_audience')
-    end    
+    end
 
     it 'should have get_variation return nil when attributes are invalid' do
       allow(project_instance).to receive(:attributes_valid?).and_return(false)
@@ -586,7 +587,7 @@ describe 'Optimizely' do
       user_attributes = {
         'browser_type' => 'firefox',
         OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
-      } 
+      }
       expect(project_instance.get_variation('test_experiment_not_started', 'test_user',user_attributes)).to eq(nil)
     end
 
@@ -647,12 +648,12 @@ describe 'Optimizely' do
       }
     end
 
-    it 'should return nil when called with invalid project config' do
+    it 'should return false when called with invalid project config' do
       invalid_project = Optimizely::Project.new('invalid',nil,spy_logger)
-      expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be nil
-      
+      expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
+
     end
-    
+
     it 'should return false when the feature flag key is invalid' do
       expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
@@ -691,14 +692,14 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
       )
-      
+
       expect(project_instance.notification_center).to receive(:send_notifications)
       .with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment_to_return, 'test_user', nil, variation_to_return,
         instance_of(Optimizely::Event)
       )
-      
+
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expected_params = @expected_bucketed_params
@@ -976,7 +977,7 @@ describe 'Optimizely' do
       expect(project_instance.get_variation('test_experiment','test_user')). to eq('variation')
     end
 
-    # setForcedVariation on a running experiment with audience enabled and then call getVariation on that same experiment with invalid attributes. 
+    # setForcedVariation on a running experiment with audience enabled and then call getVariation on that same experiment with invalid attributes.
     it 'should return nil when getVariation called on audience enabled running experiment with invalid attributes' do
       project_instance.set_forced_variation('test_experiment_with_audience','test_user','control_with_audience')
       expect { project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid') }
@@ -986,7 +987,7 @@ describe 'Optimizely' do
     # Adding this test case to cover this in code coverage. All test cases for getForceVariation are present in
     # project_config_spec.rb which test the get_force_variation method in project_config. The one in optimizely.rb
     # only calls the other one
-    
+
     # getForceVariation on a running experiment after setforcevariation
     it 'should return expected variation id  when get_forced_variation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment','test_user','variation')

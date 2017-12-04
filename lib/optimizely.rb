@@ -160,7 +160,7 @@ module Optimizely
       #
       # experiment_key - String - key identifying the experiment.
       # user_id - String - The user ID to be used for bucketing.
-      # variation_key - The variation key specifies the variation which the user will 
+      # variation_key - The variation key specifies the variation which the user will
       #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
       #
       # Returns - Boolean - indicates if the set completed successfully.
@@ -234,10 +234,12 @@ module Optimizely
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
       end
+
       @notification_center.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:TRACK],
           event_key, user_id, attributes, event_tags, conversion_event
       )
+      return nil
     end
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
@@ -255,7 +257,7 @@ module Optimizely
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
-        return nil
+        return false
       end
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
@@ -408,7 +410,7 @@ module Optimizely
         @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
         return nil
       end
-      
+
       variable = @config.get_feature_variable(feature_flag, variable_key)
 
       # Error message logged in ProjectConfig- get_feature_flag_from_key
