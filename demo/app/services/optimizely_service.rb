@@ -53,7 +53,7 @@ class OptimizelyService
     rescue StandardError => error
       @errors.push(error.message)
     end
-    variation
+    return variation, @errors.empty?
   end
 
   def track_service!(event_key, visitor, event_tags)

@@ -57,7 +57,7 @@ class DemoController < ApplicationController
         flash[:error] = @optimizely_service.errors
       end
     rescue StandardError => error
-      flash[:error] = error
+      flash.now[:error] = "Failed to load datafile using Project ID: #{@config.project_id} (#{error})!"
     end
     render 'new'
   end
@@ -75,8 +75,8 @@ class DemoController < ApplicationController
     # Calls optimizely client activate method to create variation(Static object) in OptimizelyService class
     
     @optimizely_service = OptimizelyService.new(@config.project_configuration_json)
-    @variation = @optimizely_service.activate_service!(@visitor, @config.experiment_key)
-    if @variation
+    @variation, succeeded = @optimizely_service.activate_service!(@visitor, @config.experiment_key)
+    if succeeded
       if @variation == 'sort_by_price'
         @products = Product::PRODUCTS.sort_by { |hsh| hsh[:price] }
       elsif @variation == 'sort_by_name'
@@ -128,19 +128,24 @@ class DemoController < ApplicationController
   end
 
   def validate_config!
-    @config = Config.find_or_create_by_project_id(demo_params[:project_id])
-    if @config.valid?
-      @config
+    if demo_params[:project_id].present? && demo_params[:experiment_key].present?
+      @config = Config.find_or_create_by_project_id(demo_params[:project_id])
+      if @config.valid?
+        @config
+      else
+        flash[:error] = @config.errors.full_messages.first
+        render 'new'
+      end
     else
-      flash[:error] = @config.errors.full_messages.first
-      render 'new'
+      flash[:error] = "Project ID or Experiment Key can't be blank!"
+      redirect_to demo_config_path
     end
   end
 
   def get_project_configuration
     @config = Config.find_by_project_id(session[:config_project_id])
     unless @config.present? && @config.try(:experiment_key).present?
-      flash[:alert] = "Project id or Experiment key can't be blank!"
+      flash[:alert] = "Project ID or Experiment Key can't be blank!"
       redirect_to demo_config_path
     end
   end
