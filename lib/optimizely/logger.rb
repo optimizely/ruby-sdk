@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -20,15 +21,13 @@ module Optimizely
   class BaseLogger
     # Class encapsulating logging functionality. Override with your own logger providing log method.
 
-    def log(_level, _message)
-    end
+    def log(_level, _message); end
   end
 
   class NoOpLogger < BaseLogger
     # Class providing log method which logs nothing.
 
-    def log(_level, _message)
-    end
+    def log(_level, _message); end
   end
 
   class SimpleLogger < BaseLogger

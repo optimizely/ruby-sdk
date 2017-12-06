@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -25,6 +26,7 @@ require_relative 'optimizely/helpers/group'
 require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
+require_relative 'optimizely/notification_center'
 require_relative 'optimizely/project_config'
 
 module Optimizely
@@ -38,9 +40,9 @@ module Optimizely
     attr_reader :event_builder
     attr_reader :event_dispatcher
     attr_reader :logger
+    attr_reader :notification_center
 
-    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false,
-                   user_profile_service = nil)
+    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
       # Constructor for Projects.
       #
       # datafile - JSON string representing the project.
@@ -84,6 +86,7 @@ module Optimizely
 
       @decision_service = DecisionService.new(@config, @user_profile_service)
       @event_builder = EventBuilder.new(@config)
+      @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
     def activate(experiment_key, user_id, attributes = nil)
@@ -197,8 +200,7 @@ module Optimizely
         event_tags = {
           'revenue' => event_tags
         }
-        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in '\
-                    'revenue value instead.')
+        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
       end
 
       return nil unless user_inputs_valid?(attributes, event_tags)
@@ -222,13 +224,18 @@ module Optimizely
       conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
                                                                 event_tags, experiment_variation_map)
       @logger.log(Logger::INFO,
-                  'Dispatching conversion event to URL %s with params %s.' % [conversion_event.url,
-                                                                              conversion_event.params])
+                  format('Dispatching conversion event to URL %s with params %s.', conversion_event.url, conversion_event.params))
       begin
         @event_dispatcher.dispatch_event(conversion_event)
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
       end
+
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+        event_key, user_id, attributes, event_tags, conversion_event
+      )
+      nil
     end
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
@@ -246,7 +253,7 @@ module Optimizely
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
-        return nil
+        return false
       end
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
@@ -258,12 +265,12 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
       unless decision.nil?
         variation = decision['variation']
-        experiment = decision['experiment']
-        if experiment.nil?
+        # Send event if Decision came from an experiment.
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          send_impression(decision.experiment, variation['key'], user_id, attributes)
+        else
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
-        else
-          send_impression(experiment, variation['key'], user_id, attributes)
         end
 
         @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
@@ -376,7 +383,23 @@ module Optimizely
       # attributes - Hash representing visitor attributes and values which need to be recorded.
       #
       # Returns the type-casted variable value.
-      # Returns nil if the feature flag or variable are not found.
+      # Returns nil if the feature flag or variable or user ID is empty
+      #             in case of variable type mismatch
+
+      unless feature_flag_key
+        @logger.log(Logger::ERROR, 'Feature flag key cannot be empty.')
+        return nil
+      end
+
+      unless variable_key
+        @logger.log(Logger::ERROR, 'Variable key cannot be empty.')
+        return nil
+      end
+
+      unless user_id
+        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+        return nil
+      end
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
@@ -384,44 +407,38 @@ module Optimizely
         return nil
       end
 
-      variable_value = nil
       variable = @config.get_feature_variable(feature_flag, variable_key)
-      unless variable.nil?
-        variable_value = variable['defaultValue']
 
+      # Error message logged in ProjectConfig- get_feature_flag_from_key
+      return nil if variable.nil?
+
+      # Returns nil if type differs
+      if variable['type'] != variable_type
+        @logger.log(Logger::WARN,
+                    "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
+        return nil
+      else
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+        variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
-          if variation_variable_usages && variation_variable_usages.key?(variable_id)
+          if variation_variable_usages&.key?(variable_id)
             variable_value = variation_variable_usages[variable_id]['value']
             @logger.log(Logger::INFO,
-                        "Got variable value '#{variable_value}' for variable '#{variable_key}' of "\
-                        "feature flag '#{feature_flag_key}'.")
+                        "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
           else
-            variation_key = variation['key']
             @logger.log(Logger::DEBUG,
-                        "Variable '#{variable_key}' is not used in variation '#{variation_key}'. "\
-                        "Returning the default variable value '#{variable_value}'.")
+                        "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
           end
         else
           @logger.log(Logger::INFO,
-                      "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'."\
-                      " Returning the default variable value '#{variable_value}'.")
+                      "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
         end
       end
 
-      unless variable_value.nil?
-        actual_variable_type = variable['type']
-        unless variable_type == actual_variable_type
-          @logger.log(Logger::WARN,
-                      "Requested variable type '#{variable_type}' but variable '#{variable_key}' is of "\
-                      "type '#{actual_variable_type}'.")
-        end
-
-        variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
-      end
+      variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
 
       variable_value
     end
@@ -502,13 +519,17 @@ module Optimizely
       variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
       impression_event = @event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
-                  'Dispatching impression event to URL %s with params %s.' % [impression_event.url,
-                                                                              impression_event.params])
+                  format('Dispatching impression event to URL %s with params %s.', impression_event.url, impression_event.params))
       begin
         @event_dispatcher.dispatch_event(impression_event)
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
       end
+      variation = @config.get_variation_from_id(experiment_key, variation_id)
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+        experiment, user_id, attributes, variation, impression_event
+      )
     end
   end
 end

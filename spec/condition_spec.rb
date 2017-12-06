@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -31,12 +32,12 @@ describe Optimizely::ConditionEvaluator do
   end
 
   it 'should return true for evaluator when there is a match' do
-    condition_array = ['browser_type', 'firefox']
+    condition_array = %w[browser_type firefox]
     expect(@condition_evaluator.evaluator(condition_array)).to be true
   end
 
   it 'should return false for evaluator when there is not a match' do
-    condition_array = ['browser_type', 'chrome']
+    condition_array = %w[browser_type chrome]
     expect(@condition_evaluator.evaluator(condition_array)).to be false
   end
 
@@ -128,20 +129,20 @@ describe Optimizely::ConditionEvaluator do
 
   it 'should return true for evaluate when conditions evaluate to true' do
     condition = @config_body['audiences'][0]['conditions']
-    condition = JSON.load(condition)
+    condition = JSON.parse(condition)
     expect(@condition_evaluator.evaluate(condition)).to be true
   end
 
   it 'should evaluate to false for evaluate when conditions evaluate to false' do
     condition = '["and", ["or", ["or", '\
                 '{"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]]]'
-    condition = JSON.load(condition)
+    condition = JSON.parse(condition)
     expect(@condition_evaluator.evaluate(condition)).to be false
   end
 
   it 'should evaluate to true for evaluate when NOT conditions evaluate to true' do
     condition = '["not", {"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]'
-    condition = JSON.load(condition)
+    condition = JSON.parse(condition)
     expect(@condition_evaluator.evaluate(condition)).to be true
   end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -44,7 +45,7 @@ module Optimizely
       audience_ids.each do |audience_id|
         audience = config.get_audience_from_id(audience_id)
         audience_conditions = audience['conditions']
-        audience_conditions = JSON.load(audience_conditions)
+        audience_conditions = JSON.parse(audience_conditions)
         return true if @condition_evaluator.evaluate(audience_conditions)
       end
 

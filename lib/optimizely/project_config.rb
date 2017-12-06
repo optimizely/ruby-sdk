@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+# frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -69,7 +71,7 @@ module Optimizely
       #
       # datafile - JSON string representing the project
 
-      config = JSON.load(datafile)
+      config = JSON.parse(datafile)
 
       @parsing_succeeded = false
       @error_handler = error_handler
@@ -86,7 +88,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
-      @anonymize_ip = (config.key? 'anonymizeIP') ? config['anonymizeIP'] : false
+      @anonymize_ip = config.key? 'anonymizeIP' ? config['anonymizeIP'] : false
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
@@ -108,7 +110,7 @@ module Optimizely
       @forced_variation_map = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
-      @experiment_key_map.each do |_key, exp|
+      @experiment_key_map.each_value do |exp|
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
         variations.each do |variation|
@@ -119,7 +121,7 @@ module Optimizely
       @rollout_id_map = generate_key_map(@rollouts, 'id')
       # split out the experiment id map for rollouts
       @rollout_experiment_id_map = {}
-      @rollout_id_map.each do |_id, rollout|
+      @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end

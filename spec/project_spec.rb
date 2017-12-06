@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -68,30 +69,26 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when given a datafile that does not conform to the schema' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       Optimizely::Project.new('{"foo": "bar"}')
     end
 
     it 'should log an error when given an invalid logger' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided logger is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
 
       class InvalidLogger; end
       Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new)
     end
 
     it 'should log an error when given an invalid event_dispatcher' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
 
       class InvalidEventDispatcher; end
       Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new)
     end
 
     it 'should log an error when given an invalid error_handler' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
       class InvalidErrorHandler; end
       Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new)
@@ -104,23 +101,19 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when provided a datafile that is not JSON and skip_json_validation is true' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
 
       Optimizely::Project.new('this is not JSON', nil, nil, nil, true)
     end
 
     it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
 
       Optimizely::Project.new('{"foo": "bar"}', nil, nil, nil, true)
     end
 
     it 'should log an error when provided a datafile of unsupported version' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once
-        .with(Logger::ERROR, 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or '\
-              'earlier for datafile version 1.')
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or earlier for datafile version 1.')
 
       Optimizely::Project.new(config_body_invalid_JSON, nil, nil, nil, true)
     end
@@ -171,13 +164,11 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url).with(query: params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
-    it 'should properly activate a user, invoke Event object with right params, and return variation after '\
-       'a forced variation call' do
+    it 'should properly activate a user, invoke Event object with right params, and return variation after a forced variation call' do
       params = @expected_activate_params
 
       project_instance.config.set_forced_variation('test_experiment', 'test_user', 'control')
@@ -191,8 +182,7 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url).with(query: params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
@@ -216,13 +206,11 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
-    it 'should properly activate a user, (with attributes provided) when there is an audience match after '\
-       'a force variation call' do
+    it 'should properly activate a user, (with attributes provided) when there is an audience match after a force variation call' do
       params = @expected_activate_params
       params[:visitors][0][:attributes] = [{
         entity_id: '111094',
@@ -237,16 +225,14 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      project_instance.config.set_forced_variation('test_experiment_with_audience', 'test_user',
-                                                   'variation_with_audience')
+      project_instance.config.set_forced_variation('test_experiment_with_audience', 'test_user', 'variation_with_audience')
       variation_to_return = project_instance.config.get_forced_variation('test_experiment', 'test_user')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('variation_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
     it 'should return nil when experiment status is not "Running"' do
@@ -273,7 +259,7 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
-    it 'should log when an impression event is dispatched' do
+    it 'should log and send activate notification when an impression event is dispatched' do
       params = @expected_activate_params
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -281,9 +267,16 @@ describe 'Optimizely' do
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')
         .and_return([])
+      experiment = project_instance.config.get_experiment_from_key('test_experiment')
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+        experiment, 'test_user', nil, variation_to_return,
+        instance_of(Optimizely::Event)
+      )
       project_instance.activate('test_experiment', 'test_user')
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::INFO, include("Dispatching impression event to URL #{impression_log_url} with params #{params}"))
+
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include('Dispatching impression event to' \
+                                                                                " URL #{impression_log_url} with params #{params}"))
     end
 
     it 'should log when an exception has occurred during dispatching the impression event' do
@@ -291,8 +284,7 @@ describe 'Optimizely' do
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::ERROR, 'Unable to dispatch impression event. Error: RuntimeError')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Unable to dispatch impression event. Error: RuntimeError')
     end
 
     it 'should raise an exception when called with invalid attributes' do
@@ -319,11 +311,9 @@ describe 'Optimizely' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
-      expect(project_instance.activate('test_experiment_with_audience', 'forced_audience_user',
-                                       'browser_type' => 'wrong_browser'))
+      expect(project_instance.activate('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
 
@@ -332,8 +322,7 @@ describe 'Optimizely' do
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      expect(logger).to receive(:log)
-        .with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting activate.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.activate('test_exp', 'test_user')
@@ -377,8 +366,7 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params after forced variation' do
@@ -388,26 +376,28 @@ describe 'Optimizely' do
       project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should log a message if an exception has occurred during dispatching of the event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.track('test_event', 'test_user')
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::ERROR, 'Unable to dispatch conversion event. Error: RuntimeError')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Unable to dispatch conversion event. Error: RuntimeError')
     end
 
-    it 'should properly track an event by calling dispatch_event with right params with revenue provided' do
+    it 'should send track notification and properly track an event by calling dispatch_event with right params with revenue provided' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 42,
                                                              tags: {'revenue' => 42})
-
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
+      expect(project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          'test_event', 'test_user', nil, {'revenue' => 42}, conversion_event
+        ).once
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should properly track an event by calling dispatch_event with right params with deprecated revenue provided' do
@@ -417,10 +407,8 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(spy_logger).to have_received(:log).once.with(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
     end
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
@@ -441,8 +429,7 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
@@ -464,8 +451,8 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
-      expect(spy_logger).to have_received(:log)
-        .with(Logger::INFO, include("Dispatching conversion event to URL #{conversion_log_url} with params #{params}"))
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, include('Dispatching conversion event to' \
+                                                                                " URL #{conversion_log_url} with params #{params}"))
     end
 
     it 'should raise an exception when called with attributes in an invalid format' do
@@ -526,8 +513,7 @@ describe 'Optimizely' do
 
       project_instance.track('test_event_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser')
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event)
-        .with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should log an error when called with an invalid Project object' do
@@ -559,8 +545,7 @@ describe 'Optimizely' do
         .to eq('control_with_audience')
     end
 
-    it 'should have get_variation return expected variation with bucketing id attribute '\
-       'when audience conditions match' do
+    it 'should have get_variation return expected variation with bucketing id attribute when audience conditions match' do
       user_attributes = {
         'browser_type' => 'firefox',
         OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
@@ -608,8 +593,7 @@ describe 'Optimizely' do
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
-      expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user',
-                                            'browser_type' => 'wrong_browser'))
+      expect(project_instance.get_variation('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
@@ -619,8 +603,7 @@ describe 'Optimizely' do
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      expect(logger).to receive(:log)
-        .with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_variation.')
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.get_variation('test_exp', 'test_user')
@@ -659,62 +642,64 @@ describe 'Optimizely' do
       }
     end
 
-    it 'should return nil when called with invalid project config' do
+    it 'should return false when called with invalid project config' do
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
-      expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be nil
+      expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
     end
 
     it 'should return false when the feature flag key is invalid' do
       expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::ERROR, "No feature flag was found for key 'totally_invalid_feature_key'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "No feature flag was found for key 'totally_invalid_feature_key'.")
     end
 
     it 'should return false when the user is not bucketed into any variation' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
 
     it 'should return true but not send an impression if the user is not bucketed into a feature experiment' do
       experiment_to_return = config_body['rollouts'][0]['experiments'][0]
       variation_to_return = experiment_to_return['variations'][0]
-      decision_to_return = {
-        'experiment' => nil,
-        'variation' => variation_to_return
-      }
+
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::DEBUG, "The user 'test_user' is not being experimented on in "\
-                             "feature 'boolean_single_variable_feature'.")
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return true and send an impression if the user is bucketed into a feature experiment' do
+    it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][0]
-      decision_to_return = {
-        'experiment' => experiment_to_return,
-        'variation' => variation_to_return
-      }
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+
+      expect(project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+          experiment_to_return, 'test_user', nil, variation_to_return,
+          instance_of(Optimizely::Event)
+        )
+
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expected_params = @expected_bucketed_params
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::INFO, 'Dispatching impression event to URL https://logx.optimizely.com/v1/events with '\
-                            "params #{expected_params}.")
-      expect(spy_logger).to have_received(:log).once
-        .with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/v1/events with params #{expected_params}.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
   end
 
@@ -732,45 +717,54 @@ describe 'Optimizely' do
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-          expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable',
-                                                              user_id, user_attributes))
+          expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('wingardium leviosa')
           expect(spy_logger).to have_received(:log).once
-            .with(
-              Logger::DEBUG,
-              "Variable 'string_variable' is not used in variation '177775'. "\
-              "Returning the default variable value 'wingardium leviosa'."
-            )
+                                                   .with(
+                                                     Logger::DEBUG,
+                                                     "Variable 'string_variable' is not used in variation '177775'. Returning the default variable value 'wingardium leviosa'."
+                                                   )
         end
       end
 
       describe 'and a variable usage instance is found' do
-        describe 'and the variable type is not a string' do
+        describe 'and the variable type boolean is not a string' do
           it 'should log a warning' do
             variation_to_return = project_instance.config.rollout_id_map['166660']['experiments'][0]['variations'][0]
             decision_to_return = {
               'experiment' => nil,
               'variation' => variation_to_return
             }
-            allow(project_instance.decision_service).to receive(:get_variation_for_feature)
-              .and_return(decision_to_return)
+            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-            expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable',
-                                                                user_id, user_attributes))
-              .to eq('true')
+            expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
+              .to eq(nil)
+            expect(spy_logger).to have_received(:log).once
+                                                     .with(
+                                                       Logger::WARN,
+                                                       "Requested variable as type 'string' but variable 'boolean_variable' is of type 'boolean'."
+                                                     )
+          end
+        end
 
-            expect(spy_logger).to have_received(:log).twice
+        describe 'and the variable type integer is not a string' do
+          it 'should log a warning' do
+            integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+            experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+            variation_to_return = experiment_to_return['variations'][0]
+            decision_to_return = {
+              'experiment' => experiment_to_return,
+              'variation' => variation_to_return
+            }
+            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+            expect(project_instance.get_feature_variable_string('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
+              .to eq(nil)
             expect(spy_logger).to have_received(:log).once
-              .with(
-                Logger::INFO,
-                "Got variable value 'true' for variable 'boolean_variable' of feature flag "\
-                "'boolean_single_variable_feature'."
-              )
-            expect(spy_logger).to have_received(:log).once
-              .with(
-                Logger::WARN,
-                "Requested variable type 'string' but variable 'boolean_variable' is of type 'boolean'."
-              )
+                                                     .with(
+                                                       Logger::WARN,
+                                                       "Requested variable as type 'string' but variable 'integer_variable' is of type 'integer'."
+                                                     )
           end
         end
 
@@ -783,17 +777,15 @@ describe 'Optimizely' do
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-          expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable',
-                                                              user_id, user_attributes))
+          expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('cta_1')
 
           expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
-            .with(
-              Logger::INFO,
-              "Got variable value 'cta_1' for variable 'string_variable' of "\
-              "feature flag 'string_single_variable_feature'."
-            )
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value 'cta_1' for variable 'string_variable' of feature flag 'string_single_variable_feature'."
+                                                   )
         end
       end
     end
@@ -802,50 +794,45 @@ describe 'Optimizely' do
       it 'should return the default variable value' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
-        expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable',
-                                                            user_id, user_attributes))
+        expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
           .to eq('wingardium leviosa')
         expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
-          .with(
-            Logger::INFO,
-            "User 'test_user' was not bucketed into any variation for feature flag 'string_single_variable_feature'. "\
-            "Returning the default variable value 'wingardium leviosa'."
-          )
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'string_single_variable_feature'. Returning the default variable value 'wingardium leviosa'."
+                                                 )
       end
     end
 
     describe 'when the specified feature flag is invalid' do
       it 'should log an error message and return nil' do
-        expect(project_instance.get_feature_variable_string('totally_invalid_feature_key', 'string_variable',
-                                                            user_id, user_attributes))
+        expect(project_instance.get_feature_variable_string('totally_invalid_feature_key', 'string_variable', user_id, user_attributes))
           .to eq(nil)
         expect(spy_logger).to have_received(:log).twice
         expect(spy_logger).to have_received(:log).once
-          .with(
-            Logger::ERROR,
-            "Feature flag key 'totally_invalid_feature_key' is not in datafile."
-          )
+                                                 .with(
+                                                   Logger::ERROR,
+                                                   "Feature flag key 'totally_invalid_feature_key' is not in datafile."
+                                                 )
         expect(spy_logger).to have_received(:log).once
-          .with(
-            Logger::INFO,
-            "No feature flag was found for key 'totally_invalid_feature_key'."
-          )
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "No feature flag was found for key 'totally_invalid_feature_key'."
+                                                 )
       end
     end
 
     describe 'when the specified feature variable is invalid' do
       it 'should log an error message and return nil' do
-        expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'invalid_string_variable',
-                                                            user_id, user_attributes))
+        expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'invalid_string_variable', user_id, user_attributes))
           .to eq(nil)
         expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
-          .with(
-            Logger::ERROR,
-            "No feature variable was found for key 'invalid_string_variable' in "\
-            "feature flag 'string_single_variable_feature'."
-          )
+                                                 .with(
+                                                   Logger::ERROR,
+                                                   "No feature variable was found for key 'invalid_string_variable' in feature flag 'string_single_variable_feature'."
+                                                 )
       end
     end
   end
@@ -864,16 +851,15 @@ describe 'Optimizely' do
       }
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-      expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable',
-                                                           user_id, user_attributes))
+      expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(true)
 
       expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
-        .with(
-          Logger::INFO,
-          "Got variable value 'true' for variable 'boolean_variable' of feature flag 'boolean_single_variable_feature'."
-        )
+                                               .with(
+                                                 Logger::INFO,
+                                                 "Got variable value 'true' for variable 'boolean_variable' of feature flag 'boolean_single_variable_feature'."
+                                               )
     end
   end
 
@@ -892,16 +878,15 @@ describe 'Optimizely' do
 
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-      expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable',
-                                                          user_id, user_attributes))
+      expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(42.42)
 
       expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
-        .with(
-          Logger::INFO,
-          "Got variable value '42.42' for variable 'double_variable' of feature flag 'double_single_variable_feature'."
-        )
+                                               .with(
+                                                 Logger::INFO,
+                                                 "Got variable value '42.42' for variable 'double_variable' of feature flag 'double_single_variable_feature'."
+                                               )
     end
   end
 
@@ -920,16 +905,38 @@ describe 'Optimizely' do
 
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable',
-                                                           user_id, user_attributes))
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(42)
 
       expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
-        .with(
-          Logger::INFO,
-          "Got variable value '42' for variable 'integer_variable' of feature flag 'integer_single_variable_feature'."
-        )
+                                               .with(
+                                                 Logger::INFO,
+                                                 "Got variable value '42' for variable 'integer_variable' of feature flag 'integer_single_variable_feature'."
+                                               )
+    end
+  end
+
+  describe '#get_feature_variable_for_type with empty params' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return nil if feature_flag_key is nil' do
+      expect(project_instance.get_feature_variable_integer(nil, 'integer_variable', user_id, user_attributes))
+        .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key cannot be empty.')
+    end
+
+    it 'should return nil if variable_key is nil' do
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', nil, user_id, user_attributes))
+        .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Variable key cannot be empty.')
+    end
+
+    it 'should return nil if user_id is nil' do
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
+        .to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'User ID cannot be empty.')
     end
   end
 
@@ -941,30 +948,25 @@ describe 'Optimizely' do
     end
 
     # setForcedVariation on a running experiment and then call getVariation.
-    it 'should return expected variation id  when getVariation is called on a running experiment '\
-       'after setForcedVariation' do
+    it 'should return expected variation id  when getVariation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
       expect(project_instance.get_variation('test_experiment', 'test_user')). to eq('variation')
     end
 
-    # setForcedVariation on a whitelisted user on the variation that they are not forced into and
-    # then call getVariation on the user.
-    it 'should return expected forced variation id  when getVariation is called on a running experiment '\
-       'after setForcedVariation is called on a whitelisted user' do
+    # setForcedVariation on a whitelisted user on the variation that they are not forced into and then call getVariation on the user.
+    it 'should return expected forced variation id  when getVariation is called on a running experiment after setForcedVariation is called on a whitelisted user' do
       project_instance.set_forced_variation('test_experiment', 'forced_user1', 'variation')
       expect(project_instance.get_variation('test_experiment', 'forced_user1')). to eq('variation')
     end
 
-    # setForcedVariation on a running experiment with a previously set variation
-    # (different from the one set by setForcedVariation) and then call getVariation.
+    # setForcedVariation on a running experiment with a previously set variation (different from the one set by setForcedVariation) and then call getVariation.
     it 'should return latest set variation when different variations are set on the same experiment' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'control')
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
       expect(project_instance.get_variation('test_experiment', 'test_user')). to eq('variation')
     end
 
-    # setForcedVariation on a running experiment with audience enabled and then call getVariation on
-    # that same experiment with invalid attributes.
+    # setForcedVariation on a running experiment with audience enabled and then call getVariation on that same experiment with invalid attributes.
     it 'should return nil when getVariation called on audience enabled running experiment with invalid attributes' do
       project_instance.set_forced_variation('test_experiment_with_audience', 'test_user', 'control_with_audience')
       expect { project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid') }
@@ -976,8 +978,7 @@ describe 'Optimizely' do
     # only calls the other one
 
     # getForceVariation on a running experiment after setforcevariation
-    it 'should return expected variation id  when get_forced_variation is called on a running experiment '\
-       'after setForcedVariation' do
+    it 'should return expected variation id  when get_forced_variation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
       expect(project_instance.get_forced_variation('test_experiment', 'test_user')). to eq('variation')
     end

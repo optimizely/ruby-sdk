@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -65,37 +66,34 @@ module Optimizely
 
       visitor_attributes = []
 
-      unless attributes.nil?
+      attributes&.keys&.each do |attribute_key|
+        # Omit null attribute value
+        attribute_value = attributes[attribute_key]
+        next if attribute_value.nil?
 
-        attributes.keys.each do |attribute_key|
-          # Omit null attribute value
-          attribute_value = attributes[attribute_key]
-          next if attribute_value.nil?
+        if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
+          # TODO: (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so
+          # that custom attributes are not overloaded
+          feature = {
+            entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
+            key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+            value: attribute_value
+          }
+        else
+          # Skip attributes not in the datafile
+          attribute_id = @config.get_attribute_id(attribute_key)
+          next unless attribute_id
 
-          if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
-            # TODO: (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so
-            # that custom attributes are not overloaded
-            feature = {
-              entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
-              key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
-              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-              value: attribute_value
-            }
-          else
-            # Skip attributes not in the datafile
-            attribute_id = @config.get_attribute_id(attribute_key)
-            next unless attribute_id
+          feature = {
+            entity_id: attribute_id,
+            key: attribute_key,
+            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+            value: attribute_value
+          }
 
-            feature = {
-              entity_id: attribute_id,
-              key: attribute_key,
-              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-              value: attribute_value
-            }
-
-          end
-          visitor_attributes.push(feature)
         end
+        visitor_attributes.push(feature)
       end
 
       common_params = {
@@ -179,9 +177,9 @@ module Optimizely
         }],
         events: [{
           entity_id: @config.experiment_key_map[experiment_key]['layerId'],
-          timestamp: get_timestamp,
+          timestamp: create_timestamp,
           key: ACTIVATE_EVENT_KEY,
-          uuid: get_uuid
+          uuid: create_uuid
         }]
       }
 
@@ -211,8 +209,8 @@ module Optimizely
 
         event_object = {
           entity_id: @config.event_key_map[event_key]['id'],
-          timestamp: get_timestamp,
-          uuid: get_uuid,
+          timestamp: create_timestamp,
+          uuid: create_uuid,
           key: event_key
         }
 
@@ -234,13 +232,13 @@ module Optimizely
       conversion_event_params
     end
 
-    def get_timestamp
+    def create_timestamp
       # Returns +Integer+ Current timestamp
 
       (Time.now.to_f * 1000).to_i
     end
 
-    def get_uuid
+    def create_uuid
       # Returns +String+ Random UUID
 
       SecureRandom.uuid

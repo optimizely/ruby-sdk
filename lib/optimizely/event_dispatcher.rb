@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016, Optimizely and contributors
 #
@@ -20,8 +21,7 @@ module Optimizely
   class NoOpEventDispatcher
     # Class providing dispatch_event method which does nothing.
 
-    def dispatch_event(event)
-    end
+    def dispatch_event(event); end
   end
 
   class EventDispatcher

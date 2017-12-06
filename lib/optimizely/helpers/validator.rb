@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -51,7 +52,7 @@ module Optimizely
         # Returns boolean depending on validity of datafile.
 
         begin
-          datafile = JSON.load(datafile)
+          datafile = JSON.parse(datafile)
         rescue
           return false
         end

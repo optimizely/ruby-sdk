@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -28,7 +29,7 @@ describe Optimizely::Bucketer do
 
   def get_bucketing_key(bucketing_id, entity_id = nil)
     entity_id ||= 1_886_780_721
-    sprintf(Optimizely::Bucketer::BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: entity_id)
+    format(Optimizely::Bucketer::BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: entity_id)
   end
 
   it 'should return correct variation ID when provided bucket value' do
@@ -67,7 +68,7 @@ describe Optimizely::Bucketer do
     expect(bucketer.bucket(experiment, 'bucket_id_ignored', 'test_user')).to eq(expected_variation)
     expect(spy_logger).to have_received(:log).exactly(4).times
     expect(spy_logger).to have_received(:log).twice
-      .with(Logger::DEBUG, "Assigned bucket 3000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'.")
+                                             .with(Logger::DEBUG, "Assigned bucket 3000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'.")
     expect(spy_logger).to have_received(:log)
       .with(Logger::INFO, "User 'test_user' is in experiment 'group1_exp1' of group 101.")
     expect(spy_logger).to have_received(:log)

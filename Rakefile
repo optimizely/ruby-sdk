@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'bundler/gem_tasks'
 require_relative 'spec/benchmarking/benchmark'
 
@@ -14,4 +16,4 @@ task :benchmark do
   OptimizelyBenchmark.run_tests
 end
 
-task :default => :spec
+task default: :spec

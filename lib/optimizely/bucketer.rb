@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -21,7 +22,7 @@ module Optimizely
   class Bucketer
     # Optimizely bucketing algorithm that evenly distributes visitors.
 
-    BUCKETING_ID_TEMPLATE = '%{bucketing_id}%{entity_id}'
+    BUCKETING_ID_TEMPLATE = '%<bucketing_id>s%<entity_id>s'
     HASH_SEED = 1
     MAX_HASH_VALUE = 2**32
     MAX_TRAFFIC_VALUE = 10_000
@@ -108,7 +109,7 @@ module Optimizely
       # traffic_allocations - Array of traffic allocations
       #
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
-      bucketing_key = sprintf(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
+      bucketing_key = format(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
       bucket_value = generate_bucket_value(bucketing_key)
       @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' "\
                          "with bucketing ID: '#{bucketing_id}'.")

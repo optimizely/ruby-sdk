@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -433,7 +434,7 @@ module OptimizelySpec
       'id' => '155549',
       'key' => 'boolean_feature',
       'rolloutId' => '',
-      'experimentIds' => ['133331', '133332'],
+      'experimentIds' => %w[133331 133332],
       'variables' => []
     }, {
       'id' => '155550',
@@ -510,7 +511,7 @@ module OptimizelySpec
       'id' => '155562',
       'key' => 'mutex_group_feature',
       'rolloutId' => '',
-      'experimentIds' => ['133331', '133332'],
+      'experimentIds' => %w[133331 133332],
       'variables' => [
         {
           'id' => '155563',

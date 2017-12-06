@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -49,9 +50,9 @@ module Optimizely
                         'type' => 'integer'
                       }
                     },
-                    'required' => [
-                      'entityId',
-                      'endOfRange'
+                    'required' => %w[
+                      entityId
+                      endOfRange
                     ]
                   }
                 },
@@ -84,9 +85,9 @@ module Optimizely
                               'type' => 'string'
                             }
                           },
-                          'required' => [
-                            'id',
-                            'key'
+                          'required' => %w[
+                            id
+                            key
                           ]
                         }
                       },
@@ -102,9 +103,9 @@ module Optimizely
                               'type' => 'integer'
                             }
                           },
-                          'required' => [
-                            'entityId',
-                            'endOfRange'
+                          'required' => %w[
+                            entityId
+                            endOfRange
                           ]
                         }
                       },
@@ -118,24 +119,24 @@ module Optimizely
                         'type' => 'object'
                       }
                     },
-                    'required' => [
-                      'id',
-                      'layerId',
-                      'key',
-                      'status',
-                      'variations',
-                      'trafficAllocation',
-                      'audienceIds',
-                      'forcedVariations'
+                    'required' => %w[
+                      id
+                      layerId
+                      key
+                      status
+                      variations
+                      trafficAllocation
+                      audienceIds
+                      forcedVariations
                     ]
                   }
                 }
               },
-              'required' => [
-                'id',
-                'policy',
-                'trafficAllocation',
-                'experiments'
+              'required' => %w[
+                id
+                policy
+                trafficAllocation
+                experiments
               ]
             }
           },
@@ -168,9 +169,9 @@ module Optimizely
                         'type' => 'string'
                       }
                     },
-                    'required' => [
-                      'id',
-                      'key'
+                    'required' => %w[
+                      id
+                      key
                     ]
                   }
                 },
@@ -186,9 +187,9 @@ module Optimizely
                         'type' => 'integer'
                       }
                     },
-                    'required' => [
-                      'entityId',
-                      'endOfRange'
+                    'required' => %w[
+                      entityId
+                      endOfRange
                     ]
                   }
                 },
@@ -202,15 +203,15 @@ module Optimizely
                   'type' => 'object'
                 }
               },
-              'required' => [
-                'id',
-                'key',
-                'variations',
-                'trafficAllocation',
-                'audienceIds',
-                'forcedVariations',
-                'status',
-                'layerId'
+              'required' => %w[
+                id
+                key
+                variations
+                trafficAllocation
+                audienceIds
+                forcedVariations
+                status
+                layerId
               ]
             }
           },
@@ -232,10 +233,10 @@ module Optimizely
                   'type' => 'string'
                 }
               },
-              'required' => [
-                'key',
-                'experimentIds',
-                'id'
+              'required' => %w[
+                key
+                experimentIds
+                id
               ]
             }
           },
@@ -254,10 +255,10 @@ module Optimizely
                   'type' => 'string'
                 }
               },
-              'required' => [
-                'id',
-                'name',
-                'conditions'
+              'required' => %w[
+                id
+                name
+                conditions
               ]
             }
           },
@@ -273,9 +274,9 @@ module Optimizely
                   'type' => 'string'
                 }
               },
-              'required' => [
-                'id',
-                'key'
+              'required' => %w[
+                id
+                key
               ]
             }
           },
@@ -286,16 +287,16 @@ module Optimizely
             'type' => 'string'
           }
         },
-        'required' => [
-          'projectId',
-          'accountId',
-          'experiments',
-          'events',
-          'groups',
-          'audiences',
-          'attributes',
-          'version',
-          'revision'
+        'required' => %w[
+          projectId
+          accountId
+          experiments
+          events
+          groups
+          audiences
+          attributes
+          version
+          revision
         ]
       }.freeze
 
