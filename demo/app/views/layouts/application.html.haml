@@ -24,5 +24,6 @@
     = javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
   %body
     = render "layouts/header"
-    = render "shared/flash_messages"
+    #flash_messages
+      = render 'shared/flash_messages'
     = yield

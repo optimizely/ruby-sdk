@@ -14,15 +14,26 @@
 #    limitations under the License.
 #
 
-class ApplicationController < ActionController::Base
-  protect_from_forgery with: :exception
-
-  def optimizely_client_present?
-    redirect_to demo_config_path unless OptimizelyService.optimizely_client_present?
+class Purchase < ActiveHash::Base
+  
+  @@data = []
+  
+  fields :product_id
+  
+  def self.create_record(product_id)
+    @@data << product_id
   end
-
-  def get_visitor
-    visitor = Visitor.find(session[:visitor_id])
-    @visitor = visitor.present? ? visitor : Visitor::VISITORS.first
+  
+  def self.all_purchases
+    @@data.group_by{|e| e}.map{|k, v| [k, v.length]}.to_h
+  end
+  
+  def self.delete_all_purchases
+    delete_all
+    @@data = []
+  end
+  
+  def self.total
+    @@data.length
   end
 end

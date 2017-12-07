@@ -45,7 +45,12 @@ module ApplicationHelper
       ''
     end
   end
+  
   def generate_json_view(json)
     JSON.pretty_generate JSON.parse(json)
+  end
+  
+  def active_class(visitor_id)
+    return 'active' if visitor_id == session[:visitor_id]
   end
 end

@@ -66,6 +66,10 @@ class DemoController < ApplicationController
     # Returns list of visitors from model Visitor
     @visitors = Visitor::VISITORS
   end
+  
+  def select_visitor
+    session[:visitor_id] = params[:id].to_i
+  end
 
   def shop
     # Calls before_action get_visitor from Application Controller to get visitor
@@ -102,11 +106,11 @@ class DemoController < ApplicationController
       @visitor,
       Product::Event_Tags
     )
-      flash[:success] = "Successfully Purchased item #{@product[:name]} for visitor #{@visitor[:name]}!"
+      Purchase.create_record(@product[:id])
+      flash.now[:success] = "Successfully Purchased item #{@product[:name]} for visitor #{@visitor[:name]}!"
     else
-      flash[:error] = @optimizely_service.errors
+      flash.now[:error] = @optimizely_service.errors
     end
-    redirect_to messages_path
   end
 
   def log_messages
@@ -118,6 +122,16 @@ class DemoController < ApplicationController
     LogMessage.delete_all_logs
     redirect_to messages_path
     flash[:success] = 'log messages deleted successfully.'
+  end
+  
+  def purchases
+    @purchases = Purchase.all_purchases
+  end
+
+  def delete_purchases
+    Purchase.delete_all_purchases
+    redirect_to checkout_path
+    flash[:success] = 'Purchase record deleted successfully.'
   end
 
   private

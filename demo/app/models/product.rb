@@ -30,7 +30,7 @@ class Product
       color: 'Baby Blue',
       category: 'Shirts',
       price: 54,
-      image_url: 'item_1.png'
+      image_url: 'item_7.png'
     },
     {
       id: 2,

@@ -16,12 +16,15 @@
 
 Rails.application.routes.draw do
   resources :demo, only: [:new, :create]
+  get 'demo/checkout', to: 'demo#purchases', as: :checkout
   post 'demo/buy', to: 'demo#buy', as: :buy
   get 'demo/config', to: 'demo#new'
   post 'demo/config', to: 'demo#create'
   delete 'demo/delete_messages', to: 'demo#delete_messages', as: :delete_messages
+  delete 'demo/delete_purchases', to: 'demo#delete_purchases', as: :delete_purchases
   get 'demo/messages', to: 'demo#log_messages', as: :messages
   get 'demo/shop', to: 'demo#shop', as: :shop
+  get 'demo/select_visitor', to: 'demo#select_visitor', as: :select_visitor
   get 'demo/visitors', to: 'demo#visitors', as: :visitors
   # root path
   root 'home#index'

@@ -39,4 +39,6 @@
                   %p.lead
                     $#{product[:price]}
                 .col-xs-12.col-md-6
-                  = link_to "Buy Now", buy_path(id: @visitor[:id], product_id: product[:id]),method: :post, class:"btn btn-info"
+                  = link_to "Buy Now",
+                  buy_path(id: @visitor[:id], product_id: product[:id]),
+                  method: :post, class:"btn btn-info", remote: true

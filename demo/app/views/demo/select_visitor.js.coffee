@@ -13,16 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
-class ApplicationController < ActionController::Base
-  protect_from_forgery with: :exception
-
-  def optimizely_client_present?
-    redirect_to demo_config_path unless OptimizelyService.optimizely_client_present?
-  end
-
-  def get_visitor
-    visitor = Visitor.find(session[:visitor_id])
-    @visitor = visitor.present? ? visitor : Visitor::VISITORS.first
-  end
-end
+$ ->
+  $('.list-group a').removeClass 'active'
+  $('#visitor_<%= session[:visitor_id]%>').addClass 'active'

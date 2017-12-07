@@ -1,0 +1,50 @@
+-#
+-# Copyright 2017, Optimizely and contributors
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#    http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+
+.container
+  / Example row of columns
+  = render "shared/tabs"
+  .row
+    = link_to 'Clear checkout',
+    delete_purchases_path,
+    method: :delete,
+    data: { confirm: 'Are you sure? want to delete all purchases!' },
+    class:"btn btn-danger #{!@purchases.present? ? 'disabled' : ''}"
+  %br
+  .row
+    %table#example.table.table-sm
+      %thead
+        %tr
+          %th Products
+          %th Quantity
+      %tbody
+        - @purchases.each do |key,value|
+          %tr
+            %td
+              = "#{Product.find(key)[:name]}"
+            %td
+              = "#{value}"
+        %tr
+          %td Total
+          %td
+            = "#{Purchase.total.to_i}"
+-#
+-#:javascript
+-#  $(document).ready(function() {
+-#    $('#example').dataTable({
+-#      'bSort': false
+-#    });
+-#  });
