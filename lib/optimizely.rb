@@ -224,7 +224,7 @@ module Optimizely
       conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
                                                                 event_tags, experiment_variation_map)
       @logger.log(Logger::INFO,
-                  format('Dispatching conversion event to URL %s with params %s.', conversion_event.url, conversion_event.params))
+                  "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
       begin
         @event_dispatcher.dispatch_event(conversion_event)
       rescue => e
@@ -519,7 +519,7 @@ module Optimizely
       variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
       impression_event = @event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
-                  format('Dispatching impression event to URL %s with params %s.', impression_event.url, impression_event.params))
+                  "Dispatching impression event to URL #{impression_event.url} with params #{impression_event.params}.")
       begin
         @event_dispatcher.dispatch_event(impression_event)
       rescue => e
