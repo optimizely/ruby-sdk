@@ -1,3 +1,7 @@
+## 1.4.0
+* Implemented IP anonymization.
+* Implemented bucketing IDs. 
+* Implemented Notification Listeners.
 -------------------------------------------------------------------------------
 ## 1.4.0
 October 3, 2017
