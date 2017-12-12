@@ -35,6 +35,10 @@ module Optimizely
     attr_reader :bucketer
     attr_reader :config
 
+    Decision = Struct.new(:experiment, :variation, :source)
+    DECISION_SOURCE_EXPERIMENT = 'experiment'.freeze
+    DECISION_SOURCE_ROLLOUT = 'rollout'.freeze
+
     def initialize(config, user_profile_service = nil)
       @config = config
       @user_profile_service = user_profile_service
@@ -52,21 +56,10 @@ module Optimizely
       #   (nil if experiment is inactive or user does not meet audience conditions)
 
       # By default, the bucketing ID should be the user ID
-      bucketing_id = user_id;
-
-      # If the bucketing ID key is defined in attributes, then use that in place of the userID
-      if attributes and attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a? String 
-        unless attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].empty?
-          bucketing_id = attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID]
-          @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
-        end
-      end
-
+      bucketing_id = get_bucketing_id(user_id, attributes)
       # Check to make sure experiment is active
       experiment = @config.get_experiment_from_key(experiment_key)
-      if experiment.nil?
-        return nil
-      end
+      return nil if experiment.nil?
 
       experiment_id = experiment['id']
       unless @config.experiment_running?(experiment)
@@ -118,30 +111,18 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns hash with the experiment and variation where visitor will be bucketed (nil if the user is not bucketed into any of the experiments on the feature)
+      # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
       decision = get_variation_for_feature_experiment(feature_flag, user_id, attributes)
-      unless decision.nil?
-        return decision
-      end
+      return decision unless decision.nil?
 
       feature_flag_key = feature_flag['key']
-      variation = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
-      if variation
+      decision = get_variation_for_feature_rollout(feature_flag, user_id, attributes)
+      if decision
         @config.logger.log(
           Logger::INFO,
-          "User '#{user_id}' is in the rollout for feature flag '#{feature_flag_key}'."
-        )
-        # return decision with nil experiment so we don't track impressions for it
-        return {
-          'experiment' => nil,
-          'variation' => variation
-        }
-      else
-        @config.logger.log(
-          Logger::INFO,
-          "User '#{user_id}' is not in the rollout for feature flag '#{feature_flag_key}'."
+          "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag_key}'."
         )
         return decision
       end
@@ -160,13 +141,19 @@ module Optimizely
       # user_id - String ID for the user
       # attributes - Hash representing user attributes
       #
-      # Returns a hash with the experiment and variation where visitor will be bucketed
+      # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
       # or nil if the user is not bucketed into any of the experiments on the feature
-
       feature_flag_key = feature_flag['key']
-      unless feature_flag['experimentIds'].empty?
-        # check if experiment is part of mutex group
-        experiment_id = feature_flag['experimentIds'][0]
+      if feature_flag['experimentIds'].empty?
+        @config.logger.log(
+          Logger::DEBUG,
+          "The feature flag '#{feature_flag_key}' is not used in any experiments."
+        )
+        return nil
+      end
+
+      # Evaluate each experiment and return the first bucketed experiment variation
+      feature_flag['experimentIds'].each do |experiment_id|
         experiment = @config.experiment_id_map[experiment_id]
         unless experiment
           @config.logger.log(
@@ -175,52 +162,25 @@ module Optimizely
           )
           return nil
         end
+        
+        experiment_key = experiment['key']
+        variation_id = get_variation(experiment_key, user_id, attributes)
 
-        group_id = experiment['groupId']
-        # if experiment is part of mutex group we first determine which experiment (if any) in the group the user is part of
-        if group_id and @config.group_key_map.has_key?(group_id)
-          group = @config.group_key_map[group_id]
-          bucketed_experiment_id = @bucketer.find_bucket(user_id, group_id, group['trafficAllocation'])
-          if bucketed_experiment_id.nil?
-            @config.logger.log(
-              Logger::INFO,
-              "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
-            )
-            return nil
-          end
-        else
-          bucketed_experiment_id = experiment_id
-        end
-
-        if feature_flag['experimentIds'].include?(bucketed_experiment_id)
-          experiment = @config.experiment_id_map[bucketed_experiment_id]
-          experiment_key = experiment['key']
-          variation_id = get_variation(experiment_key, user_id, attributes)
-          unless variation_id.nil?
-            variation = @config.variation_id_map[experiment_key][variation_id]
-            @config.logger.log(
-              Logger::INFO,
-              "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
-            )
-            return {
-              'variation' => variation,
-              'experiment' => experiment
-            }
-          else
-            @config.logger.log(
-              Logger::INFO,
-              "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
-            )
-          end
-        end
-      else
+        next unless variation_id
+        variation = @config.variation_id_map[experiment_key][variation_id]
         @config.logger.log(
-          Logger::DEBUG,
-          "The feature flag '#{feature_flag_key}' is not used in any experiments."
+          Logger::INFO,
+          "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
         )
+        return Decision.new(experiment, variation, DECISION_SOURCE_EXPERIMENT)
       end
+      
+      @config.logger.log(
+        Logger::INFO,
+        "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
+      )
 
-      return nil
+      nil
     end
 
     def get_variation_for_feature_rollout(feature_flag, user_id, attributes = nil)
@@ -234,75 +194,69 @@ module Optimizely
       # Returns the Decision struct or nil if not bucketed into any of the targeting rules
       bucketing_id = get_bucketing_id(user_id, attributes)
       rollout_id = feature_flag['rolloutId']
-      if rollout_id.nil? or rollout_id.empty?
+      if rollout_id.nil? || rollout_id.empty?
         feature_flag_key = feature_flag['key']
         @config.logger.log(
           Logger::DEBUG,
-          "Feature flag '#{feature_flag_key}' is not part of a rollout."
+          "Feature flag '#{feature_flag_key}' is not used in a rollout."
         )
         return nil
       end
 
       rollout = @config.get_rollout_from_id(rollout_id)
-      unless rollout.nil? or rollout['experiments'].empty?
-        rollout_experiments = rollout['experiments']
-        number_of_rules = rollout_experiments.length - 1
-
-        # Go through each experiment in order and try to get the variation for the user
-        for index in (0...number_of_rules)
-          experiment = rollout_experiments[index]
-          experiment_key = experiment['key']
-
-          # Check that user meets audience conditions for targeting rule
-          unless Audience.user_in_experiment?(@config, experiment, attributes)
-            @config.logger.log(
-              Logger::DEBUG,
-              "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
-            )
-            # move onto the next targeting rule
-            next
-          end
-
-          @config.logger.log(
-            Logger::DEBUG,
-            "User '#{user_id}' meets conditions for targeting rule '#{index + 1}'."
-          )
-          variation = @bucketer.bucket(experiment, user_id)
-          unless variation.nil?
-            variation_key = variation['key']
-            return variation
-          end
-
-          # User failed traffic allocation, jump to Everyone Else rule
-          @config.logger.log(
-            Logger::DEBUG,
-            "User '#{user_id}' is not in the traffic group for the targeting rule. Checking 'Eveyrone Else' rule now."
-          )
-          break
-        end
-
-        # Evalute the "Everyone Else" rule, which is the last rule.
-        everyone_else_experiment = rollout_experiments[number_of_rules]
-        variation = @bucketer.bucket(everyone_else_experiment, user_id)
-        unless variation.nil?
-          @config.logger.log(
-            Logger::DEBUG,
-            "User '#{user_id}' meets conditions for targeting rule 'Everyone Else'."
-          )
-          return variation
-        end
-
+      if rollout.nil?
         @config.logger.log(
           Logger::DEBUG,
-          "User '#{user_id}' does not meet conditions for targeting rule 'Everyone Else'."
+          "Rollout with ID '#{rollout_id}' is not in the datafile '#{feature_flag['key']}'"
         )
+        return nil
+      end
+
+      return nil if rollout['experiments'].empty?
+
+      rollout_rules = rollout['experiments']
+      number_of_rules = rollout_rules.length - 1
+
+      # Go through each experiment in order and try to get the variation for the user
+      number_of_rules.times do |index|
+        rollout_rule = rollout_rules[index]
+        audience_id = rollout_rule['audienceIds'][0]
+        audience = @config.get_audience_from_id(audience_id)
+        audience_name = audience['name']
+
+        # Check that user meets audience conditions for targeting rule
+        unless Audience.user_in_experiment?(@config, rollout_rule, attributes)
+          @config.logger.log(
+            Logger::DEBUG,
+            "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
+          )
+          # move onto the next targeting rule
+          next
+        end
+
+        # User failed traffic allocation, jump to Everyone Else rule
+        @config.logger.log(
+          Logger::DEBUG,
+          "Attempting to bucket user '#{user_id}' into rollout rule for audience '#{audience_name}'."
+        )
+
+        # Evaluate if user satisfies the traffic allocation for this rollout rule
+        variation = @bucketer.bucket(rollout_rule, bucketing_id, user_id)
+        return Decision.new(rollout_rule, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
+        # User failed traffic allocation, jump to Everyone Else rule
+        @config.logger.log(
+          Logger::DEBUG,
+          "User '#{user_id}' was excluded due to traffic allocation. Checking 'Everyone Else' rule now."
+        )
+
+        break
       end
       
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
       variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
-
+      
       @config.logger.log(
         Logger::DEBUG,
         "User '#{user_id}' was excluded from the 'Everyone Else' rule for feature flag"
@@ -374,8 +328,8 @@ module Optimizely
       # Returns Hash stored user profile (or a default one if lookup fails or user profile service not provided)
 
       user_profile = {
-        :user_id => user_id,
-        :experiment_bucket_map => {}
+        user_id: user_id,
+        experiment_bucket_map: {}
       }
 
       return user_profile unless @user_profile_service
@@ -389,7 +343,6 @@ module Optimizely
       user_profile
     end
 
-
     def save_user_profile(user_profile, experiment_id, variation_id)
       # Save a given bucketing decision to a given user profile
       #
@@ -402,7 +355,7 @@ module Optimizely
       user_id = user_profile[:user_id]
       begin
         user_profile[:experiment_bucket_map][experiment_id] = {
-          :variation_id => variation_id
+          variation_id: variation_id
         }
         @user_profile_service.save(user_profile)
         @config.logger.log(Logger::INFO, "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'.")

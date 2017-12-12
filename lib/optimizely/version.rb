@@ -16,6 +16,6 @@
 module Optimizely
   
  CLIENT_ENGINE = 'ruby-sdk'.freeze
- VERSION = '2.0.0.beta'.freeze
+ VERSION = '1.5.0'.freeze
   
 end
