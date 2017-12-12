@@ -16,9 +16,12 @@
 require 'json'
 
 module OptimizelySpec
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id".freeze
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = "optimizely_bucketing_id".freeze
   VALID_CONFIG_BODY = {
     'accountId' => '12001',
     'projectId' => '111001',
+    'anonymizeIP'=> false,
     'revision' => '42',
     'version' => '2',
     'events' => [{

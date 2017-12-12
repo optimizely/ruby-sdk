@@ -38,6 +38,8 @@ module Optimizely
     attr_reader :groups
     attr_reader :parsing_succeeded
     attr_reader :project_id
+    # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
+    attr_reader :anonymize_ip
     attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
@@ -86,6 +88,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
+      @anonymize_ip = (config.has_key? 'anonymizeIP')? config['anonymizeIP'] :false
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
@@ -195,15 +198,15 @@ module Optimizely
       []
     end
 
-    def get_audience_conditions_from_id(audience_id)
-      # Get audience conditions for the provided audience ID
+    def get_audience_from_id(audience_id)
+      # Get audience for the provided audience ID
       #
       # audience_id - ID of the audience
       #
-      # Returns conditions for the audience
+      # Returns the audience
 
       audience = @audience_id_map[audience_id]
-      return audience['conditions'] if audience
+      return audience if audience
       @logger.log Logger::ERROR, "Audience '#{audience_id}' is not in datafile."
       @error_handler.handle_error InvalidAudienceError
       nil
