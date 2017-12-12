@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,15 +20,13 @@ module Optimizely
     # Class encapsulating exception handling functionality.
     # Override with your own exception handler providing a handle_error method.
 
-    def handle_error(_error)
-    end
+    def handle_error(_error); end
   end
 
   class NoOpErrorHandler < BaseErrorHandler
     # Class providing handle_error method that suppresses errors.
 
-    def handle_error(_error)
-    end
+    def handle_error(_error); end
   end
 
   class RaiseErrorHandler < BaseErrorHandler

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2017, Optimizely and contributors
 #
@@ -16,7 +18,7 @@
 require_relative './bucketer'
 
 module Optimizely
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id".freeze
+  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id"
 
   class DecisionService
     # Optimizely's decision service that determines into which variation of an experiment a user will be allocated.
@@ -35,8 +37,8 @@ module Optimizely
     attr_reader :config
 
     Decision = Struct.new(:experiment, :variation, :source)
-    DECISION_SOURCE_EXPERIMENT = 'experiment'.freeze
-    DECISION_SOURCE_ROLLOUT = 'rollout'.freeze
+    DECISION_SOURCE_EXPERIMENT = 'experiment'
+    DECISION_SOURCE_ROLLOUT = 'rollout'
 
     def initialize(config, user_profile_service = nil)
       @config = config
@@ -161,7 +163,7 @@ module Optimizely
           )
           return nil
         end
-        
+
         experiment_key = experiment['key']
         variation_id = get_variation(experiment_key, user_id, attributes)
 
@@ -173,7 +175,7 @@ module Optimizely
         )
         return Decision.new(experiment, variation, DECISION_SOURCE_EXPERIMENT)
       end
-      
+
       @config.logger.log(
         Logger::INFO,
         "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."

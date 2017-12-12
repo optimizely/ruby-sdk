@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2017, Optimizely and contributors
 #
@@ -26,7 +28,7 @@ module Optimizely
     def initialize(logger, error_handler)
       @notification_id = 1
       @notifications = {}
-      NOTIFICATION_TYPES.values.each { |value| @notifications[value] = [] }
+      NOTIFICATION_TYPES.each_value { |value| @notifications[value] = [] }
       @logger = logger
       @error_handler = error_handler
     end
@@ -73,7 +75,7 @@ module Optimizely
         @logger.log Logger::ERROR, 'Notification ID can not be empty.'
         return nil
       end
-      @notifications.each do |key, _array|
+      @notifications.each_key do |key|
         @notifications[key].each do |notification|
           if notification_id == notification[:notification_id]
             @notifications[key].delete(notification_id: notification_id, callback: notification[:callback])
@@ -98,7 +100,7 @@ module Optimizely
 
     def clean_all_notifications
       # Removes all notifications
-      @notifications.keys.each { |key| @notifications[key] = [] }
+      @notifications.each_key { |key| @notifications[key] = [] }
     end
 
     def send_notifications(notification_type, *args)

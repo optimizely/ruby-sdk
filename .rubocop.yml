@@ -1,3 +1,8 @@
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  TargetRubyVersion: 2.3
+
 Metrics/AbcSize:
   Enabled: false
 
@@ -10,26 +15,29 @@ Metrics/PerceivedComplexity:
 Metrics/ClassLength:
   Enabled: false
 
+Metrics/BlockLength:
+  Enabled: false
+
 Metrics/LineLength:
-  Max: 120
+  Enabled: false
 
 Metrics/MethodLength:
   Enabled: false
 
-Style/AccessorMethodName:
+Metrics/ModuleLength:
   Enabled: false
 
 Style/Documentation:
   Enabled: false
 
-Style/FormatString:
-  Enabled: false
-
 Style/SignalException:
   EnforcedStyle: only_raise
 
-Style/SpaceInsideHashLiteralBraces:
+Layout/SpaceInsideHashLiteralBraces:
   EnforcedStyle: no_space
 
-Style/WordArray:
+Naming/VariableNumber:
   Enabled: false
+
+Lint/RescueWithoutErrorClass:
+   Enabled: false

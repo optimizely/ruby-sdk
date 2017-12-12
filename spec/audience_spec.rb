@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -18,11 +20,11 @@ require 'spec_helper'
 describe Optimizely::Audience do
   before(:context) do
     @config_body = OptimizelySpec::VALID_CONFIG_BODY
-    @config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    @config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
   end
 
   before(:example) do
-    @project_instance = Optimizely::Project.new(@config_body_JSON)
+    @project_instance = Optimizely::Project.new(@config_body_json)
   end
 
   it 'should return true for user_in_experiment? if there are no audiences and no attributes' do
@@ -38,15 +40,15 @@ describe Optimizely::Audience do
       'browser_type' => 'firefox'
     }
     expect(Optimizely::Audience.user_in_experiment?(@project_instance.config,
-                                                   experiment,
-                                                   user_attributes)).to be true
+                                                    experiment,
+                                                    user_attributes)).to be true
   end
 
   it 'should return false for user_in_experiment? if there are audiences but no attributes' do
     experiment = @project_instance.config.experiment_key_map['test_experiment_with_audience']
     expect(Optimizely::Audience.user_in_experiment?(@project_instance.config,
-                                                   experiment,
-                                                   nil)).to be false
+                                                    experiment,
+                                                    nil)).to be false
   end
 
   it 'should return true for user_in_experiment? if any one of the audience conditions are met' do
@@ -56,8 +58,8 @@ describe Optimizely::Audience do
 
     experiment = @project_instance.config.experiment_key_map['test_experiment_with_audience']
     expect(Optimizely::Audience.user_in_experiment?(@project_instance.config,
-                                                   experiment,
-                                                   user_attributes)).to be true
+                                                    experiment,
+                                                    user_attributes)).to be true
   end
 
   it 'should return false for user_in_experiment? if the audience conditions are not met' do
@@ -66,7 +68,7 @@ describe Optimizely::Audience do
     }
     experiment = @project_instance.config.experiment_key_map['test_experiment_with_audience']
     expect(Optimizely::Audience.user_in_experiment?(@project_instance.config,
-                                                   experiment,
-                                                   user_attributes)).to be false
+                                                    experiment,
+                                                    user_attributes)).to be false
   end
 end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,15 +21,13 @@ module Optimizely
   class BaseLogger
     # Class encapsulating logging functionality. Override with your own logger providing log method.
 
-    def log(_level, _message)
-    end
+    def log(_level, _message); end
   end
 
   class NoOpLogger < BaseLogger
     # Class providing log method which logs nothing.
 
-    def log(_level, _message)
-    end
+    def log(_level, _message); end
   end
 
   class SimpleLogger < BaseLogger

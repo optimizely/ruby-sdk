@@ -1,4 +1,5 @@
-#
+# frozen_string_literal: true
+
 #    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +17,13 @@
 require 'json'
 
 module Optimizely
-
   V1_CONFIG_VERSION = '1'
 
-  UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
+  UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION].freeze
 
   class ProjectConfig
     # Representation of the Optimizely project config.
-    RUNNING_EXPERIMENT_STATUS = ['Running']
+    RUNNING_EXPERIMENT_STATUS = ['Running'].freeze
 
     # Gets project config attributes.
     attr_reader :error_handler
@@ -69,16 +69,14 @@ module Optimizely
       #
       # datafile - JSON string representing the project
 
-      config = JSON.load(datafile)
+      config = JSON.parse(datafile)
 
       @parsing_succeeded = false
       @error_handler = error_handler
       @logger = logger
       @version = config['version']
 
-      if UNSUPPORTED_VERSIONS.include?(@version)
-        return
-      end
+      return if UNSUPPORTED_VERSIONS.include?(@version)
 
       @account_id = config['accountId']
       @attributes = config.fetch('attributes', [])
@@ -88,7 +86,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
-      @anonymize_ip = (config.has_key? 'anonymizeIP')? config['anonymizeIP'] :false
+      @anonymize_ip = config.key? 'anonymizeIP' ? config['anonymizeIP'] : false
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
@@ -110,7 +108,7 @@ module Optimizely
       @forced_variation_map = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
-      @experiment_key_map.each do |key, exp|
+      @experiment_key_map.each_value do |exp|
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
         variations.each do |variation|
@@ -121,7 +119,7 @@ module Optimizely
       @rollout_id_map = generate_key_map(@rollouts, 'id')
       # split out the experiment id map for rollouts
       @rollout_experiment_id_map = {}
-      @rollout_id_map.each do |id, rollout|
+      @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end
@@ -153,7 +151,7 @@ module Optimizely
       # experiment - Experiment
       #
       # Returns true if experiment is running
-      return RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
+      RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
     end
 
     def get_experiment_from_key(experiment_key)
@@ -278,34 +276,35 @@ module Optimizely
       # Returns Variation The variation which the given user and experiment should be forced into.
 
       # check for nil and empty string user ID
-      if user_id.nil? or user_id.empty?
-        @logger.log(Logger::DEBUG, "User ID is invalid")
+      if user_id.nil? || user_id.empty?
+        @logger.log(Logger::DEBUG, 'User ID is invalid')
         return nil
       end
 
-      unless @forced_variation_map.has_key? (user_id)
+      unless @forced_variation_map.key? user_id
         @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
         return nil
       end
 
-      experimentToVariationMap = @forced_variation_map[user_id]
+      experiment_to_variation_map = @forced_variation_map[user_id]
       experiment = get_experiment_from_key(experiment_key)
-      experiment_id = experiment["id"] if experiment
+      experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
-      if experiment_id.nil? or experiment_id.empty?
+      if experiment_id.nil? || experiment_id.empty?
         # this case is logged in get_experiment_from_key
         return nil
       end
 
-      unless experimentToVariationMap.has_key? (experiment_id)
-        @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map.")
+      unless experiment_to_variation_map.key? experiment_id
+        @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' "\
+                    'in the forced variation map.')
         return nil
       end
 
-      variation_id = experimentToVariationMap[experiment_id]
-      variation_key = ""
-      variation = get_variation_from_id(experiment_key,variation_id)
-      variation_key = variation["key"] if variation
+      variation_id = experiment_to_variation_map[experiment_id]
+      variation_key = ''
+      variation = get_variation_from_id(experiment_key, variation_id)
+      variation_key = variation['key'] if variation
 
       # check if the variation exists in the datafile
       if variation_key.empty?
@@ -313,8 +312,9 @@ module Optimizely
         return nil
       end
 
-      @logger.log(Logger::DEBUG, "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map")
-      
+      @logger.log(Logger::DEBUG, "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' "\
+                  "and user '#{user_id}' in the forced variation map")
+
       variation
     end
 
@@ -328,22 +328,21 @@ module Optimizely
       # Returns a boolean value that indicates if the set completed successfully.
 
       #  check for null and empty string user ID
-      if user_id.nil? or user_id.empty?
-        @logger.log(Logger::DEBUG, "User ID is invalid")
+      if user_id.nil? || user_id.empty?
+        @logger.log(Logger::DEBUG, 'User ID is invalid')
         return false
       end
 
       experiment = get_experiment_from_key(experiment_key)
-      experiment_id = experiment["id"] if experiment
+      experiment_id = experiment['id'] if experiment
       #  check if the experiment exists in the datafile
-      if experiment_id.nil? or experiment_id.empty?
-        return false
-      end
+      return false if experiment_id.nil? || experiment_id.empty?
 
       #  clear the forced variation if the variation key is null
-      if variation_key.nil? or variation_key.empty?
-        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map.has_key? (user_id)
-        @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user '#{user_id}'.")
+      if variation_key.nil? || variation_key.empty?
+        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map.key? user_id
+        @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user "\
+                    "'#{user_id}'.")
         return true
       end
 
@@ -355,12 +354,13 @@ module Optimizely
         return false
       end
 
-      unless @forced_variation_map.has_key? user_id 
+      unless @forced_variation_map.key? user_id
         @forced_variation_map[user_id] = {}
       end
       @forced_variation_map[user_id][experiment_id] = variation_id
-      @logger.log(Logger::DEBUG, "Set variation '#{variation_id}' for experiment '#{experiment_id}' and user '#{user_id}' in the forced variation map.")
-      return true
+      @logger.log(Logger::DEBUG, "Set variation '#{variation_id}' for experiment '#{experiment_id}' and "\
+                  "user '#{user_id}' in the forced variation map.")
+      true
     end
 
     def get_attribute_id(attribute_key)
@@ -421,7 +421,8 @@ module Optimizely
       feature_flag_key = feature_flag['key']
       variable = @feature_variable_key_map[feature_flag_key][variable_key]
       return variable if variable
-      @logger.log Logger::ERROR, "No feature variable was found for key '#{variable_key}' in feature flag '#{feature_flag_key}'."
+      @logger.log Logger::ERROR, "No feature variable was found for key '#{variable_key}' in feature flag "\
+                  "'#{feature_flag_key}'."
       nil
     end
 

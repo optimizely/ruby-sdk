@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -83,7 +85,8 @@ module Optimizely
   class InvalidDatafileVersionError < Error
     # Raised when a datafile with an unsupported version is provided
 
-    def initialize(msg = 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or earlier for datafile version 1.')
+    def initialize(msg = 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or earlier '\
+                  'for datafile version 1.')
       super
     end
   end
@@ -95,13 +98,12 @@ module Optimizely
       super("Provided #{type} is in an invalid format.")
     end
   end
-  
+
   class InvalidNotificationType < Error
     # Raised when an invalid notification type is provided
-  
+
     def initialize(msg = 'Provided notification type is invalid.')
       super
     end
   end
-  
 end

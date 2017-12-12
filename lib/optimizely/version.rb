@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2016-2017, Optimizely and contributors
 #
@@ -14,8 +16,6 @@
 #    limitations under the License.
 #
 module Optimizely
-  
- CLIENT_ENGINE = 'ruby-sdk'.freeze
- VERSION = '1.5.0'.freeze
-  
+  CLIENT_ENGINE = 'ruby-sdk'
+  VERSION = '1.5.0'
 end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -43,7 +45,7 @@ module Optimizely
       audience_ids.each do |audience_id|
         audience = config.get_audience_from_id(audience_id)
         audience_conditions = audience['conditions']
-        audience_conditions = JSON.load(audience_conditions)
+        audience_conditions = JSON.parse(audience_conditions)
         return true if @condition_evaluator.evaluate(audience_conditions)
       end
 

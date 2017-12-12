@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 #
-#    Copyright 2016, Optimizely and contributors
+#    Copyright 2016-2017, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,8 +21,7 @@ module Optimizely
   class NoOpEventDispatcher
     # Class providing dispatch_event method which does nothing.
 
-    def dispatch_event(event)
-    end
+    def dispatch_event(event); end
   end
 
   class EventDispatcher
@@ -40,9 +41,9 @@ module Optimizely
       elsif event.http_verb == :post
         begin
           HTTParty.post(event.url,
-                   body: event.params.to_json,
-                   headers: event.headers,
-                   timeout: REQUEST_TIMEOUT)
+                        body: event.params.to_json,
+                        headers: event.headers,
+                        timeout: REQUEST_TIMEOUT)
         rescue Timeout::Error => e
           return e
         end
