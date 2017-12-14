@@ -703,6 +703,37 @@ describe 'Optimizely' do
     end
   end
 
+  describe '#get_enabled_features' do
+    it 'should return empty when called with invalid project config' do
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_enabled_features('test_user')).to be_empty
+    end
+
+    it 'should return empty when no feature flag is enabled' do
+      allow(project_instance).to receive(:is_feature_enabled).and_return(false)
+      expect(project_instance.get_enabled_features('test_user')).to be_empty
+    end
+
+    it 'should return only enabled feature flags keys' do
+      # Sets all feature-flags keys with randomly assigned status
+      features_keys = project_instance.config.feature_flags.map do |item|
+        {key: (item['key']).to_s, value: [true, false].sample} # '[true, false].sample' generates random boolean
+      end
+
+      enabled_features = features_keys.map { |x| x[:key] if x[:value] == true }.compact
+      disabled_features = features_keys.map { |x| x[:key] if x[:value] == false }.compact
+      booleans = features_keys.map { |x| x[:value] }.compact
+
+      # Checks enabled features are returned
+      allow(project_instance).to receive(:is_feature_enabled).and_return(*booleans)
+      expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).to eq(enabled_features)
+
+      # Checks prevented features should not return
+      allow(project_instance).to receive(:is_feature_enabled).and_return(*booleans)
+      expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).not_to eq(disabled_features)
+    end
+  end
+
   describe '#get_feature_variable_string' do
     user_id = 'test_user'
     user_attributes = {}

@@ -282,6 +282,31 @@ module Optimizely
       false
     end
 
+    def get_enabled_features(user_id, attributes = nil)
+      # Gets keys of all feature flags which are enabled for the user.
+      # Args:
+      #   user_id: ID for user.
+      #   attributes: Dict representing user attributes.
+      # Returns:
+      #   A List of feature flag keys that are enabled for the user.
+      #
+      enabled_features = []
+
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_enabled_features').message)
+        return enabled_features
+      end
+
+      @config.feature_flags.each do |feature|
+        enabled_features.push(feature['key']) if is_feature_enabled(
+          feature['key'],
+          user_id, attributes
+        ) == true
+      end
+      enabled_features
+    end
+
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
       # Get the String value of the specified variable in the feature flag.
       #
