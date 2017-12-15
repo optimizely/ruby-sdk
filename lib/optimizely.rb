@@ -301,7 +301,8 @@ module Optimizely
       @config.feature_flags.each do |feature|
         enabled_features.push(feature['key']) if is_feature_enabled(
           feature['key'],
-          user_id, attributes
+          user_id,
+          attributes
         ) == true
       end
       enabled_features
