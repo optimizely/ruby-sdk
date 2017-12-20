@@ -10,3 +10,5 @@ Gemfile.lock
 /tmp/
 *.DS_Store
 .ruby-version
+demo/log/*
+demo/tmp/*

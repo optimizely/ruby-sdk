@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id: 
+  name: 
+  color: 
+  category: 
+  price: 
+
+two:
+  id: 
+  name: 
+  color: 
+  category: 
+  price: 
