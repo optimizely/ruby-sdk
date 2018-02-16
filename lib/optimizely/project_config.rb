@@ -126,16 +126,16 @@ module Optimizely
       @all_experiments = @experiment_key_map.merge(@rollout_experiment_id_map)
       @all_experiments.each do |key, exp|
         variations = exp.fetch('variations')
-        @variation_id_map[key] = generate_key_map(variations, 'id')
-        @variation_key_map[key] = generate_key_map(variations, 'key')
-
         variations.each do |variation|
           variation_id = variation['id']
+          variation['featureEnabled'] = variation['featureEnabled'] == true
           variation_variables = variation['variables']
           unless variation_variables.nil?
             @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
           end
         end
+        @variation_id_map[key] = generate_key_map(variations, 'id')
+        @variation_key_map[key] = generate_key_map(variations, 'key')
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
       @feature_variable_key_map = {}

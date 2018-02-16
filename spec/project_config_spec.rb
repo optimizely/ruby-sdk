@@ -25,6 +25,7 @@ describe Optimizely::ProjectConfig do
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
   let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
+  let(:feature_enabled) { 'featureEnabled' }
 
   describe '.initialize' do
     it 'should initialize properties correctly upon creating project' do
@@ -43,7 +44,6 @@ describe Optimizely::ProjectConfig do
       expected_attribute_key_map = {
         'browser_type' => config_body['attributes'][0]
       }
-
       expected_audience_id_map = {
         '11154' => config_body['audiences'][0],
         '11155' => config_body['audiences'][1]
@@ -74,31 +74,37 @@ describe Optimizely::ProjectConfig do
         'test_experiment' => {
           '111128' => {
             'key' => 'control',
-            'id' => '111128'
+            'id' => '111128',
+            feature_enabled => true
           },
           '111129' => {
             'key' => 'variation',
-            'id' => '111129'
+            'id' => '111129',
+            feature_enabled => true
           }
         },
         'test_experiment_not_started' => {
           '100028' => {
             'key' => 'control_not_started',
-            'id' => '100028'
+            'id' => '100028',
+            feature_enabled => true
           },
           '100029' => {
             'key' => 'variation_not_started',
-            'id' => '100029'
+            'id' => '100029',
+            feature_enabled => false
           }
         },
         'test_experiment_with_audience' => {
           '122228' => {
             'key' => 'control_with_audience',
-            'id' => '122228'
+            'id' => '122228',
+            feature_enabled => true
           },
           '122229' => {
             'key' => 'variation_with_audience',
-            'id' => '122229'
+            'id' => '122229',
+            feature_enabled => true
           }
         },
         'test_experiment_multivariate' => {
@@ -123,6 +129,7 @@ describe Optimizely::ProjectConfig do
           '130001' => {
             'key' => 'g1_e1_v1',
             'id' => '130001',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -133,6 +140,7 @@ describe Optimizely::ProjectConfig do
           '130002' => {
             'key' => 'g1_e1_v2',
             'id' => '130002',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -145,6 +153,7 @@ describe Optimizely::ProjectConfig do
           '130003' => {
             'key' => 'g1_e2_v1',
             'id' => '130003',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -155,6 +164,7 @@ describe Optimizely::ProjectConfig do
           '130004' => {
             'key' => 'g1_e2_v2',
             'id' => '130004',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -166,27 +176,32 @@ describe Optimizely::ProjectConfig do
         'group2_exp1' => {
           '144443' => {
             'key' => 'g2_e1_v1',
-            'id' => '144443'
+            'id' => '144443',
+            feature_enabled => true
           },
           '144444' => {
             'key' => 'g2_e1_v2',
-            'id' => '144444'
+            'id' => '144444',
+            feature_enabled => true
           }
         },
         'group2_exp2' => {
           '144445' => {
             'key' => 'g2_e2_v1',
-            'id' => '144445'
+            'id' => '144445',
+            feature_enabled => true
           },
           '144446' => {
             'key' => 'g2_e2_v2',
-            'id' => '144446'
+            'id' => '144446',
+            feature_enabled => true
           }
         },
         '177770' => {
           '177771' => {
             'id' => '177771',
             'key' => '177771',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -199,6 +214,7 @@ describe Optimizely::ProjectConfig do
           '177773' => {
             'id' => '177773',
             'key' => '177773',
+            feature_enabled => false,
             'variables' => [
               {
                 'id' => '155556',
@@ -211,6 +227,7 @@ describe Optimizely::ProjectConfig do
           '177775' => {
             'id' => '177775',
             'key' => '177775',
+            feature_enabled => true,
             'variables' => []
           }
         },
@@ -218,6 +235,7 @@ describe Optimizely::ProjectConfig do
           '177778' => {
             'id' => '177778',
             'key' => '177778',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -230,6 +248,7 @@ describe Optimizely::ProjectConfig do
           '177780' => {
             'id' => '177780',
             'key' => '177780',
+            feature_enabled => true,
             'variables' => []
           }
         }
@@ -239,31 +258,37 @@ describe Optimizely::ProjectConfig do
         'test_experiment' => {
           'control' => {
             'key' => 'control',
-            'id' => '111128'
+            'id' => '111128',
+            feature_enabled => true
           },
           'variation' => {
             'key' => 'variation',
-            'id' => '111129'
+            'id' => '111129',
+            feature_enabled => true
           }
         },
         'test_experiment_not_started' => {
           'control_not_started' => {
             'key' => 'control_not_started',
-            'id' => '100028'
+            'id' => '100028',
+            feature_enabled => true
           },
           'variation_not_started' => {
             'key' => 'variation_not_started',
-            'id' => '100029'
+            'id' => '100029',
+            feature_enabled => false
           }
         },
         'test_experiment_with_audience' => {
           'control_with_audience' => {
             'key' => 'control_with_audience',
-            'id' => '122228'
+            'id' => '122228',
+            feature_enabled => true
           },
           'variation_with_audience' => {
             'key' => 'variation_with_audience',
-            'id' => '122229'
+            'id' => '122229',
+            feature_enabled => true
           }
         },
         'test_experiment_multivariate' => {
@@ -288,6 +313,7 @@ describe Optimizely::ProjectConfig do
           'g1_e1_v1' => {
             'key' => 'g1_e1_v1',
             'id' => '130001',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -298,6 +324,7 @@ describe Optimizely::ProjectConfig do
           'g1_e1_v2' => {
             'key' => 'g1_e1_v2',
             'id' => '130002',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -310,6 +337,7 @@ describe Optimizely::ProjectConfig do
           'g1_e2_v1' => {
             'key' => 'g1_e2_v1',
             'id' => '130003',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -320,6 +348,7 @@ describe Optimizely::ProjectConfig do
           'g1_e2_v2' => {
             'key' => 'g1_e2_v2',
             'id' => '130004',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155563',
@@ -331,27 +360,32 @@ describe Optimizely::ProjectConfig do
         'group2_exp1' => {
           'g2_e1_v1' => {
             'key' => 'g2_e1_v1',
-            'id' => '144443'
+            'id' => '144443',
+            feature_enabled => true
           },
           'g2_e1_v2' => {
             'key' => 'g2_e1_v2',
-            'id' => '144444'
+            'id' => '144444',
+            feature_enabled => true
           }
         },
         'group2_exp2' => {
           'g2_e2_v1' => {
             'key' => 'g2_e2_v1',
-            'id' => '144445'
+            'id' => '144445',
+            feature_enabled => true
           },
           'g2_e2_v2' => {
             'key' => 'g2_e2_v2',
-            'id' => '144446'
+            'id' => '144446',
+            feature_enabled => true
           }
         },
         '177770' => {
           '177771' => {
             'id' => '177771',
             'key' => '177771',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -364,6 +398,7 @@ describe Optimizely::ProjectConfig do
           '177773' => {
             'id' => '177773',
             'key' => '177773',
+            feature_enabled => false,
             'variables' => [
               {
                 'id' => '155556',
@@ -376,6 +411,7 @@ describe Optimizely::ProjectConfig do
           '177775' => {
             'id' => '177775',
             'key' => '177775',
+            feature_enabled => true,
             'variables' => []
           }
         },
@@ -383,6 +419,7 @@ describe Optimizely::ProjectConfig do
           '177778' => {
             'id' => '177778',
             'key' => '177778',
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -395,6 +432,7 @@ describe Optimizely::ProjectConfig do
           '177780' => {
             'id' => '177780',
             'key' => '177780',
+            feature_enabled => true,
             'variables' => []
           }
         }
@@ -609,6 +647,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
       expect(project_config.event_key_map).to eq(expected_event_key_map)
+
       expect(project_config.experiment_key_map).to eq(expected_experiment_key_map)
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.feature_variable_key_map).to eq(expected_feature_variable_key_map)
@@ -672,6 +711,16 @@ describe Optimizely::ProjectConfig do
       end
       it 'should return nil when provided variation key is invalid' do
         expect(config.get_variation_from_id('test_experiment', 'invalid_variation')).to eq(nil)
+      end
+
+      it 'should return variation having featureEnabled false when not provided in the datafile' do
+        config_body = OptimizelySpec::VALID_CONFIG_BODY
+        experiment_key = config_body['experiments'][1]['key']
+        variation_id = config_body['experiments'][1]['variations'][1]['id']
+        config_body['experiments'][1]['variations'][1][feature_enabled] = nil
+        config_body_json = JSON.dump(config_body)
+        project_config = Optimizely::ProjectConfig.new(config_body_json, logger, error_handler)
+        expect(project_config.get_variation_from_id(experiment_key, variation_id)[feature_enabled]).to eq(false)
       end
     end
 
