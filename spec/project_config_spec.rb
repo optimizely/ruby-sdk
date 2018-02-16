@@ -201,7 +201,7 @@ describe Optimizely::ProjectConfig do
           '177771' => {
             'id' => '177771',
             'key' => '177771',
-            feature_enabled => false,
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -214,7 +214,7 @@ describe Optimizely::ProjectConfig do
           '177773' => {
             'id' => '177773',
             'key' => '177773',
-            feature_enabled => true,
+            feature_enabled => false,
             'variables' => [
               {
                 'id' => '155556',
@@ -385,7 +385,7 @@ describe Optimizely::ProjectConfig do
           '177771' => {
             'id' => '177771',
             'key' => '177771',
-            feature_enabled => false,
+            feature_enabled => true,
             'variables' => [
               {
                 'id' => '155556',
@@ -398,7 +398,7 @@ describe Optimizely::ProjectConfig do
           '177773' => {
             'id' => '177773',
             'key' => '177773',
-            feature_enabled => true,
+            feature_enabled => false,
             'variables' => [
               {
                 'id' => '155556',

@@ -562,7 +562,7 @@ module OptimizelySpec
         'variations' => [{
           'id' => '177771',
           'key' => '177771',
-          'featureEnabled' => false,
+          'featureEnabled' => true,
           'variables' => [
             {
               'id' => '155556',
@@ -583,7 +583,7 @@ module OptimizelySpec
         'variations' => [{
           'id' => '177773',
           'key' => '177773',
-          'featureEnabled' => true,
+          'featureEnabled' => false,
           'variables' => [
             {
               'id' => '155556',

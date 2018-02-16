@@ -676,8 +676,8 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return true if the user is bucketed into a feature rollout even if featureEnabled property is false' do
-      experiment_to_return = config_body['rollouts'][0]['experiments'][0]
+    it 'should return false, if the user is bucketed into a feature rollout but the featureEnabled property is false' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][1]
       variation_to_return = experiment_to_return['variations'][0]
       decision_to_return = Optimizely::DecisionService::Decision.new(
         experiment_to_return,
@@ -686,6 +686,21 @@ describe 'Optimizely' do
       )
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
       expect(variation_to_return['featureEnabled']).to be false
+
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is not enabled for user 'test_user'.")
+    end
+
+    it 'should return true, if the user is bucketed into a feature rollout when featureEnabled property is true' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][0]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      expect(variation_to_return['featureEnabled']).to be true
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
