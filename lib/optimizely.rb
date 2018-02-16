@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -263,23 +263,29 @@ module Optimizely
       end
 
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-      unless decision.nil?
-        variation = decision['variation']
-        # Send event if Decision came from an experiment.
-        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-          send_impression(decision.experiment, variation['key'], user_id, attributes)
-        else
-          @logger.log(Logger::DEBUG,
-                      "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
-        end
-
-        @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
-        return true
+      if decision.nil?
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        return false
       end
 
-      @logger.log(Logger::INFO,
-                  "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-      false
+      variation = decision['variation']
+      unless variation['featureEnabled']
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        return false
+      end
+
+      if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+        # Send event if Decision came from an experiment.
+        send_impression(decision.experiment, variation['key'], user_id, attributes)
+      else
+        @logger.log(Logger::DEBUG,
+                    "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
+      end
+      @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
+
+      true
     end
 
     def get_enabled_features(user_id, attributes = nil)

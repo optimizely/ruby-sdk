@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -676,6 +676,37 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
     end
 
+    it 'should return false, if the user is bucketed into a feature rollout but the featureEnabled property is false' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][1]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      expect(variation_to_return['featureEnabled']).to be false
+
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is not enabled for user 'test_user'.")
+    end
+
+    it 'should return true, if the user is bucketed into a feature rollout when featureEnabled property is true' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][0]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      expect(variation_to_return['featureEnabled']).to be true
+
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
+    end
+
     it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
@@ -700,6 +731,21 @@ describe 'Optimizely' do
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/v1/events with params #{expected_params}.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
+    end
+
+    it 'should return false, if the user is bucketed into a feature experiment but the featureEnabled property is false' do
+      experiment_to_return = config_body['experiments'][3]
+      variation_to_return = experiment_to_return['variations'][1]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+      expect(variation_to_return['featureEnabled']).to be false
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
   end
 
