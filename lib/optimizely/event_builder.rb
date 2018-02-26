@@ -50,8 +50,9 @@ module Optimizely
 
     attr_reader :config
 
-    def initialize(config)
+    def initialize(config, logger)
       @config = config
+      @logger = logger
     end
 
     private
@@ -215,10 +216,10 @@ module Optimizely
         }
 
         if event_tags
-          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
+          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags, @logger)
           event_object[:revenue] = revenue_value if revenue_value
 
-          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags)
+          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags, @logger)
           event_object[:value] = numeric_value if numeric_value
 
           event_object[:tags] = event_tags
