@@ -32,7 +32,7 @@ describe Optimizely::EventBuilder do
 
   before(:example) do
     config = Optimizely::ProjectConfig.new(@config_body_json, @logger, @error_handler)
-    @event_builder = Optimizely::EventBuilder.new(config)
+    @event_builder = Optimizely::EventBuilder.new(config, @logger)
 
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)

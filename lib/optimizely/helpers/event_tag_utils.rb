@@ -17,7 +17,6 @@
 #
 require 'optimizely/logger'
 require 'optimizely/helpers/validator'
-
 module Optimizely
   module Helpers
     module EventTagUtils
@@ -32,7 +31,7 @@ module Optimizely
         false
       end
 
-      def get_revenue_value(event_tags)
+      def get_revenue_value(event_tags, logger)
         # Grab the revenue value from the event tags. "revenue" is a reserved keyword.
         # The revenue value must be an integer.
         #
@@ -46,7 +45,6 @@ module Optimizely
 
         return nil unless event_tags.key?(REVENUE_EVENT_METRIC_NAME)
 
-        logger = SimpleLogger.new
         raw_value = event_tags[REVENUE_EVENT_METRIC_NAME]
 
         unless raw_value.is_a? Numeric
@@ -63,13 +61,12 @@ module Optimizely
         raw_value
       end
 
-      def get_numeric_value(event_tags, logger = nil)
+      def get_numeric_value(event_tags, logger)
         # Grab the numeric event value from the event tags. "value" is a reserved keyword.
         # The value of 'value' can be a float or a numeric string
         #
         # event_tags - +Hash+ representing metadata associated with the event.
         # Returns  +Number+ | +nil+ if value can't be retrieved from the event tags.
-        logger = SimpleLogger.new if logger.nil?
 
         if event_tags.nil?
           logger.log(Logger::DEBUG, 'Event tags is undefined.')
