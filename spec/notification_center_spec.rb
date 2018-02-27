@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017, Optimizely and contributors
+#    Copyright 2017-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -415,7 +415,7 @@ describe Optimizely::NotificationCenter do
       let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, raise_error_handler) }
       before(:example) do
         config = Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)
-        @event_builder = Optimizely::EventBuilder.new(config)
+        @event_builder = Optimizely::EventBuilder.new(config, spy_logger)
         @args = [
           config.get_experiment_from_key('test_experiment'),
           'test_user',

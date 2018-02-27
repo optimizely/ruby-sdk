@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017, Optimizely and contributors
+#    Copyright 2017-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,69 +24,187 @@ describe 'EventTagUtils' do
   let(:logger) { Optimizely::NoOpLogger.new }
 
   describe '.get_revenue_value' do
-    it 'should return nil if argument is not a Hash' do
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(nil)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(0.5)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(65_536)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(9_223_372_036_854_775_807)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value('65536')).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(false)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(true)).to be_nil
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value([])).to be_nil
+    it 'should return nil if argument is undefined' do
+      expect(logger).to receive(:log).with(Logger::DEBUG,
+                                           'Event tags is undefined.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(nil, logger)).to be_nil
     end
-    it 'should return nil if event tags does not contain the revenue' do
+
+    it 'should return nil if argument is not a Hash' do
+      expect(logger).to receive(:log).with(Logger::DEBUG,
+                                           'Event tags is not a hash.').exactly(7).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(0.5, logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(65_536, logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(9_223_372_036_854_775_807, logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value('65536', logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(false, logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(true, logger)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value([], logger)).to be_nil
+    end
+
+    it 'should return nil if event tags does not contain the revenue key' do
       event_tags = {
         'non-revenue' => 5432
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(logger).to receive(:log)
+        .with(Logger::DEBUG, 'The revenue key is not defined in the event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
+
+    it 'should return nil if event tags contains the revenue key with nil value' do
+      event_tags = {
+        'revenue' => nil
+      }
+      expect(logger).to receive(:log).with(Logger::DEBUG,
+                                           'The revenue key is nil.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
+    end
+
     it 'should return nil if event tags contains the revenue with a string value' do
       event_tags = {
         'revenue' => 'string'
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Revenue value is not an integer or float, or is not a numeric string.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
-    it 'should return nil if event tags contains the revenue with a string value' do
-      event_tags = {
-        'revenue' => '65536'
-      }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
-    end
+
     it 'should return nil if event tags contains the revenue with a boolean true value' do
       event_tags = {
         'revenue' => true
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Revenue value is not an integer or float, or is not a numeric string.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
+
     it 'should return nil if event tags contains the revenue with a boolean false value' do
       event_tags = {
         'revenue' => false
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Revenue value is not an integer or float, or is not a numeric string.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
+
     it 'should return nil if event tags contains the revenue with a list value' do
       event_tags = {
         'revenue' => []
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Revenue value is not an integer or float, or is not a numeric string.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
-    it 'should return nil if event tags contains the revenue with a float value' do
+
+    it 'should return nil if event tags contains the revenue with a invalid float value' do
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Failed to parse revenue value 0.5 from event tags.').exactly(1).times
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Failed to parse revenue value 2.5 from event tags.').exactly(1).times
       event_tags = {
         'revenue' => 0.5
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to be_nil
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
+      event_tags['revenue'] = 2.5
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
     end
+
+    it 'should return nil if event tags contains the revenue with a invalid string numeric' do
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Failed to parse revenue value 0.5 from event tags.').exactly(1).times
+      expect(logger).to receive(:log)
+        .with(Logger::WARN, 'Failed to parse revenue value 2.5 from event tags.').exactly(1).times
+      event_tags = {
+        'revenue' => '0.5'
+      }
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
+      event_tags['revenue'] = '2.5'
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to be_nil
+    end
+
+    it 'should return correct value if event tags contains the revenue with a valid float value' do
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 65536 from event tags.').exactly(1).times
+      event_tags = {
+        'revenue' => 65_536.0
+      }
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(65_536)
+    end
+
+    it 'should return correct value if event tags contains the revenue with a valid float string' do
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 65536 from event tags.').exactly(1).times
+      event_tags = {
+        'revenue' => '65536.0'
+      }
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(65_536)
+    end
+
+    it 'should return correct value if event tags contains the revenue with a valid integer string' do
+      event_tags = {
+        'revenue' => '65536'
+      }
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 65536 from event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(65_536)
+    end
+
     it 'should return correct value if event tags contains the revenue with an integer value' do
       event_tags = {
         'revenue' => 65_536
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to eq(65_536)
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 65536 from event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(65_536)
     end
-    it 'should return correct value if event tags contains the revenue with a long value' do
+
+    it 'should return correct value if event tags contains the revenue with an integer zero value' do
+      event_tags = {
+        'revenue' => 0
+      }
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 0 from event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(0)
+    end
+
+    it 'should return correct value if event tags contains the revenue with an float zero value' do
+      event_tags = {
+        'revenue' => 0.0
+      }
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 0 from event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(0.0)
+    end
+
+    it 'should return correct value if event tags contains the revenue with a long integer value' do
       event_tags = {
         'revenue' => 9_223_372_036_854_775_807
       }
-      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags)).to eq(9_223_372_036_854_775_807)
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, 'Parsed revenue value 9223372036854775807 from event tags.').exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(9_223_372_036_854_775_807)
+    end
+
+    it 'should return correct value if event tags contains the revenue with a long float value' do
+      value = 9_223_372_036_854_775_807.to_f
+      event_tags = {
+        'revenue' => value
+      }
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, "Parsed revenue value #{value.to_i} from event tags.").exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(value.to_i)
+    end
+
+    it 'should return correct value if event tags contains the revenue with a long string value' do
+      value = '9_223_372_036_854_775_807'
+      event_tags = {
+        'revenue' => value
+      }
+      # Float converts long number to E-notation i.e "9.223372036854776e+18"
+      value = value.to_f
+      expect(logger).to receive(:log)
+        .with(Logger::INFO, "Parsed revenue value #{value.to_i} from event tags.").exactly(1).times
+      expect(Optimizely::Helpers::EventTagUtils.get_revenue_value(event_tags, logger)).to eq(value.to_i)
     end
   end
 

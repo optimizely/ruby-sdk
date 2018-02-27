@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ describe Optimizely::EventBuilder do
 
   before(:example) do
     config = Optimizely::ProjectConfig.new(@config_body_json, @logger, @error_handler)
-    @event_builder = Optimizely::EventBuilder.new(config)
+    @event_builder = Optimizely::EventBuilder.new(config, @logger)
 
     time_now = Time.now
     allow(Time).to receive(:now).and_return(time_now)
@@ -193,11 +193,13 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create a valid Event when create_conversion_event is called with invalid revenue event tag' do
+  it 'should create a valid Event when create_conversion_event is called with valid string revenue event tag' do
     event_tags = {'revenue' => '4200'}
 
     @expected_conversion_params[:visitors][0][:attributes] = []
-    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0][:tags] = event_tags
+    @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 4200,
+                                                                                tags: event_tags)
+
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags,
                                                               '111127' => '111128')
     expect(conversion_event.params).to eq(@expected_conversion_params)

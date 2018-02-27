@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -49,9 +49,11 @@ module Optimizely
     CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
     attr_reader :config
+    attr_reader :logger
 
-    def initialize(config)
+    def initialize(config, logger)
       @config = config
+      @logger = logger
     end
 
     private
@@ -215,10 +217,10 @@ module Optimizely
         }
 
         if event_tags
-          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags)
+          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags, @logger)
           event_object[:revenue] = revenue_value if revenue_value
 
-          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags)
+          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags, @logger)
           event_object[:value] = numeric_value if numeric_value
 
           event_object[:tags] = event_tags
