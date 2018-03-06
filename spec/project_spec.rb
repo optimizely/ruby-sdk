@@ -780,6 +780,31 @@ describe 'Optimizely' do
       # Checks prevented features should not return
       expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).not_to include(*disabled_features)
     end
+
+    it 'should return sorted feature keys' do
+      # Mock is_feature_enabled and assert that is_feature_enabled does get called in an unsorted order
+      expect(project_instance).to receive(:is_feature_enabled).with('boolean_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('double_single_variable_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('integer_single_variable_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('boolean_single_variable_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('string_single_variable_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('multi_variate_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('mutex_group_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+      expect(project_instance).to receive(:is_feature_enabled).with('empty_feature', 'test_user', 'browser_type' => 'chrome').and_return(true).ordered
+
+      expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).to eq(
+        %w[
+          boolean_feature
+          boolean_single_variable_feature
+          double_single_variable_feature
+          empty_feature
+          integer_single_variable_feature
+          multi_variate_feature
+          mutex_group_feature
+          string_single_variable_feature
+        ]
+      )
+    end
   end
 
   describe '#get_feature_variable_string' do

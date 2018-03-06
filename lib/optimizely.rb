@@ -311,7 +311,7 @@ module Optimizely
           attributes
         ) == true
       end
-      enabled_features
+      enabled_features.sort
     end
 
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
