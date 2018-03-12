@@ -659,6 +659,17 @@ describe 'Optimizely' do
       expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
     end
 
+    it 'should return false when the feature flag key is nil' do
+      expect(project_instance.is_feature_enabled(nil, 'test_user')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key cannot be empty.')
+    end
+
+    it 'should return false when user_id is empty or nil' do
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', '')).to be false
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', nil)).to be false
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+    end
+
     it 'should return false when the feature flag key is invalid' do
       expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")

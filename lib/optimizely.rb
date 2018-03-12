@@ -261,6 +261,16 @@ module Optimizely
         return false
       end
 
+      unless feature_flag_key
+        @logger.log(Logger::ERROR, 'Feature flag key cannot be empty.')
+        return false
+      end
+
+      if user_id.to_s.empty?
+        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+        return false
+      end
+
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
