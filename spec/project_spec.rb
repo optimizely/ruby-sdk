@@ -361,6 +361,12 @@ describe 'Optimizely' do
       }
     end
 
+    it 'should return nil when user_id is empty or nil' do
+      expect(project_instance.track('test_event', '', nil, 'revenue' => 42)).to eq(nil)
+      expect(project_instance.track('test_event', nil, nil, 'revenue' => 42)).to eq(nil)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+    end
+
     it 'should properly track an event by calling dispatch_event with right params' do
       params = @expected_track_event_params
 
@@ -529,6 +535,12 @@ describe 'Optimizely' do
   end
 
   describe '#get_variation' do
+    it 'should return nil when user_id is empty or nil' do
+      expect(project_instance.get_variation('test_experiment_with_audience', '', nil)).to eq(nil)
+      expect(project_instance.get_variation('test_experiment_with_audience', nil, nil)).to eq(nil)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+    end
+
     it 'should have get_variation return expected variation when there are no audiences' do
       expect(project_instance.get_variation('test_experiment', 'test_user'))
         .to eq(config_body['experiments'][0]['variations'][0]['key'])
@@ -1012,10 +1024,12 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Variable key cannot be empty.')
     end
 
-    it 'should return nil if user_id is nil' do
+    it 'should return nil if user_id is empty or nil' do
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
         .to eq(nil)
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', '', user_attributes))
+        .to eq(nil)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
     end
   end
 

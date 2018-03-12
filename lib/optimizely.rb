@@ -135,8 +135,8 @@ module Optimizely
         return nil
       end
 
-      unless user_id.is_a? String
-        @logger.log(Logger::ERROR, "User id: #{user_id} is not a string")
+      if user_id.to_s.empty?
+        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
         return nil
       end
 
@@ -193,6 +193,11 @@ module Optimizely
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
+        return nil
+      end
+
+      if user_id.to_s.empty?
+        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
         return nil
       end
 
@@ -428,7 +433,7 @@ module Optimizely
         return nil
       end
 
-      unless user_id
+      if user_id.to_s.empty?
         @logger.log(Logger::ERROR, 'User ID cannot be empty.')
         return nil
       end
