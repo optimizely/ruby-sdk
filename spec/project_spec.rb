@@ -406,17 +406,6 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
-    it 'should properly track an event by calling dispatch_event with right params with deprecated revenue provided' do
-      params = @expected_track_event_params
-      params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 42,
-                                                             tags: {'revenue' => 42})
-
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      project_instance.track('test_event', 'test_user', nil, 42)
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
-      expect(spy_logger).to have_received(:log).once.with(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
-    end
-
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
       params = @expected_track_event_params
       params[:visitors][0][:attributes] = [{
@@ -474,6 +463,9 @@ describe 'Optimizely' do
     it 'should raise an exception when called with event tags in an invalid format' do
       expect { project_instance.track('test_event', 'test_user', nil, 'invalid_tags') }
         .to raise_error(Optimizely::InvalidEventTagFormatError)
+      expect { project_instance.track('test_event', 'test_user', nil, 42) }
+        .to raise_error(Optimizely::InvalidEventTagFormatError)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'Provided event tags are in an invalid format.')
     end
 
     it 'should return false when called with event tags in an invalid format' do

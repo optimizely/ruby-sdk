@@ -201,13 +201,6 @@ module Optimizely
         return nil
       end
 
-      if event_tags && event_tags.is_a?(Numeric)
-        event_tags = {
-          'revenue' => event_tags
-        }
-        @logger.log(Logger::WARN, 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
-      end
-
       return nil unless user_inputs_valid?(attributes, event_tags)
 
       experiment_ids = @config.get_experiment_ids_for_event(event_key)
