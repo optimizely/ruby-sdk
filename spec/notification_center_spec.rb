@@ -30,9 +30,7 @@ describe Optimizely::NotificationCenter do
 
   before(:context) do
     class CallBack
-      def call(args)
-        args
-      end
+      def call; end
     end
 
     @callback = CallBack.new
@@ -108,9 +106,7 @@ describe Optimizely::NotificationCenter do
       it 'should add and return notification ID when multiple
             valid callbacks are added for a single notification type' do
         class CallBackSecond
-          def call(_args)
-            'Test multi listner.'
-          end
+          def call; end
         end
 
         @callback_second = CallBackSecond.new
@@ -166,12 +162,6 @@ describe Optimizely::NotificationCenter do
       let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, raise_error_handler) }
       before(:example) do
         @inner_notification_center = notification_center
-        class CallBackSecond
-          def call(_args)
-            'Test remove notification.'
-          end
-        end
-
         @callback_second = CallBackSecond.new
         @callback_reference_second = @callback_second.method(:call)
         # add a callback for multiple notification types
@@ -321,19 +311,11 @@ describe Optimizely::NotificationCenter do
       let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, raise_error_handler) }
       before(:example) do
         @inner_notification_center = notification_center
-        class CallBackSecond
-          def call(_args)
-            'Test remove notification.'
-          end
-        end
-
         @callback_second = CallBackSecond.new
         @callback_reference_second = @callback_second.method(:call)
 
         class CallBackThird
-          def call(_args)
-            'Test remove notification.'
-          end
+          def call; end
         end
 
         @callback_third = CallBackThird.new
@@ -406,9 +388,7 @@ describe Optimizely::NotificationCenter do
           @logger.log Logger::INFO, 'delivered two.'
         end
 
-        def deliver_three(_args)
-          @logger.log Logger::INFO, 'delivered three.'
-        end
+        def deliver_three; end
       end
       let(:raise_error_handler) { Optimizely::RaiseErrorHandler.new }
       let(:invitation) { Invitation.new(spy_logger) }
