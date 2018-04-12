@@ -1,3 +1,37 @@
+## 2.0.0
+April 12th, 2018
+
+This major release of the Optimizely SDK introduces APIs for Feature Management. It also introduces some breaking changes listed below.
+
+### New Features
+* Introduces the `is_feature_enabled` API to determine whether to show a feature to a user or not.
+```
+enabled = optimizely_client.is_feature_enabled('my_feature_key', 'user_1', user_attributes)
+```
+
+* You can also get all the enabled features for the user by calling the following method which returns a list of strings representing the feature keys:
+```
+enabled_features = optimizely_client.get_enabled_features('user_1', user_attributes)
+```
+
+* Introduces Feature Variables to configure or parameterize your feature. There are four variable types: `Integer`, `String`, `Double`, `Boolean`.
+```
+string_variable = optimizely_client.get_feature_variable_string('my_feature_key', 'string_variable_key', 'user_1')
+integer_variable = optimizely_client.get_feature_variable_integer('my_feature_key', 'integer_variable_key', 'user_1')
+double_variable = optimizely_client.get_feature_variable_double('my_feature_key', 'double_variable_key', 'user_1')
+boolean_variable = optimizely_client.get_feature_variable_boolean('my_feature_key', 'boolean_variable_key', 'user_1')
+```
+
+### Breaking changes
+* The `track` API with revenue value as a stand-alone parameter has been removed. The revenue value should be passed in as an entry of the event tags map. The key for the revenue tag is `revenue` and will be treated by Optimizely as the key for analyzing revenue data in results.
+```
+event_tags = {
+  'revenue'=> 1200
+}
+
+optimizely_client.track('event_key', 'user_id', user_attributes, event_tags)
+```
+
 ## 2.0.0.beta1
 March 29th, 2018
 
