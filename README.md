@@ -15,6 +15,9 @@ The SDK is available through [RubyGems](https://rubygems.org/gems/optimizely-sdk
 gem install optimizely-sdk
 ```
 
+### Feature Management Access
+To access the Feature Management configuration in the Optimizely dashboard, please contact your Optimizely account executive.
+
 ### Using the SDK
 See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Full Stack project and use the SDK.
 
