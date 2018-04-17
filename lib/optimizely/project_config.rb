@@ -275,8 +275,8 @@ module Optimizely
       #
       # Returns Variation The variation which the given user and experiment should be forced into.
 
-      # check for nil and empty string user ID
-      if user_id.nil? || user_id.empty?
+      # user ID should be non empty string
+      if !user_id.is_a?(String) || user_id.empty?
         @logger.log(Logger::DEBUG, 'User ID is invalid')
         return nil
       end
@@ -323,8 +323,8 @@ module Optimizely
       #
       # Returns a boolean value that indicates if the set completed successfully.
 
-      #  check for null and empty string user ID
-      if user_id.nil? || user_id.empty?
+      #  user ID should be non empty string
+      if !user_id.is_a?(String) || user_id.empty?
         @logger.log(Logger::DEBUG, 'User ID is invalid')
         return false
       end

@@ -135,8 +135,8 @@ module Optimizely
         return nil
       end
 
-      if user_id.to_s.empty?
-        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+      if !user_id.is_a?(String) || user_id.empty?
+        @logger.log(Logger::ERROR, 'User ID is invalid')
         return nil
       end
 
@@ -196,8 +196,8 @@ module Optimizely
         return nil
       end
 
-      if user_id.to_s.empty?
-        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+      if !user_id.is_a?(String) || user_id.empty?
+        @logger.log(Logger::ERROR, 'User ID is invalid')
         return nil
       end
 
@@ -259,8 +259,8 @@ module Optimizely
         return false
       end
 
-      if user_id.to_s.empty?
-        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+      if !user_id.is_a?(String) || user_id.empty?
+        @logger.log(Logger::ERROR, 'User ID is invalid')
         return false
       end
 
@@ -436,8 +436,8 @@ module Optimizely
         return nil
       end
 
-      if user_id.to_s.empty?
-        @logger.log(Logger::ERROR, 'User ID cannot be empty.')
+      if !user_id.is_a?(String) || user_id.empty?
+        @logger.log(Logger::ERROR, 'User ID is invalid')
         return nil
       end
 

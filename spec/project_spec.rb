@@ -364,7 +364,16 @@ describe 'Optimizely' do
     it 'should return nil when user_id is empty or nil' do
       expect(project_instance.track('test_event', '', nil, 'revenue' => 42)).to eq(nil)
       expect(project_instance.track('test_event', nil, nil, 'revenue' => 42)).to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should return nil when user_id is non string value' do
+      expect(project_instance.track('test_event', 2, nil, 'revenue' => 42)).to eq(nil)
+      expect(project_instance.track('test_event', 2.0, nil, 'revenue' => 42)).to eq(nil)
+      expect(project_instance.track('test_event', [], nil, 'revenue' => 42)).to eq(nil)
+      expect(project_instance.track('test_event', true, nil, 'revenue' => 42)).to eq(nil)
+      expect(project_instance.track('test_event', false, nil, 'revenue' => 42)).to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(5).times
     end
 
     it 'should properly track an event by calling dispatch_event with right params' do
@@ -530,7 +539,16 @@ describe 'Optimizely' do
     it 'should return nil when user_id is empty or nil' do
       expect(project_instance.get_variation('test_experiment_with_audience', '', nil)).to eq(nil)
       expect(project_instance.get_variation('test_experiment_with_audience', nil, nil)).to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should return nil when user_id is non string value' do
+      expect(project_instance.get_variation('test_experiment_with_audience', 2, nil)).to eq(nil)
+      expect(project_instance.get_variation('test_experiment_with_audience', 2.0, nil)).to eq(nil)
+      expect(project_instance.get_variation('test_experiment_with_audience', [], nil)).to eq(nil)
+      expect(project_instance.get_variation('test_experiment_with_audience', true, nil)).to eq(nil)
+      expect(project_instance.get_variation('test_experiment_with_audience', false, nil)).to eq(nil)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid').exactly(5).times
     end
 
     it 'should have get_variation return expected variation when there are no audiences' do
@@ -659,7 +677,16 @@ describe 'Optimizely' do
     it 'should return false when user_id is empty or nil' do
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', '')).to be false
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', nil)).to be false
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should return false when user_id is non string value' do
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 2)).to be false
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 2.0)).to be false
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', [])).to be false
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', true)).to be false
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', false)).to be false
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(5).times
     end
 
     it 'should return false when the feature flag key is invalid' do
@@ -1032,7 +1059,21 @@ describe 'Optimizely' do
         .to eq(nil)
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', '', user_attributes))
         .to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should return nil if user_id is non string value' do
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 2, user_attributes))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 2.0, user_attributes))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', [], user_attributes))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', true, user_attributes))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', false, user_attributes))
+        .to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(5).times
     end
   end
 
