@@ -859,6 +859,12 @@ describe Optimizely::ProjectConfig do
       @valid_experiment = {id: '111127', key: 'test_experiment'}
       @valid_variation = {id: '111128', key: 'control'}
     end
+
+    it 'should call inputs_valid? with the proper arguments in get_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: nil}, spy_logger, Logger::DEBUG)
+      expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
+    end
+
     # User ID is nil
     it 'should log a message and return nil when user_id is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
@@ -870,15 +876,6 @@ describe Optimizely::ProjectConfig do
       expect(config.get_forced_variation(@valid_experiment[:key], '')).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      'User ID is invalid')
-    end
-    # User ID is non string value
-    it 'should log a message and return nil when user_id non string value for get_forced_variation' do
-      expect(config.get_forced_variation(@valid_experiment[:key], 2)).to eq(nil)
-      expect(config.get_forced_variation(@valid_experiment[:key], 2.0)).to eq(nil)
-      expect(config.get_forced_variation(@valid_experiment[:key], [])).to eq(nil)
-      expect(config.get_forced_variation(@valid_experiment[:key], true)).to eq(nil)
-      expect(config.get_forced_variation(@valid_experiment[:key], false)).to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'User ID is invalid').exactly(5).times
     end
     # User ID is not defined in the forced variation map
     it 'should log a message and return nil when user is not in forced variation map' do
@@ -914,6 +911,11 @@ describe Optimizely::ProjectConfig do
       @valid_variation = {id: '111128', key: 'control'}
     end
 
+    it 'should call inputs_valid? with the proper arguments in set_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: nil}, spy_logger, Logger::DEBUG)
+      expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
+    end
+
     # User ID is nil
     it 'should log a message when user_id is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
@@ -925,15 +927,6 @@ describe Optimizely::ProjectConfig do
       expect(config.set_forced_variation(@valid_experiment[:key], '', @valid_variation[:key])).to eq(false)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      'User ID is invalid')
-    end
-    # User ID is non string value
-    it 'should log a message and return false when user_id is non string value' do
-      expect(config.set_forced_variation(@valid_experiment[:key], 2, @valid_variation[:key])).to eq(false)
-      expect(config.set_forced_variation(@valid_experiment[:key], 2.0, @valid_variation[:key])).to eq(false)
-      expect(config.set_forced_variation(@valid_experiment[:key], [], @valid_variation[:key])).to eq(false)
-      expect(config.set_forced_variation(@valid_experiment[:key], true, @valid_variation[:key])).to eq(false)
-      expect(config.set_forced_variation(@valid_experiment[:key], false, @valid_variation[:key])).to eq(false)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'User ID is invalid').exactly(5).times
     end
     # Experiment key is nil
     it 'should return false when experiment_key is passed as nil' do

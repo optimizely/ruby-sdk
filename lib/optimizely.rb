@@ -135,10 +135,7 @@ module Optimizely
         return nil
       end
 
-      if !user_id.is_a?(String) || user_id.empty?
-        @logger.log(Logger::ERROR, 'User ID is invalid')
-        return nil
-      end
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
 
       unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
@@ -196,10 +193,7 @@ module Optimizely
         return nil
       end
 
-      if !user_id.is_a?(String) || user_id.empty?
-        @logger.log(Logger::ERROR, 'User ID is invalid')
-        return nil
-      end
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
 
       return nil unless user_inputs_valid?(attributes, event_tags)
 
@@ -259,10 +253,7 @@ module Optimizely
         return false
       end
 
-      if !user_id.is_a?(String) || user_id.empty?
-        @logger.log(Logger::ERROR, 'User ID is invalid')
-        return false
-      end
+      return false unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
@@ -436,10 +427,7 @@ module Optimizely
         return nil
       end
 
-      if !user_id.is_a?(String) || user_id.empty?
-        @logger.log(Logger::ERROR, 'User ID is invalid')
-        return nil
-      end
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
