@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 require_relative 'constants'
 require 'json'
 require 'json-schema'
+require 'optimizely/logger'
 
 module Optimizely
   module Helpers
@@ -94,6 +95,19 @@ module Optimizely
         !Float(str).nil?
       rescue
         false
+      end
+
+      def inputs_valid?(variables, logger, level)
+        return false unless variables.respond_to?(:each) && !variables.empty?
+        valid = true
+        variables.each do |key, value|
+          next unless !value.is_a?(String) || value.empty?
+          valid = false
+          if logger_valid?(logger) && level
+            logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s]} is invalid")
+          end
+        end
+        valid
       end
     end
   end

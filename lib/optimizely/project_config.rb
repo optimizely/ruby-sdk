@@ -15,6 +15,7 @@
 #    limitations under the License.
 #
 require 'json'
+require_relative 'helpers/validator'
 
 module Optimizely
   V1_CONFIG_VERSION = '1'
@@ -275,11 +276,8 @@ module Optimizely
       #
       # Returns Variation The variation which the given user and experiment should be forced into.
 
-      # check for nil and empty string user ID
-      if user_id.nil? || user_id.empty?
-        @logger.log(Logger::DEBUG, 'User ID is invalid')
-        return nil
-      end
+      # user ID should be non empty string
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::DEBUG)
 
       unless @forced_variation_map.key? user_id
         @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
@@ -323,11 +321,8 @@ module Optimizely
       #
       # Returns a boolean value that indicates if the set completed successfully.
 
-      #  check for null and empty string user ID
-      if user_id.nil? || user_id.empty?
-        @logger.log(Logger::DEBUG, 'User ID is invalid')
-        return false
-      end
+      #  user ID should be non empty string
+      return false unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::DEBUG)
 
       experiment = get_experiment_from_key(experiment_key)
       experiment_id = experiment['id'] if experiment

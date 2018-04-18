@@ -859,6 +859,12 @@ describe Optimizely::ProjectConfig do
       @valid_experiment = {id: '111127', key: 'test_experiment'}
       @valid_variation = {id: '111128', key: 'control'}
     end
+
+    it 'should call inputs_valid? with the proper arguments in get_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: nil}, spy_logger, Logger::DEBUG)
+      expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
+    end
+
     # User ID is nil
     it 'should log a message and return nil when user_id is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
@@ -903,6 +909,11 @@ describe Optimizely::ProjectConfig do
       @invalid_variation_key = 'invalid_variation'
       @valid_experiment = {id: '111127', key: 'test_experiment'}
       @valid_variation = {id: '111128', key: 'control'}
+    end
+
+    it 'should call inputs_valid? with the proper arguments in set_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: nil}, spy_logger, Logger::DEBUG)
+      expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
     end
 
     # User ID is nil
