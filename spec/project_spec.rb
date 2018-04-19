@@ -250,6 +250,62 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user2'.")
     end
 
+    it 'should call inputs_valid? with the proper arguments in activate' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          experiment_key: 'test_experiment_with_audience',
+          user_id: 'test_user'
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.activate('test_experiment_with_audience', 'test_user')
+    end
+
+    it 'should return false when invalid inputs are passed' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({})).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?([])).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?(2)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?(2.0)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?('2.0')).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?('')).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?(true)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?(false)).to eq(false)
+    end
+
+    it 'should log and return false when non string value inputs are passed' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: nil}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: ''}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: []}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: {}}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: 2}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: 2.0}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: true}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: false}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(8).times
+    end
+
+    it 'should log and return false when multiple non string value inputs are passed' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: '', experiment_key: true}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: [], variation_key: 2.0}, spy_logger, Logger::ERROR)).to eq(false)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Experiment key is invalid')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Variation key is invalid')
+    end
+
+    it 'should return true when valid input values are passed' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: '2'}, spy_logger, Logger::ERROR)).to eq(true)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({
+                                                            user_id: 'test_user',
+                                                            experiment_key: 'test_experiment',
+                                                            variation_key: 'test_variation'
+                                                          }, spy_logger, Logger::ERROR)).to eq(true)
+    end
+
+    it 'should not log when logger or level are nil' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: nil}, nil, Logger::ERROR)).to eq(false)
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: nil}, spy_logger, nil)).to eq(false)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, 'User ID is invalid')
+    end
+
     it 'should return nil when user is in no variation' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(nil)
@@ -364,7 +420,17 @@ describe 'Optimizely' do
     it 'should return nil when user_id is empty or nil' do
       expect(project_instance.track('test_event', '', nil, 'revenue' => 42)).to eq(nil)
       expect(project_instance.track('test_event', nil, nil, 'revenue' => 42)).to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should call inputs_valid? with the proper arguments in track' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          user_id: 'test_user',
+          event_key: 'test_event'
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.track('test_event', 'test_user')
     end
 
     it 'should properly track an event by calling dispatch_event with right params' do
@@ -530,7 +596,17 @@ describe 'Optimizely' do
     it 'should return nil when user_id is empty or nil' do
       expect(project_instance.get_variation('test_experiment_with_audience', '', nil)).to eq(nil)
       expect(project_instance.get_variation('test_experiment_with_audience', nil, nil)).to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should call inputs_valid? with the proper arguments in get_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          user_id: 'test_user',
+          experiment_key: 'test_experiment_with_audience'
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.get_variation('test_experiment_with_audience', 'test_user', nil)
     end
 
     it 'should have get_variation return expected variation when there are no audiences' do
@@ -653,19 +729,29 @@ describe 'Optimizely' do
 
     it 'should return false when the feature flag key is nil' do
       expect(project_instance.is_feature_enabled(nil, 'test_user')).to be false
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key cannot be empty.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key is invalid')
     end
 
     it 'should return false when user_id is empty or nil' do
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', '')).to be false
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', nil)).to be false
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
     end
 
     it 'should return false when the feature flag key is invalid' do
       expect(project_instance.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Feature flag key 'totally_invalid_feature_key' is not in datafile.")
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "No feature flag was found for key 'totally_invalid_feature_key'.")
+    end
+
+    it 'should call inputs_valid? with the proper arguments in is_feature_enabled' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          feature_flag_key: 'multi_variate_feature',
+          user_id: 'test_user'
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.is_feature_enabled('multi_variate_feature', 'test_user')
     end
 
     it 'should return false when the user is not bucketed into any variation' do
@@ -773,6 +859,12 @@ describe 'Optimizely' do
     it 'should return empty when no feature flag is enabled' do
       allow(project_instance).to receive(:is_feature_enabled).and_return(false)
       expect(project_instance.get_enabled_features('test_user')).to be_empty
+    end
+
+    it 'should call inputs_valid? with the proper arguments in get_enabled_features' do
+      expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: 'test_user'}, spy_logger, Logger::ERROR)).to eq(true)
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: 'test_user'}, spy_logger, Logger::ERROR)
+      project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')
     end
 
     it 'should return only enabled feature flags keys' do
@@ -1018,13 +1110,13 @@ describe 'Optimizely' do
     it 'should return nil if feature_flag_key is nil' do
       expect(project_instance.get_feature_variable_integer(nil, 'integer_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key cannot be empty.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Feature flag key is invalid')
     end
 
     it 'should return nil if variable_key is nil' do
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', nil, user_id, user_attributes))
         .to eq(nil)
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Variable key cannot be empty.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Variable key is invalid')
     end
 
     it 'should return nil if user_id is empty or nil' do
@@ -1032,7 +1124,20 @@ describe 'Optimizely' do
         .to eq(nil)
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', '', user_attributes))
         .to eq(nil)
-      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID cannot be empty.')
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR, 'User ID is invalid')
+    end
+
+    it 'should call inputs_valid? with the proper arguments in get_feature_variable_for_type' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          feature_flag_key: 'integer_single_variable_feature',
+          variable_key: 'integer_variable',
+          variable_type: 'integer',
+          user_id: nil
+        }, spy_logger, Logger::ERROR
+      )
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
+        .to eq(nil)
     end
   end
 

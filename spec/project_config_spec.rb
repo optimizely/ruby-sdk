@@ -859,6 +859,7 @@ describe Optimizely::ProjectConfig do
       @valid_experiment = {id: '111127', key: 'test_experiment'}
       @valid_variation = {id: '111128', key: 'control'}
     end
+
     # User ID is nil
     it 'should log a message and return nil when user_id is passed as nil for get_forced_variation' do
       expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
@@ -961,6 +962,26 @@ describe Optimizely::ProjectConfig do
       @valid_variation_2 = {id: '111129', key: 'variation'}
       @valid_experiment_2 = {id: '122227', key: 'test_experiment_with_audience'}
       @valid_variation_for_exp_2 = {id: '122228', key: 'control_with_audience'}
+    end
+
+    it 'should call inputs_valid? with the proper arguments in set_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          user_id: @user_id,
+          experiment_key: @valid_experiment[:key]
+        }, spy_logger, Logger::DEBUG
+      )
+      config.set_forced_variation(@valid_experiment[:key], @user_id, @valid_variation[:key])
+    end
+
+    it 'should call inputs_valid? with the proper arguments in get_forced_variation' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          experiment_key: @valid_experiment[:key],
+          user_id: @user_id
+        }, spy_logger, Logger::DEBUG
+      )
+      config.get_forced_variation(@valid_experiment[:key], @user_id)
     end
 
     # Call set variation with different variations on one user/experiment to confirm that each set is expected.
