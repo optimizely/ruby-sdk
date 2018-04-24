@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -94,6 +94,27 @@ module Optimizely
         !Float(str).nil?
       rescue
         false
+      end
+
+      def inputs_valid?(variables, logger = NoOpLogger.new, level = Logger::ERROR)
+        # Determines if values of variables in given array are non empty string.
+        #
+        # variables - array values to validate.
+        #
+        # logger - logger.
+        #
+        # Returns boolean True if all of the values are valid, False otherwise.
+
+        return false unless variables.respond_to?(:each) && !variables.empty?
+        is_valid = true
+        variables.each do |key, value|
+          next if value.is_a?(String) && !value.empty?
+          is_valid = false
+          if logger_valid?(logger) && level
+            logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
+          end
+        end
+        is_valid
       end
     end
   end
