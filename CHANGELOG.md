@@ -1,3 +1,9 @@
+## 2.0.1
+April 25th, 2018
+
+### Bug Fixes
+Fixes [#101](https://github.com/optimizely/ruby-sdk/issues/101)
+
 ## 2.0.0
 April 12th, 2018
 
