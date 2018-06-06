@@ -18,8 +18,6 @@
 require_relative './bucketer'
 
 module Optimizely
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID = "\$opt_bucketing_id"
-
   class DecisionService
     # Optimizely's decision service that determines into which variation of an experiment a user will be allocated.
     #
@@ -368,9 +366,9 @@ module Optimizely
       bucketing_id = user_id
 
       # If the bucketing ID key is defined in attributes, then use that in place of the userID
-      if attributes && attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].is_a?(String)
-        unless attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID].empty?
-          bucketing_id = attributes[RESERVED_ATTRIBUTE_KEY_BUCKETING_ID]
+      if attributes && attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']].is_a?(String)
+        unless attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']].empty?
+          bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
           @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
         end
       end

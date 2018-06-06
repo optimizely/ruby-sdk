@@ -315,6 +315,12 @@ module Optimizely
         'VARIABLE_KEY' => 'Variable key',
         'VARIABLE_TYPE' => 'Variable type'
       }.freeze
+
+      CONTROL_ATTRIBUTES = {
+        'BOT_FILTERING' => '$opt_bot_filtering',
+        'BUCKETING_ID' => '$opt_bucketing_id',
+        'USER_AGENT' => '$opt_user_agent'
+      }.freeze
     end
   end
 end
