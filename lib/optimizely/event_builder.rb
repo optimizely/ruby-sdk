@@ -89,7 +89,7 @@ module Optimizely
         end
       end
       # Append Bot Filtering Attribute
-      if bot_filtering.is_a?(TrueClass) || bot_filtering.is_a?(FalseClass)
+      if bot_filtering == true || bot_filtering == false
         visitor_attributes.push(
           entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
           key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
