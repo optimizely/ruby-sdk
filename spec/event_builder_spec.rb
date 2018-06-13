@@ -357,15 +357,18 @@ describe Optimizely::EventBuilder do
 
   # Create impression event with bucketing ID
   it 'should create valid Event when create_impression_event is called with Bucketing ID attribute' do
-    @expected_impression_params[:visitors][0][:attributes].unshift({
-                                                                     entity_id: '111094',
-                                                                     key: 'browser_type',
-                                                                     type: 'custom',
-                                                                     value: 'firefox'
-                                                                   },       entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
-                                                                            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
-                                                                            type: 'custom',
-                                                                            value: 'variation')
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      type: 'custom',
+      value: 'variation'
+    )
 
     user_attributes = {
       'browser_type' => 'firefox',

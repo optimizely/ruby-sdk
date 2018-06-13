@@ -1031,18 +1031,20 @@ describe Optimizely::ProjectConfig do
   describe 'get_attribute_id_valid_key' do
     let(:spy_logger) { spy('logger') }
     let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+
     it 'should return attribute ID when provided valid attribute key has reserved prefix' do
       config.attribute_key_map['$opt_bot'] = {'key' => '$opt_bot', 'id' => '111'}
       expect(config.get_attribute_id('$opt_bot')).to eq('111')
-      expect(spy_logger).to have_received(:log).with(Logger::WARN,
-                                                     "Attribute '$opt_bot' unexpectedly has reserved prefix '$opt_'; using attribute ID instead of reserved attribute name.")
+      expect(spy_logger).to have_received(:log).with(
+        Logger::WARN,
+        "Attribute '$opt_bot' unexpectedly has reserved prefix '$opt_'; using attribute ID instead of reserved attribute name."
+      )
     end
+
     it 'should return attribute ID when provided attribute key is valid' do
       expect(config.get_attribute_id('browser_type')).to eq('111094')
     end
-    it 'should return nil when provided attribute key is bot_filtering_constant' do
-      expect(config.get_attribute_id('$opt_bot_filtering')).to eq(nil)
-    end
+
     it 'should return attribute key as attribute ID when key has reserved prefix but is not present in data file' do
       expect(config.get_attribute_id('$opt_user_agent')).to eq('$opt_user_agent')
     end

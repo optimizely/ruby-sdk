@@ -383,7 +383,7 @@ module Optimizely
         end
         return attribute['id']
       end
-      return attribute_key if has_reserved_prefix && attribute_key != Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING']
+      return attribute_key if has_reserved_prefix
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil
