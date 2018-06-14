@@ -343,6 +343,12 @@ module Optimizely
       # Returns the string variable value.
       # Returns nil if the feature flag or variable are not found.
 
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_string').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -364,6 +370,12 @@ module Optimizely
       #
       # Returns the boolean variable value.
       # Returns nil if the feature flag or variable are not found.
+
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_boolean').message)
+        return nil
+      end
 
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
@@ -387,6 +399,12 @@ module Optimizely
       # Returns the double variable value.
       # Returns nil if the feature flag or variable are not found.
 
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_double').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -408,6 +426,12 @@ module Optimizely
       #
       # Returns the integer variable value.
       # Returns nil if the feature flag or variable are not found.
+
+      unless @is_valid
+        logger = SimpleLogger.new
+        logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_integer').message)
+        return nil
+      end
 
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
