@@ -1,3 +1,8 @@
+## 2.0.2
+June 19th, 2018
+
+Fix: send impression event for Feature Test when Feature is disabled ([#110](https://github.com/optimizely/ruby-sdk/pull/110)).
+
 ## 2.0.1
 April 25th, 2018
 
