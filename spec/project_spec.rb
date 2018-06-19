@@ -834,7 +834,8 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return false, if the user is bucketed into a feature experiment but the featureEnabled property is false' do
+    it 'should return false and send impression if the user is bucketed into a feature experiment but the featureEnabled property is false' do      
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))      
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][1]
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -846,6 +847,7 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be false
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
   end
