@@ -258,7 +258,6 @@ module Optimizely
       # Returns True if the feature is enabled.
       #         False if the feature is disabled.
       #         False if the feature is not found.
-      
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
@@ -270,14 +269,14 @@ module Optimizely
           feature_flag_key: feature_flag_key,
           user_id: user_id
         }, @logger, Logger::ERROR
-        )
-        
+      )
+
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
         return false
       end
-      
+
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
       if decision.nil?
         @logger.log(Logger::INFO,
