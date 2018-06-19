@@ -15,7 +15,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require 'pp'
 require_relative 'optimizely/audience'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
