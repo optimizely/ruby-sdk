@@ -258,7 +258,6 @@ module Optimizely
       # Returns True if the feature is enabled.
       #         False if the feature is disabled.
       #         False if the feature is not found.
-
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
@@ -286,12 +285,6 @@ module Optimizely
       end
 
       variation = decision['variation']
-      unless variation['featureEnabled']
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
-      end
-
       if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
         # Send event if Decision came from an experiment.
         send_impression(decision.experiment, variation['key'], user_id, attributes)
@@ -299,9 +292,16 @@ module Optimizely
         @logger.log(Logger::DEBUG,
                     "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
       end
-      @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
 
-      true
+      if variation['featureEnabled'] == true
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
+        return true
+      else
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        return false
+      end
     end
 
     def get_enabled_features(user_id, attributes = nil)
