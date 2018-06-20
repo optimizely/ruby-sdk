@@ -117,7 +117,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#lookup-instance_method" title="#lookup (instance method)">#<strong>lookup</strong>(user_id)  &#x21d2; Object </a>
+      <a href="#lookup-instance_method" title="#lookup (instance method)">#<strong>lookup</strong>(user_id)  &#x21d2; Hash </a>
     
 
     
@@ -132,7 +132,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Class encapsulating user profile service functionality.</p>
+<p>Retrieve the Hash user profile associated with a given user ID.</p>
 </div></span>
   
 </li>
@@ -155,7 +155,9 @@
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Saves a given user profile.</p>
+</div></span>
   
 </li>
 
@@ -172,7 +174,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="lookup-instance_method">
   
-    #<strong>lookup</strong>(user_id)  &#x21d2; <tt>Object</tt> 
+    #<strong>lookup</strong>(user_id)  &#x21d2; <tt>Hash</tt> 
   
 
   
@@ -181,14 +183,52 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Class encapsulating user profile service functionality. Override with your
-own implementation for storing and retrieving user profiles.</p>
+<p>Retrieve the Hash user profile associated with a given user ID.</p>
 
 
   </div>
 </div>
 <div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
   
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String user ID</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>user profile.</p>
+</div>
+      
+    </li>
+  
+</ul>
 
 </div><table class="source_code">
   <tr>
@@ -196,24 +236,12 @@ own implementation for storing and retrieving user profiles.</p>
       <pre class="lines">
 
 
-24
-25
-26
-27
-28
-29
-30</pre>
+28</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/user_profile_service.rb', line 24</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/user_profile_service.rb', line 28</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span>
-  <span class='comment'># Retrieve the Hash user profile associated with a given user ID.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># user_id - String user ID
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns Hash user profile.
-</span><span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -228,26 +256,50 @@ own implementation for storing and retrieving user profiles.</p>
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Saves a given user profile.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user_profile</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash user profile.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-32
-33
-34
-35
-36</pre>
+33</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/user_profile_service.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/user_profile_service.rb', line 33</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_save'>save</span><span class='lparen'>(</span><span class='id identifier rubyid_user_profile'>user_profile</span><span class='rparen'>)</span>
-  <span class='comment'># Saves a given user profile.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># user_profile - Hash user profile.
-</span><span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_save'>save</span><span class='lparen'>(</span><span class='id identifier rubyid_user_profile'>user_profile</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -258,7 +310,7 @@ own implementation for storing and retrieving user profiles.</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Jun 19 16:49:37 2018 by
+  Generated on Wed Jun 20 21:27:10 2018 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.14 (ruby-2.3.1).
 </div>

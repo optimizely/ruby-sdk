@@ -103,244 +103,6 @@
 
 
 
-  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
-  <ul class="summary">
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#config-instance_method" title="#config (instance method)">#<strong>config</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute config.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#decision_service-instance_method" title="#decision_service (instance method)">#<strong>decision_service</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute decision_service.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#error_handler-instance_method" title="#error_handler (instance method)">#<strong>error_handler</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute error_handler.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#event_builder-instance_method" title="#event_builder (instance method)">#<strong>event_builder</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute event_builder.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#event_dispatcher-instance_method" title="#event_dispatcher (instance method)">#<strong>event_dispatcher</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute event_dispatcher.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#is_valid-instance_method" title="#is_valid (instance method)">#<strong>is_valid</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Boolean representing if the instance represents a usable Optimizely
-Project.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#logger-instance_method" title="#logger (instance method)">#<strong>logger</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute logger.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#notification_center-instance_method" title="#notification_center (instance method)">#<strong>notification_center</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute notification_center.</p>
-</div></span>
-  
-</li>
-
-    
-  </ul>
-
 
 
 
@@ -355,7 +117,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#activate-instance_method" title="#activate (instance method)">#<strong>activate</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#activate-instance_method" title="#activate (instance method)">#<strong>activate</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; Variation Key<sup>?</sup> </a>
     
 
     
@@ -369,7 +131,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Buckets visitor and sends impression event to Optimizely.</p>
+</div></span>
   
 </li>
 
@@ -377,7 +141,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_enabled_features-instance_method" title="#get_enabled_features (instance method)">#<strong>get_enabled_features</strong>(user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_enabled_features-instance_method" title="#get_enabled_features (instance method)">#<strong>get_enabled_features</strong>(user_id, attributes = nil)  &#x21d2; feature flag keys </a>
     
 
     
@@ -391,7 +155,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Gets keys of all feature flags which are enabled for the user.</p>
+</div></span>
   
 </li>
 
@@ -399,7 +165,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_feature_variable_boolean-instance_method" title="#get_feature_variable_boolean (instance method)">#<strong>get_feature_variable_boolean</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_feature_variable_boolean-instance_method" title="#get_feature_variable_boolean (instance method)">#<strong>get_feature_variable_boolean</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Boolean<sup>?</sup> </a>
     
 
     
@@ -413,7 +179,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Get the Boolean value of the specified variable in the feature flag.</p>
+</div></span>
   
 </li>
 
@@ -421,7 +189,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_feature_variable_double-instance_method" title="#get_feature_variable_double (instance method)">#<strong>get_feature_variable_double</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_feature_variable_double-instance_method" title="#get_feature_variable_double (instance method)">#<strong>get_feature_variable_double</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Boolean<sup>?</sup> </a>
     
 
     
@@ -435,7 +203,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Get the Double value of the specified variable in the feature flag.</p>
+</div></span>
   
 </li>
 
@@ -443,7 +213,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_feature_variable_integer-instance_method" title="#get_feature_variable_integer (instance method)">#<strong>get_feature_variable_integer</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_feature_variable_integer-instance_method" title="#get_feature_variable_integer (instance method)">#<strong>get_feature_variable_integer</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Integer<sup>?</sup> </a>
     
 
     
@@ -457,7 +227,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Get the Integer value of the specified variable in the feature flag.</p>
+</div></span>
   
 </li>
 
@@ -465,7 +237,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_feature_variable_string-instance_method" title="#get_feature_variable_string (instance method)">#<strong>get_feature_variable_string</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_feature_variable_string-instance_method" title="#get_feature_variable_string (instance method)">#<strong>get_feature_variable_string</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; String<sup>?</sup> </a>
     
 
     
@@ -479,7 +251,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Get the String value of the specified variable in the feature flag.</p>
+</div></span>
   
 </li>
 
@@ -487,7 +261,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_forced_variation-instance_method" title="#get_forced_variation (instance method)">#<strong>get_forced_variation</strong>(experiment_key, user_id)  &#x21d2; Object </a>
+      <a href="#get_forced_variation-instance_method" title="#get_forced_variation (instance method)">#<strong>get_forced_variation</strong>(experiment_key, user_id)  &#x21d2; String </a>
     
 
     
@@ -501,7 +275,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Gets the forced variation for a given user and experiment.</p>
+</div></span>
   
 </li>
 
@@ -509,7 +285,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get_variation-instance_method" title="#get_variation (instance method)">#<strong>get_variation</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#get_variation-instance_method" title="#get_variation (instance method)">#<strong>get_variation</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; variation key<sup>?</sup> </a>
     
 
     
@@ -523,7 +299,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Gets variation where visitor will be bucketed.</p>
+</div></span>
   
 </li>
 
@@ -548,7 +326,7 @@ Project.</p>
 
   
     <span class="summary_desc"><div class='inline'>
-<p>A new instance of Project.</p>
+<p>Constructor for Projects.</p>
 </div></span>
   
 </li>
@@ -557,7 +335,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#is_feature_enabled-instance_method" title="#is_feature_enabled (instance method)">#<strong>is_feature_enabled</strong>(feature_flag_key, user_id, attributes = nil)  &#x21d2; Object </a>
+      <a href="#is_feature_enabled-instance_method" title="#is_feature_enabled (instance method)">#<strong>is_feature_enabled</strong>(feature_flag_key, user_id, attributes = nil)  &#x21d2; True, False </a>
     
 
     
@@ -571,7 +349,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Determine whether a feature is enabled.</p>
+</div></span>
   
 </li>
 
@@ -579,7 +359,7 @@ Project.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#set_forced_variation-instance_method" title="#set_forced_variation (instance method)">#<strong>set_forced_variation</strong>(experiment_key, user_id, variation_key)  &#x21d2; Object </a>
+      <a href="#set_forced_variation-instance_method" title="#set_forced_variation (instance method)">#<strong>set_forced_variation</strong>(experiment_key, user_id, variation_key)  &#x21d2; Boolean </a>
     
 
     
@@ -593,7 +373,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Force a user into a variation for a given experiment.</p>
+</div></span>
   
 </li>
 
@@ -615,7 +397,9 @@ Project.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'></div></span>
+    <span class="summary_desc"><div class='inline'>
+<p>Send conversion event to Optimizely.</p>
+</div></span>
   
 </li>
 
@@ -638,13 +422,136 @@ Project.</p>
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Returns a new instance of Project</p>
+<p>Constructor for Projects.</p>
 
 
   </div>
 </div>
 <div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
   
+    <li>
+      
+        <span class='name'>datafile</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>JSON string representing the project.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>event_dispatcher</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Provides a dispatch_event method which if given a URL and params sends a
+request to it.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>logger</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Optional component which provides a log method to log messages. By default
+nothing would be logged.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>error_handler</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Optional component which provides a handle_error method to handle
+exceptions.</p>
+</li></ul>
+
+<p>By default all exceptions will be suppressed.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_profile_service</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Optional component which provides methods to store and retreive user
+profiles.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>skip_json_validation</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Optional boolean param to skip JSON schema validation of the provided
+datafile.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
 
 </div><table class="source_code">
   <tr>
@@ -652,10 +559,6 @@ Project.</p>
       <pre class="lines">
 
 
-45
-46
-47
-48
 49
 50
 51
@@ -691,28 +594,12 @@ Project.</p>
 81
 82
 83
-84
-85
-86
-87
-88
-89
-90</pre>
+84</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 49</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_datafile'>datafile</span><span class='comma'>,</span> <span class='id identifier rubyid_event_dispatcher'>event_dispatcher</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_error_handler'>error_handler</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_skip_json_validation'>skip_json_validation</span> <span class='op'>=</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='id identifier rubyid_user_profile_service'>user_profile_service</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Constructor for Projects.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># datafile - JSON string representing the project.
-</span>  <span class='comment'># event_dispatcher - Provides a dispatch_event method which if given a URL and params sends a request to it.
-</span>  <span class='comment'># logger - Optional component which provides a log method to log messages. By default nothing would be logged.
-</span>  <span class='comment'># error_handler - Optional component which provides a handle_error method to handle exceptions.
-</span>  <span class='comment'>#                 By default all exceptions will be suppressed.
-</span>  <span class='comment'># user_profile_service - Optional component which provides methods to store and retreive user profiles.
-</span>  <span class='comment'># skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
-</span>
   <span class='ivar'>@is_valid</span> <span class='op'>=</span> <span class='kw'>true</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="NoOpLogger.html" title="Optimizely::NoOpLogger (class)">NoOpLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
   <span class='ivar'>@error_handler</span> <span class='op'>=</span> <span class='id identifier rubyid_error_handler'>error_handler</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="NoOpErrorHandler.html" title="Optimizely::NoOpErrorHandler (class)">NoOpErrorHandler</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -755,355 +642,6 @@ Project.</p>
   
 </div>
 
-  <div id="instance_attr_details" class="attr_details">
-    <h2>Instance Attribute Details</h2>
-    
-      
-      <span id=""></span>
-      <div class="method_details first">
-  <h3 class="signature first" id="config-instance_method">
-  
-    #<strong>config</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute config</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-37
-38
-39</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 37</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
-  <span class='ivar'>@config</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="decision_service-instance_method">
-  
-    #<strong>decision_service</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute decision_service</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-38
-39
-40</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 38</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_decision_service'>decision_service</span>
-  <span class='ivar'>@decision_service</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="error_handler-instance_method">
-  
-    #<strong>error_handler</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute error_handler</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-39
-40
-41</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 39</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_error_handler'>error_handler</span>
-  <span class='ivar'>@error_handler</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="event_builder-instance_method">
-  
-    #<strong>event_builder</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute event_builder</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-40
-41
-42</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 40</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_event_builder'>event_builder</span>
-  <span class='ivar'>@event_builder</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="event_dispatcher-instance_method">
-  
-    #<strong>event_dispatcher</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute event_dispatcher</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-41
-42
-43</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 41</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_event_dispatcher'>event_dispatcher</span>
-  <span class='ivar'>@event_dispatcher</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="is_valid-instance_method">
-  
-    #<strong>is_valid</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Boolean representing if the instance represents a usable Optimizely Project</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-35
-36
-37</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 35</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_is_valid'>is_valid</span>
-  <span class='ivar'>@is_valid</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="logger-instance_method">
-  
-    #<strong>logger</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute logger</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-42
-43
-44</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 42</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
-  <span class='ivar'>@logger</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="notification_center-instance_method">
-  
-    #<strong>notification_center</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute notification_center</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-43
-44
-45</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 43</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_notification_center'>notification_center</span>
-  <span class='ivar'>@notification_center</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-  </div>
-
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
@@ -1112,21 +650,119 @@ Project.</p>
       <div class="method_details first">
   <h3 class="signature first" id="activate-instance_method">
   
-    #<strong>activate</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>activate</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; <tt>Variation Key</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Buckets visitor and sends impression event to Optimizely.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>experiment_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Experiment which needs to be activated.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String ID for user.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing user attributes and values to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Variation Key</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>representing the variation the user will be bucketed in.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if experiment is not Running, if user is not in experiment, or if datafile
+is invalid.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-92
-93
-94
 95
 96
 97
@@ -1153,27 +789,12 @@ Project.</p>
 118
 119
 120
-121
-122
-123
-124
-125
-126
-127</pre>
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 92</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 95</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Buckets visitor and sends impression event to Optimizely.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># experiment_key - Experiment which needs to be activated.
-</span>  <span class='comment'># user_id - String ID for user.
-</span>  <span class='comment'># attributes - Hash representing user attributes and values to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns variation key representing the variation the user will be bucketed in.
-</span>  <span class='comment'># Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
-</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
     <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>activate</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -1208,21 +829,87 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_enabled_features-instance_method">
   
-    #<strong>get_enabled_features</strong>(user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_enabled_features</strong>(user_id, attributes = nil)  &#x21d2; <tt>feature flag keys</tt> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Gets keys of all feature flags which are enabled for the user.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>ID for user.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Dict representing user attributes.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>feature flag keys</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>A List of feature flag keys that are enabled for the user.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-307
-308
-309
 310
 311
 312
@@ -1242,24 +929,13 @@ Project.</p>
 326
 327
 328
-329
-330
-331
-332
-333</pre>
+329</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 307</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 310</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_enabled_features'>get_enabled_features</span><span class='lparen'>(</span><span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Gets keys of all feature flags which are enabled for the user.
-</span>  <span class='comment'># Args:
-</span>  <span class='comment'>#   user_id: ID for user.
-</span>  <span class='comment'>#   attributes: Dict representing user attributes.
-</span>  <span class='comment'># Returns:
-</span>  <span class='comment'>#   A List of feature flag keys that are enabled for the user.
-</span>  <span class='comment'>#
-</span>  <span class='id identifier rubyid_enabled_features'>enabled_features</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_enabled_features'>enabled_features</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
 
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
@@ -1286,25 +962,135 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_feature_variable_boolean-instance_method">
   
-    #<strong>get_feature_variable_boolean</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_feature_variable_boolean</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Boolean</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the Boolean value of the specified variable in the feature flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>feature_flag_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of feature flag the variable belongs to</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variable_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of variable for which we are getting the string value</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String user ID</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the boolean variable value.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature flag or variable are not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-357
-358
-359
-360
-361
-362
-363
 364
 365
 366
@@ -1316,24 +1102,13 @@ Project.</p>
 372
 373
 374
-375
-376
-377</pre>
+375</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 357</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 364</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_boolean'>get_feature_variable_boolean</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Get the Boolean value of the specified variable in the feature flag.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># feature_flag_key - String key of feature flag the variable belongs to
-</span>  <span class='comment'># variable_key - String key of variable for which we are getting the string value
-</span>  <span class='comment'># user_id - String user ID
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns the boolean variable value.
-</span>  <span class='comment'># Returns nil if the feature flag or variable are not found.
-</span>
+  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1352,26 +1127,135 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_feature_variable_double-instance_method">
   
-    #<strong>get_feature_variable_double</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_feature_variable_double</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Boolean</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the Double value of the specified variable in the feature flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>feature_flag_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of feature flag the variable belongs to</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variable_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of variable for which we are getting the string value</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String user ID</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the double variable value.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature flag or variable are not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-379
-380
-381
-382
-383
-384
-385
-386
 387
 388
 389
@@ -1383,23 +1267,13 @@ Project.</p>
 395
 396
 397
-398
-399</pre>
+398</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 379</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 387</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_double'>get_feature_variable_double</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Get the Double value of the specified variable in the feature flag.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># feature_flag_key - String key of feature flag the variable belongs to
-</span>  <span class='comment'># variable_key - String key of variable for which we are getting the string value
-</span>  <span class='comment'># user_id - String user ID
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns the double variable value.
-</span>  <span class='comment'># Returns nil if the feature flag or variable are not found.
-</span>
+  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1418,27 +1292,135 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_feature_variable_integer-instance_method">
   
-    #<strong>get_feature_variable_integer</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_feature_variable_integer</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Integer</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the Integer value of the specified variable in the feature flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>feature_flag_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of feature flag the variable belongs to</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variable_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of variable for which we are getting the string value</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String user ID</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>variable value.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature flag or variable are not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-401
-402
-403
-404
-405
-406
-407
-408
-409
 410
 411
 412
@@ -1453,19 +1435,10 @@ Project.</p>
 421</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 401</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 410</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_integer'>get_feature_variable_integer</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Get the Integer value of the specified variable in the feature flag.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># feature_flag_key - String key of feature flag the variable belongs to
-</span>  <span class='comment'># variable_key - String key of variable for which we are getting the string value
-</span>  <span class='comment'># user_id - String user ID
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns the integer variable value.
-</span>  <span class='comment'># Returns nil if the feature flag or variable are not found.
-</span>
+  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1484,24 +1457,135 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_feature_variable_string-instance_method">
   
-    #<strong>get_feature_variable_string</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_feature_variable_string</strong>(feature_flag_key, variable_key, user_id, attributes = nil)  &#x21d2; <tt>String</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the String value of the specified variable in the feature flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>feature_flag_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of feature flag the variable belongs to</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variable_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String key of variable for which we are getting the string value</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String user ID</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the string variable value.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature flag or variable are not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-335
-336
-337
-338
-339
-340
 341
 342
 343
@@ -1513,25 +1597,13 @@ Project.</p>
 349
 350
 351
-352
-353
-354
-355</pre>
+352</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 335</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 341</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_string'>get_feature_variable_string</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Get the String value of the specified variable in the feature flag.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># feature_flag_key - String key of feature flag the variable belongs to
-</span>  <span class='comment'># variable_key - String key of variable for which we are getting the string value
-</span>  <span class='comment'># user_id - String user ID
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns the string variable value.
-</span>  <span class='comment'># Returns nil if the feature flag or variable are not found.
-</span>
+  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1550,20 +1622,85 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_forced_variation-instance_method">
   
-    #<strong>get_forced_variation</strong>(experiment_key, user_id)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_forced_variation</strong>(experiment_key, user_id)  &#x21d2; <tt>String</tt> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Gets the forced variation for a given user and experiment.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>experiment_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String - Key identifying the experiment.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String - The user ID to be used for bucketing.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The forced variation key.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-179
-180
 181
 182
 183
@@ -1571,23 +1708,13 @@ Project.</p>
 185
 186
 187
-188
-189
-190
-191
-192</pre>
+188</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 179</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 181</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_forced_variation'>get_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span>
-  <span class='comment'># Gets the forced variation for a given user and experiment.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># experiment_key - String - Key identifying the experiment.
-</span>  <span class='comment'># user_id - String - The user ID to be used for bucketing.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns String|nil The forced variation key.
-</span>
+  
   <span class='id identifier rubyid_forced_variation_key'>forced_variation_key</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='id identifier rubyid_forced_variation'>forced_variation</span> <span class='op'>=</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_get_forced_variation'>get_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_forced_variation_key'>forced_variation_key</span> <span class='op'>=</span> <span class='id identifier rubyid_forced_variation'>forced_variation</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>key</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_forced_variation'>forced_variation</span>
@@ -1602,21 +1729,119 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="get_variation-instance_method">
   
-    #<strong>get_variation</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>get_variation</strong>(experiment_key, user_id, attributes = nil)  &#x21d2; <tt>variation key</tt><sup>?</sup> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Gets variation where visitor will be bucketed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>experiment_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Experiment for which visitor variation needs to be determined.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String ID for user.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing user attributes.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>variation key</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>where visitor will be bucketed.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if experiment is not Running, if user is not in experiment, or if datafile
+is invalid.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-129
-130
-131
 132
 133
 134
@@ -1643,27 +1868,12 @@ Project.</p>
 155
 156
 157
-158
-159
-160
-161
-162
-163
-164</pre>
+158</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 129</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 132</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_variation'>get_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Gets variation where visitor will be bucketed.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># experiment_key - Experiment for which visitor variation needs to be determined.
-</span>  <span class='comment'># user_id - String ID for user.
-</span>  <span class='comment'># attributes - Hash representing user attributes.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns variation key where visitor will be bucketed.
-</span>  <span class='comment'># Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
-</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
     <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>get_variation</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -1698,26 +1908,133 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="is_feature_enabled-instance_method">
   
-    #<strong>is_feature_enabled</strong>(feature_flag_key, user_id, attributes = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>is_feature_enabled</strong>(feature_flag_key, user_id, attributes = nil)  &#x21d2; <tt>True</tt>, <tt>False</tt> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Determine whether a feature is enabled. Sends an impression event if the
+user is bucketed into an experiment using the feature.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>feature_flag_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String unique key of the feature.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String ID of the user.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>True</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature is enabled.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>False</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature is disabled.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>False</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the feature is not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-250
-251
-252
-253
-254
-255
-256
-257
 258
 259
 260
@@ -1762,26 +2079,12 @@ Project.</p>
 299
 300
 301
-302
-303
-304
-305</pre>
+302</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 258</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_is_feature_enabled'>is_feature_enabled</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Determine whether a feature is enabled.
-</span>  <span class='comment'># Sends an impression event if the user is bucketed into an experiment using the feature.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># feature_flag_key - String unique key of the feature.
-</span>  <span class='comment'># userId - String ID of the user.
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns True if the feature is enabled.
-</span>  <span class='comment'>#         False if the feature is disabled.
-</span>  <span class='comment'>#         False if the feature is not found.
-</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
     <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>is_feature_enabled</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -1834,44 +2137,115 @@ Project.</p>
       <div class="method_details ">
   <h3 class="signature " id="set_forced_variation-instance_method">
   
-    #<strong>set_forced_variation</strong>(experiment_key, user_id, variation_key)  &#x21d2; <tt>Object</tt> 
+    #<strong>set_forced_variation</strong>(experiment_key, user_id, variation_key)  &#x21d2; <tt>Boolean</tt> 
   
 
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Force a user into a variation for a given experiment.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>experiment_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String - key identifying the experiment.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String - The user ID to be used for bucketing.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variation_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>The variation key specifies the variation which the user will</p>
+</li></ul>
+
+<p>be forced into. If nil, then clear the existing experiment-to-variation
+mapping.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>indicates if the set completed successfully.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-166
-167
-168
 169
 170
 171
-172
-173
-174
-175
-176
-177</pre>
+172</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 166</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 169</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_forced_variation'>set_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_variation_key'>variation_key</span><span class='rparen'>)</span>
-  <span class='comment'># Force a user into a variation for a given experiment.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># experiment_key - String - key identifying the experiment.
-</span>  <span class='comment'># user_id - String - The user ID to be used for bucketing.
-</span>  <span class='comment'># variation_key - The variation key specifies the variation which the user will
-</span>  <span class='comment'>#   be forced into. If nil, then clear the existing experiment-to-variation mapping.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># Returns - Boolean - indicates if the set completed successfully.
-</span>
+  
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_set_forced_variation'>set_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_variation_key'>variation_key</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1888,15 +2262,99 @@ Project.</p>
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Send conversion event to Optimizely.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event_key</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Event key representing the event which needs to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user_id</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>String ID for user.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attributes</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing visitor attributes and values which need to be recorded.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>event_tags</span>
+      
+      
+        <span class='type'></span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><ul><li>
+<p>Hash representing metadata associated with the event.</p>
+</li></ul>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-194
-195
-196
 197
 198
 199
@@ -1945,22 +2403,13 @@ Project.</p>
 242
 243
 244
-245
-246
-247
-248</pre>
+245</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 194</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 197</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_key'>event_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_event_tags'>event_tags</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='comment'># Send conversion event to Optimizely.
-</span>  <span class='comment'>#
-</span>  <span class='comment'># event_key - Event key representing the event which needs to be recorded.
-</span>  <span class='comment'># user_id - String ID for user.
-</span>  <span class='comment'># attributes - Hash representing visitor attributes and values which need to be recorded.
-</span>  <span class='comment'># event_tags - Hash representing metadata associated with the event.
-</span>
+  
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
     <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>track</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -2003,7 +2452,7 @@ Project.</p>
   <span class='kw'>end</span>
 
   <span class='ivar'>@notification_center</span><span class='period'>.</span><span class='id identifier rubyid_send_notifications'>send_notifications</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="NotificationCenter.html" title="Optimizely::NotificationCenter (class)">NotificationCenter</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NotificationCenter.html#NOTIFICATION_TYPES-constant" title="Optimizely::NotificationCenter::NOTIFICATION_TYPES (constant)">NOTIFICATION_TYPES</a></span></span><span class='lbracket'>[</span><span class='symbol'>:TRACK</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="NotificationCenter.html" title="Optimizely::NotificationCenter (class)">NotificationCenter</a></span></span><span class='op'>::</span><span class='const'>NOTIFICATION_TYPES</span><span class='lbracket'>[</span><span class='symbol'>:TRACK</span><span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='id identifier rubyid_event_key'>event_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='comma'>,</span> <span class='id identifier rubyid_event_tags'>event_tags</span><span class='comma'>,</span> <span class='id identifier rubyid_conversion_event'>conversion_event</span>
   <span class='rparen'>)</span>
   <span class='kw'>nil</span>
@@ -2018,7 +2467,7 @@ Project.</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Jun 19 16:49:37 2018 by
+  Generated on Wed Jun 20 21:27:10 2018 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.14 (ruby-2.3.1).
 </div>
