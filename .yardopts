@@ -1,0 +1,9 @@
+--no-private
+--query '@api.text != "attributes"'
+--query '@api.text != "constants"'
+lib/optimizely/event_dispatcher.rb
+lib/optimizely/error_handler.rb
+lib/optimizely/notification_center.rb
+lib/optimizely/logger.rb
+lib/optimizely.rb
+lib/optimizely/user_profile_service.rb

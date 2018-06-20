@@ -32,27 +32,21 @@ require_relative 'optimizely/project_config'
 module Optimizely
   class Project
     # Boolean representing if the instance represents a usable Optimizely Project
-    attr_reader :is_valid
+    # @api attributes
+    attr_reader :is_valid, :config, :decision_service, :error_handler,
+                :event_builder, :event_dispatcher, :logger, :notification_center
 
-    attr_reader :config
-    attr_reader :decision_service
-    attr_reader :error_handler
-    attr_reader :event_builder
-    attr_reader :event_dispatcher
-    attr_reader :logger
-    attr_reader :notification_center
+    # Constructor for Projects.
+    #
+    # @param datafile - JSON string representing the project.
+    # @param event_dispatcher - Provides a dispatch_event method which if given a URL and params sends a request to it.
+    # @param logger - Optional component which provides a log method to log messages. By default nothing would be logged.
+    # @param error_handler - Optional component which provides a handle_error method to handle exceptions.
+    #                 By default all exceptions will be suppressed.
+    # @param user_profile_service - Optional component which provides methods to store and retreive user profiles.
+    # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
-      # Constructor for Projects.
-      #
-      # datafile - JSON string representing the project.
-      # event_dispatcher - Provides a dispatch_event method which if given a URL and params sends a request to it.
-      # logger - Optional component which provides a log method to log messages. By default nothing would be logged.
-      # error_handler - Optional component which provides a handle_error method to handle exceptions.
-      #                 By default all exceptions will be suppressed.
-      # user_profile_service - Optional component which provides methods to store and retreive user profiles.
-      # skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
-
       @is_valid = true
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -89,16 +83,16 @@ module Optimizely
       @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
-    def activate(experiment_key, user_id, attributes = nil)
-      # Buckets visitor and sends impression event to Optimizely.
-      #
-      # experiment_key - Experiment which needs to be activated.
-      # user_id - String ID for user.
-      # attributes - Hash representing user attributes and values to be recorded.
-      #
-      # Returns variation key representing the variation the user will be bucketed in.
-      # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+    # Buckets visitor and sends impression event to Optimizely.
+    #
+    # @param experiment_key - Experiment which needs to be activated.
+    # @param user_id - String ID for user.
+    # @param attributes - Hash representing user attributes and values to be recorded.
+    #
+    # @return [Variation Key] representing the variation the user will be bucketed in.
+    # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
+    def activate(experiment_key, user_id, attributes = nil)
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
@@ -126,16 +120,16 @@ module Optimizely
       variation_key
     end
 
-    def get_variation(experiment_key, user_id, attributes = nil)
-      # Gets variation where visitor will be bucketed.
-      #
-      # experiment_key - Experiment for which visitor variation needs to be determined.
-      # user_id - String ID for user.
-      # attributes - Hash representing user attributes.
-      #
-      # Returns variation key where visitor will be bucketed.
-      # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+    # Gets variation where visitor will be bucketed.
+    #
+    # @param experiment_key - Experiment for which visitor variation needs to be determined.
+    # @param user_id - String ID for user.
+    # @param attributes - Hash representing user attributes.
+    #
+    # @return [variation key] where visitor will be bucketed.
+    # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
+    def get_variation(experiment_key, user_id, attributes = nil)
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
@@ -163,27 +157,27 @@ module Optimizely
       nil
     end
 
-    def set_forced_variation(experiment_key, user_id, variation_key)
-      # Force a user into a variation for a given experiment.
-      #
-      # experiment_key - String - key identifying the experiment.
-      # user_id - String - The user ID to be used for bucketing.
-      # variation_key - The variation key specifies the variation which the user will
-      #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
-      #
-      # Returns - Boolean - indicates if the set completed successfully.
+    # Force a user into a variation for a given experiment.
+    #
+    # @param experiment_key - String - key identifying the experiment.
+    # @param user_id - String - The user ID to be used for bucketing.
+    # @param variation_key - The variation key specifies the variation which the user will
+    #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
+    #
+    # @return [Boolean] indicates if the set completed successfully.
 
+    def set_forced_variation(experiment_key, user_id, variation_key)
       @config.set_forced_variation(experiment_key, user_id, variation_key)
     end
 
-    def get_forced_variation(experiment_key, user_id)
-      # Gets the forced variation for a given user and experiment.
-      #
-      # experiment_key - String - Key identifying the experiment.
-      # user_id - String - The user ID to be used for bucketing.
-      #
-      # Returns String|nil The forced variation key.
+    # Gets the forced variation for a given user and experiment.
+    #
+    # @param experiment_key - String - Key identifying the experiment.
+    # @param user_id - String - The user ID to be used for bucketing.
+    #
+    # @return [String] The forced variation key.
 
+    def get_forced_variation(experiment_key, user_id)
       forced_variation_key = nil
       forced_variation = @config.get_forced_variation(experiment_key, user_id)
       forced_variation_key = forced_variation['key'] if forced_variation
@@ -191,14 +185,14 @@ module Optimizely
       forced_variation_key
     end
 
-    def track(event_key, user_id, attributes = nil, event_tags = nil)
-      # Send conversion event to Optimizely.
-      #
-      # event_key - Event key representing the event which needs to be recorded.
-      # user_id - String ID for user.
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      # event_tags - Hash representing metadata associated with the event.
+    # Send conversion event to Optimizely.
+    #
+    # @param event_key - Event key representing the event which needs to be recorded.
+    # @param user_id - String ID for user.
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # @param event_tags - Hash representing metadata associated with the event.
 
+    def track(event_key, user_id, attributes = nil, event_tags = nil)
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
@@ -247,18 +241,18 @@ module Optimizely
       nil
     end
 
-    def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
-      # Determine whether a feature is enabled.
-      # Sends an impression event if the user is bucketed into an experiment using the feature.
-      #
-      # feature_flag_key - String unique key of the feature.
-      # userId - String ID of the user.
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      #
-      # Returns True if the feature is enabled.
-      #         False if the feature is disabled.
-      #         False if the feature is not found.
+    # Determine whether a feature is enabled.
+    # Sends an impression event if the user is bucketed into an experiment using the feature.
+    #
+    # @param feature_flag_key - String unique key of the feature.
+    # @param user_id - String ID of the user.
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [True] if the feature is enabled.
+    # @return [False] if the feature is disabled.
+    # @return [False] if the feature is not found.
 
+    def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
       unless @is_valid
         logger = SimpleLogger.new
         logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
@@ -304,14 +298,13 @@ module Optimizely
       true
     end
 
+    # Gets keys of all feature flags which are enabled for the user.
+    #
+    # @param user_id -  ID for user.
+    # @param attributes - Dict representing user attributes.
+    # @return [feature flag keys] A List of feature flag keys that are enabled for the user.
+
     def get_enabled_features(user_id, attributes = nil)
-      # Gets keys of all feature flags which are enabled for the user.
-      # Args:
-      #   user_id: ID for user.
-      #   attributes: Dict representing user attributes.
-      # Returns:
-      #   A List of feature flag keys that are enabled for the user.
-      #
       enabled_features = []
 
       unless @is_valid
@@ -332,17 +325,17 @@ module Optimizely
       enabled_features
     end
 
-    def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
-      # Get the String value of the specified variable in the feature flag.
-      #
-      # feature_flag_key - String key of feature flag the variable belongs to
-      # variable_key - String key of variable for which we are getting the string value
-      # user_id - String user ID
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      #
-      # Returns the string variable value.
-      # Returns nil if the feature flag or variable are not found.
+    # Get the String value of the specified variable in the feature flag.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [String] the string variable value.
+    # @return [nil] if the feature flag or variable are not found.
 
+    def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -354,17 +347,17 @@ module Optimizely
       variable_value
     end
 
-    def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
-      # Get the Boolean value of the specified variable in the feature flag.
-      #
-      # feature_flag_key - String key of feature flag the variable belongs to
-      # variable_key - String key of variable for which we are getting the string value
-      # user_id - String user ID
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      #
-      # Returns the boolean variable value.
-      # Returns nil if the feature flag or variable are not found.
+    # Get the Boolean value of the specified variable in the feature flag.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Boolean] the boolean variable value.
+    # @return [nil] if the feature flag or variable are not found.
 
+    def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -376,17 +369,17 @@ module Optimizely
       variable_value
     end
 
-    def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
-      # Get the Double value of the specified variable in the feature flag.
-      #
-      # feature_flag_key - String key of feature flag the variable belongs to
-      # variable_key - String key of variable for which we are getting the string value
-      # user_id - String user ID
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      #
-      # Returns the double variable value.
-      # Returns nil if the feature flag or variable are not found.
+    # Get the Double value of the specified variable in the feature flag.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Boolean] the double variable value.
+    # @return [nil] if the feature flag or variable are not found.
 
+    def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -398,17 +391,17 @@ module Optimizely
       variable_value
     end
 
-    def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
-      # Get the Integer value of the specified variable in the feature flag.
-      #
-      # feature_flag_key - String key of feature flag the variable belongs to
-      # variable_key - String key of variable for which we are getting the string value
-      # user_id - String user ID
-      # attributes - Hash representing visitor attributes and values which need to be recorded.
-      #
-      # Returns the integer variable value.
-      # Returns nil if the feature flag or variable are not found.
+    # Get the Integer value of the specified variable in the feature flag.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Integer] variable value.
+    # @return [nil] if the feature flag or variable are not found.
 
+    def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,

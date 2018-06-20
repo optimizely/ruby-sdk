@@ -25,13 +25,13 @@ module Optimizely
   end
 
   class EventDispatcher
+    # @api constants
     REQUEST_TIMEOUT = 10
 
+    # Dispatch the event being represented by the Event object.
+    #
+    # @param event - Event object
     def dispatch_event(event)
-      # Dispatch the event being represented by the Event object.
-      #
-      # event - Event object
-
       if event.http_verb == :get
         begin
           HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
