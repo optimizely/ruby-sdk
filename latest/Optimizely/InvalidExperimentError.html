@@ -4,7 +4,7 @@
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
-  Class: Optimizely::BaseErrorHandler
+  Exception: Optimizely::InvalidExperimentError
   
     &mdash; Documentation by YARD 0.9.14
   
@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="../css/common.css" type="text/css" charset="utf-8" />
 
 <script type="text/javascript" charset="utf-8">
-  pathId = "Optimizely::BaseErrorHandler";
+  pathId = "Optimizely::InvalidExperimentError";
   relpath = '../';
 </script>
 
@@ -36,10 +36,10 @@
       <div id="header">
         <div id="menu">
   
-    <a href="../_index.html">Index (B)</a> &raquo;
+    <a href="../_index.html">Index (I)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../Optimizely.html" title="Optimizely (module)">Optimizely</a></span></span>
      &raquo; 
-    <span class="title">BaseErrorHandler</span>
+    <span class="title">InvalidExperimentError</span>
   
 </div>
 
@@ -59,7 +59,7 @@
         <div class="clear"></div>
       </div>
 
-      <div id="content"><h1>Class: Optimizely::BaseErrorHandler
+      <div id="content"><h1>Exception: Optimizely::InvalidExperimentError
   
   
   
@@ -69,12 +69,16 @@
   <dl>
     <dt>Inherits:</dt>
     <dd>
-      <span class="inheritName">Object</span>
+      <span class="inheritName"><span class='object_link'><a href="Error.html" title="Optimizely::Error (class)">Error</a></span></span>
       
         <ul class="fullTree">
           <li>Object</li>
           
-            <li class="next">Optimizely::BaseErrorHandler</li>
+            <li class="next">StandardError</li>
+          
+            <li class="next"><span class='object_link'><a href="Error.html" title="Optimizely::Error (class)">Error</a></span></li>
+          
+            <li class="next">Optimizely::InvalidExperimentError</li>
           
         </ul>
         <a href="#" class="inheritanceTree">show all</a>
@@ -94,15 +98,11 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/optimizely/error_handler.rb</dd>
+    <dd>lib/optimizely/exceptions.rb</dd>
   </dl>
   
 </div>
 
-<div id="subclasses">
-  <h2>Direct Known Subclasses</h2>
-  <p class="children"><span class='object_link'><a href="NoOpErrorHandler.html" title="Optimizely::NoOpErrorHandler (class)">NoOpErrorHandler</a></span>, <span class='object_link'><a href="RaiseErrorHandler.html" title="Optimizely::RaiseErrorHandler (class)">RaiseErrorHandler</a></span></p>
-</div>
 
 
 
@@ -121,12 +121,14 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_error-instance_method" title="#handle_error (instance method)">#<strong>handle_error</strong>(_error)  &#x21d2; Object </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(msg = &#39;Provided experiment is not in datafile.&#39;)  &#x21d2; InvalidExperimentError </a>
     
 
     
   </span>
   
+  
+    <span class="note title constructor">constructor</span>
   
   
   
@@ -136,7 +138,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Class encapsulating exception handling functionality.</p>
+<p>Raised when an invalid experiment key is provided.</p>
 </div></span>
   
 </li>
@@ -146,15 +148,19 @@
   
 
 
-
-  <div id="instance_method_details" class="method_details_list">
-    <h2>Instance Method Details</h2>
-
-    
-      <div class="method_details first">
-  <h3 class="signature first" id="handle_error-instance_method">
   
-    #<strong>handle_error</strong>(_error)  &#x21d2; <tt>Object</tt> 
+  
+  
+  
+  
+  
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(msg = &#39;Provided experiment is not in datafile.&#39;)  &#x21d2; <tt><span class='object_link'><a href="" title="Optimizely::InvalidExperimentError (class)">InvalidExperimentError</a></span></tt> 
   
 
   
@@ -163,8 +169,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Class encapsulating exception handling functionality. Override with your
-own exception handler providing a handle_error method.</p>
+<p>Raised when an invalid experiment key is provided</p>
 
 
   </div>
@@ -178,18 +183,23 @@ own exception handler providing a handle_error method.</p>
       <pre class="lines">
 
 
-23</pre>
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/error_handler.rb', line 23</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/exceptions.rb', line 56</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_error'>handle_error</span><span class='lparen'>(</span><span class='id identifier rubyid__error'>_error</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_msg'>msg</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Provided experiment is not in datafile.</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='kw'>super</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
 </div>
-    
-  </div>
+  
+</div>
+
 
 </div>
 

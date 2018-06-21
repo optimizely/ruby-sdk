@@ -100,6 +100,25 @@
 </div>
 
 
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="NOTIFICATION_TYPES-constant" class="">NOTIFICATION_TYPES =
+          
+        </dt>
+        <dd><pre class="code"><span class='lbrace'>{</span>
+  <span class='label'>ACTIVATE:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>ACTIVATE: experiment, user_id, attributes, variation, event</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>TRACK:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TRACK: event_key, user_id, attributes, event_tags, event</span><span class='tstring_end'>&#39;</span></span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
 
 
 
@@ -236,30 +255,6 @@
 </li>
 
       
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#send_notifications-instance_method" title="#send_notifications (instance method)">#<strong>send_notifications</strong>(notification_type, *args)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Sends off the notification for the specific event.</p>
-</div></span>
-  
-</li>
-
-      
     </ul>
   
 
@@ -292,21 +287,21 @@
       <pre class="lines">
 
 
+28
 29
 30
 31
 32
 33
-34
-35</pre>
+34</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 29</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 28</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_error_handler'>error_handler</span><span class='rparen'>)</span>
   <span class='ivar'>@notification_id</span> <span class='op'>=</span> <span class='int'>1</span>
   <span class='ivar'>@notifications</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-  <span class='const'>NOTIFICATION_TYPES</span><span class='period'>.</span><span class='id identifier rubyid_each_value'>each_value</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='ivar'>@notifications</span><span class='lbracket'>[</span><span class='id identifier rubyid_value'>value</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+  <span class='const'><span class='object_link'><a href="#NOTIFICATION_TYPES-constant" title="Optimizely::NotificationCenter::NOTIFICATION_TYPES (constant)">NOTIFICATION_TYPES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_each_value'>each_value</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='ivar'>@notifications</span><span class='lbracket'>[</span><span class='id identifier rubyid_value'>value</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span>
   <span class='ivar'>@error_handler</span> <span class='op'>=</span> <span class='id identifier rubyid_error_handler'>error_handler</span>
 <span class='kw'>end</span></pre>
@@ -404,6 +399,7 @@
       <pre class="lines">
 
 
+43
 44
 45
 46
@@ -423,15 +419,12 @@
 60
 61
 62
-63
-64
-65</pre>
+63</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 44</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 43</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_notification_listener'>add_notification_listener</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='comma'>,</span> <span class='id identifier rubyid_notification_callback'>notification_callback</span><span class='rparen'>)</span>
-  
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_notification_type_valid?'>notification_type_valid?</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rparen'>)</span>
 
   <span class='kw'>unless</span> <span class='id identifier rubyid_notification_callback'>notification_callback</span>
@@ -483,12 +476,12 @@
       <pre class="lines">
 
 
-102
-103
-104</pre>
+99
+100
+101</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 102</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clean_all_notifications'>clean_all_notifications</span>
   <span class='ivar'>@notifications</span><span class='period'>.</span><span class='id identifier rubyid_each_key'>each_key</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span> <span class='ivar'>@notifications</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
@@ -545,19 +538,17 @@
       <pre class="lines">
 
 
+91
+92
 93
 94
 95
-96
-97
-98
-99</pre>
+96</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 91</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clear_notifications'>clear_notifications</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rparen'>)</span>
-  
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_notification_type_valid?'>notification_type_valid?</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rparen'>)</span>
 
   <span class='ivar'>@notifications</span><span class='lbracket'>[</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -627,6 +618,8 @@
       <pre class="lines">
 
 
+71
+72
 73
 74
 75
@@ -639,12 +632,10 @@
 82
 83
 84
-85
-86
-87</pre>
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 73</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_remove_notification_listener'>remove_notification_listener</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_id'>notification_id</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_notification_id'>notification_id</span>
@@ -666,115 +657,12 @@
 </table>
 </div>
     
-      <div class="method_details ">
-  <h3 class="signature " id="send_notifications-instance_method">
-  
-    #<strong>send_notifications</strong>(notification_type, *args)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Sends off the notification for the specific event.  Uses var args to pass
-in a arbitrary list of parameters according to which notification type was
-sent</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>notification_type</span>
-      
-      
-        <span class='type'></span>
-      
-      
-      
-        &mdash;
-        <div class='inline'><ul><li>
-<p>one of the constants in NOTIFICATION_TYPES</p>
-</li></ul>
-</div>
-      
-    </li>
-  
-    <li>
-      
-        <span class='name'>args</span>
-      
-      
-        <span class='type'></span>
-      
-      
-      
-        &mdash;
-        <div class='inline'><ul><li>
-<p>list of arguments to the callback</p>
-</li></ul>
-</div>
-      
-    </li>
-  
-</ul>
-
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely/notification_center.rb', line 112</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_send_notifications'>send_notifications</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_notification_type_valid?'>notification_type_valid?</span><span class='lparen'>(</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rparen'>)</span>
-
-  <span class='ivar'>@notifications</span><span class='lbracket'>[</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_notification'>notification</span><span class='op'>|</span>
-    <span class='kw'>begin</span>
-      <span class='id identifier rubyid_notification_callback'>notification_callback</span> <span class='op'>=</span> <span class='id identifier rubyid_notification'>notification</span><span class='lbracket'>[</span><span class='symbol'>:callback</span><span class='rbracket'>]</span>
-      <span class='id identifier rubyid_notification_callback'>notification_callback</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
-      <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span> <span class='const'>Logger</span><span class='op'>::</span><span class='const'>INFO</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Notification </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_notification_type'>notification_type</span><span class='embexpr_end'>}</span><span class='tstring_content'> sent successfully.</span><span class='tstring_end'>&quot;</span></span>
-    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-      <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Problem calling notify callback. Error: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-      <span class='kw'>return</span> <span class='kw'>nil</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 20 21:27:10 2018 by
+  Generated on Thu Jun 21 19:02:49 2018 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.14 (ruby-2.3.1).
 </div>

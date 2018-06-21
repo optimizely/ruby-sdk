@@ -103,6 +103,40 @@
 
 
 
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#notification_center-instance_method" title="#notification_center (instance method)">#<strong>notification_center</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute notification_center.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
 
 
 
@@ -608,7 +642,7 @@ datafile.</p>
 
   <span class='kw'>begin</span>
     <span class='id identifier rubyid_validate_instantiation_options'>validate_instantiation_options</span><span class='lparen'>(</span><span class='id identifier rubyid_datafile'>datafile</span><span class='comma'>,</span> <span class='id identifier rubyid_skip_json_validation'>skip_json_validation</span><span class='rparen'>)</span>
-  <span class='kw'>rescue</span> <span class='const'>InvalidInputError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="InvalidInputError.html" title="Optimizely::InvalidInputError (class)">InvalidInputError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
     <span class='ivar'>@is_valid</span> <span class='op'>=</span> <span class='kw'>false</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
     <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -620,14 +654,14 @@ datafile.</p>
   <span class='kw'>rescue</span>
     <span class='ivar'>@is_valid</span> <span class='op'>=</span> <span class='kw'>false</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidInputError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>datafile</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidInputError.html" title="Optimizely::InvalidInputError (class)">InvalidInputError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidInputError.html#initialize-instance_method" title="Optimizely::InvalidInputError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>datafile</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span>
   <span class='kw'>end</span>
 
   <span class='kw'>unless</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_parsing_succeeded?'>parsing_succeeded?</span>
     <span class='ivar'>@is_valid</span> <span class='op'>=</span> <span class='kw'>false</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileVersionError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileVersionError.html" title="Optimizely::InvalidDatafileVersionError (class)">InvalidDatafileVersionError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileVersionError.html#initialize-instance_method" title="Optimizely::InvalidDatafileVersionError#initialize (method)">new</a></span></span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span>
   <span class='kw'>end</span>
 
@@ -641,6 +675,54 @@ datafile.</p>
 </div>
   
 </div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="notification_center-instance_method">
+  
+    #<strong>notification_center</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute notification_center</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+34
+35
+36</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 34</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_notification_center'>notification_center</span>
+  <span class='ivar'>@notification_center</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 
   <div id="instance_method_details" class="method_details_list">
@@ -797,7 +879,7 @@ is invalid.</p>
 <span class='kw'>def</span> <span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>activate</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileError.html" title="Optimizely::InvalidDatafileError (class)">InvalidDatafileError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileError.html#initialize-instance_method" title="Optimizely::InvalidDatafileError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>activate</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='kw'>nil</span>
   <span class='kw'>end</span>
 
@@ -910,6 +992,9 @@ is invalid.</p>
       <pre class="lines">
 
 
+307
+308
+309
 310
 311
 312
@@ -926,20 +1011,17 @@ is invalid.</p>
 323
 324
 325
-326
-327
-328
-329</pre>
+326</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 310</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 307</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_enabled_features'>get_enabled_features</span><span class='lparen'>(</span><span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_enabled_features'>enabled_features</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
 
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>get_enabled_features</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileError.html" title="Optimizely::InvalidDatafileError (class)">InvalidDatafileError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileError.html#initialize-instance_method" title="Optimizely::InvalidDatafileError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>get_enabled_features</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='id identifier rubyid_enabled_features'>enabled_features</span>
   <span class='kw'>end</span>
 
@@ -1091,24 +1173,22 @@ is invalid.</p>
       <pre class="lines">
 
 
+360
+361
+362
+363
 364
 365
 366
 367
 368
 369
-370
-371
-372
-373
-374
-375</pre>
+370</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 364</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 360</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_boolean'>get_feature_variable_boolean</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1256,24 +1336,22 @@ is invalid.</p>
       <pre class="lines">
 
 
+382
+383
+384
+385
+386
 387
 388
 389
 390
 391
-392
-393
-394
-395
-396
-397
-398</pre>
+392</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 387</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 382</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_double'>get_feature_variable_double</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1421,24 +1499,22 @@ is invalid.</p>
       <pre class="lines">
 
 
+404
+405
+406
+407
+408
+409
 410
 411
 412
 413
-414
-415
-416
-417
-418
-419
-420
-421</pre>
+414</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 410</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 404</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_integer'>get_feature_variable_integer</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1586,6 +1662,9 @@ is invalid.</p>
       <pre class="lines">
 
 
+338
+339
+340
 341
 342
 343
@@ -1593,17 +1672,12 @@ is invalid.</p>
 345
 346
 347
-348
-349
-350
-351
-352</pre>
+348</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 341</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_feature_variable_string'>get_feature_variable_string</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  
   <span class='id identifier rubyid_variable_value'>variable_value</span> <span class='op'>=</span> <span class='id identifier rubyid_get_feature_variable_for_type'>get_feature_variable_for_type</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span>
     <span class='id identifier rubyid_variable_key'>variable_key</span><span class='comma'>,</span>
@@ -1701,20 +1775,18 @@ is invalid.</p>
       <pre class="lines">
 
 
+180
 181
 182
 183
 184
 185
-186
-187
-188</pre>
+186</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 181</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 180</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_forced_variation'>get_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span>
-  
   <span class='id identifier rubyid_forced_variation_key'>forced_variation_key</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='id identifier rubyid_forced_variation'>forced_variation</span> <span class='op'>=</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_get_forced_variation'>get_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_forced_variation_key'>forced_variation_key</span> <span class='op'>=</span> <span class='id identifier rubyid_forced_variation'>forced_variation</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>key</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_forced_variation'>forced_variation</span>
@@ -1876,7 +1948,7 @@ is invalid.</p>
 <span class='kw'>def</span> <span class='id identifier rubyid_get_variation'>get_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>get_variation</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileError.html" title="Optimizely::InvalidDatafileError (class)">InvalidDatafileError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileError.html#initialize-instance_method" title="Optimizely::InvalidDatafileError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>get_variation</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='kw'>nil</span>
   <span class='kw'>end</span>
 
@@ -2035,6 +2107,9 @@ user is bucketed into an experiment using the feature.</p>
       <pre class="lines">
 
 
+255
+256
+257
 258
 259
 260
@@ -2076,18 +2151,15 @@ user is bucketed into an experiment using the feature.</p>
 296
 297
 298
-299
-300
-301
-302</pre>
+299</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 258</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 255</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_is_feature_enabled'>is_feature_enabled</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_flag_key'>feature_flag_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>is_feature_enabled</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileError.html" title="Optimizely::InvalidDatafileError (class)">InvalidDatafileError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileError.html#initialize-instance_method" title="Optimizely::InvalidDatafileError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>is_feature_enabled</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='kw'>false</span>
   <span class='kw'>end</span>
 
@@ -2238,14 +2310,12 @@ mapping.</p>
 
 169
 170
-171
-172</pre>
+171</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 169</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_forced_variation'>set_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_variation_key'>variation_key</span><span class='rparen'>)</span>
-  
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_set_forced_variation'>set_forced_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_experiment_key'>experiment_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_variation_key'>variation_key</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2355,6 +2425,8 @@ mapping.</p>
       <pre class="lines">
 
 
+195
+196
 197
 198
 199
@@ -2400,19 +2472,15 @@ mapping.</p>
 239
 240
 241
-242
-243
-244
-245</pre>
+242</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 197</span>
+      <pre class="code"><span class="info file"># File 'lib/optimizely.rb', line 195</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_key'>event_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_event_tags'>event_tags</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  
   <span class='kw'>unless</span> <span class='ivar'>@is_valid</span>
     <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SimpleLogger.html" title="Optimizely::SimpleLogger (class)">SimpleLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SimpleLogger.html#initialize-instance_method" title="Optimizely::SimpleLogger#initialize (method)">new</a></span></span>
-    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'>InvalidDatafileError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>track</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_log'>log</span><span class='lparen'>(</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>ERROR</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="InvalidDatafileError.html" title="Optimizely::InvalidDatafileError (class)">InvalidDatafileError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InvalidDatafileError.html#initialize-instance_method" title="Optimizely::InvalidDatafileError#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>track</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='kw'>nil</span>
   <span class='kw'>end</span>
 
@@ -2452,7 +2520,7 @@ mapping.</p>
   <span class='kw'>end</span>
 
   <span class='ivar'>@notification_center</span><span class='period'>.</span><span class='id identifier rubyid_send_notifications'>send_notifications</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="NotificationCenter.html" title="Optimizely::NotificationCenter (class)">NotificationCenter</a></span></span><span class='op'>::</span><span class='const'>NOTIFICATION_TYPES</span><span class='lbracket'>[</span><span class='symbol'>:TRACK</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="NotificationCenter.html" title="Optimizely::NotificationCenter (class)">NotificationCenter</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NotificationCenter.html#NOTIFICATION_TYPES-constant" title="Optimizely::NotificationCenter::NOTIFICATION_TYPES (constant)">NOTIFICATION_TYPES</a></span></span><span class='lbracket'>[</span><span class='symbol'>:TRACK</span><span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='id identifier rubyid_event_key'>event_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user_id'>user_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='comma'>,</span> <span class='id identifier rubyid_event_tags'>event_tags</span><span class='comma'>,</span> <span class='id identifier rubyid_conversion_event'>conversion_event</span>
   <span class='rparen'>)</span>
   <span class='kw'>nil</span>
@@ -2467,7 +2535,7 @@ mapping.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 20 21:27:10 2018 by
+  Generated on Thu Jun 21 19:02:50 2018 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.14 (ruby-2.3.1).
 </div>
