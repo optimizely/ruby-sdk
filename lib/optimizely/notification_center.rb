@@ -17,10 +17,9 @@
 #
 module Optimizely
   class NotificationCenter
-    # @api attributes
+    # @api no-doc
     attr_reader :notifications, :notification_id
 
-    # @api constants
     NOTIFICATION_TYPES = {
       ACTIVATE: 'ACTIVATE: experiment, user_id, attributes, variation, event',
       TRACK: 'TRACK: event_key, user_id, attributes, event_tags, event'
@@ -106,7 +105,8 @@ module Optimizely
     #
     # @param notification_type - one of the constants in NOTIFICATION_TYPES
     # @param args - list of arguments to the callback
-
+    #
+    # @api no-doc
     def send_notifications(notification_type, *args)
       return nil unless notification_type_valid?(notification_type)
 

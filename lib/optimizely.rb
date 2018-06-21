@@ -31,10 +31,10 @@ require_relative 'optimizely/project_config'
 
 module Optimizely
   class Project
-    # Boolean representing if the instance represents a usable Optimizely Project
-    # @api attributes
+    attr_reader :notification_center
+    # @api no-doc
     attr_reader :is_valid, :config, :decision_service, :error_handler,
-                :event_builder, :event_dispatcher, :logger, :notification_center
+                :event_builder, :event_dispatcher, :logger
 
     # Constructor for Projects.
     #
