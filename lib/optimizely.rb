@@ -336,6 +336,7 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_string').message)
         return nil
       end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -362,6 +363,7 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_boolean').message)
         return nil
       end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -388,6 +390,7 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_double').message)
         return nil
       end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
