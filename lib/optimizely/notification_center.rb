@@ -17,8 +17,8 @@
 #
 module Optimizely
   class NotificationCenter
-    attr_reader :notifications
-    attr_reader :notification_id
+    # @api no-doc
+    attr_reader :notifications, :notification_id
 
     NOTIFICATION_TYPES = {
       ACTIVATE: 'ACTIVATE: experiment, user_id, attributes, variation, event',
@@ -33,16 +33,14 @@ module Optimizely
       @error_handler = error_handler
     end
 
+    # Adds notification callback to the notification center
+    #
+    # @param notification_type -  One of the constants in NOTIFICATION_TYPES
+    # @param notification_callback -  Function to call when the event is sent
+    #
+    # @return [notification ID] Used to remove the notification
+
     def add_notification_listener(notification_type, notification_callback)
-      # Adds notification callback to the notification center
-
-      # Args:
-      #  notification_type: one of the constants in NOTIFICATION_TYPES
-      #  notification_callback: function to call when the event is sent
-
-      # Returns:
-      #  notification ID used to remove the notification
-
       return nil unless notification_type_valid?(notification_type)
 
       unless notification_callback
@@ -64,13 +62,13 @@ module Optimizely
       notification_id
     end
 
-    def remove_notification_listener(notification_id)
-      # Removes previously added notification callback
+    # Removes previously added notification callback
+    #
+    # @param notification_id
+    #
+    # @return [Boolean] The function returns true if found and removed, false otherwise
 
-      # Args:
-      #  notification_id:
-      # Returns:
-      #  The function returns true if found and removed, false otherwise
+    def remove_notification_listener(notification_id)
       unless notification_id
         @logger.log Logger::ERROR, 'Notification ID can not be empty.'
         return nil
@@ -86,30 +84,30 @@ module Optimizely
       false
     end
 
-    def clear_notifications(notification_type)
-      # Removes notifications for a certain notification type
-      #
-      # Args:
-      #  notification_type: one of the constants in NOTIFICATION_TYPES
+    # Removes notifications for a certain notification type
+    #
+    # @param notification_type - one of the constants in NOTIFICATION_TYPES
 
+    def clear_notifications(notification_type)
       return nil unless notification_type_valid?(notification_type)
 
       @notifications[notification_type] = []
       @logger.log Logger::INFO, "All callbacks for notification type #{notification_type} have been removed."
     end
 
+    # Removes all notifications
     def clean_all_notifications
-      # Removes all notifications
       @notifications.each_key { |key| @notifications[key] = [] }
     end
 
+    # Sends off the notification for the specific event.  Uses var args to pass in a
+    # arbitrary list of parameters according to which notification type was sent
+    #
+    # @param notification_type - one of the constants in NOTIFICATION_TYPES
+    # @param args - list of arguments to the callback
+    #
+    # @api no-doc
     def send_notifications(notification_type, *args)
-      # Sends off the notification for the specific event.  Uses var args to pass in a
-      # arbitrary list of parameters according to which notification type was sent
-
-      # Args:
-      #  notification_type: one of the constants in NOTIFICATION_TYPES
-      #  args: list of arguments to the callback
       return nil unless notification_type_valid?(notification_type)
 
       @notifications[notification_type].each do |notification|

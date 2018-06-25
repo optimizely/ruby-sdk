@@ -1,0 +1,11 @@
+--query '@api.text != "no-doc"'
+lib/optimizely/error_handler.rb
+lib/optimizely/exceptions.rb
+lib/optimizely/event_dispatcher.rb
+lib/optimizely/logger.rb
+lib/optimizely/notification_center.rb
+lib/optimizely.rb
+lib/optimizely/user_profile_service.rb
+-
+CONTRIBUTING.md
+.rubocop.yml

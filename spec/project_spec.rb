@@ -834,7 +834,8 @@ describe 'Optimizely' do
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
 
-    it 'should return false, if the user is bucketed into a feature experiment but the featureEnabled property is false' do
+    it 'should return false and send impression if the user is bucketed into a feature experiment but the featureEnabled property is false' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][1]
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -846,6 +847,7 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be false
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
   end
@@ -892,6 +894,17 @@ describe 'Optimizely' do
   describe '#get_feature_variable_string' do
     user_id = 'test_user'
     user_attributes = {}
+
+    it 'should return nil when called with invalid project config' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
+        .to eq(nil)
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_feature_variable_string.')
+    end
 
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
@@ -1027,6 +1040,17 @@ describe 'Optimizely' do
     user_id = 'test_user'
     user_attributes = {}
 
+    it 'should return nil when called with invalid project config' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
+        .to eq(nil)
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_feature_variable_boolean.')
+    end
+
     it 'should return the variable value for the variation for the user is bucketed into' do
       boolean_feature = project_instance.config.feature_flag_key_map['boolean_single_variable_feature']
       rollout = project_instance.config.rollout_id_map[boolean_feature['rolloutId']]
@@ -1052,6 +1076,17 @@ describe 'Optimizely' do
   describe '#get_feature_variable_double' do
     user_id = 'test_user'
     user_attributes = {}
+
+    it 'should return nil when called with invalid project config' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
+        .to eq(nil)
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_feature_variable_double.')
+    end
 
     it 'should return the variable value for the variation for the user is bucketed into' do
       double_feature = project_instance.config.feature_flag_key_map['double_single_variable_feature']
@@ -1079,6 +1114,17 @@ describe 'Optimizely' do
   describe '#get_feature_variable_integer' do
     user_id = 'test_user'
     user_attributes = {}
+
+    it 'should return nil when called with invalid project config' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
+        .to eq(nil)
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_feature_variable_integer.')
+    end
 
     it 'should return the variable value for the variation for the user is bucketed into' do
       integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
