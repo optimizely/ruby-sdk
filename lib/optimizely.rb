@@ -63,8 +63,8 @@ module Optimizely
         validate_instantiation_options(datafile, skip_json_validation)
       rescue InvalidInputError => e
         @is_valid = false
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, e.message)
+        @logger = SimpleLogger.new
+        @logger.log(Logger::ERROR, e.message)
         return
       end
 
@@ -72,15 +72,15 @@ module Optimizely
         @config = ProjectConfig.new(datafile, @logger, @error_handler)
       rescue
         @is_valid = false
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        @logger = SimpleLogger.new
+        @logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
         return
       end
 
       unless @config.parsing_succeeded?
         @is_valid = false
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileVersionError.new.message)
+        @logger = SimpleLogger.new
+        @logger.log(Logger::ERROR, InvalidDatafileVersionError.new.message)
         return
       end
 
@@ -100,8 +100,7 @@ module Optimizely
       # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
       unless @is_valid
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
         return nil
       end
 
@@ -137,8 +136,7 @@ module Optimizely
       # Returns nil if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
       unless @is_valid
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
         return nil
       end
 
@@ -200,8 +198,7 @@ module Optimizely
       # event_tags - Hash representing metadata associated with the event.
 
       unless @is_valid
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
         return nil
       end
 
@@ -258,10 +255,8 @@ module Optimizely
       # Returns True if the feature is enabled.
       #         False if the feature is disabled.
       #         False if the feature is not found.
-
       unless @is_valid
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
         return false
       end
 
@@ -286,12 +281,6 @@ module Optimizely
       end
 
       variation = decision['variation']
-      unless variation['featureEnabled']
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
-      end
-
       if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
         # Send event if Decision came from an experiment.
         send_impression(decision.experiment, variation['key'], user_id, attributes)
@@ -299,9 +288,16 @@ module Optimizely
         @logger.log(Logger::DEBUG,
                     "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
       end
-      @logger.log(Logger::INFO, "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
 
-      true
+      if variation['featureEnabled'] == true
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
+        return true
+      else
+        @logger.log(Logger::INFO,
+                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+        return false
+      end
     end
 
     def get_enabled_features(user_id, attributes = nil)
@@ -315,8 +311,7 @@ module Optimizely
       enabled_features = []
 
       unless @is_valid
-        logger = SimpleLogger.new
-        logger.log(Logger::ERROR, InvalidDatafileError.new('get_enabled_features').message)
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_enabled_features').message)
         return enabled_features
       end
 
@@ -343,6 +338,11 @@ module Optimizely
       # Returns the string variable value.
       # Returns nil if the feature flag or variable are not found.
 
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_string').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -364,6 +364,11 @@ module Optimizely
       #
       # Returns the boolean variable value.
       # Returns nil if the feature flag or variable are not found.
+
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_boolean').message)
+        return nil
+      end
 
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
@@ -387,6 +392,11 @@ module Optimizely
       # Returns the double variable value.
       # Returns nil if the feature flag or variable are not found.
 
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_double').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -408,6 +418,11 @@ module Optimizely
       #
       # Returns the integer variable value.
       # Returns nil if the feature flag or variable are not found.
+
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_integer').message)
+        return nil
+      end
 
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
