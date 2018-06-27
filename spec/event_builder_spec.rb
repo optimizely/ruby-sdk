@@ -386,6 +386,13 @@ describe Optimizely::EventBuilder do
     # with right params when user agent attribute is provided and
     # bot filtering is enabled
 
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: true
+    }]
+
     @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
       key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
@@ -396,6 +403,7 @@ describe Optimizely::EventBuilder do
       '$opt_user_agent' => 'test'
     }
     experiment = config.get_experiment_from_key('test_experiment')
+    expect(@event_builder.send(:bot_filtering)).to eq(true)
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', user_attributes)
     expect(impression_event.params).to eq(@expected_impression_params)
     expect(impression_event.url).to eq(@expected_endpoint)
