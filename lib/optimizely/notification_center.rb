@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017, Optimizely and contributors
+#    Copyright 2017-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -86,20 +86,31 @@ module Optimizely
       false
     end
 
+    # @deprecated Use {#clear_notification_listeners} instead.
     def clear_notifications(notification_type)
-      # Removes notifications for a certain notification type
-      #
-      # Args:
-      #  notification_type: one of the constants in NOTIFICATION_TYPES
+      @logger.log Logger::WARN, "'clear_notifications' is deprecated. Call 'clear_notification_listeners' instead."
+      clear_notification_listeners(notification_type)
+    end
 
+    # Removes notifications for a certain notification type
+    #
+    # @param notification_type - one of the constants in NOTIFICATION_TYPES
+
+    def clear_notification_listeners(notification_type)
       return nil unless notification_type_valid?(notification_type)
 
       @notifications[notification_type] = []
       @logger.log Logger::INFO, "All callbacks for notification type #{notification_type} have been removed."
     end
 
+    # @deprecated Use {#clear_all_notification_listeners} instead.
     def clean_all_notifications
-      # Removes all notifications
+      @logger.log Logger::WARN, "'clean_all_notifications' is deprecated. Call 'clear_all_notification_listeners' instead."
+      clear_all_notification_listeners
+    end
+
+    # Removes all notifications
+    def clear_all_notification_listeners
       @notifications.each_key { |key| @notifications[key] = [] }
     end
 
