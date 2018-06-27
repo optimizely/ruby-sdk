@@ -89,7 +89,7 @@ module Optimizely
       #
       # Returns boolean indicating the result of comparing the condition value against the user attributes.
 
-      condition_array[1] == @user_attributes[condition_array[0]]
+      condition_array[1] == @user_attributes[condition_array[0].to_sym]
     end
 
     def evaluate(conditions)
