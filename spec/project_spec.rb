@@ -192,10 +192,12 @@ describe 'Optimizely' do
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
       params = @expected_activate_params
-      params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                key: 'browser_type',
-                                                type: 'custom',
-                                                value: 'firefox')
+      params[:visitors][0][:attributes].unshift(
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -215,10 +217,12 @@ describe 'Optimizely' do
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match after a force variation call' do
       params = @expected_activate_params
-      params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                key: 'browser_type',
-                                                type: 'custom',
-                                                value: 'firefox')
+      params[:visitors][0][:attributes].unshift(
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -478,10 +482,12 @@ describe 'Optimizely' do
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
       params = @expected_track_event_params
-      params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                key: 'browser_type',
-                                                type: 'custom',
-                                                value: 'firefox')
+      params[:visitors][0][:attributes].unshift(
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -560,10 +566,12 @@ describe 'Optimizely' do
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       params = @expected_track_event_params
       params[:visitors][0][:visitor_id] = 'forced_audience_user'
-      params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                key: 'browser_type',
-                                                type: 'custom',
-                                                value: 'wrong_browser')
+      params[:visitors][0][:attributes].unshift(
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'wrong_browser'
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',

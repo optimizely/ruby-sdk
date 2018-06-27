@@ -110,10 +110,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a string value' do
-    @expected_impression_params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                                   key: 'browser_type',
-                                                                   type: 'custom',
-                                                                   value: 'firefox')
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox'
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user',
@@ -124,10 +126,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a false value' do
-    @expected_impression_params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                                   key: 'browser_type',
-                                                                   type: 'custom',
-                                                                   value: false)
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: false
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user',
@@ -138,10 +142,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a zero value' do
-    @expected_impression_params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                                   key: 'browser_type',
-                                                                   type: 'custom',
-                                                                   value: 0)
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 0
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', 'browser_type' => 0)
@@ -167,10 +173,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_conversion_event is called with attributes' do
-    @expected_conversion_params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                                   key: 'browser_type',
-                                                                   type: 'custom',
-                                                                   value: 'firefox')
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox'
+    )
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'},
                                                               nil, '111127' => '111128')
@@ -343,10 +351,12 @@ describe Optimizely::EventBuilder do
                                                                                 value: 13.37,
                                                                                 tags: event_tags)
 
-    @expected_conversion_params[:visitors][0][:attributes].unshift(entity_id: '111094',
-                                                                   key: 'browser_type',
-                                                                   type: 'custom',
-                                                                   value: 'firefox')
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      entity_id: '111094',
+      key: 'browser_type',
+      type: 'custom',
+      value: 'firefox'
+    )
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'},
                                                               event_tags, '111127' => '111128')
@@ -441,15 +451,18 @@ describe Optimizely::EventBuilder do
 
   # Create conversion event with bucketing ID
   it 'should create valid Event when create_conversion_event is called with Bucketing ID attribute' do
-    @expected_conversion_params[:visitors][0][:attributes].unshift({
-                                                                     entity_id: '111094',
-                                                                     key: 'browser_type',
-                                                                     type: 'custom',
-                                                                     value: 'firefox'
-                                                                   },       entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
-                                                                            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
-                                                                            type: 'custom',
-                                                                            value: 'variation')
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      type: 'custom',
+      value: 'variation'
+    )
 
     user_attributes = {
       'browser_type' => 'firefox',
