@@ -34,6 +34,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
+      expect(project_config.bot_filtering).to eq(config_body['botFiltering'])
       expect(project_config.events).to eq(config_body['events'])
       expect(project_config.feature_flags).to eq(config_body['featureFlags'])
       expect(project_config.groups).to eq(config_body['groups'])
@@ -742,7 +743,7 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_attribute_id' do
+    describe 'get_attribute_id_invalid_key' do
       it 'should log a message when provided attribute key is invalid' do
         config.get_attribute_id('invalid_attr')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
@@ -818,7 +819,7 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_attribute_id' do
+    describe 'get_attribute_id_invalid_key' do
       it 'should raise an error when provided attribute key is invalid' do
         expect { config.get_attribute_id('invalid_attr') }.to raise_error(Optimizely::InvalidAttributeError)
       end
@@ -1024,6 +1025,28 @@ describe Optimizely::ProjectConfig do
       variation = config.get_forced_variation(@valid_experiment[:key], @user_id_2)
       expect(variation['id']).to eq(@valid_variation[:id])
       expect(variation['key']).to eq(@valid_variation[:key])
+    end
+  end
+
+  describe 'get_attribute_id_valid_key' do
+    let(:spy_logger) { spy('logger') }
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+
+    it 'should return attribute ID when provided valid attribute key has reserved prefix' do
+      config.attribute_key_map['$opt_bot'] = {'key' => '$opt_bot', 'id' => '111'}
+      expect(config.get_attribute_id('$opt_bot')).to eq('111')
+      expect(spy_logger).to have_received(:log).with(
+        Logger::WARN,
+        "Attribute '$opt_bot' unexpectedly has reserved prefix '$opt_'; using attribute ID instead of reserved attribute name."
+      )
+    end
+
+    it 'should return attribute ID when provided attribute key is valid' do
+      expect(config.get_attribute_id('browser_type')).to eq('111094')
+    end
+
+    it 'should return attribute key as attribute ID when key has reserved prefix but is not present in data file' do
+      expect(config.get_attribute_id('$opt_user_agent')).to eq('$opt_user_agent')
     end
   end
 end

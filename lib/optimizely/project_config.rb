@@ -15,6 +15,7 @@
 #    limitations under the License.
 #
 require 'json'
+require_relative 'helpers/constants'
 require_relative 'helpers/validator'
 
 module Optimizely
@@ -25,6 +26,7 @@ module Optimizely
   class ProjectConfig
     # Representation of the Optimizely project config.
     RUNNING_EXPERIMENT_STATUS = ['Running'].freeze
+    RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
     # Gets project config attributes.
     attr_reader :error_handler
@@ -41,6 +43,7 @@ module Optimizely
     attr_reader :project_id
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
+    attr_reader :bot_filtering
     attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
@@ -88,6 +91,7 @@ module Optimizely
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
       @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
+      @bot_filtering = config['botFiltering']
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
@@ -363,8 +367,23 @@ module Optimizely
     end
 
     def get_attribute_id(attribute_key)
+      # Get attribute ID for the provided attribute key.
+      #
+      # Args:
+      #   Attribute key for which attribute is to be fetched.
+      #
+      # Returns:
+      #   Attribute ID corresponding to the provided attribute key.
       attribute = @attribute_key_map[attribute_key]
-      return attribute['id'] if attribute
+      has_reserved_prefix = attribute_key.to_s.start_with?(RESERVED_ATTRIBUTE_PREFIX)
+      unless attribute.nil?
+        if has_reserved_prefix
+          @logger.log(Logger::WARN, "Attribute '#{attribute_key}' unexpectedly has reserved prefix '#{RESERVED_ATTRIBUTE_PREFIX}'; "\
+                      'using attribute ID instead of reserved attribute name.')
+        end
+        return attribute['id']
+      end
+      return attribute_key if has_reserved_prefix
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil

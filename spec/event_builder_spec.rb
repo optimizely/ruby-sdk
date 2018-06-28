@@ -43,7 +43,12 @@ describe Optimizely::EventBuilder do
       account_id: '12001',
       project_id: '111001',
       visitors: [{
-        attributes: [],
+        attributes: [{
+          entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          type: 'custom',
+          value: true
+        }],
         visitor_id: 'test_user',
         snapshots: [{
           decisions: [{
@@ -68,7 +73,12 @@ describe Optimizely::EventBuilder do
       account_id: '12001',
       project_id: '111001',
       visitors: [{
-        attributes: [],
+        attributes: [{
+          entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          type: 'custom',
+          value: true
+        }],
         visitor_id: 'test_user',
         snapshots: [{
           decisions: [{
@@ -100,12 +110,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a string value' do
-    @expected_impression_params[:visitors][0][:attributes] = [{
+    @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
       key: 'browser_type',
       type: 'custom',
       value: 'firefox'
-    }]
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user',
@@ -116,12 +126,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a false value' do
-    @expected_impression_params[:visitors][0][:attributes] = [{
+    @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
       key: 'browser_type',
       type: 'custom',
       value: false
-    }]
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user',
@@ -132,12 +142,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes as a zero value' do
-    @expected_impression_params[:visitors][0][:attributes] = [{
+    @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
       key: 'browser_type',
       type: 'custom',
       value: 0
-    }]
+    )
 
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', 'browser_type' => 0)
@@ -147,8 +157,6 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes is not in the datafile' do
-    @expected_impression_params[:visitors][0][:attributes] = []
-
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user',
                                                               invalid_attribute: 'sorry_not_sorry')
@@ -165,12 +173,12 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_conversion_event is called with attributes' do
-    @expected_conversion_params[:visitors][0][:attributes] = [{
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
       key: 'browser_type',
       type: 'custom',
       value: 'firefox'
-    }]
+    )
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'},
                                                               nil, '111127' => '111128')
@@ -182,7 +190,6 @@ describe Optimizely::EventBuilder do
   it 'should create a valid Event when create_conversion_event is called with revenue event tag' do
     event_tags = {'revenue' => 4200}
 
-    @expected_conversion_params[:visitors][0][:attributes] = []
     @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 4200,
                                                                                 tags: event_tags)
 
@@ -196,7 +203,6 @@ describe Optimizely::EventBuilder do
   it 'should create a valid Event when create_conversion_event is called with valid string revenue event tag' do
     event_tags = {'revenue' => '4200'}
 
-    @expected_conversion_params[:visitors][0][:attributes] = []
     @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 4200,
                                                                                 tags: event_tags)
 
@@ -210,7 +216,6 @@ describe Optimizely::EventBuilder do
   it 'should create a valid Event when create_conversion_event is called with invalid revenue event tag' do
     event_tags = {'revenue' => 'invalid revenue'}
 
-    @expected_conversion_params[:visitors][0][:attributes] = []
     @expected_conversion_params[:visitors][0][:snapshots][0][:events][0][:tags] = event_tags
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags,
@@ -223,7 +228,6 @@ describe Optimizely::EventBuilder do
   it 'should create a valid Event when create_conversion_event is called with non-revenue event tag' do
     event_tags = {'non-revenue' => 4200}
 
-    @expected_conversion_params[:visitors][0][:attributes] = []
     @expected_conversion_params[:visitors][0][:snapshots][0][:events][0][:tags] = event_tags
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, event_tags,
@@ -239,7 +243,6 @@ describe Optimizely::EventBuilder do
       'non-revenue' => 4200
     }
 
-    @expected_conversion_params[:visitors][0][:attributes] = []
     @expected_conversion_params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 4200,
                                                                                 tags: event_tags)
 
@@ -348,12 +351,12 @@ describe Optimizely::EventBuilder do
                                                                                 value: 13.37,
                                                                                 tags: event_tags)
 
-    @expected_conversion_params[:visitors][0][:attributes] = [{
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
       key: 'browser_type',
       type: 'custom',
       value: 'firefox'
-    }]
+    )
 
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', {'browser_type' => 'firefox'},
                                                               event_tags, '111127' => '111128')
@@ -364,21 +367,22 @@ describe Optimizely::EventBuilder do
 
   # Create impression event with bucketing ID
   it 'should create valid Event when create_impression_event is called with Bucketing ID attribute' do
-    @expected_impression_params[:visitors][0][:attributes] = [{
-      entity_id: '111094',
-      key: 'browser_type',
-      type: 'custom',
-      value: 'firefox'
-    }, {
-      entity_id: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
-      key: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
       type: 'custom',
       value: 'variation'
-    }]
+    )
 
     user_attributes = {
       'browser_type' => 'firefox',
-      OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'variation'
+      '$opt_bucketing_id' => 'variation'
     }
     experiment = config.get_experiment_from_key('test_experiment')
     impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', user_attributes)
@@ -387,24 +391,134 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
+  it 'should create valid Event with user agent when bot_filtering is enabled' do
+    # Test that create_impression_event creates Event object
+    # with right params when user agent attribute is provided and
+    # bot filtering is enabled
+
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: true
+    }]
+
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      type: 'custom',
+      value: 'test'
+    )
+    user_attributes = {
+      '$opt_user_agent' => 'test'
+    }
+    experiment = config.get_experiment_from_key('test_experiment')
+    expect(@event_builder.send(:bot_filtering)).to eq(true)
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', user_attributes)
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event with user agent when bot_filtering is disabled' do
+    # Test that create_impression_event creates Event object
+    # with right params when user agent attribute is provided and
+    # bot filtering is disabled
+
+    @expected_impression_params[:visitors][0][:attributes] = [{
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: false
+    }]
+    @expected_impression_params[:visitors][0][:attributes].unshift(
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      type: 'custom',
+      value: 'test'
+    )
+
+    user_attributes = {
+      '$opt_user_agent' => 'test'
+    }
+    experiment = config.get_experiment_from_key('test_experiment')
+    allow(@event_builder).to receive(:bot_filtering).and_return(false)
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', user_attributes)
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
   # Create conversion event with bucketing ID
   it 'should create valid Event when create_conversion_event is called with Bucketing ID attribute' do
-    @expected_conversion_params[:visitors][0][:attributes] = [{
-      entity_id: '111094',
-      key: 'browser_type',
-      type: 'custom',
-      value: 'firefox'
-    }, {
-      entity_id: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
-      key: OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
       type: 'custom',
       value: 'variation'
-    }]
+    )
 
     user_attributes = {
       'browser_type' => 'firefox',
-      OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'variation'
+      '$opt_bucketing_id' => 'variation'
     }
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', user_attributes, nil,
+                                                              '111127' => '111128')
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event with user agent when bot_filtering is enabled' do
+    # Test that create_conversion_event creates Event object
+    # with right params when user agent attribute is provided and
+    # bot filtering is enabled
+
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      type: 'custom',
+      value: 'test'
+    )
+
+    user_attributes = {
+      '$opt_user_agent' => 'test'
+    }
+    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', user_attributes, nil,
+                                                              '111127' => '111128')
+    expect(conversion_event.params).to eq(@expected_conversion_params)
+    expect(conversion_event.url).to eq(@expected_endpoint)
+    expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event with user agent when bot_filtering is disabled' do
+    # Test that create_conversion_event creates Event object
+    # with right params when user agent attribute is provided and
+    # bot filtering is disabled
+    @expected_conversion_params[:visitors][0][:attributes] = [{
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: false
+    }]
+
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['USER_AGENT'],
+      type: 'custom',
+      value: 'test'
+    )
+
+    user_attributes = {
+      '$opt_user_agent' => 'test'
+    }
+    allow(@event_builder).to receive(:bot_filtering).and_return(false)
     conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', user_attributes, nil,
                                                               '111127' => '111128')
     expect(conversion_event.params).to eq(@expected_conversion_params)

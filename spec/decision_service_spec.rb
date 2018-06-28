@@ -51,7 +51,7 @@ describe Optimizely::DecisionService do
     it 'should return the correct variation ID (using Bucketing ID attrbiute) for a given user for whom a variation has been forced' do
       user_attributes = {
         'browser_type' => 'firefox',
-        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'
       }
       config.set_forced_variation('test_experiment_with_audience', 'test_user', 'control_with_audience')
       expect(decision_service.get_variation('test_experiment_with_audience', 'test_user', user_attributes)).to eq('122228')
@@ -88,7 +88,7 @@ describe Optimizely::DecisionService do
     it 'should return correct variation ID (using Bucketing ID attrbiute) if user ID is in whitelisted Variations and variation is valid' do
       user_attributes = {
         'browser_type' => 'firefox',
-        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'
       }
       expect(decision_service.get_variation('test_experiment', 'forced_user1', user_attributes)).to eq('111128')
       expect(spy_logger).to have_received(:log)
@@ -208,7 +208,7 @@ describe Optimizely::DecisionService do
         }
         user_attributes = {
           'browser_type' => 'firefox',
-          OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+          Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'
         }
         expect(spy_user_profile_service).to receive(:lookup).once.and_return(nil)
 

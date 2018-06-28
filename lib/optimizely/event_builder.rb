@@ -22,8 +22,6 @@ require_relative '../optimizely/helpers/event_tag_utils'
 require 'securerandom'
 
 module Optimizely
-  RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY = 'optimizely_bucketing_id'
-
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
@@ -58,6 +56,13 @@ module Optimizely
 
     private
 
+    def bot_filtering
+      # Get bot filtering bool
+      #
+      # Returns 'botFiltering' value in the datafile.
+      @config.bot_filtering
+    end
+
     def get_common_params(user_id, attributes)
       # Get params which are used in both conversion and impression events.
       #
@@ -69,33 +74,28 @@ module Optimizely
       visitor_attributes = []
 
       attributes&.keys&.each do |attribute_key|
-        # Omit null attribute value
+        # Omit null attribute values
         attribute_value = attributes[attribute_key]
-        next if attribute_value.nil?
-
-        if attribute_key.eql? RESERVED_ATTRIBUTE_KEY_BUCKETING_ID
-          # TODO: (Copied from PHP-SDK) (Alda): the type for bucketing ID attribute may change so
-          # that custom attributes are not overloaded
-          feature = {
-            entity_id: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID,
-            key: RESERVED_ATTRIBUTE_KEY_BUCKETING_ID_EVENT_PARAM_KEY,
-            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-            value: attribute_value
-          }
-        else
-          # Skip attributes not in the datafile
-          attribute_id = @config.get_attribute_id(attribute_key)
-          next unless attribute_id
-
-          feature = {
-            entity_id: attribute_id,
-            key: attribute_key,
-            type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-            value: attribute_value
-          }
-
+        unless attribute_value.nil?
+          attribute_id = @config.get_attribute_id attribute_key
+          if attribute_id
+            visitor_attributes.push(
+              entity_id: attribute_id,
+              key: attribute_key,
+              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+              value: attribute_value
+            )
+          end
         end
-        visitor_attributes.push(feature)
+      end
+      # Append Bot Filtering Attribute
+      if bot_filtering == true || bot_filtering == false
+        visitor_attributes.push(
+          entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+          type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+          value: bot_filtering
+        )
       end
 
       common_params = {

@@ -128,7 +128,12 @@ describe 'Optimizely' do
         account_id: '12001',
         project_id: '111001',
         visitors: [{
-          attributes: [],
+          attributes: [{
+            entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            type: 'custom',
+            value: true
+          }],
           snapshots: [{
             decisions: [{
               campaign_id: '1',
@@ -187,12 +192,12 @@ describe 'Optimizely' do
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match' do
       params = @expected_activate_params
-      params[:visitors][0][:attributes] = [{
+      params[:visitors][0][:attributes].unshift(
         entity_id: '111094',
         key: 'browser_type',
         type: 'custom',
         value: 'firefox'
-      }]
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -212,12 +217,12 @@ describe 'Optimizely' do
 
     it 'should properly activate a user, (with attributes provided) when there is an audience match after a force variation call' do
       params = @expected_activate_params
-      params[:visitors][0][:attributes] = [{
+      params[:visitors][0][:attributes].unshift(
         entity_id: '111094',
         key: 'browser_type',
         type: 'custom',
         value: 'firefox'
-      }]
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -351,12 +356,10 @@ describe 'Optimizely' do
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       params = @expected_activate_params
       params[:visitors][0][:visitor_id] = 'forced_audience_user'
-      params[:visitors][0][:attributes] = [{
-        entity_id: '111094',
-        key: 'browser_type',
-        type: 'custom',
-        value: 'wrong_browser'
-      }]
+      params[:visitors][0][:attributes].unshift(entity_id: '111094',
+                                                key: 'browser_type',
+                                                type: 'custom',
+                                                value: 'wrong_browser')
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -394,7 +397,12 @@ describe 'Optimizely' do
         account_id: '12001',
         project_id: '111001',
         visitors: [{
-          attributes: [],
+          attributes: [{
+            entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            type: 'custom',
+            value: true
+          }],
           snapshots: [{
             decisions: [{
               campaign_id: '1',
@@ -474,12 +482,12 @@ describe 'Optimizely' do
 
     it 'should properly track an event by calling dispatch_event with right params with attributes provided' do
       params = @expected_track_event_params
-      params[:visitors][0][:attributes] = [{
+      params[:visitors][0][:attributes].unshift(
         entity_id: '111094',
         key: 'browser_type',
         type: 'custom',
         value: 'firefox'
-      }]
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -558,12 +566,12 @@ describe 'Optimizely' do
     it 'should override the audience check if the user is whitelisted to a specific variation' do
       params = @expected_track_event_params
       params[:visitors][0][:visitor_id] = 'forced_audience_user'
-      params[:visitors][0][:attributes] = [{
+      params[:visitors][0][:attributes].unshift(
         entity_id: '111094',
         key: 'browser_type',
         type: 'custom',
         value: 'wrong_browser'
-      }]
+      )
       params[:visitors][0][:snapshots][0][:decisions] = [{
         campaign_id: '3',
         experiment_id: '122227',
@@ -628,7 +636,7 @@ describe 'Optimizely' do
     it 'should have get_variation return expected variation with bucketing id attribute when audience conditions match' do
       user_attributes = {
         'browser_type' => 'firefox',
-        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'
       }
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
         .to eq('control_with_audience')
@@ -648,7 +656,7 @@ describe 'Optimizely' do
 
     it 'should have get_variation return nil with bucketing id attribute when audience conditions do not match' do
       user_attributes = {'browser_type' => 'chrome',
-                         OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'}
+                         Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'}
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
         .to eq(nil)
     end
@@ -660,7 +668,7 @@ describe 'Optimizely' do
     it 'should have get_variation return nil with bucketing id attribute when experiment is not Running' do
       user_attributes = {
         'browser_type' => 'firefox',
-        OptimizelySpec::RESERVED_ATTRIBUTE_KEY_BUCKETING_ID => 'pid'
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'pid'
       }
       expect(project_instance.get_variation('test_experiment_not_started', 'test_user', user_attributes)).to eq(nil)
     end
@@ -699,7 +707,12 @@ describe 'Optimizely' do
         account_id: '12001',
         project_id: '111001',
         visitors: [{
-          attributes: [],
+          attributes: [{
+            entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            type: 'custom',
+            value: true
+          }],
           snapshots: [{
             decisions: [{
               campaign_id: '4',
