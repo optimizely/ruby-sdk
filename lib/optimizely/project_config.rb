@@ -90,7 +90,7 @@ module Optimizely
       @feature_flags = config.fetch('featureFlags', [])
       @groups = config.fetch('groups', [])
       @project_id = config['projectId']
-      @anonymize_ip = config.key? 'anonymizeIP' ? config['anonymizeIP'] : false
+      @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
