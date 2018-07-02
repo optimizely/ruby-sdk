@@ -1,3 +1,8 @@
+## 2.1.0
+July 2nd, 2018
+
+- Introduces support for bot filtering ([#106](https://github.com/optimizely/ruby-sdk/pull/106)).
+
 ## 2.0.3
 June 25th, 2018
 
