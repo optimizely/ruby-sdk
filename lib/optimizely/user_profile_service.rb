@@ -21,18 +21,15 @@ module Optimizely
     # Class encapsulating user profile service functionality.
     # Override with your own implementation for storing and retrieving user profiles.
 
-    def lookup(user_id)
-      # Retrieve the Hash user profile associated with a given user ID.
-      #
-      # user_id - String user ID
-      #
-      # Returns Hash user profile.
-    end
+    # Retrieve the Hash user profile associated with a given user ID.
+    #
+    # @param user_id - String user ID
+    # @return [Hash] user profile.
+    def lookup(user_id); end
 
-    def save(user_profile)
-      # Saves a given user profile.
-      #
-      # user_profile - Hash user profile.
-    end
+    # Saves a given user profile.
+    #
+    # @param user_profile - Hash user profile.
+    def save(user_profile); end
   end
 end

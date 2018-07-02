@@ -6,6 +6,7 @@ Gemfile.lock
 /_yardoc/
 /coverage/
 /doc/
+!/doc/README.md
 /spec/reports/
 /tmp/
 *.DS_Store
