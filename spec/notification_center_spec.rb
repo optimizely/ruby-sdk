@@ -255,7 +255,7 @@ describe Optimizely::NotificationCenter do
 
       it 'should not remove notifications for an invalid notification type' do
         invalid_type = 'Invalid notification'
-        expect { @inner_notification_center.clear_notifications(invalid_type) }
+        expect { @inner_notification_center.clear_notification_listeners(invalid_type) }
           .to raise_error(Optimizely::InvalidNotificationType)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Invalid notification type.')
@@ -273,7 +273,7 @@ describe Optimizely::NotificationCenter do
 
       it 'should remove all notifications for a valid notification type' do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
-        @inner_notification_center.clear_notifications(notification_type)
+        @inner_notification_center.clear_notification_listeners(notification_type)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::INFO, "All callbacks for notification type #{notification_type} have been removed.")
         expect(
@@ -288,10 +288,19 @@ describe Optimizely::NotificationCenter do
         ).to eq(1)
       end
 
-      it 'should not throw an error when clear_notifications is called again for the same notification type' do
+      it 'should call clear_notification_listeners and log depreciation message' do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
+        expect(@inner_notification_center).to receive(:clear_notification_listeners).once.with(notification_type)
         @inner_notification_center.clear_notifications(notification_type)
-        expect { @inner_notification_center.clear_notifications(notification_type) }
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN, "'clear_notifications' is deprecated. Call 'clear_notification_listeners' instead."
+        )
+      end
+
+      it 'should not throw an error when clear_notification_listeners is called again for the same notification type' do
+        notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
+        @inner_notification_center.clear_notification_listeners(notification_type)
+        expect { @inner_notification_center.clear_notification_listeners(notification_type) }
           .to_not raise_error(Optimizely::InvalidNotificationType)
         expect(
           @inner_notification_center.notifications[
@@ -361,16 +370,24 @@ describe Optimizely::NotificationCenter do
       end
 
       it 'should remove all notifications for each notification type' do
-        @inner_notification_center.clean_all_notifications
+        @inner_notification_center.clear_all_notification_listeners
         @inner_notification_center.notifications.each_key do |key|
           expect(@inner_notification_center.notifications[key]).to be_empty
         end
       end
 
-      it 'clean_all_notifications does not throw an error when called again' do
-        @inner_notification_center.clean_all_notifications
-        expect { @inner_notification_center.clean_all_notifications }
+      it 'clear_all_notification_listeners does not throw an error when called again' do
+        @inner_notification_center.clear_all_notification_listeners
+        expect { @inner_notification_center.clear_all_notification_listeners }
           .to_not raise_error
+      end
+
+      it 'should call clear_all_notification_listeners and log depreciation message' do
+        expect(@inner_notification_center).to receive(:clear_all_notification_listeners).once
+        @inner_notification_center.clean_all_notifications
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN, "'clean_all_notifications' is deprecated. Call 'clear_all_notification_listeners' instead."
+        )
       end
     end
 
