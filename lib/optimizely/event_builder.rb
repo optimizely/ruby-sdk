@@ -153,7 +153,7 @@ module Optimizely
 
       event_params = get_common_params(user_id, attributes)
       conversion_params = get_conversion_params(event_key, event_tags, experiment_variation_map)
-      event_params[:visitors][0][:snapshots] = conversion_params
+      event_params[:visitors][0][:snapshots] = [conversion_params]
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
@@ -195,43 +195,38 @@ module Optimizely
       # event_tags -               +Hash+ Values associated with the event.
       # experiment_variation_map - +Hash+ Map of experiment IDs to bucketed variation IDs
       #
-      # Returns +Hash+ Impression event params
+      # Returns +Hash+ Conversion event params
 
-      conversion_event_params = []
-
+      single_snapshot = {}
+      single_snapshot[:decisions] = []
       experiment_variation_map.each do |experiment_id, variation_id|
-        single_snapshot = {
-          decisions: [{
-            campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
-            experiment_id: experiment_id,
-            variation_id: variation_id
-          }],
-          events: []
-        }
-
-        event_object = {
-          entity_id: @config.event_key_map[event_key]['id'],
-          timestamp: create_timestamp,
-          uuid: create_uuid,
-          key: event_key
-        }
-
-        if event_tags
-          revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags, @logger)
-          event_object[:revenue] = revenue_value if revenue_value
-
-          numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags, @logger)
-          event_object[:value] = numeric_value if numeric_value
-
-          event_object[:tags] = event_tags
-        end
-
-        single_snapshot[:events] = [event_object]
-
-        conversion_event_params.push(single_snapshot)
+        next unless variation_id
+        single_snapshot[:decisions].push(
+          campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
+          experiment_id: experiment_id,
+          variation_id: variation_id
+        )
       end
 
-      conversion_event_params
+      event_object = {
+        entity_id: @config.event_key_map[event_key]['id'],
+        timestamp: create_timestamp,
+        uuid: create_uuid,
+        key: event_key
+      }
+
+      if event_tags
+        revenue_value = Helpers::EventTagUtils.get_revenue_value(event_tags, @logger)
+        event_object[:revenue] = revenue_value if revenue_value
+
+        numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags, @logger)
+        event_object[:value] = numeric_value if numeric_value
+
+        event_object[:tags] = event_tags
+      end
+
+      single_snapshot[:events] = [event_object]
+      single_snapshot
     end
 
     def create_timestamp
