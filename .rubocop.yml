@@ -39,5 +39,5 @@ Layout/SpaceInsideHashLiteralBraces:
 Naming/VariableNumber:
   Enabled: false
 
-Lint/RescueWithoutErrorClass:
+Style/RescueStandardError:
    Enabled: false
