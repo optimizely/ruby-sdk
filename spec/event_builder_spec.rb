@@ -253,18 +253,6 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.http_verb).to eq(:post)
   end
 
-  it 'should create_conversion_event when Event is used in multiple experiments' do
-    @expected_conversion_params[:visitors][0][:snapshots][0][:decisions].push(
-      campaign_id: '4',
-      experiment_id: '122230',
-      variation_id: '122231'
-    )
-    conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, '111127' => '111128', '122230' => '122231')
-    expect(conversion_event.params).to eq(@expected_conversion_params)
-    expect(conversion_event.url).to eq(@expected_endpoint)
-    expect(conversion_event.http_verb).to eq(:post)
-  end
-
   it 'should create a valid Event when create_conversion_event is called with boolean event tag' do
     event_tags = {
       'boolean_tag' => false,
@@ -536,5 +524,24 @@ describe Optimizely::EventBuilder do
     expect(conversion_event.params).to eq(@expected_conversion_params)
     expect(conversion_event.url).to eq(@expected_endpoint)
     expect(conversion_event.http_verb).to eq(:post)
+  end
+
+  describe 'multiple_experiments_event' do
+    it 'should create_conversion_event when Event is used in multiple experiments' do
+      @expected_conversion_params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '1',
+        experiment_id: '111127',
+        variation_id: '111128'
+      }, {
+        campaign_id: '4',
+        experiment_id: '122230',
+        variation_id: '122231'
+      }]
+
+      conversion_event = @event_builder.create_conversion_event('test_event', 'test_user', nil, nil, '111127' => '111128', '122230' => '122231')
+      expect(conversion_event.params).to eq(@expected_conversion_params)
+      expect(conversion_event.url).to eq(@expected_endpoint)
+      expect(conversion_event.http_verb).to eq(:post)
+    end
   end
 end

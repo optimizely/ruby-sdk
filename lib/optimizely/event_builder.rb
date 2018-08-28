@@ -222,7 +222,7 @@ module Optimizely
         numeric_value = Helpers::EventTagUtils.get_numeric_value(event_tags, @logger)
         event_object[:value] = numeric_value if numeric_value
 
-        event_object[:tags] = event_tags
+        event_object[:tags] = event_tags unless event_tags.empty?
       end
 
       single_snapshot[:events] = [event_object]
