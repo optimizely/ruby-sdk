@@ -27,7 +27,7 @@ module OptimizelySpec
     'version' => '2',
     'events' => [{
       'key' => 'test_event',
-      'experimentIds' => ['111127'],
+      'experimentIds' => %w[111127 122230],
       'id' => '111095'
     }, {
       'key' => 'Total Revenue',
