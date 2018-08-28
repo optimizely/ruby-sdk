@@ -42,7 +42,6 @@ module Optimizely
 
     def add_notification_listener(notification_type, notification_callback)
       return nil unless notification_type_valid?(notification_type)
-
       unless notification_callback
         @logger.log Logger::ERROR, 'Callback can not be empty.'
         return nil

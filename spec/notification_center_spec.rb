@@ -41,9 +41,8 @@ describe Optimizely::NotificationCenter do
     describe 'test add notification with invalid params' do
       it 'should log and return nil if notification type is empty' do
         expect(notification_center.add_notification_listener(
-                 nil,
-                 @callback_reference
-        )).to eq(nil)
+                 nil, @callback_reference
+               )).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Notification type can not be empty.')
       end
@@ -52,7 +51,7 @@ describe Optimizely::NotificationCenter do
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  nil
-        )).to eq(nil)
+               )).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Callback can not be empty.')
       end
@@ -61,7 +60,7 @@ describe Optimizely::NotificationCenter do
         expect(notification_center.add_notification_listener(
                  'Test notification type',
                  @callback_reference
-        )).to eq(nil)
+               )).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Invalid notification type.')
       end
@@ -70,7 +69,7 @@ describe Optimizely::NotificationCenter do
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  'Invalid callback!'
-        )).to eq(nil)
+               )).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Invalid notification callback given.')
       end
@@ -81,7 +80,7 @@ describe Optimizely::NotificationCenter do
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference
-        )).to eq(1)
+               )).to eq(1)
         # verifies that one notification is added
         expect(notification_center.notifications[Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]].length)
           .to eq(1)
@@ -95,7 +94,7 @@ describe Optimizely::NotificationCenter do
           expect(notification_center.add_notification_listener(
                    value,
                    @callback_reference
-          )).to eq(notification_id)
+                 )).to eq(notification_id)
         end
         notification_center.notifications.each_key do |key|
           expect(notification_center.notifications[key].length)
@@ -141,19 +140,19 @@ describe Optimizely::NotificationCenter do
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference
-        )).to eq(-1)
+               )).to eq(-1)
       end
 
       it 'should add same callback for a different notification type' do
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference
-        )).to eq(1)
+               )).to eq(1)
 
         expect(notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                  @callback_reference
-        )).to eq(2)
+               )).to eq(2)
       end
     end
 
@@ -169,18 +168,18 @@ describe Optimizely::NotificationCenter do
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference
-        )).to eq(1)
+               )).to eq(1)
 
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                  @callback_reference
-        )).to eq(2)
+               )).to eq(2)
 
         # add another callback for NOTIFICATION_TYPES::ACTIVATE
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference_second
-        )).to eq(3)
+               )).to eq(3)
         # Verify that notifications length for NOTIFICATION_TYPES::ACTIVATE is 2
         expect(@inner_notification_center.notifications[
          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]].length).to eq(2)
@@ -338,27 +337,27 @@ describe Optimizely::NotificationCenter do
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference
-        )).to eq(1)
+               )).to eq(1)
 
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference_second
-        )).to eq(2)
+               )).to eq(2)
 
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
                  @callback_reference_third
-        )).to eq(3)
+               )).to eq(3)
 
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                  @callback_reference
-        )).to eq(4)
+               )).to eq(4)
 
         expect(@inner_notification_center.add_notification_listener(
                  Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                  @callback_reference_second
-        )).to eq(5)
+               )).to eq(5)
 
         # verify that notifications length for each type reflects the just added callbacks
 

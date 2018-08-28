@@ -57,7 +57,7 @@ describe Optimizely::Bucketer do
     expect(bucketer.send(:generate_bucket_value, get_bucketing_key(
                                                    'a very very very very very very very very very very very very '\
                                                    'very very very long ppd string'
-    ))).to eq(6128)
+                                                 ))).to eq(6128)
   end
 
   it 'should return the proper variation for a user in a mutually exclusive grouped experiment' do
