@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -85,9 +85,8 @@ module Optimizely
   class InvalidDatafileVersionError < Error
     # Raised when a datafile with an unsupported version is provided
 
-    def initialize(msg = 'Provided datafile is an unsupported version. Please use SDK version 1.1.2 or earlier '\
-                  'for datafile version 1.')
-      super
+    def initialize(version)
+      super("This version of the Ruby SDK does not support the given datafile version: #{version}.")
     end
   end
 

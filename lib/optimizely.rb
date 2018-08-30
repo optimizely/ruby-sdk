@@ -64,17 +64,15 @@ module Optimizely
 
       begin
         @config = ProjectConfig.new(datafile, @logger, @error_handler)
+      rescue InvalidDatafileVersionError => e
+        @is_valid = false
+        @logger = SimpleLogger.new
+        @logger.log(Logger::ERROR, e.message)
+        return
       rescue
         @is_valid = false
         @logger = SimpleLogger.new
         @logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
-        return
-      end
-
-      unless @config.parsing_succeeded?
-        @is_valid = false
-        @logger = SimpleLogger.new
-        @logger.log(Logger::ERROR, InvalidDatafileVersionError.new.message)
         return
       end
 
