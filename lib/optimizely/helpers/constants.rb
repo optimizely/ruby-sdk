@@ -321,6 +321,12 @@ module Optimizely
         'BUCKETING_ID' => '$opt_bucketing_id',
         'USER_AGENT' => '$opt_user_agent'
       }.freeze
+
+      SUPPORTED_VERSIONS = {
+        'v2' => '2',
+        'v3' => '3',
+        'v4' => '4'
+      }.freeze
     end
   end
 end
