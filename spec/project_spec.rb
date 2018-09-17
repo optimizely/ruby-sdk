@@ -228,6 +228,92 @@ describe 'Optimizely' do
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
+    it 'should properly activate a user, (with attributes of valid types) when there is an audience match' do
+      params = @expected_activate_params
+      params[:visitors][0][:attributes].unshift(
+        {
+          entity_id: '111094',
+          key: 'browser_type',
+          type: 'custom',
+          value: 'firefox'
+        }, {
+          entity_id: '111095',
+          key: 'boolean_key',
+          type: 'custom',
+          value: true
+        }, {
+          entity_id: '111096',
+          key: 'integer_key',
+          type: 'custom',
+          value: 5
+        },
+        entity_id: '111097',
+        key: 'double_key',
+        type: 'custom',
+        value: 5.5
+      )
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122228'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
+
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+      attributes = {
+        'browser_type' => 'firefox',
+        'boolean_key' => true,
+        'integer_key' => 5,
+        'double_key' => 5.5
+      }
+
+      expect(project_instance.activate('test_experiment_with_audience', 'test_user', attributes))
+        .to eq('control_with_audience')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
+    end
+
+    it 'should properly activate a user, (with attributes of invalid types) when there is an audience match' do
+      params = @expected_activate_params
+      params[:visitors][0][:attributes].unshift(
+        {
+          entity_id: '111094',
+          key: 'browser_type',
+          type: 'custom',
+          value: 'firefox'
+        },
+        entity_id: '111095',
+        key: 'boolean_key',
+        type: 'custom',
+        value: true
+      )
+      params[:visitors][0][:snapshots][0][:decisions] = [{
+        campaign_id: '3',
+        experiment_id: '122227',
+        variation_id: '122228'
+      }]
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
+
+      variation_to_return = project_instance.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+      attributes = {
+        'browser_type' => 'firefox',
+        'boolean_key' => true,
+        'integer_key' => nil,
+        'double_key' => {}
+      }
+
+      expect(project_instance.activate('test_experiment_with_audience', 'test_user', attributes))
+        .to eq('control_with_audience')
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+      expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
+    end
+
     it 'should properly activate a user, (with attributes provided) when there is an audience match after a force variation call' do
       params = @expected_activate_params
       params[:visitors][0][:attributes].unshift(
@@ -780,6 +866,12 @@ describe 'Optimizely' do
       project_instance.is_feature_enabled('multi_variate_feature', 'test_user')
     end
 
+    it 'should log and raise an exception when called with attributes in an invalid format' do
+      expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'invalid_attributes')).to be false
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
+    end
+
     it 'should return false when the user is not bucketed into any variation' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
@@ -893,6 +985,12 @@ describe 'Optimizely' do
       expect(Optimizely::Helpers::Validator.inputs_valid?({user_id: 'test_user'}, spy_logger, Logger::ERROR)).to eq(true)
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with({user_id: 'test_user'}, spy_logger, Logger::ERROR)
       project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')
+    end
+
+    it 'should log and raise an exception when called with attributes in an invalid format' do
+      expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.get_enabled_features('test_user', 'invalid_attributes')).to be_empty
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
     end
 
     it 'should return only enabled feature flags keys' do
@@ -1210,6 +1308,12 @@ describe 'Optimizely' do
       )
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
         .to eq(nil)
+    end
+
+    it 'should log and raise an exception when called with attributes in an invalid format' do
+      expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, 'invalid_attributes')).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
     end
   end
 

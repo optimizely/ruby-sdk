@@ -34,6 +34,15 @@ module Optimizely
         attributes.is_a?(Hash)
       end
 
+      def attribute_value_type_valid?(attribute_value)
+        # Determines if provided attribute value is valid.
+        #
+        # attribute_value - value to be validated.
+        #
+        # Returns boolean depending on validity of attribute value.
+        Helpers::Constants::ATTRIBUTE_VALID_TYPES.any? { |type| attribute_value.is_a?(type) }
+      end
+
       def event_tags_valid?(event_tags)
         # Determines if provided event tags are valid.
         #
