@@ -27,7 +27,7 @@ module OptimizelySpec
     'version' => '2',
     'events' => [{
       'key' => 'test_event',
-      'experimentIds' => ['111127'],
+      'experimentIds' => %w[111127 122230],
       'id' => '111095'
     }, {
       'key' => 'Total Revenue',
@@ -657,6 +657,6 @@ module OptimizelySpec
   VALID_CONFIG_BODY_JSON = JSON.dump(VALID_CONFIG_BODY)
 
   INVALID_CONFIG_BODY = VALID_CONFIG_BODY.dup
-  INVALID_CONFIG_BODY['version'] = '1'
+  INVALID_CONFIG_BODY['version'] = '5'
   INVALID_CONFIG_BODY_JSON = JSON.dump(INVALID_CONFIG_BODY)
 end

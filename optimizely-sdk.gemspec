@@ -1,4 +1,3 @@
-
 # frozen_string_literal: true
 
 require_relative 'lib/optimizely/version'
@@ -18,9 +17,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '~> 1.10'
-  spec.add_development_dependency 'rake', '~> 10.0'
-  spec.add_development_dependency 'rspec', '~> 3.4.0'
-  spec.add_development_dependency 'rubocop', '~> 0.51.0'
+  spec.add_development_dependency 'rake', '~> 12.0'
+  spec.add_development_dependency 'rspec', '~> 3.8.0'
+  spec.add_development_dependency 'rubocop', '~> 0.58.0'
 
   spec.add_runtime_dependency 'httparty', '~> 0.11'
   spec.add_runtime_dependency 'json-schema', '~> 2.6'
