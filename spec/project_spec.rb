@@ -472,6 +472,19 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
+    it 'should properly track an event with tags even when the project does not have a custom logger' do
+      project_instance = Optimizely::Project.new(config_body_JSON)
+
+      params = @expected_track_event_params
+      params[:visitors][0][:snapshots][0][:decisions][0][:variation_id] = '111129'
+      params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
+
+      project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      project_instance.track('test_event', 'test_user', nil, revenue: 42)
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+    end
+
     it 'should log a message if an exception has occurred during dispatching of the event' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.track('test_event', 'test_user')
