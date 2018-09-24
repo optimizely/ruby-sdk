@@ -34,12 +34,15 @@ module Optimizely
         attributes.is_a?(Hash)
       end
 
-      def attribute_value_type_valid?(attribute_value)
-        # Determines if provided attribute value is valid.
+      def attribute_valid?(attribute_key, attribute_value)
+        # Determines if provided attribute_key and attribute_value are valid.
         #
-        # attribute_value - value to be validated.
+        # attribute_key - Variable which needs to be validated.
+        # attribute_value - Variable which needs to be validated.
         #
-        # Returns boolean depending on validity of attribute value.
+        # Returns boolean depending on validity of attribute_key and attribute_value.
+
+        return false unless attribute_key.is_a?(String) || attribute_key.is_a?(Symbol)
         Helpers::Constants::ATTRIBUTE_VALID_TYPES.any? { |type| attribute_value.is_a?(type) }
       end
 

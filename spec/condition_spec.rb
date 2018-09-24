@@ -146,7 +146,7 @@ describe Optimizely::ConditionEvaluator do
     expect(@condition_evaluator.evaluate(condition)).to be true
   end
 
-  it 'should evaluate to true for evaluate when user attributes evaluate true' do
+  it 'should evaluate to true when user attributes match the audience conditions' do
     user_attributes = {
       'device_type' => 'iPhone',
       'is_firefox' => false,

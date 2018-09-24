@@ -76,9 +76,9 @@ module Optimizely
       visitor_attributes = []
 
       attributes&.keys&.each do |attribute_key|
-        # Omit invalid attribute values.
+        # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
-        if Helpers::Validator.attribute_value_type_valid?(attribute_value)
+        if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
           attribute_id = @config.get_attribute_id attribute_key
           if attribute_id
             visitor_attributes.push(

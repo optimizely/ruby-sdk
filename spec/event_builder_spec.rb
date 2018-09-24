@@ -126,7 +126,7 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event when create_impression_event is called with attributes of different valid types' do
-    @expected_impression_params[:visitors][0][:attributes].unshift(
+    @expected_impression_params[:visitors][0][:attributes] = [
       {
         entity_id: '111094',
         key: 'browser_type',
@@ -142,12 +142,17 @@ describe Optimizely::EventBuilder do
         key: 'integer_key',
         type: 'custom',
         value: 5
+      }, {
+        entity_id: '111097',
+        key: 'double_key',
+        type: 'custom',
+        value: 5.5
       },
-      entity_id: '111097',
-      key: 'double_key',
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
       type: 'custom',
-      value: 5.5
-    )
+      value: true
+    ]
 
     experiment = config.get_experiment_from_key('test_experiment')
     attributes = {
@@ -163,18 +168,24 @@ describe Optimizely::EventBuilder do
   end
 
   it 'should create a valid Event and exclude attributes of invalid types' do
-    @expected_impression_params[:visitors][0][:attributes].unshift(
+    @expected_impression_params[:visitors][0][:attributes] = [
       {
         entity_id: '111094',
         key: 'browser_type',
         type: 'custom',
         value: 'firefox'
       },
-      entity_id: '111096',
-      key: 'integer_key',
+      {
+        entity_id: '111096',
+        key: 'integer_key',
+        type: 'custom',
+        value: 5
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
       type: 'custom',
-      value: 5
-    )
+      value: true
+    ]
 
     experiment = config.get_experiment_from_key('test_experiment')
     attributes = {
