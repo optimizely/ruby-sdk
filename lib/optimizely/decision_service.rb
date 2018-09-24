@@ -362,17 +362,16 @@ module Optimizely
       #
       # user_id - String user ID
       # attributes - Hash user attributes
-      # By default, the bucketing ID should be the user ID
-      bucketing_id = user_id
+      # Returns String representing bucketing ID if it is a String type in attributes else return user ID
 
-      # If the bucketing ID key is defined in attributes, then use that in place of the userID
-      if attributes && attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']].is_a?(String)
-        unless attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']].empty?
-          bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
-          @config.logger.log(Logger::DEBUG, "Setting the bucketing ID '#{bucketing_id}'")
-        end
+      attributes ||= {}
+      bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
+
+      if bucketing_id
+        return bucketing_id if bucketing_id.is_a?(String)
+        @config.logger.log(Logger::WARN, 'Bucketing ID attribute is not a string. Defaulted to user ID.')
       end
-      bucketing_id
+      user_id
     end
   end
 end

@@ -676,4 +676,41 @@ describe Optimizely::DecisionService do
       end
     end
   end
+  describe '#get_bucketing_id' do
+    it 'should log a message and return user ID when bucketing ID is not a String' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 5
+      }
+      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('test_user')
+      expect(spy_logger).to have_received(:log).once.with(Logger::WARN, 'Bucketing ID attribute is not a string. Defaulted to user ID.')
+    end
+
+    it 'should not log any message and return user ID when bucketing ID is nil' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => nil
+      }
+      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('test_user')
+      expect(spy_logger).not_to have_received(:log)
+    end
+
+    it 'should not log any message and return given bucketing ID when bucketing ID is a String' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'i_am_bucketing_id'
+      }
+      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('i_am_bucketing_id')
+      expect(spy_logger).not_to have_received(:log)
+    end
+
+    it 'should not log any message and return empty String when bucketing ID is empty String' do
+      user_attributes = {
+        'browser_type' => 'firefox',
+        Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => ''
+      }
+      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('')
+      expect(spy_logger).not_to have_received(:log)
+    end
+  end
 end
