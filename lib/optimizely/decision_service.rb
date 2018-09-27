@@ -364,7 +364,8 @@ module Optimizely
       # attributes - Hash user attributes
       # Returns String representing bucketing ID if it is a String type in attributes else return user ID
 
-      attributes ||= {}
+      return user_id unless attributes
+
       bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
 
       if bucketing_id
