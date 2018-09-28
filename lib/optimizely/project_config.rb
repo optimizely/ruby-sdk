@@ -275,10 +275,14 @@ module Optimizely
 
       return nil unless Optimizely::Helpers::Validator.inputs_valid?(
         {
-          experiment_key: experiment_key,
-          user_id: user_id
+          experiment_key: experiment_key
         }, @logger, Logger::DEBUG
       )
+
+      unless user_id.is_a?(String)
+        @logger.log(Logger::DEBUG, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES['USER_ID']} is invalid")
+        return nil
+      end
 
       unless @forced_variation_map.key? user_id
         @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
@@ -324,10 +328,14 @@ module Optimizely
 
       return false unless Optimizely::Helpers::Validator.inputs_valid?(
         {
-          user_id: user_id,
           experiment_key: experiment_key
         }, @logger, Logger::DEBUG
       )
+
+      unless user_id.is_a?(String)
+        @logger.log(Logger::DEBUG, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES['USER_ID']} is invalid")
+        return false
+      end
 
       experiment = get_experiment_from_key(experiment_key)
       experiment_id = experiment['id'] if experiment
