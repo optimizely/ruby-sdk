@@ -10,5 +10,5 @@ addons:
   srcclr: true
 script:
   #  - "rake spec"
-  - "./ci/run.sh"
+  - "ci/run.sh"
 after_success: "coveralls"
