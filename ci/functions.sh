@@ -14,8 +14,8 @@ function trigger_job {
       "merge_mode": "replace",
       "env": {
         "global": {
-          "UPSTREAM_SHA": "$TRAVIS_PULL_REQUEST_SHA",
-          "UPSTREAM_REPO": "$TRAVIS_PULL_REQUEST_SLUG",
+          "UPSTREAM_SHA": "${TRAVIS_PULL_REQUEST_SHA}",
+          "UPSTREAM_REPO": "${TRAVIS_PULL_REQUEST_SLUG}",
           "DOCKER_COMPOSE_VERSION": "1.22.0",
           "DEFAULT_RUN_ALL": false,
           "DEFAULT_SDK_BRANCH": "master",
@@ -25,7 +25,8 @@ function trigger_job {
           "PERF": false,
           "PERF_NUM_RUNS": 50,
           "RESULTS_DIR": "./test_results",
-          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-ruby",
+          "SDK": "ruby",
+          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}",
           "TESTAPP_PORT_BINDING": 3000
         }
       },
