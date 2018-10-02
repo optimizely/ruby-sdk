@@ -10,6 +10,7 @@ function trigger_job {
     "message": "Override the commit message: this is an api request",
     "branch": "jtong/travisci",
     "config": {
+      "sudo": "required",
       "merge_mode": "replace",
       "env": {
         "UPSTREAM_SHA": "$TRAVIS_PULL_REQUEST_SHA",
