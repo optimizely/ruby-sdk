@@ -2,12 +2,12 @@ language: ruby
 rvm:
   - 2.3.1
 #before_install: gem install bundler -v 1.10.6
-install:
+#install:
   #- bundle install
   #- bundle exec rake install
-before_script: "rubocop"
+#before_script: "rubocop"
 addons:
-  srcclr: true
+#  srcclr: true
 script:
   #  - "rake spec"
   - "ci/run.sh"
