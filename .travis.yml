@@ -8,5 +8,7 @@ install:
 before_script: "rubocop"
 addons:
   srcclr: true
-script: "rake spec"
+script:
+  - "rake spec"
+  - "./ci/run.sh"
 after_success: "coveralls"
