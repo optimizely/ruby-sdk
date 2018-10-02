@@ -31,10 +31,10 @@ function trigger_job {
           "COMPOSE_PROJECT_NAME": "${COMPOSE_PROJECT_NAME}-ruby"
         }
       },
-      "before_script": "STATE=pending ./update_build_status.sh",
+      "before_script": "STATE=pending ci/update_build_status.sh",
       "script": ["./ci.sh"],
-      "after_success": "STATE=success ./update_build_status.sh",
-      "after_failure": "STATE=failure ./update_build_status.sh"
+      "after_success": "STATE=success ci/update_build_status.sh",
+      "after_failure": "STATE=failure ci/update_build_status.sh"
     }
   }
 }
