@@ -11,4 +11,4 @@ addons:
 script:
   #  - "rake spec"
   - "ci/run.sh"
-after_success: "coveralls"
+#after_success: "coveralls"
