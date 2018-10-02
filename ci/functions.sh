@@ -24,11 +24,8 @@ function trigger_job {
           "PERF": false,
           "PERF_NUM_RUNS": 50,
           "RESULTS_DIR": "./test_results",
-          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}",
+          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-ruby",
           "TESTAPP_PORT_BINDING": 3000
-        },
-        "matrix": {
-          "COMPOSE_PROJECT_NAME": "${COMPOSE_PROJECT_NAME}-ruby"
         }
       },
       "before_script": "STATE=pending ci/update_build_status.sh",
@@ -41,19 +38,13 @@ function trigger_job {
 EOF
 )
 
-echo $body
-
 local REPO="https://api.travis-ci.com/repo/$repo_slug/requests"
 
-local results=$(curl -s -X POST \
+curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -H "Travis-API-Version: 3" \
   -H "Authorization: token $TRAVIS_COM_TOKEN" \
   -d "$body" \
-  $REPO)
-
-echo $results
-
-echo $results | jq .id
+  $REPO
 }
