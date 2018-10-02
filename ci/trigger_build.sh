@@ -2,9 +2,9 @@
 
 set -e
 
-local repo_slug=$1
+repo_slug=$1
 
-local body=$(cat <<EOF
+body=$(cat <<EOF
 {
   "request": {
     "message": "Override the commit message: this is an api request",
@@ -40,7 +40,7 @@ local body=$(cat <<EOF
 EOF
 )
 
-local REPO="https://api.travis-ci.com/repo/$repo_slug/requests"
+REPO="https://api.travis-ci.com/repo/$repo_slug/requests"
 
 curl -s -X POST \
   -H "Content-Type: application/json" \
