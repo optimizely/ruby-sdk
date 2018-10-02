@@ -49,7 +49,7 @@ local results=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -H "Travis-API-Version: 3" \
-  -H "Authorization: token $TOKEN" \
+  -H "Authorization: token $TRAVIS_COM_TOKEN" \
   -d "$body" \
   $REPO)
 
