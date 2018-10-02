@@ -4,5 +4,5 @@ set -ex
 
 . "./ci/functions.sh"
 
-repo="optimizely/fullstack-sdk-compatibility-suite"
+repo="optimizely%2Ffullstack-sdk-compatibility-suite"
 id=$(trigger_job $repo)
