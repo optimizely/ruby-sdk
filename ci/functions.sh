@@ -29,7 +29,7 @@ function trigger_job {
         }
       },
       "before_script": "STATE=pending ci/update_build_status.sh",
-      "script": ["./ci.sh"],
+      "script": ["ci/before_install.sh", "./ci.sh"],
       "after_success": "STATE=success ci/update_build_status.sh",
       "after_failure": "STATE=failure ci/update_build_status.sh"
     }
