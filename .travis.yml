@@ -1,6 +1,6 @@
 language: ruby
-rvm:
-  - 2.3.1
+#rvm:
+#  - 2.3.1
 #before_install: gem install bundler -v 1.10.6
 #install:
   #- bundle install
@@ -10,5 +10,5 @@ addons:
 #  srcclr: true
 script:
   #  - "rake spec"
-  - "ci/run.sh"
+  - "ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
 #after_success: "coveralls"

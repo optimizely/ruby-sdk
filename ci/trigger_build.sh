@@ -1,10 +1,10 @@
-# helper functions
+#!/usr/bin/env bash
 
-function trigger_job {
+set -e
 
-  local repo_slug=$1
+local repo_slug=$1
 
-  local body=$(cat <<EOF
+local body=$(cat <<EOF
 {
   "request": {
     "message": "Override the commit message: this is an api request",
@@ -49,4 +49,3 @@ curl -s -X POST \
   -H "Authorization: token $TRAVIS_COM_TOKEN" \
   -d "$body" \
   $REPO
-}
