@@ -56,3 +56,4 @@ local results=$(curl -s -X POST \
 echo $results
 
 echo $results | jq .id
+}
