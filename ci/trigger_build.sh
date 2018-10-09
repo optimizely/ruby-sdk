@@ -25,9 +25,9 @@ body=$(cat <<EOF
           "PERF": false,
           "PERF_NUM_RUNS": 50,
           "RESULTS_DIR": "./test_results",
-          "TESTAPP_PORT_BINDING": 3000
+          "TESTAPP_PORT_BINDING": 3000,
           "SDK": "ruby",
-          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-ruby",
+          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-ruby"
         }
       },
       "before_script": "STATE=pending ci/update_build_status.sh",
