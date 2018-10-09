@@ -4,6 +4,9 @@ set -e
 
 repo_slug=$1
 
+echo "${TRAVIS_PULL_REQUEST_SHA}"
+echo "${TRAVIS_PULL_REQUEST_SLUG}"
+
 body=$(cat <<EOF
 {
   "request": {
