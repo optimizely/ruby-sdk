@@ -10,5 +10,5 @@ addons:
 #  srcclr: true
 script:
   #  - "rake spec"
-  - "ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
+  - "SDK=ruby ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
 #after_success: "coveralls"
