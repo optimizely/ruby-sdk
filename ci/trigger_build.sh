@@ -11,21 +11,11 @@ body=$(cat <<EOF
     "branch": "jtong/travisci",
     "config": {
       "sudo": "required",
-      "merge_mode": "replace",
+      "merge_mode": "deep_merge",
       "env": {
         "global": {
           "UPSTREAM_SHA": "${TRAVIS_PULL_REQUEST_SHA}",
           "UPSTREAM_REPO": "${TRAVIS_PULL_REQUEST_SLUG}",
-          "DOCKER_COMPOSE_VERSION": "1.22.0",
-          "DEFAULT_RUN_ALL": false,
-          "DEFAULT_SDK_BRANCH": "master",
-          "DEFAULT_TESTAPP_TAG": "latest",
-          "TESTAPP_IMAGE": "",
-          "TESTAPP_REPO": "quay.io/optimizely",
-          "PERF": false,
-          "PERF_NUM_RUNS": 50,
-          "RESULTS_DIR": "./test_results",
-          "TESTAPP_PORT_BINDING": 3000,
           "SDK": "${SDK}",
           "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
         }
