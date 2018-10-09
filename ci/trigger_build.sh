@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 repo_slug=$1
 
@@ -20,8 +20,8 @@ body=$(cat <<EOF
           "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
         }
       },
-      "before_script": "STATE=pending ci/update_build_status.sh",
-      "script": ["ci/before_install.sh", "./ci.sh"],
+      "install": ["ci/install.sh"],
+      "script": ["./ci.sh"],
       "after_success": "STATE=success ci/update_build_status.sh",
       "after_failure": "STATE=failure ci/update_build_status.sh"
     }
