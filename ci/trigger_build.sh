@@ -4,8 +4,19 @@ set -e
 
 repo_slug=$1
 
-echo "${TRAVIS_PULL_REQUEST_SHA}"
-echo "${TRAVIS_PULL_REQUEST_SLUG}"
+# why travis creates two builds for every commit push:
+# https://stackoverflow.com/questions/34974925/travis-ci-creates-two-builds-for-each-github-commit-push
+#
+# one build is event type "push", the other is event type "pull request" we can only use the latter type
+if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+  echo "push events do not set values for TRAVIS_PULL_REQUEST_SHA or TRAVIS_PULL_REQUEST_SLUG so there's no point triggering build without these values"
+  exit 1
+elif [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
+  echo "pull_request event detected. continuing..."
+else
+  echo "i do not understand TRAVIS_EVENT_TYPE=$TRAVIS_EVENT_TYPE"
+  exit 2
+fi
 
 body=$(cat <<EOF
 {
