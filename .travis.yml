@@ -10,5 +10,6 @@ addons:
 #  srcclr: true
 script:
   #  - "rake spec"
+  - printenv | grep TRAVIS
   - "SDK=ruby ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
 #after_success: "coveralls"
