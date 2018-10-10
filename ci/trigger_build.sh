@@ -20,6 +20,8 @@ body=$(cat <<EOF
           "UPSTREAM_SHA": "${TRAVIS_PULL_REQUEST_SHA}",
           "UPSTREAM_REPO": "${TRAVIS_PULL_REQUEST_SLUG}",
           "SDK": "${SDK}",
+        },
+        "matrix": {
           "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
         }
       },
