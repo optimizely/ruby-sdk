@@ -10,7 +10,9 @@ repo_slug=$1
 # one build is event type "push", the other is event type "pull request" we can only use the latter type
 if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
   echo "push events do not set values for TRAVIS_PULL_REQUEST_SHA or TRAVIS_PULL_REQUEST_SLUG so there's no point triggering build without these values"
-  exit 1
+  echo "i will exit 0 since this is technically not an error but i will stop here since i cannot continue. the next travis job should be a pull_request"
+  echo "type, we'll be using that"
+  exit 0
 elif [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then
   echo "pull_request event detected. continuing..."
 else
