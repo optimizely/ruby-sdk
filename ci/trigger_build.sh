@@ -34,7 +34,7 @@ body=$(cat <<EOF
           "SDK": "${SDK}"
         },
         "matrix": {
-          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}",
+          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
         }
       },
       "install": ["ci/install.sh"],
