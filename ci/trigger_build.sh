@@ -19,7 +19,7 @@ body=$(cat <<EOF
         "global": {
           "UPSTREAM_SHA": "${TRAVIS_PULL_REQUEST_SHA}",
           "UPSTREAM_REPO": "${TRAVIS_PULL_REQUEST_SLUG}",
-          "SDK": "${SDK}",
+          "SDK": "${SDK}"
         },
         "matrix": {
           "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
@@ -37,10 +37,15 @@ EOF
 
 REPO="https://api.travis-ci.com/repo/$repo_slug/requests"
 
-curl -s -X POST \
+output=$(curl -s -X POST \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -H "Travis-API-Version: 3" \
   -H "Authorization: token $TRAVIS_COM_TOKEN" \
   -d "$body" \
   $REPO
+)
+
+if [[ "$output" == *"error"* ]]; then
+  exit 1
+fi
