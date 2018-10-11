@@ -31,14 +31,14 @@ body=$(cat <<EOF
         "global": {
           "UPSTREAM_SHA": "${TRAVIS_PULL_REQUEST_SHA}",
           "UPSTREAM_REPO": "${TRAVIS_PULL_REQUEST_SLUG}",
-          "SDK": "${SDK}"
+          "DEFAULT_RUN_ALL": false
         },
         "matrix": {
-          "COMPOSE_PROJECT_NAME": "fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK}"
+          "SDK": "${SDK}"
         }
       },
       "install": ["ci/install.sh"],
-      "script": ["./ci.sh"],
+      "script": ["COMPOSE_PROJECT_NAME=fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK} ./ci.sh"],
       "after_success": "STATE=success ci/update_build_status.sh",
       "after_failure": "STATE=failure ci/update_build_status.sh"
     }
