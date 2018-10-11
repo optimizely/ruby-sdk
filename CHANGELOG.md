@@ -1,3 +1,12 @@
+## 2.1.1
+October 11th, 2018
+
+### Bug Fixes
+- fix(track): Send decisions for all experiments using an event when using track ([#120](https://github.com/optimizely/ruby-sdk/pull/120)).
+- EventBuilder uses the same logger as Project ([#122](https://github.com/optimizely/ruby-sdk/pull/122)).
+- Updating libraries for Ruby SDK ([#123](https://github.com/optimizely/ruby-sdk/pull/123)).
+- fix(datafile-parsing): Prevent newer versions datafile ([#124](https://github.com/optimizely/ruby-sdk/pull/124)).
+
 ## 2.1.0
 July 2nd, 2018
 
