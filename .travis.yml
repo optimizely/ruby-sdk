@@ -6,7 +6,7 @@ language: ruby
   #- bundle install
   #- bundle exec rake install
 #before_script: "rubocop"
-addons:
+#addons:
 #  srcclr: true
 script:
   #  - "rake spec"
