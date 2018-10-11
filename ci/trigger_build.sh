@@ -38,7 +38,7 @@ body=$(cat <<EOF
         }
       },
       "install": ["ci/install.sh"],
-      "script": ["COMPOSE_PROJECT_NAME=fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK} ./ci.sh"],
+      "script": ["echo $HELLO", "COMPOSE_PROJECT_NAME=fullstack-compat-${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}-${SDK} ./ci.sh"],
       "after_success": "STATE=success ci/update_build_status.sh",
       "after_failure": "STATE=failure ci/update_build_status.sh"
     }
