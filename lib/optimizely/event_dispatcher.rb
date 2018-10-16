@@ -25,8 +25,6 @@ module Optimizely
   end
 
   class EventDispatcher
-
-    include HTTParty
     # @api constants
     REQUEST_TIMEOUT = 10
 
