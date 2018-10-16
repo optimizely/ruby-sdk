@@ -16,10 +16,12 @@ Gem::Specification.new do |spec|
   spec.files         = Dir['lib/**/*']
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler', '~> 1.10'
-  spec.add_development_dependency 'rake', '~> 12.0'
-  spec.add_development_dependency 'rspec', '~> 3.8.0'
-  spec.add_development_dependency 'rubocop', '~> 0.58.0'
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'webmock'
+  spec.add_development_dependency 'coveralls'
 
   spec.add_runtime_dependency 'httparty', '~> 0.11'
   spec.add_runtime_dependency 'json-schema', '~> 2.6'
