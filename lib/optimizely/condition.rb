@@ -103,6 +103,7 @@ module Optimizely
       if conditions.is_a? Array
         operator_type = conditions[0]
         return false unless DEFAULT_OPERATOR_TYPES.include?(operator_type)
+
         case operator_type
         when ConditionalOperatorTypes::AND
           return and_evaluator(conditions[1..-1])
