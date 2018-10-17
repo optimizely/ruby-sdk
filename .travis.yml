@@ -1,12 +1,16 @@
+branch:
+  only:
+    - master
 language: ruby
 rvm:
-  - 2.3.1
-before_install: gem install bundler -v 1.10.6
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
+before_install: gem install bundler
 install:
   - bundle install
-  - bundle exec rake install
+script: "bundle exec rake spec"
 before_script: "rubocop"
 addons:
   srcclr: true
-script: "rake spec"
 after_success: "coveralls"

@@ -201,6 +201,7 @@ module Optimizely
       single_snapshot[:decisions] = []
       experiment_variation_map.each do |experiment_id, variation_id|
         next unless variation_id
+
         single_snapshot[:decisions].push(
           campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
           experiment_id: experiment_id,

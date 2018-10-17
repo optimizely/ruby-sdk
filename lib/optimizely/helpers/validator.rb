@@ -106,9 +106,11 @@ module Optimizely
         # Returns boolean True if all of the values are valid, False otherwise.
 
         return false unless variables.respond_to?(:each) && !variables.empty?
+
         is_valid = true
         variables.each do |key, value|
           next if value.is_a?(String) && !value.empty?
+
           is_valid = false
           if logger_valid?(logger) && level
             logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
