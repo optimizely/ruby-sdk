@@ -129,9 +129,7 @@ module Optimizely
           variation_id = variation['id']
           variation['featureEnabled'] = variation['featureEnabled'] == true
           variation_variables = variation['variables']
-          unless variation_variables.nil?
-            @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
-          end
+          @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id') unless variation_variables.nil?
         end
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
@@ -357,9 +355,7 @@ module Optimizely
         return false
       end
 
-      unless @forced_variation_map.key? user_id
-        @forced_variation_map[user_id] = {}
-      end
+      @forced_variation_map[user_id] = {} unless @forced_variation_map.key? user_id
       @forced_variation_map[user_id][experiment_id] = variation_id
       @logger.log(Logger::DEBUG, "Set variation '#{variation_id}' for experiment '#{experiment_id}' and "\
                   "user '#{user_id}' in the forced variation map.")

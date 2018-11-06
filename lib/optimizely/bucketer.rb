@@ -92,9 +92,7 @@ module Optimizely
       end
 
       # Handle the case when the traffic range is empty due to sticky bucketing
-      if variation_id == ''
-        @config.logger.log(Logger::DEBUG, 'Bucketed into an empty traffic range. Returning nil.')
-      end
+      @config.logger.log(Logger::DEBUG, 'Bucketed into an empty traffic range. Returning nil.') if variation_id == ''
 
       @config.logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
       nil

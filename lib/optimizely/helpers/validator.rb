@@ -112,9 +112,7 @@ module Optimizely
           next if value.is_a?(String) && !value.empty?
 
           is_valid = false
-          if logger_valid?(logger) && level
-            logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
-          end
+          logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid") if logger_valid?(logger) && level
         end
         is_valid
       end
