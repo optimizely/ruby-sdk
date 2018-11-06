@@ -43,6 +43,7 @@ module Optimizely
         # Returns boolean depending on validity of attribute_key and attribute_value.
 
         return false unless attribute_key.is_a?(String) || attribute_key.is_a?(Symbol)
+
         Helpers::Constants::ATTRIBUTE_VALID_TYPES.any? { |type| attribute_value.is_a?(type) }
       end
 
@@ -124,9 +125,7 @@ module Optimizely
           next if value.is_a?(String) && !value.empty?
 
           is_valid = false
-          if logger_valid?(logger) && level
-            logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
-          end
+          logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid") if logger_valid?(logger) && level
         end
         is_valid
       end

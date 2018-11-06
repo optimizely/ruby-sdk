@@ -374,6 +374,7 @@ module Optimizely
 
       if bucketing_id
         return bucketing_id if bucketing_id.is_a?(String)
+
         @config.logger.log(Logger::WARN, 'Bucketing ID attribute is not a string. Defaulted to user ID.')
       end
       user_id
