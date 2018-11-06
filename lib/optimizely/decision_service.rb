@@ -166,6 +166,7 @@ module Optimizely
         variation_id = get_variation(experiment_key, user_id, attributes)
 
         next unless variation_id
+
         variation = @config.variation_id_map[experiment_key][variation_id]
         @config.logger.log(
           Logger::INFO,
@@ -236,6 +237,7 @@ module Optimizely
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation = @bucketer.bucket(rollout_rule, bucketing_id, user_id)
         return Decision.new(rollout_rule, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
+
         break
       end
 
@@ -254,6 +256,7 @@ module Optimizely
       end
       variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
+
       nil
     end
 
@@ -303,6 +306,7 @@ module Optimizely
 
       decision = user_profile[:experiment_bucket_map][experiment_id]
       return nil unless decision
+
       variation_id = decision[:variation_id]
       return variation_id if @config.variation_id_exists?(experiment_id, variation_id)
 

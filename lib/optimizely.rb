@@ -75,7 +75,7 @@ module Optimizely
       end
 
       @decision_service = DecisionService.new(@config, @user_profile_service)
-      @event_builder = EventBuilder.new(@config, logger)
+      @event_builder = EventBuilder.new(@config, @logger)
       @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 

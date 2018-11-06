@@ -161,6 +161,7 @@ module Optimizely
 
       experiment = @experiment_key_map[experiment_key]
       return experiment if experiment
+
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
       nil
@@ -175,6 +176,7 @@ module Optimizely
 
       experiment = @experiment_id_map[experiment_id]
       return experiment['key'] unless experiment.nil?
+
       @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
       nil
@@ -189,6 +191,7 @@ module Optimizely
 
       event = @event_key_map[event_key]
       return event['experimentIds'] if event
+
       @logger.log Logger::ERROR, "Event '#{event_key}' is not in datafile."
       @error_handler.handle_error InvalidEventError
       []
@@ -203,6 +206,7 @@ module Optimizely
 
       audience = @audience_id_map[audience_id]
       return audience if audience
+
       @logger.log Logger::ERROR, "Audience '#{audience_id}' is not in datafile."
       @error_handler.handle_error InvalidAudienceError
       nil
@@ -220,6 +224,7 @@ module Optimizely
       if variation_id_map
         variation = variation_id_map[variation_id]
         return variation if variation
+
         @logger.log Logger::ERROR, "Variation id '#{variation_id}' is not in datafile."
         @error_handler.handle_error InvalidVariationError
         return nil
@@ -242,6 +247,7 @@ module Optimizely
       if variation_key_map
         variation = variation_key_map[variation_key]
         return variation['id'] if variation
+
         @logger.log Logger::ERROR, "Variation key '#{variation_key}' is not in datafile."
         @error_handler.handle_error InvalidVariationError
         return nil
@@ -261,6 +267,7 @@ module Optimizely
 
       experiment = @experiment_key_map[experiment_key]
       return experiment['forcedVariations'] if experiment
+
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
     end
@@ -377,6 +384,7 @@ module Optimizely
         return attribute['id']
       end
       return attribute_key if has_reserved_prefix
+
       @logger.log Logger::ERROR, "Attribute key '#{attribute_key}' is not in datafile."
       @error_handler.handle_error InvalidAttributeError
       nil
@@ -395,6 +403,7 @@ module Optimizely
       if variation_id_map
         variation = variation_id_map[variation_id]
         return true if variation
+
         @logger.log Logger::ERROR, "Variation ID '#{variation_id}' is not in datafile."
         @error_handler.handle_error InvalidVariationError
       end
@@ -410,6 +419,7 @@ module Optimizely
       # Returns feature flag if found, otherwise nil
       feature_flag = @feature_flag_key_map[feature_flag_key]
       return feature_flag if feature_flag
+
       @logger.log Logger::ERROR, "Feature flag key '#{feature_flag_key}' is not in datafile."
       nil
     end
@@ -424,6 +434,7 @@ module Optimizely
       feature_flag_key = feature_flag['key']
       variable = @feature_variable_key_map[feature_flag_key][variable_key]
       return variable if variable
+
       @logger.log Logger::ERROR, "No feature variable was found for key '#{variable_key}' in feature flag "\
                   "'#{feature_flag_key}'."
       nil
@@ -437,6 +448,7 @@ module Optimizely
       # Returns the rollout if found, otherwise nil
       rollout = @rollout_id_map[rollout_id]
       return rollout if rollout
+
       @logger.log Logger::ERROR, "Rollout with ID '#{rollout_id}' is not in the datafile."
       nil
     end
