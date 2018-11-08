@@ -129,7 +129,9 @@ module Optimizely
           variation_id = variation['id']
           variation['featureEnabled'] = variation['featureEnabled'] == true
           variation_variables = variation['variables']
-          @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id') unless variation_variables.nil?
+          next if variation_variables.nil?
+
+          @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
         end
         @variation_id_map[key] = generate_key_map(variations, 'id')
         @variation_key_map[key] = generate_key_map(variations, 'key')
