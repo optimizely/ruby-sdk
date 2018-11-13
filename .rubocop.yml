@@ -36,9 +36,6 @@ Naming/VariableNumber:
 Style/Documentation:
   Enabled: false
 
-Style/IfUnlessModifier:
-  Enabled: false
-
 Style/RescueStandardError:
    Enabled: false
 
