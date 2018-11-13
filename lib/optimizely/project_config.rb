@@ -329,12 +329,9 @@ module Optimizely
       #
       # Returns a boolean value that indicates if the set completed successfully.
 
-      return false unless Optimizely::Helpers::Validator.inputs_valid?(
-        {
-          user_id: user_id,
-          experiment_key: experiment_key
-        }, @logger, Logger::DEBUG
-      )
+      input_values = {user_id: user_id, experiment_key: experiment_key}
+      input_values[:variation_key] = variation_key unless variation_key.nil?
+      return false unless Optimizely::Helpers::Validator.inputs_valid?(input_values, @logger, Logger::DEBUG)
 
       experiment = get_experiment_from_key(experiment_key)
       experiment_id = experiment['id'] if experiment
@@ -342,7 +339,7 @@ module Optimizely
       return false if experiment_id.nil? || experiment_id.empty?
 
       #  clear the forced variation if the variation key is null
-      if variation_key.nil? || variation_key.empty?
+      if variation_key.nil?
         @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map.key? user_id
         @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user "\
                     "'#{user_id}'.")
