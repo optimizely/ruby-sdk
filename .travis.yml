@@ -12,4 +12,4 @@ script:
   - "rake spec"
   - git clone https://github.com/juancarlostong/ci.git
   - "SDK=ruby ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
-after_success: "coveralls"
+#after_success: "coveralls"
