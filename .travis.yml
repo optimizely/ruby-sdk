@@ -9,7 +9,10 @@ rvm:
 before_install: gem install bundler
 install:
   - bundle install
-script: "bundle exec rake spec"
+script:
+  - "bundle exec rake spec"
+  - "git clone https://github.com/juancarlostong/ci.git"
+  - "SDK=ruby ci/trigger_build.sh optimizely%2Ffullstack-sdk-compatibility-suite"
 before_script: "rubocop"
 addons:
   srcclr: true
