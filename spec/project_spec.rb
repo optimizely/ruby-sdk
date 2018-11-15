@@ -271,7 +271,8 @@ describe 'Optimizely' do
     it 'should call inputs_valid? with the proper arguments in activate' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          experiment_key: 'test_experiment_with_audience'
+          experiment_key: 'test_experiment_with_audience',
+          user_id: 'test_user'
         }, spy_logger, Logger::ERROR
       )
       project_instance.activate('test_experiment_with_audience', 'test_user')
@@ -454,7 +455,8 @@ describe 'Optimizely' do
     it 'should call inputs_valid? with the proper arguments in track' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          event_key: 'test_event'
+          event_key: 'test_event',
+          user_id: 'test_user'
         }, spy_logger, Logger::ERROR
       )
       project_instance.track('test_event', 'test_user')
@@ -646,7 +648,8 @@ describe 'Optimizely' do
     it 'should call inputs_valid? with the proper arguments in get_variation' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          experiment_key: 'test_experiment_with_audience'
+          experiment_key: 'test_experiment_with_audience',
+          user_id: 'test_user'
         }, spy_logger, Logger::ERROR
       )
       project_instance.get_variation('test_experiment_with_audience', 'test_user', nil)
@@ -799,7 +802,8 @@ describe 'Optimizely' do
     it 'should call inputs_valid? with the proper arguments in is_feature_enabled' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          feature_flag_key: 'multi_variate_feature'
+          feature_flag_key: 'multi_variate_feature',
+          user_id: 'test_user'
         }, spy_logger, Logger::ERROR
       )
       project_instance.is_feature_enabled('multi_variate_feature', 'test_user')
@@ -924,6 +928,15 @@ describe 'Optimizely' do
     it 'should return empty when called with invalid project config' do
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_enabled_features('test_user')).to be_empty
+    end
+
+    it 'should call inputs_valid? with the proper arguments in get_enabled_features' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          user_id: 'test_user'
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.get_enabled_features('test_user')
     end
 
     it 'should return empty when no feature flag is enabled' do
@@ -1249,11 +1262,11 @@ describe 'Optimizely' do
         {
           feature_flag_key: 'integer_single_variable_feature',
           variable_key: 'integer_variable',
+          user_id: 'test_user',
           variable_type: 'integer'
         }, spy_logger, Logger::ERROR
       )
-      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', nil, user_attributes))
-        .to eq(nil)
+      project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 'test_user', user_attributes)
     end
 
     it 'should log and return nil when user ID is non string' do

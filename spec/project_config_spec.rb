@@ -947,6 +947,7 @@ describe Optimizely::ProjectConfig do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
           experiment_key: @valid_experiment[:key],
+          user_id: @user_id,
           variation_key: @valid_variation[:key]
         }, spy_logger, Logger::DEBUG
       )
@@ -966,7 +967,8 @@ describe Optimizely::ProjectConfig do
     it 'should call inputs_valid? with the proper arguments in get_forced_variation' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          experiment_key: @valid_experiment[:key]
+          experiment_key: @valid_experiment[:key],
+          user_id: @user_id
         }, spy_logger, Logger::DEBUG
       )
       config.get_forced_variation(@valid_experiment[:key], @user_id)
