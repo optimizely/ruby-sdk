@@ -315,6 +315,8 @@ module Optimizely
 
       return enabled_features unless user_inputs_valid?(attributes)
 
+      return enabled_features unless user_inputs_valid?(attributes)
+
       @config.feature_flags.each do |feature|
         enabled_features.push(feature['key']) if is_feature_enabled(
           feature['key'],

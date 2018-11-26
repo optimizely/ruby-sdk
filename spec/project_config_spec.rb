@@ -42,7 +42,10 @@ describe Optimizely::ProjectConfig do
       expect(project_config.revision).to eq(config_body['revision'])
 
       expected_attribute_key_map = {
-        'browser_type' => config_body['attributes'][0]
+        'browser_type' => config_body['attributes'][0],
+        'boolean_key' => config_body['attributes'][1],
+        'integer_key' => config_body['attributes'][2],
+        'double_key' => config_body['attributes'][3]
       }
       expected_audience_id_map = {
         '11154' => config_body['audiences'][0],
