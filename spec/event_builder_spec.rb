@@ -125,6 +125,81 @@ describe Optimizely::EventBuilder do
     expect(impression_event.http_verb).to eq(:post)
   end
 
+  it 'should create a valid Event when create_impression_event is called with attributes of different valid types' do
+    @expected_impression_params[:visitors][0][:attributes] = [
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      }, {
+        entity_id: '111095',
+        key: 'boolean_key',
+        type: 'custom',
+        value: true
+      }, {
+        entity_id: '111096',
+        key: 'integer_key',
+        type: 'custom',
+        value: 5
+      }, {
+        entity_id: '111097',
+        key: 'double_key',
+        type: 'custom',
+        value: 5.5
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: true
+    ]
+
+    experiment = config.get_experiment_from_key('test_experiment')
+    attributes = {
+      'browser_type' => 'firefox',
+      'boolean_key' => true,
+      'integer_key' => 5,
+      'double_key' => 5.5
+    }
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', attributes)
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
+  it 'should create a valid Event and exclude attributes of invalid types' do
+    @expected_impression_params[:visitors][0][:attributes] = [
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      {
+        entity_id: '111096',
+        key: 'integer_key',
+        type: 'custom',
+        value: 5
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: true
+    ]
+
+    experiment = config.get_experiment_from_key('test_experiment')
+    attributes = {
+      'browser_type' => 'firefox',
+      'boolean_key' => nil,
+      'integer_key' => 5,
+      'double_key' => {}
+    }
+    impression_event = @event_builder.create_impression_event(experiment, '111128', 'test_user', attributes)
+    expect(impression_event.params).to eq(@expected_impression_params)
+    expect(impression_event.url).to eq(@expected_endpoint)
+    expect(impression_event.http_verb).to eq(:post)
+  end
+
   it 'should create a valid Event when create_impression_event is called with attributes as a false value' do
     @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',

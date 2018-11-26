@@ -302,6 +302,15 @@ module OptimizelySpec
     'attributes' => [{
       'key' => 'browser_type',
       'id' => '111094'
+    }, {
+      'key' => 'boolean_key',
+      'id' => '111095'
+    }, {
+      'key' => 'integer_key',
+      'id' => '111096'
+    }, {
+      'key' => 'double_key',
+      'id' => '111097'
     }],
     'audiences' => [{
       'name' => 'Firefox users',

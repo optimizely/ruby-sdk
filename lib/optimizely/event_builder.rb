@@ -15,10 +15,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require_relative './audience'
-require_relative './params'
-require_relative './version'
-require_relative '../optimizely/helpers/event_tag_utils'
+require_relative 'audience'
+require_relative 'helpers/constants'
+require_relative 'helpers/event_tag_utils'
+require_relative 'params'
+require_relative 'version'
+
 require 'securerandom'
 
 module Optimizely
@@ -74,9 +76,9 @@ module Optimizely
       visitor_attributes = []
 
       attributes&.keys&.each do |attribute_key|
-        # Omit null attribute values
+        # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
-        unless attribute_value.nil?
+        if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
           attribute_id = @config.get_attribute_id attribute_key
           if attribute_id
             visitor_attributes.push(

@@ -258,6 +258,8 @@ module Optimizely
         }, @logger, Logger::ERROR
       )
 
+      return false unless user_inputs_valid?(attributes)
+
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
@@ -306,6 +308,8 @@ module Optimizely
       end
 
       return enabled_features unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
+
+      return enabled_features unless user_inputs_valid?(attributes)
 
       @config.feature_flags.each do |feature|
         enabled_features.push(feature['key']) if is_feature_enabled(
@@ -449,6 +453,8 @@ module Optimizely
         },
         @logger, Logger::ERROR
       )
+
+      return nil unless user_inputs_valid?(attributes)
 
       feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag

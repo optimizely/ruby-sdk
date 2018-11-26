@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -144,5 +144,20 @@ describe Optimizely::ConditionEvaluator do
     condition = '["not", {"name": "browser_type", "type": "custom_dimension", "value": "chrome"}]'
     condition = JSON.parse(condition)
     expect(@condition_evaluator.evaluate(condition)).to be true
+  end
+
+  it 'should evaluate to true when user attributes match the audience conditions' do
+    user_attributes = {
+      'device_type' => 'iPhone',
+      'is_firefox' => false,
+      'num_users' => 15,
+      'pi_value' => 3.14
+    }
+    condition_evaluator = Optimizely::ConditionEvaluator.new(user_attributes)
+    condition = '["and", ["or", ["or", {"name": "device_type", "type": "custom_attribute", "value": "iPhone"}]],
+    ["or", ["or", {"name": "is_firefox", "type": "custom_attribute", "value": false}]], ["or", ["or", {"name": "num_users",
+      "type": "custom_attribute", "value": 15}]], ["or", ["or", {"name": "pi_value", "type": "custom_attribute", "value": 3.14}]]]'
+    condition = JSON.parse(condition)
+    expect(condition_evaluator.evaluate(condition)).to be true
   end
 end
