@@ -910,7 +910,7 @@ describe 'Optimizely' do
       expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'invalid')).to be false
     end
-    
+
     it 'should log and raise an exception when called with attributes in an invalid format' do
       expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'invalid_attributes')).to be false
@@ -1394,7 +1394,7 @@ describe 'Optimizely' do
 
     it 'should log and raise an exception when called with attributes in an invalid format' do
       expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
-      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, 'invalid_attributes')).to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 'test_user', 'invalid_attributes')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
     end
   end
