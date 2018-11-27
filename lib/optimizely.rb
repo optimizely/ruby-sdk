@@ -307,7 +307,11 @@ module Optimizely
         return enabled_features
       end
 
-      return enabled_features unless Optimizely::Helpers::Validator.inputs_valid?({user_id: user_id}, @logger, Logger::ERROR)
+      return enabled_features unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          user_id: user_id
+        }, @logger, Logger::ERROR
+      )
 
       return enabled_features unless user_inputs_valid?(attributes)
 
@@ -448,8 +452,8 @@ module Optimizely
         {
           feature_flag_key: feature_flag_key,
           variable_key: variable_key,
-          variable_type: variable_type,
-          user_id: user_id
+          user_id: user_id,
+          variable_type: variable_type
         },
         @logger, Logger::ERROR
       )

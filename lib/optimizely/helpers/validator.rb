@@ -121,13 +121,22 @@ module Optimizely
         return false unless variables.respond_to?(:each) && !variables.empty?
 
         is_valid = true
+        if variables.include? :user_id
+          # Empty str is a valid user ID.
+          unless variables[:user_id].is_a?(String)
+            is_valid = false
+            logger.log(level, "#{Constants::INPUT_VARIABLES['USER_ID']} is invalid")
+          end
+          variables.delete :user_id
+        end
+
         variables.each do |key, value|
           next if value.is_a?(String) && !value.empty?
 
           is_valid = false
           next unless logger_valid?(logger) && level
 
-          logger.log(level, "#{Optimizely::Helpers::Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
+          logger.log(level, "#{Constants::INPUT_VARIABLES[key.to_s.upcase]} is invalid")
         end
         is_valid
       end

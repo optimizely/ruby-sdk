@@ -329,7 +329,7 @@ module Optimizely
       #
       # Returns a boolean value that indicates if the set completed successfully.
 
-      input_values = {user_id: user_id, experiment_key: experiment_key}
+      input_values = {experiment_key: experiment_key, user_id: user_id}
       input_values[:variation_key] = variation_key unless variation_key.nil?
       return false unless Optimizely::Helpers::Validator.inputs_valid?(input_values, @logger, Logger::DEBUG)
 

@@ -859,12 +859,6 @@ describe Optimizely::ProjectConfig do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      'User ID is invalid')
     end
-    # User ID is an empty string
-    it 'should log a message and return nil when user_id is passed as empty string for get_forced_variation' do
-      expect(config.get_forced_variation(@valid_experiment[:key], '')).to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-                                                     'User ID is invalid')
-    end
     # User ID is not defined in the forced variation map
     it 'should log a message and return nil when user is not in forced variation map' do
       expect(config.get_forced_variation(@valid_experiment[:key], @user_id)).to eq(nil)
@@ -902,12 +896,6 @@ describe Optimizely::ProjectConfig do
     # User ID is nil
     it 'should log a message when user_id is passed as nil' do
       expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to eq(false)
-      expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
-                                                     'User ID is invalid')
-    end
-    # User ID is an empty string
-    it 'should log a message and return false when user_id is passed as empty string' do
-      expect(config.set_forced_variation(@valid_experiment[:key], '', @valid_variation[:key])).to eq(false)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      'User ID is invalid')
     end
@@ -961,12 +949,22 @@ describe Optimizely::ProjectConfig do
     it 'should call inputs_valid? with the proper arguments in set_forced_variation' do
       expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
         {
-          user_id: @user_id,
           experiment_key: @valid_experiment[:key],
+          user_id: @user_id,
           variation_key: @valid_variation[:key]
         }, spy_logger, Logger::DEBUG
       )
       config.set_forced_variation(@valid_experiment[:key], @user_id, @valid_variation[:key])
+    end
+
+    it 'should log and return false when user ID is non string in set_forced_variation' do
+      expect(config.set_forced_variation(@valid_experiment[:key], nil, @valid_variation[:key])).to be false
+      expect(config.set_forced_variation(@valid_experiment[:key], 5, @valid_variation[:key])).to be false
+      expect(config.set_forced_variation(@valid_experiment[:key], 5.5, @valid_variation[:key])).to be false
+      expect(config.set_forced_variation(@valid_experiment[:key], true, @valid_variation[:key])).to be false
+      expect(config.set_forced_variation(@valid_experiment[:key], {}, @valid_variation[:key])).to be false
+      expect(config.set_forced_variation(@valid_experiment[:key], [], @valid_variation[:key])).to be false
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'User ID is invalid').exactly(6).times
     end
 
     it 'should call inputs_valid? with the proper arguments in get_forced_variation' do
@@ -977,6 +975,16 @@ describe Optimizely::ProjectConfig do
         }, spy_logger, Logger::DEBUG
       )
       config.get_forced_variation(@valid_experiment[:key], @user_id)
+    end
+
+    it 'should log and return nil when user ID is non string in get_forced_variation' do
+      expect(config.get_forced_variation(@valid_experiment[:key], nil)).to eq(nil)
+      expect(config.get_forced_variation(@valid_experiment[:key], 5)).to eq(nil)
+      expect(config.get_forced_variation(@valid_experiment[:key], 5.5)).to eq(nil)
+      expect(config.get_forced_variation(@valid_experiment[:key], true)).to eq(nil)
+      expect(config.get_forced_variation(@valid_experiment[:key], {})).to eq(nil)
+      expect(config.get_forced_variation(@valid_experiment[:key], [])).to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'User ID is invalid').exactly(6).times
     end
 
     # Call set variation with different variations on one user/experiment to confirm that each set is expected.
