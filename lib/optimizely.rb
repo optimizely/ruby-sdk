@@ -30,6 +30,9 @@ require_relative 'optimizely/notification_center'
 require_relative 'optimizely/project_config'
 
 module Optimizely
+  # The Optimizely client class containing an API to programmatically interact with Optimizely.
+  # For more information see https://docs.developers.optimizely.com/full-stack/docs/instantiate.
+
   class Project
     attr_reader :notification_center
     # @api no-doc
@@ -38,14 +41,16 @@ module Optimizely
 
     # Constructor for Projects.
     #
-    # @param datafile - JSON string representing the project.
-    # @param event_dispatcher - Provides a dispatch_event method which if given a URL and params sends a request to it.
-    # @param logger - Optional component which provides a log method to log messages. By default nothing would be logged.
-    # @param error_handler - Optional component which provides a handle_error method to handle exceptions.
-    #                 By default all exceptions will be suppressed.
-    # @param user_profile_service - Optional component which provides methods to store and retreive user profiles.
-    # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
-
+    # See https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely.rb for more information.
+    #
+    # @param datafile             [string]               The JSON string representing the project.
+    # @param event_dispatcher     [event_dispatcher]     An event handler to manage network calls.
+    # @param logger               [logger]               logger object to log issues.
+    # @param error_handler        [error_handler]        An error handler object to handle errors.
+    #                                                    By default all exceptions will be suppressed.
+    # @param user_profile_service [user_profile_service] A user profile service.
+    # @param skip_json_validation [skip_json_validation] Specifies whether the JSON should be validated. Set to "true" to 
+    #                                                    perform JSON validation on the schema, or "false" to skip validation.
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
       @is_valid = true
       @logger = logger || NoOpLogger.new
@@ -79,14 +84,19 @@ module Optimizely
       @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
-    # Buckets visitor and sends impression event to Optimizely.
+    # Activates an A/B test for a user, deciding whether they qualify for the experiment, bucketing them
+    # into a variation if they do, and sending an impression event to Optimizely.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.
     #
-    # @param experiment_key - Experiment which needs to be activated.
-    # @param user_id - String ID for user.
-    # @param attributes - Hash representing user attributes and values to be recorded.
+    # For more information see https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely.rb.
     #
-    # @return [Variation Key] representing the variation the user will be bucketed in.
-    # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+    # @param experiment_key [string]  The key of the experiment for which to activate the variation.
+    # @param user_id        [string]  The ID of the user for whom to activate the variation.
+    # @param attributes     [map]     A map of up to 100 custom key-value string pairs defining attributes for the user.
+    #
+    # @return               [String]  The key of the variation where the visitor will be bucketed or [nil] if the experiment is
+    #                                 not running, the user is not in the experiment, or the datafile is invalid.
 
     def activate(experiment_key, user_id, attributes = nil)
       unless @is_valid
@@ -115,15 +125,23 @@ module Optimizely
       variation_key
     end
 
-    # Gets variation where visitor will be bucketed.
+    # Activates an A/B test for a user and returns information about an experiment variation.
+    # 
+    # This method performs the same logic as `activate`, in that it activates an A/B test for a user,
+    # deciding whether they qualify for the experiment and bucketing them into a variation if they do.
+    # Unlike `activate`, this method does not send an impression network request.
     #
-    # @param experiment_key - Experiment for which visitor variation needs to be determined.
-    # @param user_id - String ID for user.
-    # @param attributes - Hash representing user attributes.
+    # Use the `getVariation` method if `activate` has been called and the current variation assignment is needed
+    # for a given experiment and user.
+    #     
+    # For more information see: https://dash.readme.io/project/staging-optimizely-full-stack/v2/docs/get-variation
     #
-    # @return [variation key] where visitor will be bucketed.
-    # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
-
+    # @param experiment_key [string]    The key of the experiment for which to retrieve the forced variation.
+    # @param user_id        [string]    The ID of the user for whom to retrieve the forced variation.
+    # @param attributes     [map]       A map of up to 100 custom key-value string pairs specifying attributes for the user.
+    #
+    # @return               [variation] The variation where the visitor will be bucketed, or nil if the experiment is not running,
+    #                                   the user is not in the experiment, or the datafile is invalid.
     def get_variation(experiment_key, user_id, attributes = nil)
       unless @is_valid
         @logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
@@ -151,25 +169,36 @@ module Optimizely
       nil
     end
 
-    # Force a user into a variation for a given experiment.
+    # Forces a user into a variation for a given experiment for the lifetime of the Optimizely client.
+    # The purpose of this method is to force a user into a specific variation or personalized experience for a given experiment.
+    # The forced variation value does not persist across application launches.
     #
-    # @param experiment_key - String - key identifying the experiment.
-    # @param user_id - String - The user ID to be used for bucketing.
-    # @param variation_key - The variation key specifies the variation which the user will
-    #   be forced into. If nil, then clear the existing experiment-to-variation mapping.
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/set-forced-variation.
     #
-    # @return [Boolean] indicates if the set completed successfully.
+    # @param experiment_key  [string]  The key of the experiment for which to set the forced variation.
+    # @param user_id         [string]  The ID of the user for whom to set the forced variation.
+    # @param variation_key   [string]  The ID of the variation to force the user into. 
+    #                                  Set the value to nil to clear the existing experiment-to-variation mapping.
+    #
+    # @return                [Boolean] `true` if the user was successfully forced into a variation, `false` if the `experimentKey`
+    #                                  is not in the project file or the `variationKey` is not in the experiment.
 
     def set_forced_variation(experiment_key, user_id, variation_key)
       @config.set_forced_variation(experiment_key, user_id, variation_key)
     end
 
-    # Gets the forced variation for a given user and experiment.
+    # Returns the forced variation set by `setForcedVariation`, or nil if no variation was forced.
+    # A user can be forced into a variation for a given experiment for the lifetime of the Optimizely client.
+    # This method gets the variation that the user has been forced into.
+    # The forced variation value is runtime only and does not persist across application launches.
     #
-    # @param experiment_key - String - Key identifying the experiment.
-    # @param user_id - String - The user ID to be used for bucketing.
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/set-forced-variation.
     #
-    # @return [String] The forced variation key.
+    # @param experiment_key [string] The key of the experiment for which to retrieve the forced variation.
+    # @param user_id        [string] The ID of the user for whom to retrieve the forced variation.
+    #
+    # @return               [String] The variation the user was bucketed into. 
+    #                                This value will be nil if the forced variation failed.
 
     def get_forced_variation(experiment_key, user_id)
       forced_variation_key = nil
@@ -179,12 +208,15 @@ module Optimizely
       forced_variation_key
     end
 
-    # Send conversion event to Optimizely.
+    # Tracks a conversion event for a user whose attributes meets the audience conditions for an experiment. 
+    # When the user does not meet those conditions, events are not tracked.
     #
-    # @param event_key - Event key representing the event which needs to be recorded.
-    # @param user_id - String ID for user.
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
-    # @param event_tags - Hash representing metadata associated with the event.
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/track.
+    #
+    # @param event_key  [string] The key of the event to be tracked. This key must match the event key provided when the event was created in the Optimizely app.
+    # @param user_id    [string] The ID of the user associated with the event being tracked. This ID must match the user ID provided to `activate` or `isFeatureEnabled`.
+    # @param attributes [map]    A map of up to 100 custom key-value string pairs defining attributes for the user.
+    # @param event_tags [map]    A map of key-value string pairs specifying event names and their corresponding event values associated with the event.
 
     def track(event_key, user_id, attributes = nil, event_tags = nil)
       unless @is_valid
@@ -234,16 +266,21 @@ module Optimizely
       nil
     end
 
-    # Determine whether a feature is enabled.
-    # Sends an impression event if the user is bucketed into an experiment using the feature.
+    # Determines whether a feature test or rollout is enabled for a given user, and
+    # sends an impression event if the user is bucketed into an experiment using the feature.
     #
-    # @param feature_flag_key - String unique key of the feature.
-    # @param user_id - String ID of the user.
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # The purpose of this method is to separate the process of developing and deploying
+    # features from the decision to turn on a feature. Build your feature and deploy it
+    # to your application behind this flag, then turn the feature on or off for specific
+    # users by running tests and rollouts.
     #
-    # @return [True] if the feature is enabled.
-    # @return [False] if the feature is disabled.
-    # @return [False] if the feature is not found.
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/is-feature-enabled.
+    #
+    # @param feature_flag_key [string]  The key of the feature on which to perform the check. 
+    # @param user_id          [string]  The ID of the user on which to perform the check. 
+    # @param attributes       [map]     A map of up to 100 custom key-value string pairs defining attributes for the user.
+    #
+    # @return                 [boolean] True if the feature is enabled. False if the feature is disabled or not found.
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
       unless @is_valid
@@ -293,11 +330,17 @@ module Optimizely
       end
     end
 
-    # Gets keys of all feature flags which are enabled for the user.
+    # Retrieves a list of features that are enabled for the user.
+    # Invoking this method is equivalent to running `isFeatureEnabled` for each feature in the datafile sequentially.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.     
+    # 
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/get-enabled-features
     #
-    # @param user_id -  ID for user.
-    # @param attributes - Dict representing user attributes.
-    # @return [feature flag keys] A List of feature flag keys that are enabled for the user.
+    # @param user_id    [string]             The ID of the participant in the experiment.
+    # @param attributes [map]                A map of up to 100 custom key-value string pairs defining attributes for the user. 
+    # @return           [feature flag keys]  A list of keys corresponding to the features that are enabled for the user. 
+    #                                        If the userId is empty, this method returns an empty list.
 
     def get_enabled_features(user_id, attributes = nil)
       enabled_features = []
@@ -325,15 +368,19 @@ module Optimizely
       enabled_features
     end
 
-    # Get the String value of the specified variable in the feature flag.
+    # Evaluates the specified string feature variable and returns its value.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.   
     #
-    # @param feature_flag_key - String key of feature flag the variable belongs to
-    # @param variable_key - String key of variable for which we are getting the string value
-    # @param user_id - String user ID
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/get-feature-variable.
     #
-    # @return [String] the string variable value.
-    # @return [nil] if the feature flag or variable are not found.
+    # @param feature_flag_key [string] The key of the feature whose variable's value is being accessed.
+    # @param variable_key     [string] The key of the variable whose value is being accessed.
+    # @param user_id          [string] The ID of the participant in the experiment.
+    # @param attributes       [map]    A map of up to 100 custom key-value string pairs defining attributes for the user. 
+    #
+    # @return                 [String] The value of the variable, or nil if the feature key is invalid, the variable key is
+    #                                  invalid, or there is a mismatch with the type of the variable.
 
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
       unless @is_valid
@@ -352,15 +399,19 @@ module Optimizely
       variable_value
     end
 
-    # Get the Boolean value of the specified variable in the feature flag.
+    # Evaluates the specified boolean feature variable and returns its value.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.
+    # 
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/get-feature-variable.
     #
-    # @param feature_flag_key - String key of feature flag the variable belongs to
-    # @param variable_key - String key of variable for which we are getting the string value
-    # @param user_id - String user ID
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # @param feature_flag_key [string]  The key of the feature whose variable's value is being accessed.
+    # @param variable_key     [string]  The key of the variable whose value is being accessed.
+    # @param user_id          [string]  The ID of the participant in the experiment.
+    # @param attributes       [map]     A map of up to 100 custom key-value string pairs defining attributes for the user. 
     #
-    # @return [Boolean] the boolean variable value.
-    # @return [nil] if the feature flag or variable are not found.
+    # @return                 [boolean] The value of the variable, or nil if the feature key is invalid, the variable key is
+    #                                   invalid, or there is a mismatch with the type of the variable.
 
     def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
       unless @is_valid
@@ -379,15 +430,19 @@ module Optimizely
       variable_value
     end
 
-    # Get the Double value of the specified variable in the feature flag.
+    # Evaluates the specified double feature variable and returns its value.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.
+    # 
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/get-feature-variable.
     #
-    # @param feature_flag_key - String key of feature flag the variable belongs to
-    # @param variable_key - String key of variable for which we are getting the string value
-    # @param user_id - String user ID
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # @param feature_flag_key [string]  The key of the feature whose variable's value is being accessed.
+    # @param variable_key     [string]  The key of the variable whose value is being accessed.
+    # @param user_id          [string]  The ID of the participant in the experiment.
+    # @param attributes       [map]     A map of up to 100 custom key-value string pairs defining attributes for the user. 
     #
-    # @return [Boolean] the double variable value.
-    # @return [nil] if the feature flag or variable are not found.
+    # @return                 [double]  The value of the variable, or nil if the feature key is invalid, the variable key is
+    #                                   invalid, or there is a mismatch with the type of the variable.
 
     def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
       unless @is_valid
@@ -406,15 +461,19 @@ module Optimizely
       variable_value
     end
 
-    # Get the Integer value of the specified variable in the feature flag.
+    # Evaluates the specified integer feature variable and returns its value.
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.
+    # 
+    # For more information see: https://docs.developers.optimizely.com/full-stack/docs/get-feature-variable.
     #
-    # @param feature_flag_key - String key of feature flag the variable belongs to
-    # @param variable_key - String key of variable for which we are getting the string value
-    # @param user_id - String user ID
-    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    # @param feature_flag_key [string]  The key of the feature whose variable's value is being accessed.
+    # @param variable_key     [string]  The key of the variable whose value is being accessed.
+    # @param user_id          [string]  The ID of the participant in the experiment.
+    # @param attributes       [map]     A map of up to 100 custom key-value string pairs defining attributes for the user. 
     #
-    # @return [Integer] variable value.
-    # @return [nil] if the feature flag or variable are not found.
+    # @return                 [double]  The value of the variable, or nil if the feature key is invalid, the variable key is
+    #                                   invalid, or there is a mismatch with the type of the variable.
 
     def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
       unless @is_valid
