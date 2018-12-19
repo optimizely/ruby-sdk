@@ -49,7 +49,7 @@ module Optimizely
     # @param error_handler        [error_handler]        An error handler object to handle errors.
     #                                                    By default all exceptions will be suppressed.
     # @param user_profile_service [user_profile_service] A user profile service.
-    # @param skip_json_validation [skip_json_validation] Specifies whether the JSON should be validated. Set to `true` to 
+    # @param skip_json_validation [skip_json_validation] Specifies whether the JSON is validated. Set to `true` to 
     #                                                    skip JSON validation on the schema, or `false` to perform validation.
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
       @is_valid = true
@@ -84,20 +84,20 @@ module Optimizely
       @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
-    # Activates an A/B test for a user, deciding whether they qualify for the experiment, bucketing them
-    # into a variation if they do, and sending an impression event to Optimizely.
+    # Activates an A/B test for a user, determines whether they qualify for the experiment, buckets a qualified
+    # user into a variation, and sends an impression event to Optimizely.
     #
     # This method takes into account the user `attributes` passed in, to determine if the user
     # is part of the audience that qualifies for the experiment.
     #
     # For more information, see https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely.rb.
     #
-    # @param experiment_key [string]  The key of the experiment for which to activate the variation.
-    # @param user_id        [string]  The ID of the user for whom to activate the variation.
+    # @param experiment_key [string]  The key of the variation's experiment to activate.
+    # @param user_id        [string]  The user ID.
     # @param attributes     [map]     A map of custom key-value string pairs specifying attributes for the user.
     #
-    # @return               [String]  The variation where the visitor will be bucketed, or `nil` if the
-    #                                 user does not qualify for the experiment.
+    # @return               [String]  The key of the variation where the user is bucketed, or `nil` if the 
+    #                                 user doesn't qualify for the experiment.
 
     def activate(experiment_key, user_id, attributes = nil)
       unless @is_valid
@@ -126,23 +126,22 @@ module Optimizely
       variation_key
     end
 
-    # Activates an A/B test for a user and returns information about an experiment variation.
-    # 
-    # This method performs the same logic as `activate`, in that it activates an A/B test for a user,
-    # deciding whether they qualify for the experiment and bucketing them into a variation if they do.
-    # Unlike `activate`, this method does not send an impression network request.
-    #
-    # Use the `get_variation` method if `activate` has been called and the current variation assignment is needed
-    # for a given experiment and user.
+    # Buckets a qualified user into an A/B test. Takes the same arguments and returns the same values as `activate`, 
+    # but without sending an impression network request. The behavior of the two methods is identical otherwise. 
+    # Use `getVariation` if `activate` has been called and the current variation assignment is needed for a given
+    # experiment and user.
+
+    # This method takes into account the user `attributes` passed in, to determine if the user
+    # is part of the audience that qualifies for the experiment.
     #     
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/get-variation
     #
-    # @param experiment_key [string]    The key of the experiment for which to retrieve the forced variation.
-    # @param user_id        [string]    The ID of the user for whom to retrieve the forced variation.
+    # @param experiment_key [string]    The key of the experiment for which to retrieve the variation.
+    # @param user_id        [string]    The ID of the user for whom to retrieve the variation.
     # @param attributes     [map]       A map of custom key-value string pairs specifying attributes for the user.
     #
-    # @return               [variation] The variation where the visitor will be bucketed, or `nil` if the
-    #                                   user does not qualify for the experiment.
+    # @return               [variation] The key of the variation where the user is bucketed, or `nil` if the user
+    #                                   doesn't qualify for the experiment.
     def get_variation(experiment_key, user_id, attributes = nil)
       unless @is_valid
         @logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
@@ -171,32 +170,30 @@ module Optimizely
     end
 
     # Forces a user into a variation for a given experiment for the lifetime of the Optimizely client.
-    # The purpose of this method is to force a user into a specific variation or personalized experience for a given experiment.
-    # The forced variation value does not persist across application launches.
+    # The forced variation value doesn't persist across application launches.
     #
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/set-forced-variation.
     #
-    # @param experiment_key  [string]  The key of the experiment for which to set the forced variation.
-    # @param user_id         [string]  The ID of the user for whom to set the forced variation.
-    # @param variation_key   [string]  The ID of the variation to force the user into. 
-    #                                  Set the value to nil to clear the existing experiment-to-variation mapping.
+    # @param experiment_key  [string]  The key of the experiment to set with the forced variation.
+    # @param user_id         [string]  The ID of the user to force into the variation.
+    # @param variation_key   [string]  The key of the forced variation. 
+    #                                  Set the value to `nil` to clear the existing experiment-to-variation mapping.
     #
     # @return                [Boolean] `true` if the user was successfully forced into a variation, `false` if the `experimentKey`
-    #                                  is not in the project file or the `variationKey` is not in the experiment.
+    #                                  isn't in the project file or the `variationKey` isn't in the experiment.
 
     def set_forced_variation(experiment_key, user_id, variation_key)
       @config.set_forced_variation(experiment_key, user_id, variation_key)
     end
 
-    # Returns the forced variation set by `setForcedVariation`, or nil if no variation was forced.
+    # Returns the forced variation set by `setForcedVariation`, or `nil` if no variation was forced.
     # A user can be forced into a variation for a given experiment for the lifetime of the Optimizely client.
-    # This method gets the variation that the user has been forced into.
-    # The forced variation value is runtime only and does not persist across application launches.
+    # The forced variation value is runtime only and doesn't persist across application launches.
     #
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/set-forced-variation.
     #
     # @param experiment_key [string] The key of the experiment for which to retrieve the forced variation.
-    # @param user_id        [string] The ID of the user for whom to retrieve the forced variation.
+    # @param user_id        [string] The ID of the user in the forced variation.
     #
     # @return               [String] The variation the user was bucketed into, or `nil` if `set_forced_variation`
     #                                failed to force the user into the variation.
@@ -276,11 +273,11 @@ module Optimizely
     #
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/is-feature-enabled.
     #
-    # @param feature_flag_key [string]  The key of the feature on which to perform the check. 
-    # @param user_id          [string]  The ID of the user on which to perform the check. 
+    # @param feature_flag_key [string]  The key of the feature to check. 
+    # @param user_id          [string]  The ID of the user to check. 
     # @param attributes       [map]     A map of custom key-value string pairs specifying attributes for the user.
     #
-    # @return                 [boolean] `true` if the feature is enabled, or `false` if the feature is disabled or could not found.
+    # @return                 [boolean] `true` if the feature is enabled, or `false` if the feature is disabled or couldn't be found.
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
       unless @is_valid
@@ -338,7 +335,7 @@ module Optimizely
     # 
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/get-enabled-features.
     #
-    # @param user_id    [string]             The ID of the participant in the experiment.
+    # @param user_id    [string]             The ID of the user who may have features enabled in one or more experiments.
     # @param attributes [map]                A map of custom key-value string pairs specifying attributes for the user. 
     # @return           [feature flag keys]  A list of keys corresponding to the features that are enabled for the user, 
     #                                        or an empty list if no features could be found for the specified user.
