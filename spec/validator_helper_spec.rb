@@ -119,12 +119,19 @@ describe 'ValidatorHelper' do
     it 'should return true when passed finite value' do
       expect(Optimizely::Helpers::Validator.finite_number?(0)).to eq(true)
       expect(Optimizely::Helpers::Validator.finite_number?(5)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?(5.5)).to eq(true)
       # Upper limit
       expect(Optimizely::Helpers::Validator.finite_number?((2**53) - 1)).to eq(true)
-      expect(Optimizely::Helpers::Validator.finite_number?((2.0**53) - 1)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?((2.0**53) + 1)).to eq(true)
       # Lower limit
-      expect(Optimizely::Helpers::Validator.finite_number?((-2.0**53) + 1)).to eq(true)
-      expect(Optimizely::Helpers::Validator.finite_number?((-2.0**53) + 1)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?((-2**53) + 1)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?((-2.0**53) - 1)).to eq(true)
+      # exact number integer
+      expect(Optimizely::Helpers::Validator.finite_number?(2**53)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?(-2**53)).to eq(true)
+      # exact number float
+      expect(Optimizely::Helpers::Validator.finite_number?(2.0**53)).to eq(true)
+      expect(Optimizely::Helpers::Validator.finite_number?(-2.0**53)).to eq(true)
     end
 
     it 'should return false when passed invalid value' do
@@ -144,9 +151,11 @@ describe 'ValidatorHelper' do
       # NaN
       expect(Optimizely::Helpers::Validator.finite_number?(0.0 / 0)).to eq(false)
       # Greater than specified limit of 2 ^ 53
-      expect(Optimizely::Helpers::Validator.finite_number?(2**53)).to eq(false)
+      expect(Optimizely::Helpers::Validator.finite_number?((2**53) + 1)).to eq(false)
+      expect(Optimizely::Helpers::Validator.finite_number?((2.0**53) + 2)).to eq(false)
       # Less than specified limit of -2 ^ 53
-      expect(Optimizely::Helpers::Validator.finite_number?(-2**53)).to eq(false)
+      expect(Optimizely::Helpers::Validator.finite_number?((-2**53) - 1)).to eq(false)
+      expect(Optimizely::Helpers::Validator.finite_number?((-2**53) - 2.0)).to eq(false)
     end
   end
 end

@@ -330,7 +330,7 @@ module Optimizely
 
       ATTRIBUTE_VALID_TYPES = [FalseClass, Float, Integer, String, TrueClass].freeze
 
-      FINITE_NUMBER_LIMIT = {lower_limit: -2**53, upper_limit: 2**53}.freeze
+      FINITE_NUMBER_LIMIT = 2**53
     end
   end
 end
