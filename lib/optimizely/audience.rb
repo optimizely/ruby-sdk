@@ -38,8 +38,7 @@ module Optimizely
       # Return true if there are no audiences
       return true if audience_ids.empty?
 
-      # Return false if there are audiences but no attributes
-      return false unless attributes
+      attributes ||= {}
 
       evaluate_condition_with_user_attributes = lambda do |condition|
         custom_attribute_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
@@ -50,7 +49,7 @@ module Optimizely
       audience_ids.each do |audience_id|
         audience = config.get_audience_from_id(audience_id)
         audience_conditions = audience['conditions']
-        audience_conditions = JSON.parse(audience_conditions)
+        audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
         return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_condition_with_user_attributes)
       end
       false

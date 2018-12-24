@@ -91,8 +91,6 @@ module Optimizely
       #                    2) the user attribute value is neither nil nor undefined
       #                 Returns false otherwise
 
-      return false unless @user_attributes
-
       !@user_attributes[condition['name']].nil?
     end
 

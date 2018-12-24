@@ -31,6 +31,7 @@ module Optimizely
     attr_reader :account_id
     attr_reader :attributes
     attr_reader :audiences
+    attr_reader :typed_audiences
     attr_reader :events
     attr_reader :experiments
     attr_reader :feature_flags
@@ -79,6 +80,7 @@ module Optimizely
       @account_id = config['accountId']
       @attributes = config.fetch('attributes', [])
       @audiences = config.fetch('audiences', [])
+      @typed_audiences = config.fetch('typedAudiences', [])
       @events = config.fetch('events', [])
       @experiments = config['experiments']
       @feature_flags = config.fetch('featureFlags', [])
@@ -102,6 +104,7 @@ module Optimizely
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
+      @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
       @forced_variation_map = {}
