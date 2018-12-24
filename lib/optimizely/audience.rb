@@ -33,25 +33,29 @@ module Optimizely
       #
       # Returns boolean representing if user satisfies audience conditions for any of the audiences or not.
 
-      audience_ids = experiment['audienceIds']
+      audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
       # Return true if there are no audiences
-      return true if audience_ids.empty?
+      return true if audience_conditions.empty?
 
       attributes ||= {}
 
-      evaluate_condition_with_user_attributes = lambda do |condition|
-        custom_attribute_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
-        return custom_attribute_condition_evaluator.evaluate(condition)
+      evaluate_custom_attr = lambda do |condition|
+        custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
+        return custom_attr_condition_evaluator.evaluate(condition)
       end
 
-      # Return true if any one of the audience conditions are met
-      audience_ids.each do |audience_id|
+      evaluate_audience = lambda do |audience_id|
         audience = config.get_audience_from_id(audience_id)
+        return nil unless audience
+
         audience_conditions = audience['conditions']
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
-        return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_condition_with_user_attributes)
+        return ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
       end
+
+      return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
+
       false
     end
   end

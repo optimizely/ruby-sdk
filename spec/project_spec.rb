@@ -330,6 +330,55 @@ describe 'Optimizely' do
         expect(@project_typed_audience_instance.event_dispatcher).not_to have_received(:dispatch_event)
         expect(@project_typed_audience_instance.decision_service.bucketer).not_to have_received(:bucket)
       end
+
+      it 'should properly activate a user, (with attributes provided) when there is a complex audience match' do
+        # Should be included via substring match string audience with id '3988293898', and
+        # exact match number audience with id '3468206646'
+        user_attributes = {'house' => 'Welcome to Slytherin!', 'lasers' => 45.5}
+
+        params = @expected_activate_params
+
+        params[:visitors][0][:attributes].unshift(
+          {
+            entity_id: '594015',
+            key: 'house',
+            type: 'custom',
+            value: 'Welcome to Slytherin!'
+          },
+          entity_id: '594016',
+          key: 'lasers',
+          type: 'custom',
+          value: 45.5
+        )
+
+        params[:visitors][0][:snapshots][0][:decisions] = [{
+          campaign_id: '1323241598',
+          experiment_id: '1323241598',
+          variation_id: '1423767504'
+        }]
+        params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1323241598'
+
+        variation_to_return = @project_typed_audience_instance.config.get_variation_from_id('audience_combinations_experiment', '1423767504')
+        allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+        expect(@project_typed_audience_instance.activate('audience_combinations_experiment', 'test_user', user_attributes))
+          .to eq('A')
+        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
+        expect(@project_typed_audience_instance.decision_service.bucketer).to have_received(:bucket).once
+      end
+
+      it 'should return nil when complex audience conditions do not match' do
+        user_attributes = {'house' => 'Hufflepuff', 'lasers' => 45.5}
+        variation_to_return = @project_typed_audience_instance.config.get_variation_from_id('audience_combinations_experiment', '1423767504')
+        allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+        expect(@project_typed_audience_instance.activate('audience_combinations_experiment', 'test_user', user_attributes))
+          .to eq(nil)
+        expect(@project_typed_audience_instance.event_dispatcher).not_to have_received(:dispatch_event)
+        expect(@project_typed_audience_instance.decision_service.bucketer).not_to have_received(:bucket)
+      end
     end
 
     it 'should properly activate a user, (with attributes of valid types) when there is an audience match' do
@@ -801,7 +850,57 @@ describe 'Optimizely' do
         @project_typed_audience_instance.track('item_bought', 'test_user', 'house' => 'Welcome to Hufflepuff!')
         expect(@project_typed_audience_instance.event_dispatcher).to_not have_received(:dispatch_event)
       end
+
+      it 'should call dispatch_event with right params when complex audience match' do
+        # Should be included via exact match string audience with id '3468206642', and
+        # exact match boolean audience with id '3468206643'
+        params = @expected_activate_params
+        params[:visitors][0][:attributes] = [
+          {
+            entity_id: '594015',
+            key: 'house',
+            type: 'custom',
+            value: 'Gryffindor'
+          }, {
+            entity_id: '594017',
+            key: 'should_do_it',
+            type: 'custom',
+            value: true
+          }, {
+            entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+            type: 'custom', value: false
+          }
+        ]
+        params[:visitors][0][:snapshots][0][:decisions] = [
+          {
+            campaign_id: '1323241598',
+            experiment_id: '1323241598',
+            variation_id: '1423767504'
+          }, {
+            campaign_id: '1323241600',
+            experiment_id: '1323241599',
+            variation_id: '1423767505'
+          }
+        ]
+        user_attributes = {'house' => 'Gryffindor', 'should_do_it' => true}
+        params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '594090'
+        params[:visitors][0][:snapshots][0][:events][0][:key] = 'user_signed_up'
+        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        @project_typed_audience_instance.track('user_signed_up', 'test_user', user_attributes)
+        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_activate_params, post_headers)).once
+      end
+
+      it 'should not call dispatch_event when typed audience conditions do not match' do
+        # Should be excluded - exact match boolean audience with id '3468206643' does not match,
+        # so the overall conditions fail
+        user_attributes = {'house' => 'Gryffindor', 'should_do_it' => false}
+        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event)
+        @project_typed_audience_instance.track('user_signed_up', 'test_user', user_attributes)
+        expect(@project_typed_audience_instance.event_dispatcher).to_not have_received(:dispatch_event)
+      end
     end
+
     it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'cyberdog')
@@ -1169,6 +1268,28 @@ describe 'Optimizely' do
 
         expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "User 'test_user' is not bucketed into a rollout for feature flag 'feat'.")
         expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat' is not enabled for user 'test_user'.")
+      end
+
+      it 'should return true for feature rollout with complex audience match' do
+        # Should be included via substring match string audience with id '3988293898', and
+        # exists audience with id '3988293899'
+        user_attributes = {'house' => '...Slytherinnn...sss.', 'favorite_ice_cream' => 'matcha'}
+
+        expect(@project_typed_audience_instance.is_feature_enabled(
+                 'feat2', 'test_user', user_attributes
+               )).to be true
+
+        expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'feat2'.")
+        expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat2' is enabled for user 'test_user'.")
+      end
+
+      it 'should return false for feature rollout with complex audience mismatch' do
+        # Should be excluded - substring match string audience with id '3988293898' does not match,
+        # and no audience in the other branch of the 'and' matches either
+        expect(@project_typed_audience_instance.is_feature_enabled('feat2', 'test_user', 'house' => 'Lannister')).to be false
+
+        expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "User 'test_user' is not bucketed into a rollout for feature flag 'feat2'.")
+        expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat2' is not enabled for user 'test_user'.")
       end
     end
 
@@ -1601,6 +1722,23 @@ describe 'Optimizely' do
                  'feat_with_var',
                  'x', 'user1', 'lasers' => 50
                )).to eq('x')
+      end
+
+      it 'should return variable value with complex audience match' do
+        # Should be included via exact match string audience with id '3468206642', and
+        # greater than audience with id '3468206647'
+        user_attributes = {'house' => 'Gryffindor', 'lasers' => 700}
+        expect(@project_typed_audience_instance.get_feature_variable_integer(
+                 'feat2_with_var',
+                 'z', 'user1', user_attributes
+               )).to eq(150)
+      end
+
+      it 'should return default value with complex audience mismatch' do
+        # Should be excluded - no audiences match with no attributes
+        expect(@project_typed_audience_instance.get_feature_variable_integer(
+                 'feat2_with_var', 'z', 'user1', {}
+               )).to eq(10)
       end
     end
   end

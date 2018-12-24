@@ -678,8 +678,7 @@ module OptimizelySpec
                 'endOfRange' => 10_000
               }
             ],
-            'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646
-                                3468206647 3468206644 3468206643],
+            'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646 3468206647 3468206644 3468206643],
             'variations' => [
               {
                 'variables' => [],
@@ -838,8 +837,7 @@ module OptimizelySpec
             'endOfRange' => 10_000
           }
         ],
-        'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646
-                            3468206647 3468206644 3468206643],
+        'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646 3468206647 3468206644 3468206643],
         'variations' => [
           {
             'variables' => [
@@ -874,8 +872,7 @@ module OptimizelySpec
             'endOfRange' => 10_000
           }
         ],
-        'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646
-                            3468206647 3468206644 3468206643],
+        'audienceIds' => %w[3468206642 3988293898 3988293899 3468206646 3468206647 3468206644 3468206643],
         'forcedVariations' => {}
       },
       {
@@ -966,6 +963,11 @@ module OptimizelySpec
         'conditions' => '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
       },
       {
+        'id' => '3468206645',
+        'name' => '$$dummyMultipleCustomAttrs',
+        'conditions' => '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
+      },
+      {
         'id' => '0',
         'name' => '$$dummy',
         'conditions' => '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
@@ -975,38 +977,44 @@ module OptimizelySpec
       {
         'id' => '3988293898',
         'name' => 'substringString',
-        'conditions' => '["and", ["or", ["or", '\
-  '{"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'house', 'type' => 'custom_attribute',
+                                               'match' => 'substring', 'value' => 'Slytherin'}]]]
       },
       {
         'id' => '3988293899',
         'name' => 'exists',
-        'conditions' => '["and", ["or", ["or", {"name": "favorite_ice_cream", "type": "custom_attribute",'\
-  '"match":"exists"}]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'favorite_ice_cream', 'type' => 'custom_attribute',
+                                               'match' => 'exists'}]]]
       },
       {
         'id' => '3468206646',
         'name' => 'exactNumber',
-        'conditions' => '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'\
-  '"match":"exact", "value": 45.5}]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'lasers', 'type' => 'custom_attribute',
+                                               'match' => 'exact', 'value' => 45.5}]]]
       },
       {
         'id' => '3468206647',
         'name' => 'gtNumber',
-        'conditions' => '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'\
-  '"match":"gt", "value": 70 }]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'lasers', 'type' => 'custom_attribute',
+                                               'match' => 'gt', 'value' => 70}]]]
       },
       {
         'id' => '3468206644',
         'name' => 'ltNumber',
-        'conditions' => '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'\
-  '"match":"lt", "value": 1.0 }]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'lasers', 'type' => 'custom_attribute',
+                                               'match' => 'lt', 'value' => 1.0}]]]
       },
       {
         'id' => '3468206643',
         'name' => 'exactBoolean',
-        'conditions' => '["and", ["or", ["or", {"name": "should_do_it", "type": "custom_attribute",'\
-  '"match":"exact", "value": true}]]]'
+        'conditions' => ['and', ['or', ['or', {'name' => 'should_do_it', 'type' => 'custom_attribute',
+                                               'match' => 'exact', 'value' => true}]]]
+      },
+      {
+        'id' => '3468206645',
+        'name' => 'multiple_custom_attrs',
+        'conditions' => ['and', ['or', ['or', {'type' => 'custom_attribute', 'name' => 'browser', 'value' => 'chrome'},
+                                        {'type' => 'custom_attribute', 'name' => 'browser', 'value' => 'firefox'}]]]
       }
     ],
     'groups' => [],
