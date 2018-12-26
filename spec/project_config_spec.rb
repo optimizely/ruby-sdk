@@ -659,6 +659,26 @@ describe Optimizely::ProjectConfig do
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
     end
+
+    it 'should initialize properties correctly upon creating project with typed audience dict' do
+      project_config = Optimizely::ProjectConfig.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger, error_handler)
+      config_body = OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES
+
+      expect(project_config.audiences).to eq(config_body['audiences'])
+
+      expected_audience_id_map = {
+        '0' => config_body['audiences'][7],
+        '3468206642' => config_body['audiences'][0],
+        '3988293898' => config_body['typedAudiences'][0],
+        '3988293899' => config_body['typedAudiences'][1],
+        '3468206646' => config_body['typedAudiences'][2],
+        '3468206647' => config_body['typedAudiences'][3],
+        '3468206644' => config_body['typedAudiences'][4],
+        '3468206643' => config_body['typedAudiences'][5]
+      }
+
+      expect(project_config.audience_id_map).to eq(expected_audience_id_map)
+    end
   end
 
   describe '@logger' do
