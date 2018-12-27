@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2018, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ describe Optimizely::Audience do
     expect(Optimizely::Audience.user_in_experiment?(@project_instance.config,
                                                     experiment,
                                                     nil)).to be false
+    # asserts nil attributes default to empty dict
     expect(Optimizely::CustomAttributeConditionEvaluator).to have_received(:new).with({}).twice
   end
 

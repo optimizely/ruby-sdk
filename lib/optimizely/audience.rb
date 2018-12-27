@@ -31,7 +31,7 @@ module Optimizely
       # attributes - Hash representing user attributes which will be used in determining if
       #              the audience conditions are met.
       #
-      # Returns boolean representing if user satisfies audience conditions for any of the audiences or not.
+      # Returns boolean representing if user satisfies audience conditions for the audiences or not.
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
@@ -40,8 +40,9 @@ module Optimizely
 
       attributes ||= {}
 
+      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
+
       evaluate_custom_attr = lambda do |condition|
-        custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
         return custom_attr_condition_evaluator.evaluate(condition)
       end
 

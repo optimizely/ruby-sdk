@@ -370,8 +370,8 @@ describe 'Optimizely' do
 
       it 'should return nil when complex audience conditions do not match' do
         user_attributes = {'house' => 'Hufflepuff', 'lasers' => 45.5}
-        variation_to_return = @project_typed_audience_instance.config.get_variation_from_id('audience_combinations_experiment', '1423767504')
-        allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+        # variation_to_return = @project_typed_audience_instance.config.get_variation_from_id('audience_combinations_experiment', '1423767504')
+        allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
         expect(@project_typed_audience_instance.activate('audience_combinations_experiment', 'test_user', user_attributes))
@@ -869,7 +869,8 @@ describe 'Optimizely' do
           }, {
             entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
             key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
-            type: 'custom', value: false
+            type: 'custom',
+            value: false
           }
         ]
         params[:visitors][0][:snapshots][0][:decisions] = [
