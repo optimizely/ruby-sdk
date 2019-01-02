@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2018, Optimizely and contributors
+#    Copyright 2018-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -122,9 +122,11 @@ describe 'ValidatorHelper' do
       expect(Optimizely::Helpers::Validator.finite_number?(5.5)).to eq(true)
       # Upper limit
       expect(Optimizely::Helpers::Validator.finite_number?((2**53) - 1)).to eq(true)
+      # float(2.0**53) + 1 evaluates to float(2.0**53)
       expect(Optimizely::Helpers::Validator.finite_number?((2.0**53) + 1)).to eq(true)
       # Lower limit
       expect(Optimizely::Helpers::Validator.finite_number?((-2**53) + 1)).to eq(true)
+      # float(-2.0**53) - 1 evaluates to float(-2.0**53)
       expect(Optimizely::Helpers::Validator.finite_number?((-2.0**53) - 1)).to eq(true)
       # exact number integer
       expect(Optimizely::Helpers::Validator.finite_number?(2**53)).to eq(true)
