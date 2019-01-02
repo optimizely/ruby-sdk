@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2018, Optimizely and contributors
+#    Copyright 2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #
 require 'json'
 require 'spec_helper'
+require 'optimizely/helpers/validator'
 
 describe Optimizely::CustomAttributeConditionEvaluator do
   it 'should return true when the attributes pass the audience conditions and no match type is provided' do
@@ -168,6 +169,30 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to eq(nil)
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to eq(nil)
       end
+
+      it 'should return nil when finite_number? returns false for provided arguments' do
+        # Returns false for user attribute value
+        allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(10).and_return(false)
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('sum' => 10)
+        expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be nil
+        # finite_number? should not be called with condition value as user attribute value is failed
+        expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(100)
+
+        # Returns false for condition value
+        @exact_integer_conditions['value'] = 101
+        allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('sum' => 100)
+        expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be nil
+        # finite_number? should be called with condition value as it returns true for user attribute value
+        expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(101)
+      end
+
+      it 'should not return nil when finite_number? returns true for provided arguments' do
+        @exact_integer_conditions['value'] = 10
+        allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('sum' => 10)
+        expect(condition_evaluator.evaluate(@exact_integer_conditions)).not_to be_nil
+      end
     end
 
     describe 'with a boolean condition value' do
@@ -286,6 +311,30 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to eq(nil)
     end
+
+    it 'should return nil when finite_number? returns false for provided arguments' do
+      # Returns false for user attribute value
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(5).and_return(false)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 5)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
+      # finite_number? should not be called with condition value as user attribute value is failed
+      expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(10)
+
+      # Returns false for condition value
+      @gt_integer_conditions['value'] = 95
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 10)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
+      # finite_number? should be called with condition value as it returns true for user attribute value
+      expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(95)
+    end
+
+    it 'should not return nil when finite_number? returns true for provided arguments' do
+      @gt_integer_conditions['value'] = 81
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 51)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).not_to be_nil
+    end
   end
 
   describe 'less than match type' do
@@ -340,6 +389,30 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({})
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to eq(nil)
+    end
+
+    it 'should return nil when finite_number? returns false for provided arguments' do
+      # Returns false for user attribute value
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(15).and_return(false)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 15)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
+      # finite_number? should not be called with condition value as user attribute value is failed
+      expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(10)
+
+      # Returns false for condition value
+      @lt_integer_conditions['value'] = 25
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 10)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
+      # finite_number? should be called with condition value as it returns true for user attribute value
+      expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(25)
+    end
+
+    it 'should not return nil when finite_number? returns true for provided arguments' do
+      @lt_integer_conditions['value'] = 65
+      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new('input_value' => 75)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).not_to be_nil
     end
   end
 end
