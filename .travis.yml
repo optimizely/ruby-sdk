@@ -8,6 +8,8 @@ rvm:
   - 2.5.1
 before_install: gem install bundler
 install:
+  # bundler required above 3.0.0 version.
+  - gem update --system
   - bundle install
 script: "bundle exec rake spec"
 before_script: "rubocop"
