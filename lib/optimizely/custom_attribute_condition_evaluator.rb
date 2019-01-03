@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2018, Optimizely and contributors
+#    Copyright 2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -90,8 +90,6 @@ module Optimizely
       #                    1) the user attributes have a value for the given condition, and
       #                    2) the user attribute value is neither nil nor undefined
       #                 Returns false otherwise
-
-      return false unless @user_attributes
 
       !@user_attributes[condition['name']].nil?
     end
