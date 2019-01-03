@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2018, Optimizely and contributors
+#    Copyright 2016-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -667,14 +667,15 @@ describe Optimizely::ProjectConfig do
       expect(project_config.audiences).to eq(config_body['audiences'])
 
       expected_audience_id_map = {
-        '0' => config_body['audiences'][7],
         '3468206642' => config_body['audiences'][0],
         '3988293898' => config_body['typedAudiences'][0],
         '3988293899' => config_body['typedAudiences'][1],
         '3468206646' => config_body['typedAudiences'][2],
         '3468206647' => config_body['typedAudiences'][3],
         '3468206644' => config_body['typedAudiences'][4],
-        '3468206643' => config_body['typedAudiences'][5]
+        '3468206643' => config_body['typedAudiences'][5],
+        '3468206645' => config_body['typedAudiences'][6],
+        '0' => config_body['audiences'][8]
       }
 
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
