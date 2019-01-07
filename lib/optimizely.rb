@@ -41,7 +41,7 @@ module Optimizely
 
     # Constructor for Projects.
     #
-    # See https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely.rb for more information.
+    # For more information, see https://docs.developers.optimizely.com/full-stack/docs/instantiate.
     #
     # @param datafile             [string]               The JSON string representing the project.
     # @param event_dispatcher     [event_dispatcher]     An event handler to manage network calls.
@@ -90,9 +90,9 @@ module Optimizely
     # This method takes into account the user `attributes` passed in, to determine if the user
     # is part of the audience that qualifies for the experiment.
     #
-    # For more information, see https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely.rb.
+    # For more information, see https://docs.developers.optimizely.com/full-stack/docs/activate.
     #
-    # @param experiment_key [string]  The key of the variation's experiment to activate.
+    # @param experiment_key [string]  The experiment to activate.
     # @param user_id        [string]  The user ID.
     # @param attributes     [map]     A map of custom key-value string pairs specifying attributes for the user.
     #
@@ -269,7 +269,10 @@ module Optimizely
     end
 
     # Determines whether a feature test or rollout is enabled for a given user, and
-    # sends an impression event if the user is bucketed into an experiment using the feature.
+    # sends an impression event if the user is bucketed into a feature test using the feature. 
+    # No impression event is sent if the user is bucketed into a rollout.
+    #
+    # Note: a feature test takes priority over the rollout.
     #
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/is-feature-enabled.
     #
@@ -335,7 +338,7 @@ module Optimizely
     # 
     # For more information, see https://docs.developers.optimizely.com/full-stack/docs/get-enabled-features.
     #
-    # @param user_id    [string]             The ID of the user who may have features enabled in one or more experiments.
+    # @param user_id    [string]             The ID of the user to check.
     # @param attributes [map]                A map of custom key-value string pairs specifying attributes for the user. 
     # @return           [feature flag keys]  A list of keys corresponding to the features that are enabled for the user, 
     #                                        or an empty list if no features could be found for the specified user.
