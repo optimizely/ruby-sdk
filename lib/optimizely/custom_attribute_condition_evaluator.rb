@@ -38,8 +38,9 @@ module Optimizely
 
     attr_reader :user_attributes
 
-    def initialize(user_attributes)
+    def initialize(user_attributes, logger)
       @user_attributes = user_attributes
+      @logger = logger
     end
 
     def evaluate(leaf_condition)
@@ -51,11 +52,34 @@ module Optimizely
       # Returns boolean if the given user attributes match/don't match the given conditions,
       #         nil if the given conditions can't be evaluated.
 
-      return nil unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
+      unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{leaf_condition}' has an unknown condition type."
+        )
+        return nil
+      end
 
       condition_match = leaf_condition['match'] || EXACT_MATCH_TYPE
 
-      return nil unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
+      unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{leaf_condition}' uses an unknown match type."
+        )
+        return nil
+      end
+
+      user_provided_value = @user_attributes[leaf_condition['name']]
+
+      if user_provided_value.nil? && condition_match != EXISTS_MATCH_TYPE
+        @logger.log(
+          Logger::WARN,
+          "Audience condition #{leaf_condition} evaluated as UNKNOWN because no user value " \
+          "was passed for attribute '#{leaf_condition['name']}'."
+        )
+        return nil
+      end
 
       send(EVALUATORS_BY_MATCH_TYPE[condition_match], leaf_condition)
     end
@@ -77,9 +101,25 @@ module Optimizely
         return true if condition_value.to_f == user_provided_value.to_f
       end
 
-      return nil if !value_valid_for_exact_conditions?(user_provided_value) ||
-                    !value_valid_for_exact_conditions?(condition_value) ||
-                    !Helpers::Validator.same_types?(condition_value, user_provided_value)
+      unless value_valid_for_exact_conditions?(user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
+          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+        )
+        return nil
+      end
+
+      return nil unless value_valid_for_exact_conditions?(condition_value)
+
+      unless Helpers::Validator.same_types?(condition_value, user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for " \
+          "user attribute '#{condition['name']}' is '#{user_provided_value.class}' while expected is '#{condition_value.class}'."
+        )
+        return nil
+      end
 
       condition_value == user_provided_value
     end
@@ -103,8 +143,16 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil if !Helpers::Validator.finite_number?(user_provided_value) ||
-                    !Helpers::Validator.finite_number?(condition_value)
+      unless Helpers::Validator.finite_number?(user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
+          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+        )
+        return nil
+      end
+
+      return nil unless Helpers::Validator.finite_number?(condition_value)
 
       user_provided_value > condition_value
     end
@@ -118,8 +166,16 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil if !Helpers::Validator.finite_number?(user_provided_value) ||
-                    !Helpers::Validator.finite_number?(condition_value)
+      unless Helpers::Validator.finite_number?(user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
+          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+        )
+        return nil
+      end
+
+      return nil unless Helpers::Validator.finite_number?(condition_value)
 
       user_provided_value < condition_value
     end
@@ -133,7 +189,16 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil unless user_provided_value.is_a?(String) && condition_value.is_a?(String)
+      unless user_provided_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
+          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+        )
+        return nil
+      end
+
+      return nil unless condition_value.is_a?(String)
 
       user_provided_value.include? condition_value
     end

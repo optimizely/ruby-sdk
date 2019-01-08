@@ -36,11 +36,27 @@ module Optimizely
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
       # Return true if there are no audiences
-      return true if audience_conditions.empty?
+      if audience_conditions.empty?
+        config.logger.log(
+          Logger::INFO,
+          "No Audience attached to experiment '#{experiment['key']}'. Evaluated as True."
+        )
+        return true
+      end
+
+      config.logger.log(
+        Logger::DEBUG,
+        "Evaluating audiences for experiment '#{experiment['key']}': '#{audience_conditions}'."
+      )
+
+      config.logger.log(
+        Logger::DEBUG,
+        "User attributes: '#{attributes}'."
+      )
 
       attributes ||= {}
 
-      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
+      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes, config.logger)
 
       evaluate_custom_attr = lambda do |condition|
         return custom_attr_condition_evaluator.evaluate(condition)
@@ -51,13 +67,31 @@ module Optimizely
         return nil unless audience
 
         audience_conditions = audience['conditions']
+        config.logger.log(
+          Logger::DEBUG,
+          "Starting to evaluate audience '#{audience_id}' with conditions: '#{audience_conditions}'."
+        )
+
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
-        return ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+        result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+        result = 'UNKNOWN' if result.nil?
+        config.logger.log(
+          Logger::DEBUG,
+          "Audience '#{audience_id}' evaluated as '#{result}'."
+        )
+        result
       end
 
-      return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
+      eval_result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
 
-      false
+      eval_result ||= false
+
+      config.logger.log(
+        Logger::INFO,
+        "Audiences for experiment '#{experiment['key']}' collectively evaluated as '#{eval_result}'."
+      )
+
+      eval_result
     end
   end
 end
