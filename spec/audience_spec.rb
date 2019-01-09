@@ -17,7 +17,6 @@
 #
 require 'spec_helper'
 describe Optimizely::Audience do
-  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_typed_audience_JSON) { JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES) }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
@@ -268,49 +267,49 @@ describe Optimizely::Audience do
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Evaluating audiences for experiment 'audience_combinations_experiment': '#{experiment['audienceConditions']}'."
-    )
+    ).ordered # Order: 0
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "User attributes: '#{user_attributes}'."
-    )
+    ).ordered # Order: 1
 
     # audience_3468206647
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Starting to evaluate audience '3468206647' with conditions: '#{audience_3468206647['conditions']}'."
-    )
+    ).ordered # Order: 2
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Audience '3468206647' evaluated as 'false'."
-    )
+    ).ordered # Order: 3
 
     # audience_3988293898
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Starting to evaluate audience '3988293898' with conditions: '#{audience_3988293898['conditions']}'."
-    )
+    ).ordered # Order: 4
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Audience '3988293898' evaluated as 'UNKNOWN'."
-    )
+    ).ordered # Order: 5
 
     # audience_3468206646
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Starting to evaluate audience '3468206646' with conditions: '#{audience_3468206646['conditions']}'."
-    )
+    ).ordered # Order: 6
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Audience '3468206646' evaluated as 'true'."
-    )
+    ).ordered # Order: 7
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
       "Audiences for experiment 'audience_combinations_experiment' collectively evaluated as 'true'."
-    )
+    ).ordered # Order: 8
   end
 end

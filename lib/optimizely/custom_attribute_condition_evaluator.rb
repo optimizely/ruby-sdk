@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require_relative 'helpers/constants'
 require_relative 'helpers/validator'
 
 module Optimizely
@@ -55,7 +56,7 @@ module Optimizely
       unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{leaf_condition}' has an unknown condition type."
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_TYPE'], leaf_condition)
         )
         return nil
       end
@@ -65,7 +66,7 @@ module Optimizely
       unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{leaf_condition}' uses an unknown match type."
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_MATCH_TYPE'], leaf_condition)
         )
         return nil
       end
@@ -74,9 +75,12 @@ module Optimizely
 
       if user_provided_value.nil? && condition_match != EXISTS_MATCH_TYPE
         @logger.log(
-          Logger::WARN,
-          "Audience condition #{leaf_condition} evaluated as UNKNOWN because no user value " \
-          "was passed for attribute '#{leaf_condition['name']}'."
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['MISSING_ATTRIBUTE_VALUE'],
+            leaf_condition,
+            leaf_condition['name']
+          )
         )
         return nil
       end
@@ -104,8 +108,12 @@ module Optimizely
       unless value_valid_for_exact_conditions?(user_provided_value)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
-          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            condition['name'],
+            user_provided_value
+          )
         )
         return nil
       end
@@ -115,8 +123,13 @@ module Optimizely
       unless Helpers::Validator.same_types?(condition_value, user_provided_value)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for " \
-          "user attribute '#{condition['name']}' is '#{user_provided_value.class}' while expected is '#{condition_value.class}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['MISMATCH_TYPE'],
+            condition,
+            condition['name'],
+            user_provided_value.class,
+            condition_value.class
+          )
         )
         return nil
       end
@@ -146,8 +159,12 @@ module Optimizely
       unless Helpers::Validator.finite_number?(user_provided_value)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
-          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            condition['name'],
+            user_provided_value
+          )
         )
         return nil
       end
@@ -169,8 +186,12 @@ module Optimizely
       unless Helpers::Validator.finite_number?(user_provided_value)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
-          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            condition['name'],
+            user_provided_value
+          )
         )
         return nil
       end
@@ -192,8 +213,12 @@ module Optimizely
       unless user_provided_value.is_a?(String)
         @logger.log(
           Logger::WARN,
-          "Audience condition '#{condition}' evaluated as UNKNOWN because the value for user " \
-          "attribute '#{condition['name']}' is inapplicable: '#{user_provided_value}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            condition['name'],
+            user_provided_value
+          )
         )
         return nil
       end

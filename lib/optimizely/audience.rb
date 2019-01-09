@@ -18,6 +18,7 @@
 require 'json'
 require_relative './custom_attribute_condition_evaluator'
 require_relative 'condition_tree_evaluator'
+require_relative 'helpers/constants'
 
 module Optimizely
   module Audience
@@ -39,19 +40,23 @@ module Optimizely
       if audience_conditions.empty?
         config.logger.log(
           Logger::INFO,
-          "No Audience attached to experiment '#{experiment['key']}'. Evaluated as True."
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['NO_AUDIENCE_ATTACHED'], experiment['key'])
         )
         return true
       end
 
       config.logger.log(
         Logger::DEBUG,
-        "Evaluating audiences for experiment '#{experiment['key']}': '#{audience_conditions}'."
+        format(
+          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCES'],
+          experiment['key'],
+          audience_conditions
+        )
       )
 
       config.logger.log(
         Logger::DEBUG,
-        "User attributes: '#{attributes}'."
+        format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['USER_ATTRIBUTES'], attributes)
       )
 
       attributes ||= {}
@@ -69,7 +74,11 @@ module Optimizely
         audience_conditions = audience['conditions']
         config.logger.log(
           Logger::DEBUG,
-          "Starting to evaluate audience '#{audience_id}' with conditions: '#{audience_conditions}'."
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE_WITH_CONDITIONS'],
+            audience_id,
+            audience_conditions
+          )
         )
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
@@ -77,7 +86,7 @@ module Optimizely
         result = 'UNKNOWN' if result.nil?
         config.logger.log(
           Logger::DEBUG,
-          "Audience '#{audience_id}' evaluated as '#{result}'."
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result)
         )
         result
       end
@@ -88,7 +97,11 @@ module Optimizely
 
       config.logger.log(
         Logger::INFO,
-        "Audiences for experiment '#{experiment['key']}' collectively evaluated as '#{eval_result}'."
+        format(
+          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+          experiment['key'],
+          eval_result
+        )
       )
 
       eval_result

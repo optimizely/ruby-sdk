@@ -52,6 +52,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     condition = {'match' => 'exact', 'name' => 'weird_condition', 'type' => 'weird', 'value' => 'hi'}
     condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'weird_condition' => 'bye'}, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
+    expect(spy_logger).to have_received(:log).exactly(1).times
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition '#{condition}' has an unknown condition type."
@@ -62,6 +63,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     condition = {'match' => 'exact', 'name' => 'weird_condition', 'value' => 'hi'}
     condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'weird_condition' => 'bye'}, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
+    expect(spy_logger).to have_received(:log).exactly(1).times
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition '#{condition}' has an unknown condition type."
@@ -142,12 +144,12 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::WARN,
-          "Audience condition #{@exact_string_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'location'."
+          Logger::DEBUG,
+          "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'location'."
         )
       end
 
-      it 'should log and return nil if there user-provided value is of a unexpected type' do
+      it 'should log and return nil if the user-provided value is of a unexpected type' do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => {}}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
@@ -292,8 +294,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
-        "Audience condition #{@substring_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'text'."
+        Logger::DEBUG,
+        "Audience condition '#{@substring_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'text'."
       )
     end
 
@@ -360,12 +362,12 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
-        "Audience condition #{@gt_integer_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
+        Logger::DEBUG,
+        "Audience condition '#{@gt_integer_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
       )
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
-        "Audience condition #{@gt_float_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
+        Logger::DEBUG,
+        "Audience condition '#{@gt_float_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
       )
     end
 
@@ -456,12 +458,12 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
-        "Audience condition #{@lt_integer_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
+        Logger::DEBUG,
+        "Audience condition '#{@lt_integer_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
       )
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
-        "Audience condition #{@lt_float_conditions} evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
+        Logger::DEBUG,
+        "Audience condition '#{@lt_float_conditions}' evaluated as UNKNOWN because no user value was passed for attribute 'input_value'."
       )
     end
 

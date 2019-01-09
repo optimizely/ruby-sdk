@@ -331,6 +331,22 @@ module Optimizely
       ATTRIBUTE_VALID_TYPES = [FalseClass, Float, Integer, String, TrueClass].freeze
 
       FINITE_NUMBER_LIMIT = 2**53
+
+      AUDIENCE_EVALUATION_LOGS = {
+        'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated as '%s'.",
+        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated as '%s'.",
+        'EVALUATING_AUDIENCES' => "Evaluating audiences for experiment '%s': '%s'.",
+        'EVALUATING_AUDIENCE_WITH_CONDITIONS' => "Starting to evaluate audience '%s' with conditions: '%s'.",
+        'MISMATCH_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for " \
+          "user attribute '%s' is '%s' while expected is '%s'.",
+        'MISSING_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated as UNKNOWN because no user value " \
+          "was passed for attribute '%s'.",
+        'NO_AUDIENCE_ATTACHED' => "No Audience attached to experiment '%s'. Evaluated as True.",
+        'UNEXPECTED_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for user attribute '%s' is inapplicable: '%s'.",
+        'UNKNOWN_CONDITION_TYPE' => "Audience condition '%s' has an unknown condition type.",
+        'UNKNOWN_MATCH_TYPE' => "Audience condition '%s' uses an unknown match type.",
+        'USER_ATTRIBUTES' => "User attributes: '%s'."
+      }.freeze
     end
   end
 end
