@@ -150,6 +150,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
 
       it 'should log and return nil if the user-provided value is of a unexpected type' do
+        # attribute value: nil
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => nil}, spy_logger)
+        expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because the value for user attribute 'location' is inapplicable: ''."
+        )
+
+        # attribute value: empty hash
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => {}}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
@@ -300,6 +309,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
+      # attribute value: nil
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => nil}, spy_logger)
+      expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@substring_conditions}' evaluated as UNKNOWN because the value for user attribute 'text' is inapplicable: ''."
+      )
+
+      # attribute value: empty hash
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -372,6 +390,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
+      # attribute value: nil
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => nil}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@gt_integer_conditions}' evaluated as UNKNOWN because the value for user attribute 'input_value' is inapplicable: ''."
+      )
+
+      # attribute value: empty hash
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -468,6 +495,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
+      # attribute value: nil
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => nil}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@lt_integer_conditions}' evaluated as UNKNOWN because the value for user attribute 'input_value' is inapplicable: ''."
+      )
+
+      # attribute value: empty hash
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(

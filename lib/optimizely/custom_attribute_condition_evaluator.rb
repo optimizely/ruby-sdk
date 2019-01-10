@@ -71,9 +71,7 @@ module Optimizely
         return nil
       end
 
-      user_provided_value = @user_attributes[leaf_condition['name']]
-
-      if user_provided_value.nil? && condition_match != EXISTS_MATCH_TYPE
+      if !@user_attributes.key?(leaf_condition['name']) && condition_match != EXISTS_MATCH_TYPE
         @logger.log(
           Logger::DEBUG,
           format(
