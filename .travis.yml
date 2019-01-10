@@ -2,11 +2,14 @@ branch:
   only:
     - master
 language: ruby
+cache: bundler
 rvm:
   - 2.3.7
   - 2.4.4
   - 2.5.1
-before_install: gem install bundler
+before_install:
+  - gem update --system
+  - gem install bundler
 install:
   - bundle install
 script: "bundle exec rake spec"
@@ -15,10 +18,17 @@ addons:
   srcclr: true
 after_success: "coveralls"
 
+# Integration tests need to run first to reset the PR build status to pending
+stages:
+  - 'Integration tests'
+  - 'Test'
+
 jobs:
   include:
     - stage: 'Integration tests'
+      merge_mode: replace
       env: SDK=ruby
+      cache: false
       language: python
       before_install: skip
       install:
@@ -27,4 +37,4 @@ jobs:
         - "aws s3 cp s3://optimizely-travisci-artifacts/ci/trigger_fullstack-sdk-compat.sh ci/ && chmod u+x ci/trigger_fullstack-sdk-compat.sh"
       script:
         - "ci/trigger_fullstack-sdk-compat.sh"
-      after_success: skip
+      after_success: travis_terminate 0
