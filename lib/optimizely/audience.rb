@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2017, 2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 #    limitations under the License.
 #
 require 'json'
-require_relative './condition'
+require_relative './custom_attribute_condition_evaluator'
+require_relative 'condition_tree_evaluator'
 
 module Optimizely
   module Audience
@@ -30,24 +31,31 @@ module Optimizely
       # attributes - Hash representing user attributes which will be used in determining if
       #              the audience conditions are met.
       #
-      # Returns boolean representing if user satisfies audience conditions for any of the audiences or not.
+      # Returns boolean representing if user satisfies audience conditions for the audiences or not.
 
-      audience_ids = experiment['audienceIds']
+      audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
       # Return true if there are no audiences
-      return true if audience_ids.empty?
+      return true if audience_conditions.empty?
 
-      # Return false if there are audiences but no attributes
-      return false unless attributes
+      attributes ||= {}
 
-      # Return true if any one of the audience conditions are met
-      @condition_evaluator = ConditionEvaluator.new(attributes)
-      audience_ids.each do |audience_id|
-        audience = config.get_audience_from_id(audience_id)
-        audience_conditions = audience['conditions']
-        audience_conditions = JSON.parse(audience_conditions)
-        return true if @condition_evaluator.evaluate(audience_conditions)
+      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
+
+      evaluate_custom_attr = lambda do |condition|
+        return custom_attr_condition_evaluator.evaluate(condition)
       end
+
+      evaluate_audience = lambda do |audience_id|
+        audience = config.get_audience_from_id(audience_id)
+        return nil unless audience
+
+        audience_conditions = audience['conditions']
+        audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
+        return ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+      end
+
+      return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
 
       false
     end
