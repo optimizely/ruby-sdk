@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2018, Optimizely and contributors
+#    Copyright 2016-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -113,6 +113,7 @@ module Optimizely
         anonymize_ip: @config.anonymize_ip,
         revision: @config.revision,
         client_name: CLIENT_ENGINE,
+        enrich_decisions: true,
         client_version: VERSION
       }
 
@@ -142,19 +143,18 @@ module Optimizely
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
 
-    def create_conversion_event(event_key, user_id, attributes, event_tags, experiment_variation_map)
+    def create_conversion_event(event_key, user_id, attributes, event_tags)
       # Create conversion Event to be sent to the logging endpoint.
       #
       # event_key -                +String+ Event key representing the event which needs to be recorded.
       # user_id -                  +String+ ID for user.
       # attributes -               +Hash+ representing user attributes and values which need to be recorded.
       # event_tags -               +Hash+ representing metadata associated with the event.
-      # experiment_variation_map - +Map+ of experiment ID to the ID of the variation that the user is bucketed into.
       #
       # Returns +Event+ encapsulating the conversion event.
 
       event_params = get_common_params(user_id, attributes)
-      conversion_params = get_conversion_params(event_key, event_tags, experiment_variation_map)
+      conversion_params = get_conversion_params(event_key, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
@@ -190,27 +190,15 @@ module Optimizely
       impression_event_params
     end
 
-    def get_conversion_params(event_key, event_tags, experiment_variation_map)
+    def get_conversion_params(event_key, event_tags)
       # Creates object of params specific to conversion events
       #
       # event_key -                +String+ Key representing the event which needs to be recorded
       # event_tags -               +Hash+ Values associated with the event.
-      # experiment_variation_map - +Hash+ Map of experiment IDs to bucketed variation IDs
       #
       # Returns +Hash+ Conversion event params
 
       single_snapshot = {}
-      single_snapshot[:decisions] = []
-      experiment_variation_map.each do |experiment_id, variation_id|
-        next unless variation_id
-
-        single_snapshot[:decisions].push(
-          campaign_id: @config.experiment_id_map[experiment_id]['layerId'],
-          experiment_id: experiment_id,
-          variation_id: variation_id
-        )
-      end
-
       event_object = {
         entity_id: @config.event_key_map[event_key]['id'],
         timestamp: create_timestamp,

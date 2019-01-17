@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2018, Optimizely and contributors
+#    Copyright 2016-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -201,24 +201,14 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes, event_tags)
 
-      experiment_ids = @config.get_experiment_ids_for_event(event_key)
-      if experiment_ids.empty?
-        @config.logger.log(Logger::INFO, "Not tracking user '#{user_id}'.")
+      event = @config.get_event_from_key(event_key)
+      unless event
+        @config.logger.log(Logger::INFO, "Not tracking user '#{user_id}' for event '#{event_key}'.")
         return nil
       end
 
-      # Filter out experiments that are not running or that do not include the user in audience conditions
-
-      experiment_variation_map = get_valid_experiments_for_event(event_key, user_id, attributes)
-
-      # Don't track events without valid experiments attached
-      if experiment_variation_map.empty?
-        @logger.log(Logger::INFO, "There are no valid experiments for event '#{event_key}' to track.")
-        return nil
-      end
-
-      conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes,
-                                                                event_tags, experiment_variation_map)
+      conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes, event_tags)
+      @config.logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
       @logger.log(Logger::INFO,
                   "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
       begin
@@ -500,34 +490,6 @@ module Optimizely
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
 
       variable_value
-    end
-
-    def get_valid_experiments_for_event(event_key, user_id, attributes)
-      # Get the experiments that we should be tracking for the given event.
-      #
-      # event_key - Event key representing the event which needs to be recorded.
-      # user_id - String ID for user.
-      # attributes - Map of attributes of the user.
-      #
-      # Returns Map where each object contains the ID of the experiment to track and the ID of the variation the user
-      # is bucketed into.
-
-      valid_experiments = {}
-      experiment_ids = @config.get_experiment_ids_for_event(event_key)
-      experiment_ids.each do |experiment_id|
-        experiment_key = @config.get_experiment_key(experiment_id)
-        variation_key = get_variation(experiment_key, user_id, attributes)
-
-        if variation_key.nil?
-          @logger.log(Logger::INFO, "Not tracking user '#{user_id}' for experiment '#{experiment_key}'.")
-          next
-        end
-
-        variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
-        valid_experiments[experiment_id] = variation_id
-      end
-
-      valid_experiments
     end
 
     def user_inputs_valid?(attributes = nil, event_tags = nil)
