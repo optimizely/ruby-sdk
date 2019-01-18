@@ -334,18 +334,22 @@ module Optimizely
 
       AUDIENCE_EVALUATION_LOGS = {
         'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated as '%s'.",
-        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated as '%s'.",
+        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to '%s'.",
+        'AUDIENCE_NOT_FOUND' => "Audience '%s' could not be found.",
         'EVALUATING_AUDIENCES' => "Evaluating audiences for experiment '%s': '%s'.",
         'EVALUATING_AUDIENCE_WITH_CONDITIONS' => "Starting to evaluate audience '%s' with conditions: '%s'.",
         'MISMATCH_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for " \
           "user attribute '%s' is '%s' while expected is '%s'.",
-        'MISSING_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated as UNKNOWN because no user value " \
-          "was passed for attribute '%s'.",
-        'NO_AUDIENCE_ATTACHED' => "No Audience attached to experiment '%s'. Evaluated as True.",
-        'UNEXPECTED_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for user attribute '%s' is inapplicable: '%s'.",
-        'UNKNOWN_CONDITION_TYPE' => "Audience condition '%s' has an unknown condition type.",
-        'UNKNOWN_MATCH_TYPE' => "Audience condition '%s' uses an unknown match type.",
-        'USER_ATTRIBUTES' => "User attributes: '%s'."
+        'MISSING_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated as UNKNOWN because no value " \
+        "was passed for user attribute '%s'.",
+        'UNEXPECTED_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because a value of type '%s' " \
+        "was passed for user attribute '%s'.",
+        'UNEXPECTED_TYPE_NULL' => "Audience condition '%s' evaluated to UNKNOWN because a nil value was passed " \
+        "for user attribute '%s'.",
+        'UNKNOWN_CONDITION_TYPE' => "Audience condition '%s' has an unknown condition type. You may need " \
+        'to upgrade to a newer release of the Optimizely SDK',
+        'UNKNOWN_MATCH_TYPE' => "Audience condition '%s' uses an unknown match type. You may need " \
+        'to upgrade to a newer release of the Optimizely SDK'
       }.freeze
     end
   end

@@ -63,14 +63,6 @@ module Optimizely
 
       condition_match = leaf_condition['match'] || EXACT_MATCH_TYPE
 
-      unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
-        @logger.log(
-          Logger::WARN,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_MATCH_TYPE'], leaf_condition)
-        )
-        return nil
-      end
-
       if !@user_attributes.key?(leaf_condition['name']) && condition_match != EXISTS_MATCH_TYPE
         @logger.log(
           Logger::DEBUG,
@@ -79,6 +71,26 @@ module Optimizely
             leaf_condition,
             leaf_condition['name']
           )
+        )
+        return nil
+      end
+
+      if @user_attributes[leaf_condition['name']].nil? && condition_match != EXISTS_MATCH_TYPE
+        @logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE_NULL'],
+            leaf_condition,
+            leaf_condition['name']
+          )
+        )
+        return nil
+      end
+
+      unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_MATCH_TYPE'], leaf_condition)
         )
         return nil
       end
@@ -109,8 +121,8 @@ module Optimizely
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
-            condition['name'],
-            user_provided_value
+            user_provided_value.class,
+            condition['name']
           )
         )
         return nil
@@ -122,11 +134,10 @@ module Optimizely
         @logger.log(
           Logger::WARN,
           format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['MISMATCH_TYPE'],
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
-            condition['name'],
             user_provided_value.class,
-            condition_value.class
+            condition['name']
           )
         )
         return nil
@@ -160,8 +171,8 @@ module Optimizely
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
-            condition['name'],
-            user_provided_value
+            user_provided_value.class,
+            condition['name']
           )
         )
         return nil
@@ -187,8 +198,8 @@ module Optimizely
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
-            condition['name'],
-            user_provided_value
+            user_provided_value.class,
+            condition['name']
           )
         )
         return nil
@@ -214,8 +225,8 @@ module Optimizely
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
-            condition['name'],
-            user_provided_value
+            user_provided_value.class,
+            condition['name']
           )
         )
         return nil

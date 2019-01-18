@@ -37,13 +37,7 @@ module Optimizely
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
       # Return true if there are no audiences
-      if audience_conditions.empty?
-        config.logger.log(
-          Logger::INFO,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['NO_AUDIENCE_ATTACHED'], experiment['key'])
-        )
-        return true
-      end
+      return true if audience_conditions.empty?
 
       config.logger.log(
         Logger::DEBUG,
@@ -52,11 +46,6 @@ module Optimizely
           experiment['key'],
           audience_conditions
         )
-      )
-
-      config.logger.log(
-        Logger::DEBUG,
-        format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['USER_ATTRIBUTES'], attributes)
       )
 
       attributes ||= {}
@@ -69,14 +58,20 @@ module Optimizely
 
       evaluate_audience = lambda do |audience_id|
         audience = config.get_audience_from_id(audience_id)
-        return nil unless audience
+        unless audience
+          config.logger.log(
+            Logger::DEBUG,
+            format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_NOT_FOUND'], audience_id)
+          )
+          return nil
+        end
 
         audience_conditions = audience['conditions']
         config.logger.log(
           Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE_WITH_CONDITIONS'],
-            audience_id,
+            audience['name'],
             audience_conditions
           )
         )
@@ -86,7 +81,7 @@ module Optimizely
         result = 'UNKNOWN' if result.nil?
         config.logger.log(
           Logger::DEBUG,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result)
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience['name'], result)
         )
         result
       end
