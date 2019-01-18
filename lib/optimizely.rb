@@ -207,7 +207,7 @@ module Optimizely
         return nil
       end
 
-      conversion_event = @event_builder.create_conversion_event(event_key, user_id, attributes, event_tags)
+      conversion_event = @event_builder.create_conversion_event(event, user_id, attributes, event_tags)
       @config.logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
       @logger.log(Logger::INFO,
                   "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")

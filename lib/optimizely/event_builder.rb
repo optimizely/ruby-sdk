@@ -143,10 +143,10 @@ module Optimizely
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
 
-    def create_conversion_event(event_key, user_id, attributes, event_tags)
+    def create_conversion_event(event, user_id, attributes, event_tags)
       # Create conversion Event to be sent to the logging endpoint.
       #
-      # event_key -                +String+ Event key representing the event which needs to be recorded.
+      # event -                    +Object+ Event which needs to be recorded.
       # user_id -                  +String+ ID for user.
       # attributes -               +Hash+ representing user attributes and values which need to be recorded.
       # event_tags -               +Hash+ representing metadata associated with the event.
@@ -154,7 +154,7 @@ module Optimizely
       # Returns +Event+ encapsulating the conversion event.
 
       event_params = get_common_params(user_id, attributes)
-      conversion_params = get_conversion_params(event_key, event_tags)
+      conversion_params = get_conversion_params(event, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
@@ -190,20 +190,20 @@ module Optimizely
       impression_event_params
     end
 
-    def get_conversion_params(event_key, event_tags)
+    def get_conversion_params(event, event_tags)
       # Creates object of params specific to conversion events
       #
-      # event_key -                +String+ Key representing the event which needs to be recorded
+      # event -                    +Object+ Event which needs to be recorded.
       # event_tags -               +Hash+ Values associated with the event.
       #
       # Returns +Hash+ Conversion event params
 
       single_snapshot = {}
       event_object = {
-        entity_id: @config.event_key_map[event_key]['id'],
+        entity_id: event['id'],
         timestamp: create_timestamp,
         uuid: create_uuid,
-        key: event_key
+        key: event['key']
       }
 
       if event_tags

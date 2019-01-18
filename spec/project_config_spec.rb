@@ -792,7 +792,7 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_experiment_ids_for_event' do
+    describe 'get_event_from_key' do
       it 'should raise an error when provided event key is invalid' do
         expect { config.get_event_from_key('invalid_key') }.to raise_error(Optimizely::InvalidEventError)
       end
