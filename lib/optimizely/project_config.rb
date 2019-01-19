@@ -185,19 +185,19 @@ module Optimizely
       nil
     end
 
-    def get_experiment_ids_for_event(event_key)
-      # Get experiment IDs for the provided event key.
+    def get_event_from_key(event_key)
+      # Get event for the provided event key.
       #
-      # event_key - Event key for which experiment IDs are to be retrieved.
+      # event_key - Event key for which event is to be determined.
       #
-      # Returns array of all experiment IDs for the event.
+      # Returns Event corresponding to the provided event key.
 
       event = @event_key_map[event_key]
-      return event['experimentIds'] if event
+      return event if event
 
       @logger.log Logger::ERROR, "Event '#{event_key}' is not in datafile."
       @error_handler.handle_error InvalidEventError
-      []
+      nil
     end
 
     def get_audience_from_id(audience_id)

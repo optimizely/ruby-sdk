@@ -702,9 +702,9 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_experiment_ids_for_event' do
+    describe 'get_event_from_key' do
       it 'should log a message when provided event key is invalid' do
-        config.get_experiment_ids_for_event('invalid_key')
+        config.get_event_from_key('invalid_key')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Event 'invalid_key' is not in datafile.")
       end
     end
@@ -792,9 +792,9 @@ describe Optimizely::ProjectConfig do
       end
     end
 
-    describe 'get_experiment_ids_for_event' do
+    describe 'get_event_from_key' do
       it 'should raise an error when provided event key is invalid' do
-        expect { config.get_experiment_ids_for_event('invalid_key') }.to raise_error(Optimizely::InvalidEventError)
+        expect { config.get_event_from_key('invalid_key') }.to raise_error(Optimizely::InvalidEventError)
       end
     end
 
