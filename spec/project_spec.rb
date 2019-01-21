@@ -165,6 +165,7 @@ describe 'Optimizely' do
         anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
+        enrich_decisions: true,
         client_version: Optimizely::VERSION
       }
     end
@@ -262,6 +263,7 @@ describe 'Optimizely' do
           anonymize_ip: false,
           revision: '3',
           client_name: Optimizely::CLIENT_ENGINE,
+          enrich_decisions: true,
           client_version: Optimizely::VERSION
         }
       end
@@ -665,11 +667,6 @@ describe 'Optimizely' do
             value: true
           }],
           snapshots: [{
-            decisions: [{
-              campaign_id: '1',
-              experiment_id: '111127',
-              variation_id: '111128'
-            }],
             events: [{
               entity_id: '111095',
               timestamp: (time_now.to_f * 1000).to_i,
@@ -682,6 +679,7 @@ describe 'Optimizely' do
         anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
+        enrich_decisions: true,
         client_version: Optimizely::VERSION
       }
     end
@@ -720,20 +718,16 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params after forced variation' do
-      params = @expected_track_event_params
-      params[:visitors][0][:snapshots][0][:decisions][0][:variation_id] = '111129'
-
       project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
-      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_track_event_params, post_headers)).once
     end
 
     it 'should properly track an event with tags even when the project does not have a custom logger' do
       project_instance = Optimizely::Project.new(config_body_JSON)
 
       params = @expected_track_event_params
-      params[:visitors][0][:snapshots][0][:decisions][0][:variation_id] = '111129'
       params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
 
       project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
@@ -771,11 +765,6 @@ describe 'Optimizely' do
         type: 'custom',
         value: 'firefox'
       )
-      params[:visitors][0][:snapshots][0][:decisions] = [{
-        campaign_id: '3',
-        experiment_id: '122227',
-        variation_id: '122228'
-      }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111097'
       params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_with_audience'
 
@@ -787,7 +776,7 @@ describe 'Optimizely' do
     describe '.typed audiences' do
       before(:example) do
         @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
-        @expected_activate_params = {
+        @expected_event_params = {
           account_id: '4879520872',
           project_id: '11624721371',
           visitors: [
@@ -801,39 +790,25 @@ describe 'Optimizely' do
                 }, {
                   entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
                   key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
-                  type: 'custom', value: false
+                  type: 'custom',
+                  value: false
                 }
               ],
-              snapshots: [
-                {
-                  decisions: [
-                    {
-                      campaign_id: '11504144555',
-                      experiment_id: '11564051718',
-                      variation_id: '11617170975'
-                    },
-                    {
-                      campaign_id: '1630555627',
-                      experiment_id: '1323241597',
-                      variation_id: '1423767503'
-                    }
-                  ],
-                  events: [
-                    {
-                      entity_id: '594089',
-                      timestamp: (time_now.to_f * 1000).to_i,
-                      uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                      key: 'item_bought'
-                    }
-                  ]
-                }
-              ],
+              snapshots: [{
+                events: [{
+                  entity_id: '594089',
+                  timestamp: (time_now.to_f * 1000).to_i,
+                  uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                  key: 'item_bought'
+                }]
+              }],
               visitor_id: 'test_user'
             }
           ],
           anonymize_ip: false,
           revision: '3',
           client_name: Optimizely::CLIENT_ENGINE,
+          enrich_decisions: true,
           client_version: Optimizely::VERSION
         }
       end
@@ -842,19 +817,21 @@ describe 'Optimizely' do
         # Should be included via substring match string audience with id '3988293898'
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('item_bought', 'test_user', 'house' => 'Welcome to Slytherin!')
-        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_activate_params, post_headers)).once
+        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_event_params, post_headers)).once
       end
 
-      it 'should not call dispatch_event when typed audience conditions do not match' do
-        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event)
+      it 'should call dispatch_event even if typed audience conditions do not match' do
+        params = @expected_event_params
+        params[:visitors][0][:attributes][0][:value] = 'Welcome to Hufflepuff!'
+        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('item_bought', 'test_user', 'house' => 'Welcome to Hufflepuff!')
-        expect(@project_typed_audience_instance.event_dispatcher).to_not have_received(:dispatch_event)
+        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
       end
 
       it 'should call dispatch_event with right params when complex audience match' do
         # Should be included via exact match string audience with id '3468206642', and
         # exact match boolean audience with id '3468206643'
-        params = @expected_activate_params
+        params = @expected_event_params
         params[:visitors][0][:attributes] = [
           {
             entity_id: '594015',
@@ -873,45 +850,38 @@ describe 'Optimizely' do
             value: false
           }
         ]
-        params[:visitors][0][:snapshots][0][:decisions] = [
-          {
-            campaign_id: '1323241598',
-            experiment_id: '1323241598',
-            variation_id: '1423767504'
-          }, {
-            campaign_id: '1323241600',
-            experiment_id: '1323241599',
-            variation_id: '1423767505'
-          }
-        ]
         user_attributes = {'house' => 'Gryffindor', 'should_do_it' => true}
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '594090'
         params[:visitors][0][:snapshots][0][:events][0][:key] = 'user_signed_up'
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('user_signed_up', 'test_user', user_attributes)
-        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_activate_params, post_headers)).once
-      end
-
-      it 'should not call dispatch_event when typed audience conditions do not match' do
-        # Should be excluded - exact match boolean audience with id '3468206643' does not match,
-        # so the overall conditions fail
-        user_attributes = {'house' => 'Gryffindor', 'should_do_it' => false}
-        allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event)
-        @project_typed_audience_instance.track('user_signed_up', 'test_user', user_attributes)
-        expect(@project_typed_audience_instance.event_dispatcher).to_not have_received(:dispatch_event)
+        expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
       end
     end
 
-    it 'should not call dispatch_event when tracking an event for which audience conditions do not match' do
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event)
+    it 'should call dispatch_event when tracking an event even if audience conditions do not match' do
+      params = @expected_track_event_params
+      params[:visitors][0][:attributes].unshift(
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'cyberdog'
+      )
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111097'
+      params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_with_audience'
+
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'cyberdog')
-      expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
-    it 'should not call dispatch_event when tracking an event for which the experiment is not running' do
-      allow(project_instance.event_dispatcher).to receive(:dispatch_event)
+    it 'should call dispatch_event when tracking an event even if experiment is not running' do
+      params = @expected_track_event_params
+      params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111098'
+      params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_not_running'
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_not_running', 'test_user')
-      expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     it 'should log when a conversion event is dispatched' do
@@ -955,13 +925,13 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
-    it 'should return nil and not call dispatch_event if experiment_ids list is empty' do
-      allow(project_instance.config).to receive(:get_experiment_ids_for_event).with(any_args).and_return([])
+    it 'should return nil and does not call dispatch_event if event is not in datafile' do
+      allow(project_instance.config).to receive(:get_event_from_key).with(any_args).and_return(nil)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
       expect(project_instance.track('invalid_event', 'test_user')).to eq(nil)
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
-      expect(spy_logger).to have_received(:log).with(Logger::INFO, "Not tracking user 'test_user'.")
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, "Not tracking user 'test_user' for event 'invalid_event'.")
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
@@ -973,11 +943,6 @@ describe 'Optimizely' do
         type: 'custom',
         value: 'wrong_browser'
       )
-      params[:visitors][0][:snapshots][0][:decisions] = [{
-        campaign_id: '3',
-        experiment_id: '122227',
-        variation_id: '122229'
-      }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '111097'
       params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_with_audience'
 
@@ -1136,6 +1101,7 @@ describe 'Optimizely' do
         anonymize_ip: false,
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
+        enrich_decisions: true,
         client_version: Optimizely::VERSION
       }
     end
