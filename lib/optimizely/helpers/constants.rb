@@ -333,19 +333,18 @@ module Optimizely
       FINITE_NUMBER_LIMIT = 2**53
 
       AUDIENCE_EVALUATION_LOGS = {
-        'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated as '%s'.",
+        'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated to '%s'.",
         'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to '%s'.",
-        'AUDIENCE_NOT_FOUND' => "Audience '%s' could not be found.",
         'EVALUATING_AUDIENCES' => "Evaluating audiences for experiment '%s': '%s'.",
         'EVALUATING_AUDIENCE_WITH_CONDITIONS' => "Starting to evaluate audience '%s' with conditions: '%s'.",
         'MISMATCH_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for " \
           "user attribute '%s' is '%s' while expected is '%s'.",
         'MISSING_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated as UNKNOWN because no value " \
         "was passed for user attribute '%s'.",
+        'NULL_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated to UNKNOWN because a nil value was passed " \
+        "for user attribute '%s'.",
         'UNEXPECTED_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because a value of type '%s' " \
         "was passed for user attribute '%s'.",
-        'UNEXPECTED_TYPE_NULL' => "Audience condition '%s' evaluated to UNKNOWN because a nil value was passed " \
-        "for user attribute '%s'.",
         'UNKNOWN_CONDITION_TYPE' => "Audience condition '%s' has an unknown condition type. You may need " \
         'to upgrade to a newer release of the Optimizely SDK',
         'UNKNOWN_MATCH_TYPE' => "Audience condition '%s' uses an unknown match type. You may need " \

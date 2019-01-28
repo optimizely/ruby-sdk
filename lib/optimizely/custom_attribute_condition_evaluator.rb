@@ -79,7 +79,7 @@ module Optimizely
         @logger.log(
           Logger::DEBUG,
           format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE_NULL'],
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['NULL_ATTRIBUTE_VALUE'],
             leaf_condition,
             leaf_condition['name']
           )
@@ -115,7 +115,8 @@ module Optimizely
         return true if condition_value.to_f == user_provided_value.to_f
       end
 
-      unless value_valid_for_exact_conditions?(user_provided_value)
+      if !value_valid_for_exact_conditions?(user_provided_value) ||
+         !Helpers::Validator.same_types?(condition_value, user_provided_value)
         @logger.log(
           Logger::WARN,
           format(
@@ -129,19 +130,6 @@ module Optimizely
       end
 
       return nil unless value_valid_for_exact_conditions?(condition_value)
-
-      unless Helpers::Validator.same_types?(condition_value, user_provided_value)
-        @logger.log(
-          Logger::WARN,
-          format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
-            condition,
-            user_provided_value.class,
-            condition['name']
-          )
-        )
-        return nil
-      end
 
       condition_value == user_provided_value
     end

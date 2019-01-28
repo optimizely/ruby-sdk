@@ -58,20 +58,14 @@ module Optimizely
 
       evaluate_audience = lambda do |audience_id|
         audience = config.get_audience_from_id(audience_id)
-        unless audience
-          config.logger.log(
-            Logger::DEBUG,
-            format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_NOT_FOUND'], audience_id)
-          )
-          return nil
-        end
+        return nil unless audience
 
         audience_conditions = audience['conditions']
         config.logger.log(
           Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE_WITH_CONDITIONS'],
-            audience['name'],
+            audience_id,
             audience_conditions
           )
         )
@@ -81,7 +75,7 @@ module Optimizely
         result = 'UNKNOWN' if result.nil?
         config.logger.log(
           Logger::DEBUG,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience['name'], result)
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result)
         )
         result
       end

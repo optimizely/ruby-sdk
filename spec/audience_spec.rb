@@ -212,11 +212,6 @@ describe Optimizely::Audience do
     )
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
-      "Audience '11110' could not be found."
-    )
-
-    expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
       "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'false'."
     )
@@ -244,23 +239,23 @@ describe Optimizely::Audience do
     # audience_11154
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience 'Firefox users' with conditions: '#{audience_11154['conditions']}'."
+      "Starting to evaluate audience '11154' with conditions: '#{audience_11154['conditions']}'."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Audience 'Firefox users' evaluated as 'UNKNOWN'."
+      "Audience '11154' evaluated to 'UNKNOWN'."
     )
 
     # audience_11155
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience 'Chrome users' with conditions: '#{audience_11155['conditions']}'."
+      "Starting to evaluate audience '11155' with conditions: '#{audience_11155['conditions']}'."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Audience 'Chrome users' evaluated as 'UNKNOWN'."
+      "Audience '11155' evaluated to 'UNKNOWN'."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -291,34 +286,34 @@ describe Optimizely::Audience do
     # audience_3468206647
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience 'gtNumber' with conditions: '#{audience_3468206647['conditions']}'."
+      "Starting to evaluate audience '3468206647' with conditions: '#{audience_3468206647['conditions']}'."
     ).ordered # Order: 1
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Audience 'gtNumber' evaluated as 'false'."
+      "Audience '3468206647' evaluated to 'false'."
     ).ordered # Order: 2
 
     # audience_3988293898
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience 'substringString' with conditions: '#{audience_3988293898['conditions']}'."
+      "Starting to evaluate audience '3988293898' with conditions: '#{audience_3988293898['conditions']}'."
     ).ordered # Order: 3
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Audience 'substringString' evaluated as 'UNKNOWN'."
+      "Audience '3988293898' evaluated to 'UNKNOWN'."
     ).ordered # Order: 4
 
     # audience_3468206646
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience 'exactNumber' with conditions: '#{audience_3468206646['conditions']}'."
+      "Starting to evaluate audience '3468206646' with conditions: '#{audience_3468206646['conditions']}'."
     ).ordered # Order: 5
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Audience 'exactNumber' evaluated as 'true'."
+      "Audience '3468206646' evaluated to 'true'."
     ).ordered # Order: 6
 
     expect(spy_logger).to have_received(:log).once.with(
