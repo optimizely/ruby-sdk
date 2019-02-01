@@ -72,10 +72,10 @@ module Optimizely
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
         result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
-        result = 'UNKNOWN' if result.nil?
+        result_str = result.nil? ? 'UNKNOWN' : result
         config.logger.log(
           Logger::DEBUG,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result)
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
         )
         result
       end
