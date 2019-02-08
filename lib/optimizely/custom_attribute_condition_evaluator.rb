@@ -112,13 +112,25 @@ module Optimizely
       user_provided_value = @user_attributes[condition['name']]
 
       if user_provided_value.is_a?(Numeric) && condition_value.is_a?(Numeric)
+        unless Helpers::Validator.finite_number?(user_provided_value)
+          @logger.log(
+            Logger::DEBUG,
+            format(
+              Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINIT_ATTRIBUTE_VALUE'],
+              condition,
+              user_provided_value
+            )
+          )
+          return nil
+        end
+
         return true if condition_value.to_f == user_provided_value.to_f
       end
 
       if !value_valid_for_exact_conditions?(user_provided_value) ||
          !Helpers::Validator.same_types?(condition_value, user_provided_value)
         @logger.log(
-          Logger::WARN,
+          Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -129,7 +141,13 @@ module Optimizely
         return nil
       end
 
-      return nil unless value_valid_for_exact_conditions?(condition_value)
+      unless value_valid_for_exact_conditions?(condition_value)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition_value)
+        )
+        return nil
+      end
 
       condition_value == user_provided_value
     end
@@ -153,9 +171,9 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      unless Helpers::Validator.finite_number?(user_provided_value)
+      unless user_provided_value.is_a?(Numeric)
         @logger.log(
-          Logger::WARN,
+          Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -166,7 +184,25 @@ module Optimizely
         return nil
       end
 
-      return nil unless Helpers::Validator.finite_number?(condition_value)
+      unless Helpers::Validator.finite_number?(user_provided_value)
+        @logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINIT_ATTRIBUTE_VALUE'],
+            condition,
+            user_provided_value
+          )
+        )
+        return nil
+      end
+
+      unless Helpers::Validator.finite_number?(condition_value)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
 
       user_provided_value > condition_value
     end
@@ -180,9 +216,9 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      unless Helpers::Validator.finite_number?(user_provided_value)
+      unless user_provided_value.is_a?(Numeric)
         @logger.log(
-          Logger::WARN,
+          Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -193,7 +229,25 @@ module Optimizely
         return nil
       end
 
-      return nil unless Helpers::Validator.finite_number?(condition_value)
+      unless Helpers::Validator.finite_number?(user_provided_value)
+        @logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINIT_ATTRIBUTE_VALUE'],
+            condition,
+            user_provided_value
+          )
+        )
+        return nil
+      end
+
+      unless Helpers::Validator.finite_number?(condition_value)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
 
       user_provided_value < condition_value
     end
@@ -209,7 +263,7 @@ module Optimizely
 
       unless user_provided_value.is_a?(String)
         @logger.log(
-          Logger::WARN,
+          Logger::DEBUG,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -220,7 +274,13 @@ module Optimizely
         return nil
       end
 
-      return nil unless condition_value.is_a?(String)
+      unless condition_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
 
       user_provided_value.include? condition_value
     end

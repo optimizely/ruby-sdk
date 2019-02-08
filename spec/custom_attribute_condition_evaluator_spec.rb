@@ -56,7 +56,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition '#{condition}' has an unknown condition type. You may need to upgrade to a newer release of " \
-      'the Optimizely SDK'
+      'the Optimizely SDK.'
     )
   end
 
@@ -68,7 +68,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition '#{condition}' has an unknown condition type. You may need to upgrade to a newer release of " \
-      'the Optimizely SDK'
+      'the Optimizely SDK.'
     )
   end
 
@@ -79,7 +79,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition '#{condition}' uses an unknown match type. You may need to upgrade to a newer release " \
-      'of the Optimizely SDK'
+      'of the Optimizely SDK.'
     )
   end
 
@@ -138,7 +138,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => false}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::WARN,
+          Logger::DEBUG,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type '#{false.class}' was passed for user attribute 'location'."
         )
       end
@@ -157,7 +157,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => []}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::WARN,
+          Logger::DEBUG,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type 'Array' was " \
           "passed for user attribute 'location'."
         )
@@ -166,7 +166,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => {}}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::WARN,
+          Logger::DEBUG,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
           "passed for user attribute 'location'."
         )
@@ -222,21 +222,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to eq(nil)
       end
 
-      it 'should return nil when finite_number? returns false for provided arguments' do
-        # Returns false for user attribute value
-        allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(10).and_return(false)
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 10}, spy_logger)
+      it 'should return nil when user-provided value is infinite' do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 1 / 0.0}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be nil
-        # finite_number? should not be called with condition value as user attribute value is failed
-        expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(100)
 
-        # Returns false for condition value
-        @exact_integer_conditions['value'] = 101
-        allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 100}, spy_logger)
-        expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be nil
-        # finite_number? should be called with condition value as it returns true for user attribute value
-        expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(101)
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::DEBUG,
+          "Audience condition '#{@exact_integer_conditions}' evaluated to UNKNOWN because the number value for " \
+              "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+        )
       end
 
       it 'should not return nil when finite_number? returns true for provided arguments' do
@@ -326,9 +320,20 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
+        Logger::DEBUG,
         "Audience condition '#{@substring_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'text'."
+      )
+    end
+
+    it 'should log and return nil when condition value is invalid' do
+      @substring_conditions['value'] = 5
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 'This is a test message!'}, spy_logger)
+      expect(condition_evaluator.evaluate(@substring_conditions)).to be_nil
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@substring_conditions}' has an unsupported condition value. You may need to upgrade "\
+					'to a newer release of the Optimizely SDK.'
       )
     end
   end
@@ -409,27 +414,21 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
+        Logger::DEBUG,
         "Audience condition '#{@gt_integer_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'input_value'."
       )
     end
 
-    it 'should return nil when finite_number? returns false for provided arguments' do
-      # Returns false for user attribute value
-      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(5).and_return(false)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 5}, spy_logger)
+    it 'should return nil when user-provided value is infinite' do
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 1 / 0.0}, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
-      # finite_number? should not be called with condition value as user attribute value is failed
-      expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(10)
 
-      # Returns false for condition value
-      @gt_integer_conditions['value'] = 95
-      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
-      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
-      # finite_number? should be called with condition value as it returns true for user attribute value
-      expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(95)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::DEBUG,
+        "Audience condition '#{@gt_integer_conditions}' evaluated to UNKNOWN because the number value for " \
+          "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+      )
     end
 
     it 'should not return nil when finite_number? returns true for provided arguments' do
@@ -437,6 +436,17 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).not_to be_nil
+    end
+
+    it 'should log and return nil when condition value is infinite' do
+      @gt_integer_conditions['value'] = 1 / 0.0
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be_nil
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@gt_integer_conditions}' has an unsupported condition value. You may need to upgrade "\
+  					'to a newer release of the Optimizely SDK.'
+      )
     end
   end
 
@@ -516,27 +526,21 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::WARN,
+        Logger::DEBUG,
         "Audience condition '#{@lt_integer_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'input_value'."
       )
     end
 
-    it 'should return nil when finite_number? returns false for provided arguments' do
-      # Returns false for user attribute value
-      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).once.with(15).and_return(false)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 15}, spy_logger)
+    it 'should return nil when user-provided value is infinite' do
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 1 / 0.0}, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
-      # finite_number? should not be called with condition value as user attribute value is failed
-      expect(Optimizely::Helpers::Validator).not_to have_received(:finite_number?).with(10)
 
-      # Returns false for condition value
-      @lt_integer_conditions['value'] = 25
-      allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, false)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
-      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
-      # finite_number? should be called with condition value as it returns true for user attribute value
-      expect(Optimizely::Helpers::Validator).to have_received(:finite_number?).with(25)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::DEBUG,
+        "Audience condition '#{@lt_integer_conditions}' evaluated to UNKNOWN because the number value for " \
+          "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+      )
     end
 
     it 'should not return nil when finite_number? returns true for provided arguments' do
@@ -544,6 +548,17 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 75}, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).not_to be_nil
+    end
+
+    it 'should log and return nil when condition value is infinite' do
+      @lt_integer_conditions['value'] = 1 / 0.0
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be_nil
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition '#{@lt_integer_conditions}' has an unsupported condition value. You may need to upgrade "\
+					'to a newer release of the Optimizely SDK.'
+      )
     end
   end
 end
