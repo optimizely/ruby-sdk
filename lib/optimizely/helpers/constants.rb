@@ -339,7 +339,7 @@ module Optimizely
         'EVALUATING_AUDIENCE_WITH_CONDITIONS' => "Starting to evaluate audience '%s' with conditions: '%s'.",
         'MISMATCH_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for " \
           "user attribute '%s' is '%s' while expected is '%s'.",
-        'INFINIT_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated to UNKNOWN because the number value " \
+        'INFINITE_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated to UNKNOWN because the number value " \
         "for user attribute '%s' is not in the range [-2^53, +2^53].",
         'MISSING_ATTRIBUTE_VALUE' => "Audience condition '%s' evaluated as UNKNOWN because no value " \
         "was passed for user attribute '%s'.",
