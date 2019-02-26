@@ -111,32 +111,27 @@ module Optimizely
 
       user_provided_value = @user_attributes[condition['name']]
 
-      if user_provided_value.is_a?(Numeric) && condition_value.is_a?(Numeric)
+      # Return true when 2 = 2.0
+      if condition_value.is_a?(Numeric) && user_provided_value.is_a?(Numeric) &&
+         Helpers::Validator.finite_number?(condition_value) &&
+         Helpers::Validator.finite_number?(user_provided_value)
 
-        return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
-
-        return true if condition_value == user_provided_value
-
-        unless Helpers::Validator.same_types?(condition_value, user_provided_value)
-          @logger.log(
-            Logger::DEBUG,
-            format(
-              Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
-              condition,
-              user_provided_value.class,
-              condition['name']
-            )
-          )
-          return nil
-        end
-
-        return false
+        return true if user_provided_value == condition_value
       end
 
-      if !value_valid_for_exact_conditions?(user_provided_value) ||
+      if !value_type_valid_for_exact_conditions?(condition_value) ||
+         (condition_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(condition_value))
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
+
+      if !value_type_valid_for_exact_conditions?(user_provided_value) ||
          !Helpers::Validator.same_types?(condition_value, user_provided_value)
         @logger.log(
-          Logger::DEBUG,
+          Logger::WARN,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -147,10 +142,14 @@ module Optimizely
         return nil
       end
 
-      unless value_valid_for_exact_conditions?(condition_value)
+      if user_provided_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(user_provided_value)
         @logger.log(
           Logger::WARN,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition_value)
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINITE_ATTRIBUTE_VALUE'],
+            condition,
+            condition['name']
+          )
         )
         return nil
       end
@@ -207,7 +206,7 @@ module Optimizely
 
       unless user_provided_value.is_a?(String)
         @logger.log(
-          Logger::DEBUG,
+          Logger::WARN,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -235,9 +234,17 @@ module Optimizely
       # Returns true if user and condition values are valid numeric.
       #         false otherwise.
 
+      unless Helpers::Validator.finite_number?(condition_value)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return false
+      end
+
       unless user_value.is_a?(Numeric)
         @logger.log(
-          Logger::DEBUG,
+          Logger::WARN,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
             condition,
@@ -250,20 +257,12 @@ module Optimizely
 
       unless Helpers::Validator.finite_number?(user_value)
         @logger.log(
-          Logger::DEBUG,
+          Logger::WARN,
           format(
             Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINITE_ATTRIBUTE_VALUE'],
             condition,
-            user_value
+            condition['name']
           )
-        )
-        return false
-      end
-
-      unless Helpers::Validator.finite_number?(condition_value)
-        @logger.log(
-          Logger::WARN,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
         )
         return false
       end
@@ -271,11 +270,12 @@ module Optimizely
       true
     end
 
-    def value_valid_for_exact_conditions?(value)
+    def value_type_valid_for_exact_conditions?(value)
       # Returns true if the value is valid for exact conditions. Valid values include
-      #  strings and booleans.
+      #  strings or booleans or is a number.
+      #  false otherwise.
 
-      (Helpers::Validator.boolean? value) || (value.is_a? String)
+      (Helpers::Validator.boolean? value) || (value.is_a? String) || value.is_a?(Numeric)
     end
   end
 end

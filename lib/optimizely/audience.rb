@@ -36,17 +36,27 @@ module Optimizely
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
-      # Return true if there are no audiences
-      return true if audience_conditions.empty?
-
       config.logger.log(
         Logger::DEBUG,
         format(
-          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCES'],
+          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCES_COMBINED'],
           experiment['key'],
           audience_conditions
         )
       )
+
+      # Return true if there are no audiences
+      if audience_conditions.empty?
+        config.logger.log(
+          Logger::INFO,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+            experiment['key'],
+            'TRUE'
+          )
+        )
+        return true
+      end
 
       attributes ||= {}
 
@@ -64,7 +74,7 @@ module Optimizely
         config.logger.log(
           Logger::DEBUG,
           format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE_WITH_CONDITIONS'],
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE'],
             audience_id,
             audience_conditions
           )
@@ -72,9 +82,9 @@ module Optimizely
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
         result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
-        result_str = result.nil? ? 'UNKNOWN' : result
+        result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
         config.logger.log(
-          Logger::DEBUG,
+          Logger::INFO,
           format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
         )
         result
@@ -89,7 +99,7 @@ module Optimizely
         format(
           Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
           experiment['key'],
-          eval_result
+          eval_result.to_s.upcase
         )
       )
 

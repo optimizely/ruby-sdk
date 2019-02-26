@@ -138,7 +138,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => false}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::DEBUG,
+          Logger::WARN,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type '#{false.class}' was passed for user attribute 'location'."
         )
       end
@@ -157,7 +157,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => []}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::DEBUG,
+          Logger::WARN,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type 'Array' was " \
           "passed for user attribute 'location'."
         )
@@ -166,7 +166,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => {}}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::DEBUG,
+          Logger::WARN,
           "Audience condition '#{@exact_string_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
           "passed for user attribute 'location'."
         )
@@ -224,12 +224,12 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
       it 'should return nil when user-provided value is infinite' do
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 1 / 0.0}, spy_logger)
-        expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be nil
+        expect(condition_evaluator.evaluate(@exact_float_conditions)).to be nil
 
         expect(spy_logger).to have_received(:log).once.with(
-          Logger::DEBUG,
-          "Audience condition '#{@exact_integer_conditions}' evaluated to UNKNOWN because the number value for " \
-              "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+          Logger::WARN,
+          "Audience condition '#{@exact_float_conditions}' evaluated to UNKNOWN because the number value for " \
+              "user attribute 'sum' is not in the range [-2^53, +2^53]."
         )
       end
 
@@ -320,7 +320,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::DEBUG,
+        Logger::WARN,
         "Audience condition '#{@substring_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'text'."
       )
@@ -414,7 +414,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::DEBUG,
+        Logger::WARN,
         "Audience condition '#{@gt_integer_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'input_value'."
       )
@@ -425,9 +425,9 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
 
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::DEBUG,
+        Logger::WARN,
         "Audience condition '#{@gt_integer_conditions}' evaluated to UNKNOWN because the number value for " \
-          "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+          "user attribute 'input_value' is not in the range [-2^53, +2^53]."
       )
     end
 
@@ -526,7 +526,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::DEBUG,
+        Logger::WARN,
         "Audience condition '#{@lt_integer_conditions}' evaluated as UNKNOWN because a value of type 'Hash' was " \
         "passed for user attribute 'input_value'."
       )
@@ -537,9 +537,9 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
 
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::DEBUG,
+        Logger::WARN,
         "Audience condition '#{@lt_integer_conditions}' evaluated to UNKNOWN because the number value for " \
-          "user attribute 'Infinity' is not in the range [-2^53, +2^53]."
+          "user attribute 'input_value' is not in the range [-2^53, +2^53]."
       )
     end
 

@@ -208,12 +208,12 @@ describe Optimizely::Audience do
                                                     user_attributes)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': '#{experiment['audienceIds']}'."
+      "Evaluating audiences for experiment 'test_experiment_with_audience': #{experiment['audienceIds']}."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'false'."
+      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'FALSE'."
     )
   end
 
@@ -233,7 +233,7 @@ describe Optimizely::Audience do
                                                     user_attributes)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': '#{experiment['audienceIds']}'."
+      "Evaluating audiences for experiment 'test_experiment_with_audience': #{experiment['audienceIds']}."
     )
 
     # audience_11154
@@ -243,7 +243,7 @@ describe Optimizely::Audience do
     )
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
+      Logger::INFO,
       "Audience '11154' evaluated to 'UNKNOWN'."
     )
 
@@ -254,13 +254,13 @@ describe Optimizely::Audience do
     )
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
+      Logger::INFO,
       "Audience '11155' evaluated to 'UNKNOWN'."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'false'."
+      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'FALSE'."
     )
   end
 
@@ -280,7 +280,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'audience_combinations_experiment': '#{experiment['audienceConditions']}'."
+      "Evaluating audiences for experiment 'audience_combinations_experiment': #{experiment['audienceConditions']}."
     ).ordered # Order: 0
 
     # audience_3468206647
@@ -290,8 +290,8 @@ describe Optimizely::Audience do
     ).ordered # Order: 1
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
-      "Audience '3468206647' evaluated to 'false'."
+      Logger::INFO,
+      "Audience '3468206647' evaluated to 'FALSE'."
     ).ordered # Order: 2
 
     # audience_3988293898
@@ -301,7 +301,7 @@ describe Optimizely::Audience do
     ).ordered # Order: 3
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
+      Logger::INFO,
       "Audience '3988293898' evaluated to 'UNKNOWN'."
     ).ordered # Order: 4
 
@@ -312,13 +312,13 @@ describe Optimizely::Audience do
     ).ordered # Order: 5
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::DEBUG,
-      "Audience '3468206646' evaluated to 'true'."
+      Logger::INFO,
+      "Audience '3468206646' evaluated to 'TRUE'."
     ).ordered # Order: 6
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'audience_combinations_experiment' collectively evaluated to 'true'."
+      "Audiences for experiment 'audience_combinations_experiment' collectively evaluated to 'TRUE'."
     ).ordered # Order: 7
   end
 end
