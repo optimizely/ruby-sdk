@@ -239,7 +239,7 @@ describe Optimizely::Audience do
     # audience_11154
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '11154' with conditions: '#{audience_11154['conditions']}'."
+      "Starting to evaluate audience '11154' with conditions: #{audience_11154['conditions']}."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -250,7 +250,7 @@ describe Optimizely::Audience do
     # audience_11155
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '11155' with conditions: '#{audience_11155['conditions']}'."
+      "Starting to evaluate audience '11155' with conditions: #{audience_11155['conditions']}."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -286,7 +286,7 @@ describe Optimizely::Audience do
     # audience_3468206647
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3468206647' with conditions: '#{audience_3468206647['conditions']}'."
+      "Starting to evaluate audience '3468206647' with conditions: #{audience_3468206647['conditions']}."
     ).ordered # Order: 1
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -297,7 +297,7 @@ describe Optimizely::Audience do
     # audience_3988293898
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3988293898' with conditions: '#{audience_3988293898['conditions']}'."
+      "Starting to evaluate audience '3988293898' with conditions: #{audience_3988293898['conditions']}."
     ).ordered # Order: 3
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -308,7 +308,7 @@ describe Optimizely::Audience do
     # audience_3468206646
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3468206646' with conditions: '#{audience_3468206646['conditions']}'."
+      "Starting to evaluate audience '3468206646' with conditions: #{audience_3468206646['conditions']}."
     ).ordered # Order: 5
 
     expect(spy_logger).to have_received(:log).once.with(

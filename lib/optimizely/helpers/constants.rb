@@ -335,7 +335,7 @@ module Optimizely
       AUDIENCE_EVALUATION_LOGS = {
         'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated to '%s'.",
         'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to '%s'.",
-        'EVALUATING_AUDIENCE' => "Starting to evaluate audience '%s' with conditions: '%s'.",
+        'EVALUATING_AUDIENCE' => "Starting to evaluate audience '%s' with conditions: %s.",
         'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for experiment '%s': %s.",
         'MISMATCH_TYPE' => "Audience condition '%s' evaluated as UNKNOWN because the value for " \
           "user attribute '%s' is '%s' while expected is '%s'.",

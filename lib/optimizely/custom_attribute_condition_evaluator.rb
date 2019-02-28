@@ -111,7 +111,7 @@ module Optimizely
 
       user_provided_value = @user_attributes[condition['name']]
 
-      # Return true when 2 = 2.0
+      # Return true when 2 == 2.0
       if condition_value.is_a?(Numeric) && user_provided_value.is_a?(Numeric) &&
          Helpers::Validator.finite_number?(condition_value) &&
          Helpers::Validator.finite_number?(user_provided_value)
