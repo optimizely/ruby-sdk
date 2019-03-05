@@ -213,7 +213,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'FALSE'."
+      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
     )
   end
 
@@ -244,7 +244,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audience '11154' evaluated to 'UNKNOWN'."
+      "Audience '11154' evaluated to UNKNOWN."
     )
 
     # audience_11155
@@ -255,12 +255,12 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audience '11155' evaluated to 'UNKNOWN'."
+      "Audience '11155' evaluated to UNKNOWN."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to 'FALSE'."
+      "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
     )
   end
 
@@ -291,7 +291,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audience '3468206647' evaluated to 'FALSE'."
+      "Audience '3468206647' evaluated to FALSE."
     ).ordered # Order: 2
 
     # audience_3988293898
@@ -302,7 +302,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audience '3988293898' evaluated to 'UNKNOWN'."
+      "Audience '3988293898' evaluated to UNKNOWN."
     ).ordered # Order: 4
 
     # audience_3468206646
@@ -313,12 +313,12 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audience '3468206646' evaluated to 'TRUE'."
+      "Audience '3468206646' evaluated to TRUE."
     ).ordered # Order: 6
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::INFO,
-      "Audiences for experiment 'audience_combinations_experiment' collectively evaluated to 'TRUE'."
+      "Audiences for experiment 'audience_combinations_experiment' collectively evaluated to TRUE."
     ).ordered # Order: 7
   end
 end
