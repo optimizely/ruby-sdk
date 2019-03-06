@@ -202,14 +202,6 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
 
       it 'should return nil if the user-provided value is of a different type than the condition value' do
-        # user-provided integer value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 101}, spy_logger)
-        expect(condition_evaluator.evaluate(@exact_float_conditions)).to eq(nil)
-
-        # user-provided float value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 100.1}, spy_logger)
-        expect(condition_evaluator.evaluate(@exact_integer_conditions)).to eq(nil)
-
         # user-provided boolean value
         condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => false}, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to eq(nil)

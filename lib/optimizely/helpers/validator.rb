@@ -153,9 +153,11 @@ module Optimizely
       def same_types?(value_1, value_2)
         # Returns true if given values are of same types.
         #         false otherwise.
+        # Numeric values are considered as same type.
+
+        return true if value_1.is_a?(Numeric) && value_2.is_a?(Numeric)
 
         return true if boolean?(value_1) && boolean?(value_2)
-        return true if value_1.is_a?(Integer) && value_2.is_a?(Integer)
 
         value_1.class == value_2.class
       end

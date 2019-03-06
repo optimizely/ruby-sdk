@@ -102,6 +102,8 @@ describe 'ValidatorHelper' do
       expect(Optimizely::Helpers::Validator.same_types?('', 'test')).to eq(true)
       expect(Optimizely::Helpers::Validator.same_types?([], [])).to eq(true)
       expect(Optimizely::Helpers::Validator.same_types?({}, {})).to eq(true)
+      # Treat integers and floats as same type.
+      expect(Optimizely::Helpers::Validator.same_types?(10, 8.5)).to eq(true)
       # Fixnum and Bignum
       expect(Optimizely::Helpers::Validator.same_types?(10, 10_000_000_000_000_000_000)).to eq(true)
     end
@@ -109,7 +111,6 @@ describe 'ValidatorHelper' do
     it 'should return false when passed values are of different types' do
       expect(Optimizely::Helpers::Validator.same_types?(true, 1)).to eq(false)
       expect(Optimizely::Helpers::Validator.same_types?(0, false)).to eq(false)
-      expect(Optimizely::Helpers::Validator.same_types?(0, 0.0)).to eq(false)
       expect(Optimizely::Helpers::Validator.same_types?(0, '0.0')).to eq(false)
       expect(Optimizely::Helpers::Validator.same_types?({}, [])).to eq(false)
     end

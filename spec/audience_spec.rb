@@ -208,7 +208,7 @@ describe Optimizely::Audience do
                                                     user_attributes)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': #{experiment['audienceIds']}."
+      "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11110"].'
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -225,21 +225,19 @@ describe Optimizely::Audience do
     experiment['audienceIds'] = %w[11154 11155]
     experiment['audienceConditions'] = nil
 
-    audience_11154 = config.get_audience_from_id('11154')
-    audience_11155 = config.get_audience_from_id('11155')
-
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
                                                     user_attributes)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': #{experiment['audienceIds']}."
+      "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11154", "11155"].'
     )
 
     # audience_11154
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '11154' with conditions: #{audience_11154['conditions']}."
+      "Starting to evaluate audience '11154' with conditions: "\
+      '["and", ["or", ["or", {"name": "browser_type", "type": "custom_attribute", "value": "firefox"}]]].'
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -250,7 +248,8 @@ describe Optimizely::Audience do
     # audience_11155
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '11155' with conditions: #{audience_11155['conditions']}."
+      "Starting to evaluate audience '11155' with conditions: "\
+      '["and", ["or", ["or", {"name": "browser_type", "type": "custom_attribute", "value": "chrome"}]]].'
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -272,21 +271,19 @@ describe Optimizely::Audience do
     experiment['audienceIds'] = []
     experiment['audienceConditions'] = ['or', %w[or 3468206647 3988293898 3468206646]]
 
-    audience_3468206647 = typed_audience_config.get_audience_from_id('3468206647')
-    audience_3988293898 = typed_audience_config.get_audience_from_id('3988293898')
-    audience_3468206646 = typed_audience_config.get_audience_from_id('3468206646')
-
     Optimizely::Audience.user_in_experiment?(typed_audience_config, experiment, user_attributes)
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'audience_combinations_experiment': #{experiment['audienceConditions']}."
+      "Evaluating audiences for experiment 'audience_combinations_experiment': "\
+       '["or", ["or", "3468206647", "3988293898", "3468206646"]].'
     ).ordered # Order: 0
 
     # audience_3468206647
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3468206647' with conditions: #{audience_3468206647['conditions']}."
+      "Starting to evaluate audience '3468206647' with conditions: "\
+      '["and", ["or", ["or", {"name"=>"lasers", "type"=>"custom_attribute", "match"=>"gt", "value"=>70}]]].'
     ).ordered # Order: 1
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -297,7 +294,8 @@ describe Optimizely::Audience do
     # audience_3988293898
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3988293898' with conditions: #{audience_3988293898['conditions']}."
+      "Starting to evaluate audience '3988293898' with conditions: "\
+      '["and", ["or", ["or", {"name"=>"house", "type"=>"custom_attribute", "match"=>"substring", "value"=>"Slytherin"}]]].'
     ).ordered # Order: 3
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -308,7 +306,8 @@ describe Optimizely::Audience do
     # audience_3468206646
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Starting to evaluate audience '3468206646' with conditions: #{audience_3468206646['conditions']}."
+      "Starting to evaluate audience '3468206646' with conditions: "\
+      '["and", ["or", ["or", {"name"=>"lasers", "type"=>"custom_attribute", "match"=>"exact", "value"=>45.5}]]].'
     ).ordered # Order: 5
 
     expect(spy_logger).to have_received(:log).once.with(

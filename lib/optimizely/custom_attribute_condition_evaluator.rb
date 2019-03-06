@@ -111,14 +111,6 @@ module Optimizely
 
       user_provided_value = @user_attributes[condition['name']]
 
-      # Return true when 2 == 2.0
-      if condition_value.is_a?(Numeric) && user_provided_value.is_a?(Numeric) &&
-         Helpers::Validator.finite_number?(condition_value) &&
-         Helpers::Validator.finite_number?(user_provided_value)
-
-        return true if user_provided_value == condition_value
-      end
-
       if !value_type_valid_for_exact_conditions?(condition_value) ||
          (condition_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(condition_value))
         @logger.log(
@@ -204,6 +196,14 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
+      unless condition_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
+
       unless user_provided_value.is_a?(String)
         @logger.log(
           Logger::WARN,
@@ -213,14 +213,6 @@ module Optimizely
             user_provided_value.class,
             condition['name']
           )
-        )
-        return nil
-      end
-
-      unless condition_value.is_a?(String)
-        @logger.log(
-          Logger::WARN,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
         )
         return nil
       end
