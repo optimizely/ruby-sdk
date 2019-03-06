@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require_relative 'helpers/constants'
 require_relative 'helpers/validator'
 
 module Optimizely
@@ -38,8 +39,9 @@ module Optimizely
 
     attr_reader :user_attributes
 
-    def initialize(user_attributes)
+    def initialize(user_attributes, logger)
       @user_attributes = user_attributes
+      @logger = logger
     end
 
     def evaluate(leaf_condition)
@@ -51,11 +53,47 @@ module Optimizely
       # Returns boolean if the given user attributes match/don't match the given conditions,
       #         nil if the given conditions can't be evaluated.
 
-      return nil unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
+      unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_TYPE'], leaf_condition)
+        )
+        return nil
+      end
 
       condition_match = leaf_condition['match'] || EXACT_MATCH_TYPE
 
-      return nil unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
+      if !@user_attributes.key?(leaf_condition['name']) && condition_match != EXISTS_MATCH_TYPE
+        @logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['MISSING_ATTRIBUTE_VALUE'],
+            leaf_condition,
+            leaf_condition['name']
+          )
+        )
+        return nil
+      end
+
+      if @user_attributes[leaf_condition['name']].nil? && condition_match != EXISTS_MATCH_TYPE
+        @logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['NULL_ATTRIBUTE_VALUE'],
+            leaf_condition,
+            leaf_condition['name']
+          )
+        )
+        return nil
+      end
+
+      unless EVALUATORS_BY_MATCH_TYPE.include?(condition_match)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_MATCH_TYPE'], leaf_condition)
+        )
+        return nil
+      end
 
       send(EVALUATORS_BY_MATCH_TYPE[condition_match], leaf_condition)
     end
@@ -73,13 +111,40 @@ module Optimizely
 
       user_provided_value = @user_attributes[condition['name']]
 
-      if user_provided_value.is_a?(Numeric) && condition_value.is_a?(Numeric)
-        return true if condition_value.to_f == user_provided_value.to_f
+      if !value_type_valid_for_exact_conditions?(condition_value) ||
+         (condition_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(condition_value))
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
       end
 
-      return nil if !value_valid_for_exact_conditions?(user_provided_value) ||
-                    !value_valid_for_exact_conditions?(condition_value) ||
-                    !Helpers::Validator.same_types?(condition_value, user_provided_value)
+      if !value_type_valid_for_exact_conditions?(user_provided_value) ||
+         !Helpers::Validator.same_types?(condition_value, user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            user_provided_value.class,
+            condition['name']
+          )
+        )
+        return nil
+      end
+
+      if user_provided_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(user_provided_value)
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINITE_ATTRIBUTE_VALUE'],
+            condition,
+            condition['name']
+          )
+        )
+        return nil
+      end
 
       condition_value == user_provided_value
     end
@@ -103,8 +168,7 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil if !Helpers::Validator.finite_number?(user_provided_value) ||
-                    !Helpers::Validator.finite_number?(condition_value)
+      return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
 
       user_provided_value > condition_value
     end
@@ -118,8 +182,7 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil if !Helpers::Validator.finite_number?(user_provided_value) ||
-                    !Helpers::Validator.finite_number?(condition_value)
+      return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
 
       user_provided_value < condition_value
     end
@@ -133,20 +196,78 @@ module Optimizely
       condition_value = condition['value']
       user_provided_value = @user_attributes[condition['name']]
 
-      return nil unless user_provided_value.is_a?(String) && condition_value.is_a?(String)
+      unless condition_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
+
+      unless user_provided_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            user_provided_value.class,
+            condition['name']
+          )
+        )
+        return nil
+      end
 
       user_provided_value.include? condition_value
     end
 
     private
 
-    def value_valid_for_exact_conditions?(value)
+    def valid_numeric_values?(user_value, condition_value, condition)
+      # Returns true if user and condition values are valid numeric.
+      #         false otherwise.
+
+      unless Helpers::Validator.finite_number?(condition_value)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return false
+      end
+
+      unless user_value.is_a?(Numeric)
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            condition,
+            user_value.class,
+            condition['name']
+          )
+        )
+        return false
+      end
+
+      unless Helpers::Validator.finite_number?(user_value)
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INFINITE_ATTRIBUTE_VALUE'],
+            condition,
+            condition['name']
+          )
+        )
+        return false
+      end
+
+      true
+    end
+
+    def value_type_valid_for_exact_conditions?(value)
       # Returns true if the value is valid for exact conditions. Valid values include
-      #  strings, booleans, and numbers that aren't NaN, -Infinity, or Infinity.
+      #  strings or booleans or is a number.
+      #  false otherwise.
 
-      return Helpers::Validator.finite_number?(value) if value.is_a? Numeric
-
-      (Helpers::Validator.boolean? value) || (value.is_a? String)
+      (Helpers::Validator.boolean? value) || (value.is_a? String) || value.is_a?(Numeric)
     end
   end
 end

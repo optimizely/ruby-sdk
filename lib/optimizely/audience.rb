@@ -18,6 +18,7 @@
 require 'json'
 require_relative './custom_attribute_condition_evaluator'
 require_relative 'condition_tree_evaluator'
+require_relative 'helpers/constants'
 
 module Optimizely
   module Audience
@@ -35,12 +36,31 @@ module Optimizely
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
+      config.logger.log(
+        Logger::DEBUG,
+        format(
+          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCES_COMBINED'],
+          experiment['key'],
+          audience_conditions
+        )
+      )
+
       # Return true if there are no audiences
-      return true if audience_conditions.empty?
+      if audience_conditions.empty?
+        config.logger.log(
+          Logger::INFO,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+            experiment['key'],
+            'TRUE'
+          )
+        )
+        return true
+      end
 
       attributes ||= {}
 
-      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes)
+      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes, config.logger)
 
       evaluate_custom_attr = lambda do |condition|
         return custom_attr_condition_evaluator.evaluate(condition)
@@ -51,13 +71,39 @@ module Optimizely
         return nil unless audience
 
         audience_conditions = audience['conditions']
+        config.logger.log(
+          Logger::DEBUG,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE'],
+            audience_id,
+            audience_conditions
+          )
+        )
+
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
-        return ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+        result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+        result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
+        config.logger.log(
+          Logger::INFO,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
+        )
+        result
       end
 
-      return true if ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
+      eval_result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
 
-      false
+      eval_result ||= false
+
+      config.logger.log(
+        Logger::INFO,
+        format(
+          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+          experiment['key'],
+          eval_result.to_s.upcase
+        )
+      )
+
+      eval_result
     end
   end
 end
