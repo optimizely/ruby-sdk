@@ -498,9 +498,21 @@ describe 'Optimizely' do
       expect(project_instance.activate('test_experiment_not_started', 'test_user')).to eq(nil)
     end
 
-    it 'should return nil when audience conditions do not match' do
+    it 'should log, return nil and call decision listener with variation key nil when audience conditions do not match' do
       user_attributes = {'browser_type' => 'chrome'}
+
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'experiment', 'test_user', {'browser_type' => 'chrome'},
+        decision_info: {
+          experiment_key: 'test_experiment_with_audience', variation_key: nil
+        }
+      )
+
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', user_attributes)).to eq(nil)
+
+      expect(spy_logger).to have_received(:log)
+        .once.with(Logger::INFO, "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
     end
 
     it 'should return nil when attributes are invalid' do
@@ -583,7 +595,7 @@ describe 'Optimizely' do
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
 
-    it 'should log and send activate notification when an impression event is dispatched' do
+    it 'should log and send activate and decision notifications when an impression event is dispatched' do
       params = @expected_activate_params
       variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -592,11 +604,19 @@ describe 'Optimizely' do
         .with('test_experiment')
         .and_return([])
       experiment = project_instance.config.get_experiment_from_key('test_experiment')
+
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'experiment', 'test_user', nil,
+        decision_info: {experiment_key: 'test_experiment', variation_key: 'control'}
+      ).ordered
+
       expect(project_instance.notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment, 'test_user', nil, variation_to_return,
         instance_of(Optimizely::Event)
-      )
+      ).ordered
+
       project_instance.activate('test_experiment', 'test_user')
 
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include('Dispatching impression event to' \
@@ -999,6 +1019,13 @@ describe 'Optimizely' do
 
     it 'should have get_variation return expected variation when audience conditions match' do
       user_attributes = {'browser_type' => 'firefox'}
+
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'experiment', 'test_user', {'browser_type' => 'firefox'},
+        decision_info: {experiment_key: 'test_experiment_with_audience', variation_key: 'control_with_audience'}
+      )
+
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
         .to eq('control_with_audience')
     end
@@ -1020,6 +1047,13 @@ describe 'Optimizely' do
 
     it 'should have get_variation return nil when audience conditions do not match' do
       user_attributes = {'browser_type' => 'chrome'}
+
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'experiment', 'test_user', {'browser_type' => 'chrome'},
+        decision_info: {experiment_key: 'test_experiment_with_audience', variation_key: nil}
+      )
+
       expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', user_attributes))
         .to eq(nil)
     end
