@@ -1732,6 +1732,193 @@ describe 'Optimizely' do
     end
   end
 
+  describe '#get_feature_variable_for_type listener' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should call decision listener with correct variable type and value, when user in experiment and feature is not enabled' do
+      integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      variation_to_return = experiment_to_return['variations'][0]
+      variation_to_return['featureEnabled'] = false
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      # DECISION listener called when the user is in experiment with variation feature off.
+      expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'feature_variable', 'test_user', {},
+        decision_info: {
+          feature_key: 'integer_single_variable_feature',
+          feature_enabled: false,
+          variable_key: 'integer_variable',
+          variable_type: 'integer',
+          variable_value: 42,
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_integer_feature',
+          source_variation_key: 'control'
+        }
+      )
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'integer_single_variable_feature',
+               'integer_variable',
+               'integer',
+               user_id,
+               user_attributes
+             )).to eq(42)
+    end
+
+    it 'should call decision listener with correct variable type and value, when user in experiment and feature is enabled' do
+      integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      variation_to_return = experiment_to_return['variations'][0]
+      variation_to_return['featureEnabled'] = true
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      # DECISION listener called when the user is in experiment with variation feature on.
+      expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'feature_variable', 'test_user', {},
+        decision_info: {
+          feature_key: 'integer_single_variable_feature',
+          feature_enabled: true,
+          variable_key: 'integer_variable',
+          variable_type: 'integer',
+          variable_value: 42,
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_integer_feature',
+          source_variation_key: 'control'
+        }
+      )
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'integer_single_variable_feature',
+               'integer_variable',
+               'integer',
+               user_id,
+               user_attributes
+             )).to eq(42)
+    end
+
+    it 'should call decision listener with correct variable type and value, when user in rollout and feature is enabled' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][0]
+
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      # DECISION listener called when the user is in rollout with variation feature on.
+      expect(variation_to_return['featureEnabled']).to be true
+      expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'feature_variable', 'test_user', {},
+        decision_info: {
+          feature_key: 'boolean_single_variable_feature',
+          feature_enabled: true,
+          variable_key: 'boolean_variable',
+          variable_type: 'boolean',
+          variable_value: true,
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        }
+      )
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'boolean_single_variable_feature',
+               'boolean_variable',
+               'boolean',
+               user_id,
+               user_attributes
+             )).to eq(true)
+    end
+
+    it 'should call listener with correct variable type and value, when user in rollout and feature is not enabled' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][1]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      # DECISION listener called when the user is in rollout with variation feature on.
+      expect(variation_to_return['featureEnabled']).to be false
+      expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'feature_variable', 'test_user', {},
+        decision_info: {
+          feature_key: 'boolean_single_variable_feature',
+          feature_enabled: false,
+          variable_key: 'boolean_variable',
+          variable_type: 'boolean',
+          variable_value: false,
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        }
+      )
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'boolean_single_variable_feature',
+               'boolean_variable',
+               'boolean',
+               user_id,
+               user_attributes
+             )).to eq(false)
+    end
+
+    it 'should call listener with correct variable type and value, when user neither in experiment nor in rollout' do
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+
+      expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        'feature_variable', 'test_user', {},
+        decision_info: {
+          feature_key: 'integer_single_variable_feature',
+          feature_enabled: false,
+          variable_key: 'integer_variable',
+          variable_type: 'integer',
+          variable_value: 7,
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        }
+      )
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'integer_single_variable_feature',
+               'integer_variable',
+               'integer',
+               user_id,
+               user_attributes
+             )).to eq(7)
+    end
+  end
+
   describe 'when forced variation is used' do
     # setForcedVariation on a paused experiment and then call getVariation.
     it 'should return null when getVariation is called on a paused experiment after setForcedVariation' do
