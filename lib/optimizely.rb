@@ -276,7 +276,7 @@ module Optimizely
       end
 
       @notification_center.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
         user_id, attributes,
         decision_info: {
