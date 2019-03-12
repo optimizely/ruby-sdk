@@ -499,7 +499,7 @@ module Optimizely
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
 
       @notification_center.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['FEATURE_VARIABLE'], user_id, attributes,
         decision_info: {
           feature_key: feature_flag_key,
