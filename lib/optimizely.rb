@@ -147,7 +147,7 @@ module Optimizely
       variation_key = variation['key'] if variation
 
       @notification_center.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:ON_DECISION],
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['EXPERIMENT'], user_id, attributes,
         decision_info: {
           experiment_key: experiment_key,
