@@ -677,7 +677,7 @@ describe 'Optimizely' do
 
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-          'experiment', 'test_user', nil,
+          'experiment', 'test_user', {},
           decision_info: {experiment_key: 'test_experiment', variation_key: 'control'}
         ).ordered
 
