@@ -259,12 +259,12 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
 
       feature_enabled = false
-      source_string = 'ROLLOUT'
+      source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
       if decision.is_a?(Optimizely::DecisionService::Decision)
         variation = decision['variation']
         feature_enabled = variation['featureEnabled']
         if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-          source_string = 'EXPERIMENT'
+          source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
           experiment_key = decision.experiment['key']
           variation_key = variation['key']
           # Send event if Decision came from an experiment.
@@ -278,17 +278,17 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
-        user_id, attributes,
+        user_id, (attributes || {}),
         decision_info: {
           feature_key: feature_flag_key,
           feature_enabled: feature_enabled,
-          source: source_string,
+          source: source_string.upcase,
           source_experiment_key: experiment_key,
           source_variation_key: variation_key
         }
       )
 
-      if feature_enabled
+      if feature_enabled == true
         @logger.log(Logger::INFO,
                     "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
         return true

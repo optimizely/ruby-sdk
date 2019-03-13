@@ -1324,7 +1324,7 @@ describe 'Optimizely' do
         expect(variation_to_return['featureEnabled']).to be true
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-          'feature', 'test_user', nil,
+          'feature', 'test_user', {},
           decision_info: {
             feature_enabled: true,
             feature_key: 'multi_variate_feature',
@@ -1409,7 +1409,7 @@ describe 'Optimizely' do
         expect(variation_to_return['featureEnabled']).to be false
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-          'feature', 'test_user', nil,
+          'feature', 'test_user', {},
           decision_info: {
             feature_enabled: false,
             feature_key: 'boolean_single_variable_feature',
