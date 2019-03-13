@@ -1771,7 +1771,7 @@ describe 'Optimizely' do
                'integer_variable',
                'integer',
                user_id,
-               user_attributes
+               nil
              )).to eq(42)
     end
 
@@ -1791,7 +1791,7 @@ describe 'Optimizely' do
       # DECISION listener called when the user is in experiment with variation feature on.
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        'feature_variable', 'test_user', {},
+        'feature_variable', 'test_user', {'browser_type' => 'firefox'},
         decision_info: {
           feature_key: 'integer_single_variable_feature',
           feature_enabled: true,
@@ -1810,7 +1810,7 @@ describe 'Optimizely' do
                'integer_variable',
                'integer',
                user_id,
-               user_attributes
+               'browser_type' => 'firefox'
              )).to eq(42)
     end
 
