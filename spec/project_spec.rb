@@ -1753,16 +1753,14 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         'feature_variable', 'test_user', {},
-        decision_info: {
-          feature_key: 'integer_single_variable_feature',
-          feature_enabled: false,
-          variable_key: 'integer_variable',
-          variable_type: 'integer',
-          variable_value: 42,
-          source: 'EXPERIMENT',
-          source_experiment_key: 'test_experiment_integer_feature',
-          source_variation_key: 'control'
-        }
+        feature_key: 'integer_single_variable_feature',
+        feature_enabled: false,
+        variable_key: 'integer_variable',
+        variable_type: 'integer',
+        variable_value: 42,
+        source: 'EXPERIMENT',
+        source_experiment_key: 'test_experiment_integer_feature',
+        source_variation_key: 'control'
       )
 
       expect(project_instance.send(
@@ -1792,16 +1790,14 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         'feature_variable', 'test_user', {'browser_type' => 'firefox'},
-        decision_info: {
-          feature_key: 'integer_single_variable_feature',
-          feature_enabled: true,
-          variable_key: 'integer_variable',
-          variable_type: 'integer',
-          variable_value: 42,
-          source: 'EXPERIMENT',
-          source_experiment_key: 'test_experiment_integer_feature',
-          source_variation_key: 'control'
-        }
+        feature_key: 'integer_single_variable_feature',
+        feature_enabled: true,
+        variable_key: 'integer_variable',
+        variable_type: 'integer',
+        variable_value: 42,
+        source: 'EXPERIMENT',
+        source_experiment_key: 'test_experiment_integer_feature',
+        source_variation_key: 'control'
       )
 
       expect(project_instance.send(
@@ -1831,16 +1827,14 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         'feature_variable', 'test_user', {},
-        decision_info: {
-          feature_key: 'boolean_single_variable_feature',
-          feature_enabled: true,
-          variable_key: 'boolean_variable',
-          variable_type: 'boolean',
-          variable_value: true,
-          source: 'ROLLOUT',
-          source_experiment_key: nil,
-          source_variation_key: nil
-        }
+        feature_key: 'boolean_single_variable_feature',
+        feature_enabled: true,
+        variable_key: 'boolean_variable',
+        variable_type: 'boolean',
+        variable_value: true,
+        source: 'ROLLOUT',
+        source_experiment_key: nil,
+        source_variation_key: nil
       )
 
       expect(project_instance.send(
@@ -1868,16 +1862,14 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         'feature_variable', 'test_user', {},
-        decision_info: {
-          feature_key: 'boolean_single_variable_feature',
-          feature_enabled: false,
-          variable_key: 'boolean_variable',
-          variable_type: 'boolean',
-          variable_value: false,
-          source: 'ROLLOUT',
-          source_experiment_key: nil,
-          source_variation_key: nil
-        }
+        feature_key: 'boolean_single_variable_feature',
+        feature_enabled: false,
+        variable_key: 'boolean_variable',
+        variable_type: 'boolean',
+        variable_value: false,
+        source: 'ROLLOUT',
+        source_experiment_key: nil,
+        source_variation_key: nil
       )
 
       expect(project_instance.send(
@@ -1896,16 +1888,14 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         'feature_variable', 'test_user', {},
-        decision_info: {
-          feature_key: 'integer_single_variable_feature',
-          feature_enabled: false,
-          variable_key: 'integer_variable',
-          variable_type: 'integer',
-          variable_value: 7,
-          source: 'ROLLOUT',
-          source_experiment_key: nil,
-          source_variation_key: nil
-        }
+        feature_key: 'integer_single_variable_feature',
+        feature_enabled: false,
+        variable_key: 'integer_variable',
+        variable_type: 'integer',
+        variable_value: 7,
+        source: 'ROLLOUT',
+        source_experiment_key: nil,
+        source_variation_key: nil
       )
 
       expect(project_instance.send(

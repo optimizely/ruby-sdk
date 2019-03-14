@@ -501,16 +501,14 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
-        decision_info: {
-          feature_key: feature_flag_key,
-          feature_enabled: feature_enabled,
-          variable_key: variable_key,
-          variable_type: variable_type,
-          variable_value: variable_value,
-          source: source_string.upcase,
-          source_experiment_key: experiment_key,
-          source_variation_key: variation_key
-        }
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        variable_key: variable_key,
+        variable_type: variable_type,
+        variable_value: variable_value,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
       )
 
       variable_value
