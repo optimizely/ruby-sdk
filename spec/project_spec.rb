@@ -1325,13 +1325,11 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {},
-          decision_info: {
-            feature_enabled: true,
-            feature_key: 'multi_variate_feature',
-            source: 'EXPERIMENT',
-            source_experiment_key: 'test_experiment_multivariate',
-            source_variation_key: 'Fred'
-          }
+          feature_enabled: true,
+          feature_key: 'multi_variate_feature',
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_multivariate',
+          source_variation_key: 'Fred'
         ).ordered
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user')
@@ -1356,13 +1354,11 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'chrome'},
-          decision_info: {
-            feature_enabled: false,
-            feature_key: 'multi_variate_feature',
-            source: 'EXPERIMENT',
-            source_experiment_key: 'test_experiment_multivariate',
-            source_variation_key: 'Feorge'
-          }
+          feature_enabled: false,
+          feature_key: 'multi_variate_feature',
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_multivariate',
+          source_variation_key: 'Feorge'
         )
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'browser_type' => 'chrome')
@@ -1383,13 +1379,11 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'firefox'},
-          decision_info: {
-            feature_enabled: true,
-            feature_key: 'boolean_single_variable_feature',
-            source: 'ROLLOUT',
-            source_experiment_key: nil,
-            source_variation_key: nil
-          }
+          feature_enabled: true,
+          feature_key: 'boolean_single_variable_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
         )
 
         project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user', 'browser_type' => 'firefox')
@@ -1410,13 +1404,11 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {},
-          decision_info: {
-            feature_enabled: false,
-            feature_key: 'boolean_single_variable_feature',
-            source: 'ROLLOUT',
-            source_experiment_key: nil,
-            source_variation_key: nil
-          }
+          feature_enabled: false,
+          feature_key: 'boolean_single_variable_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
         )
 
         project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')
@@ -1428,13 +1420,11 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'firefox'},
-          decision_info: {
-            feature_enabled: false,
-            feature_key: 'multi_variate_feature',
-            source: 'ROLLOUT',
-            source_experiment_key: nil,
-            source_variation_key: nil
-          }
+          feature_enabled: false,
+          feature_key: 'multi_variate_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
         )
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'browser_type' => 'firefox')

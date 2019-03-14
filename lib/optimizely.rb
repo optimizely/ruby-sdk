@@ -279,13 +279,11 @@ module Optimizely
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
         user_id, (attributes || {}),
-        decision_info: {
-          feature_key: feature_flag_key,
-          feature_enabled: feature_enabled,
-          source: source_string.upcase,
-          source_experiment_key: experiment_key,
-          source_variation_key: variation_key
-        }
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
       )
 
       if feature_enabled == true
