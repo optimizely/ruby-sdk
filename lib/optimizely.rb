@@ -149,10 +149,8 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_INFO_TYPES['EXPERIMENT'], user_id, (attributes || {}),
-        decision_info: {
-          experiment_key: experiment_key,
-          variation_key: variation_key
-        }
+        experiment_key: experiment_key,
+        variation_key: variation_key
       )
 
       variation_key

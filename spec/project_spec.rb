@@ -659,9 +659,7 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'experiment', 'test_user', {'browser_type' => 'chrome'},
-          decision_info: {
-            experiment_key: 'test_experiment_with_audience', variation_key: nil
-          }
+          experiment_key: 'test_experiment_with_audience', variation_key: nil
         )
 
         project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'chrome')
@@ -678,7 +676,7 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'experiment', 'test_user', {},
-          decision_info: {experiment_key: 'test_experiment', variation_key: 'control'}
+          experiment_key: 'test_experiment', variation_key: 'control'
         ).ordered
 
         expect(project_instance.notification_center).to receive(:send_notifications).ordered
@@ -1345,7 +1343,7 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'experiment', 'test_user', {'browser_type' => 'firefox'},
-          decision_info: {experiment_key: 'test_experiment_with_audience', variation_key: 'control_with_audience'}
+          experiment_key: 'test_experiment_with_audience', variation_key: 'control_with_audience'
         )
 
         project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox')
@@ -1355,7 +1353,7 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'experiment', 'test_user', {'browser_type' => 'chrome'},
-          decision_info: {experiment_key: 'test_experiment_with_audience', variation_key: nil}
+          experiment_key: 'test_experiment_with_audience', variation_key: nil
         )
 
         project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'chrome')
