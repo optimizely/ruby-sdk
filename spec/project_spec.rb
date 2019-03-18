@@ -1318,9 +1318,10 @@ describe 'Optimizely' do
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
+        # Activate listener
         expect(project_instance.notification_center).to receive(:send_notifications).ordered
 
-        # DECISION listener called when the user is in experiment with variation feature on.
+        # Decision listener called when the user is in experiment with variation feature on.
         expect(variation_to_return['featureEnabled']).to be true
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -1390,17 +1391,9 @@ describe 'Optimizely' do
       end
 
       it 'should call decision listener when user is bucketed into rollout with featureEnabled property is false' do
-        experiment_to_return = config_body['rollouts'][0]['experiments'][1]
-        variation_to_return = experiment_to_return['variations'][0]
-        decision_to_return = Optimizely::DecisionService::Decision.new(
-          experiment_to_return,
-          variation_to_return,
-          Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
-        )
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::Decision)
 
         # DECISION listener called when the user is in rollout with variation feature off.
-        expect(variation_to_return['featureEnabled']).to be false
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {},
@@ -1497,34 +1490,120 @@ describe 'Optimizely' do
     end
 
     describe '.decision listener' do
-      it 'should call decision listener multiple times for each feature and feature enabled value is false in all cases.' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
-
-        expect(project_instance.notification_center).to receive(:send_notifications).with(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
-        ).exactly(8).times
-
-        expect(project_instance.is_feature_enabled(any_args, 'test_user', 'browser_type' => 'chrome')).to be false
-        expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).to be_empty
-      end
-
       it 'should return enabled features and call decision listener for all features' do
-        enabled_features = %w[boolean_feature integer_single_variable_feature boolean_single_variable_feature mutex_group_feature]
-        experiment_to_return = config_body['rollouts'][0]['experiments'][0]
-        variation_to_return = experiment_to_return['variations'][0]
-        decision_to_return = Optimizely::DecisionService::Decision.new(
-          experiment_to_return,
-          variation_to_return,
-          Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
-        )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+        enabled_features = %w[boolean_feature integer_single_variable_feature]
+
+        experiment_to_return = config_body['experiments'][3]
+        rollout_to_return = config_body['rollouts'][0]['experiments'][0]
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(
-          decision_to_return, nil, decision_to_return, decision_to_return, nil, nil, decision_to_return, nil
+          Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            experiment_to_return['variations'][0],
+            Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          ),
+          nil,
+          Optimizely::DecisionService::Decision.new(
+            rollout_to_return,
+            rollout_to_return['variations'][0],
+            Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+          ),
+          Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            experiment_to_return['variations'][1],
+            Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          ),
+          nil,
+          nil,
+          Optimizely::DecisionService::Decision,
+          nil
         )
 
-        expect(project_instance.notification_center).to receive(:send_notifications).with(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
-        ).exactly(project_instance.config.feature_flags.length).times
+        expect(project_instance.notification_center).to receive(:send_notifications).twice.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE], any_args
+        )
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: true,
+          feature_key: 'boolean_feature',
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_multivariate',
+          source_variation_key: 'Fred'
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'double_single_variable_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: true,
+          feature_key: 'integer_single_variable_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'boolean_single_variable_feature',
+          source: 'EXPERIMENT',
+          source_experiment_key: 'test_experiment_multivariate',
+          source_variation_key: 'Feorge'
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'string_single_variable_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'multi_variate_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'mutex_group_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'empty_feature',
+          source: 'ROLLOUT',
+          source_experiment_key: nil,
+          source_variation_key: nil
+        ).ordered
 
         expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'firefox')).to eq(enabled_features)
       end
