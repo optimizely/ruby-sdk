@@ -352,6 +352,12 @@ module Optimizely
         'UNKNOWN_MATCH_TYPE' => 'Audience condition %s uses an unknown match type. You may need ' \
         'to upgrade to a newer release of the Optimizely SDK.'
       }.freeze
+
+      DECISION_INFO_TYPES = {
+        'EXPERIMENT' => 'experiment',
+        'FEATURE' => 'feature',
+        'FEATURE_VARIABLE' => 'feature_variable'
+      }.freeze
     end
   end
 end
