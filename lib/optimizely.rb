@@ -473,7 +473,7 @@ module Optimizely
           variation = decision['variation']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
-          if variation_variable_usages&.key?(variable_id)
+          if variation['featureEnabled'] && variation_variable_usages&.key?(variable_id)
             variable_value = variation_variable_usages[variable_id]['value']
             @logger.log(Logger::INFO,
                         "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")

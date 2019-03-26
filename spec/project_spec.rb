@@ -1732,6 +1732,53 @@ describe 'Optimizely' do
     end
   end
 
+  describe '#get_feature_variable_for_type with default variables' do
+    it 'should return default variable type and value, when user in experiment and feature is not enabled' do
+      integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      variation_to_return = experiment_to_return['variations'][0]
+      variation_to_return['featureEnabled'] = false
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+      )
+
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'integer_single_variable_feature',
+               'integer_variable',
+               'integer',
+               'test_user',
+               'browser_type' => 'firefox'
+             )).to eq(7)
+    end
+
+    it 'should return default variable type and value, when user in rollout and feature is not enabled' do
+      experiment_to_return = config_body['rollouts'][0]['experiments'][1]
+      variation_to_return = experiment_to_return['variations'][0]
+      decision_to_return = Optimizely::DecisionService::Decision.new(
+        experiment_to_return,
+        variation_to_return,
+        Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      )
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+      expect(variation_to_return['featureEnabled']).to be false
+
+      expect(project_instance.send(
+               :get_feature_variable_for_type,
+               'boolean_single_variable_feature',
+               'boolean_variable',
+               'boolean',
+               'test_user',
+               {}
+             )).to eq(true)
+    end
+  end
+
   describe 'when forced variation is used' do
     # setForcedVariation on a paused experiment and then call getVariation.
     it 'should return null when getVariation is called on a paused experiment after setForcedVariation' do
