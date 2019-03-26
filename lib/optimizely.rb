@@ -262,30 +262,44 @@ module Optimizely
       end
 
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-      if decision.nil?
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
+
+      feature_enabled = false
+      source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      if decision.is_a?(Optimizely::DecisionService::Decision)
+        variation = decision['variation']
+        feature_enabled = variation['featureEnabled']
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          experiment_key = decision.experiment['key']
+          variation_key = variation['key']
+          # Send event if Decision came from an experiment.
+          send_impression(decision.experiment, variation['key'], user_id, attributes)
+        else
+          @logger.log(Logger::DEBUG,
+                      "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
+        end
       end
 
-      variation = decision['variation']
-      if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-        # Send event if Decision came from an experiment.
-        send_impression(decision.experiment, variation['key'], user_id, attributes)
-      else
-        @logger.log(Logger::DEBUG,
-                    "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
-      end
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
+        user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
+      )
 
-      if variation['featureEnabled'] == true
+      if feature_enabled == true
         @logger.log(Logger::INFO,
                     "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
         return true
-      else
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
       end
+
+      @logger.log(Logger::INFO,
+                  "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+      false
     end
 
     # Gets keys of all feature flags which are enabled for the user.
