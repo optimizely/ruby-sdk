@@ -143,12 +143,17 @@ module Optimizely
       end
 
       variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
+      variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
+      variation_key = variation['key'] if variation
 
-      unless variation_id.nil?
-        variation = @config.get_variation_from_id(experiment_key, variation_id)
-        return variation['key'] if variation
-      end
-      nil
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['EXPERIMENT'], user_id, (attributes || {}),
+        experiment_key: experiment_key,
+        variation_key: variation_key
+      )
+
+      variation_key
     end
 
     # Force a user into a variation for a given experiment.

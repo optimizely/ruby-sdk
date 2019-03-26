@@ -592,11 +592,17 @@ describe 'Optimizely' do
         .with('test_experiment')
         .and_return([])
       experiment = project_instance.config.get_experiment_from_key('test_experiment')
+
+      # Decision listener
+      expect(project_instance.notification_center).to receive(:send_notifications).ordered
+
+      # Activate listener
       expect(project_instance.notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment, 'test_user', nil, variation_to_return,
         instance_of(Optimizely::Event)
-      )
+      ).ordered
+
       project_instance.activate('test_experiment', 'test_user')
 
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include('Dispatching impression event to' \
@@ -648,6 +654,36 @@ describe 'Optimizely' do
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.activate('test_exp', 'test_user')
+    end
+
+    describe '.decision listener' do
+      it 'should call decision listener when user not in experiment' do
+        expect(project_instance.notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'experiment', 'test_user', {},
+          experiment_key: 'test_experiment_with_audience', variation_key: nil
+        )
+
+        project_instance.activate('test_experiment_with_audience', 'test_user')
+      end
+
+      it 'should call decision listener when user in experiment' do
+        variation_to_return = project_instance.config.get_variation_from_id('test_experiment', '111128')
+        allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+        expect(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+
+        # Decision listener
+        expect(project_instance.notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'experiment', 'test_user', {},
+          experiment_key: 'test_experiment', variation_key: 'control'
+        ).ordered
+
+        # Activate listener
+        expect(project_instance.notification_center).to receive(:send_notifications).ordered
+
+        project_instance.activate('test_experiment', 'test_user')
+      end
     end
   end
 
@@ -1065,6 +1101,28 @@ describe 'Optimizely' do
 
       invalid_project = Optimizely::Project.new('invalid')
       invalid_project.get_variation('test_exp', 'test_user')
+    end
+
+    describe '.decision listener' do
+      it 'should call decision listener when user in experiment' do
+        expect(project_instance.notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'experiment', 'test_user', {'browser_type' => 'firefox'},
+          experiment_key: 'test_experiment_with_audience', variation_key: 'control_with_audience'
+        )
+
+        project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox')
+      end
+
+      it 'should call decision listener when user not in experiment' do
+        expect(project_instance.notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'experiment', 'test_user', {'browser_type' => 'chrome'},
+          experiment_key: 'test_experiment_with_audience', variation_key: nil
+        )
+
+        project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'chrome')
+      end
     end
   end
 
