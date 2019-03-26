@@ -480,16 +480,25 @@ module Optimizely
       # Error message logged in ProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
 
+      feature_enabled = false
+
       # Returns nil if type differs
       if variable['type'] != variable_type
         @logger.log(Logger::WARN,
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
       else
+        source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
+          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+            experiment_key = decision.experiment['key']
+            variation_key = variation['key']
+            source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          end
+          feature_enabled = variation['featureEnabled']
           variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
           variable_id = variable['id']
           if variation_variable_usages&.key?(variable_id)
@@ -507,6 +516,19 @@ module Optimizely
       end
 
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
+
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        variable_key: variable_key,
+        variable_type: variable_type,
+        variable_value: variable_value,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
+      )
 
       variable_value
     end
