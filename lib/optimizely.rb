@@ -143,12 +143,17 @@ module Optimizely
       end
 
       variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
+      variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
+      variation_key = variation['key'] if variation
 
-      unless variation_id.nil?
-        variation = @config.get_variation_from_id(experiment_key, variation_id)
-        return variation['key'] if variation
-      end
-      nil
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['EXPERIMENT'], user_id, (attributes || {}),
+        experiment_key: experiment_key,
+        variation_key: variation_key
+      )
+
+      variation_key
     end
 
     # Force a user into a variation for a given experiment.
@@ -257,30 +262,44 @@ module Optimizely
       end
 
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-      if decision.nil?
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
+
+      feature_enabled = false
+      source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      if decision.is_a?(Optimizely::DecisionService::Decision)
+        variation = decision['variation']
+        feature_enabled = variation['featureEnabled']
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          experiment_key = decision.experiment['key']
+          variation_key = variation['key']
+          # Send event if Decision came from an experiment.
+          send_impression(decision.experiment, variation['key'], user_id, attributes)
+        else
+          @logger.log(Logger::DEBUG,
+                      "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
+        end
       end
 
-      variation = decision['variation']
-      if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-        # Send event if Decision came from an experiment.
-        send_impression(decision.experiment, variation['key'], user_id, attributes)
-      else
-        @logger.log(Logger::DEBUG,
-                    "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
-      end
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
+        user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
+      )
 
-      if variation['featureEnabled'] == true
+      if feature_enabled == true
         @logger.log(Logger::INFO,
                     "Feature '#{feature_flag_key}' is enabled for user '#{user_id}'.")
         return true
-      else
-        @logger.log(Logger::INFO,
-                    "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
-        return false
       end
+
+      @logger.log(Logger::INFO,
+                  "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'.")
+      false
     end
 
     # Gets keys of all feature flags which are enabled for the user.
@@ -461,25 +480,39 @@ module Optimizely
       # Error message logged in ProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
 
+      feature_enabled = false
+
       # Returns nil if type differs
       if variable['type'] != variable_type
         @logger.log(Logger::WARN,
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
       else
+        source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
-          variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
-          variable_id = variable['id']
-          if variation['featureEnabled'] && variation_variable_usages&.key?(variable_id)
-            variable_value = variation_variable_usages[variable_id]['value']
-            @logger.log(Logger::INFO,
-                        "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+            experiment_key = decision.experiment['key']
+            variation_key = variation['key']
+            source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          end
+          feature_enabled = variation['featureEnabled']
+          if feature_enabled == true
+            variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
+            variable_id = variable['id']
+            if variation_variable_usages&.key?(variable_id)
+              variable_value = variation_variable_usages[variable_id]['value']
+              @logger.log(Logger::INFO,
+                          "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+            else
+              @logger.log(Logger::DEBUG,
+                          "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+            end
           else
             @logger.log(Logger::DEBUG,
-                        "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+                        "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
           end
         else
           @logger.log(Logger::INFO,
@@ -488,6 +521,19 @@ module Optimizely
       end
 
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
+
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_INFO_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        variable_key: variable_key,
+        variable_type: variable_type,
+        variable_value: variable_value,
+        source: source_string.upcase,
+        source_experiment_key: experiment_key,
+        source_variation_key: variation_key
+      )
 
       variable_value
     end
