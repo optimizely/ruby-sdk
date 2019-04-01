@@ -499,15 +499,20 @@ module Optimizely
             source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
           end
           feature_enabled = variation['featureEnabled']
-          variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
-          variable_id = variable['id']
-          if variation_variable_usages&.key?(variable_id)
-            variable_value = variation_variable_usages[variable_id]['value']
-            @logger.log(Logger::INFO,
-                        "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+          if feature_enabled == true
+            variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
+            variable_id = variable['id']
+            if variation_variable_usages&.key?(variable_id)
+              variable_value = variation_variable_usages[variable_id]['value']
+              @logger.log(Logger::INFO,
+                          "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
+            else
+              @logger.log(Logger::DEBUG,
+                          "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+            end
           else
             @logger.log(Logger::DEBUG,
-                        "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+                        "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
           end
         else
           @logger.log(Logger::INFO,

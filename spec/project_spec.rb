@@ -2035,7 +2035,7 @@ describe 'Optimizely' do
     user_id = 'test_user'
     user_attributes = {}
 
-    it 'should call decision listener with correct variable type and value, when user in experiment and feature is not enabled' do
+    it 'should call decision listener with default variable type and value, when user in experiment and feature is not enabled' do
       integer_feature = project_instance.config.feature_flag_key_map['integer_single_variable_feature']
       experiment_to_return = project_instance.config.experiment_id_map[integer_feature['experimentIds'][0]]
       variation_to_return = experiment_to_return['variations'][0]
@@ -2056,7 +2056,7 @@ describe 'Optimizely' do
         feature_enabled: false,
         variable_key: 'integer_variable',
         variable_type: 'integer',
-        variable_value: 42,
+        variable_value: 7,
         source: 'EXPERIMENT',
         source_experiment_key: 'test_experiment_integer_feature',
         source_variation_key: 'control'
@@ -2069,7 +2069,12 @@ describe 'Optimizely' do
                'integer',
                user_id,
                nil
-             )).to eq(42)
+             )).to eq(7)
+
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::DEBUG,
+        "Feature 'integer_single_variable_feature' for variation 'control' is not enabled. Returning the default variable value '7'."
+      )
     end
 
     it 'should call decision listener with correct variable type and value, when user in experiment and feature is enabled' do
@@ -2146,7 +2151,7 @@ describe 'Optimizely' do
              )).to eq(true)
     end
 
-    it 'should call listener with correct variable type and value, when user in rollout and feature is not enabled' do
+    it 'should call listener with default variable type and value, when user in rollout and feature is not enabled' do
       experiment_to_return = config_body['rollouts'][0]['experiments'][1]
       variation_to_return = experiment_to_return['variations'][0]
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -2165,7 +2170,7 @@ describe 'Optimizely' do
         feature_enabled: false,
         variable_key: 'boolean_variable',
         variable_type: 'boolean',
-        variable_value: false,
+        variable_value: true,
         source: 'ROLLOUT',
         source_experiment_key: nil,
         source_variation_key: nil
@@ -2178,10 +2183,15 @@ describe 'Optimizely' do
                'boolean',
                user_id,
                user_attributes
-             )).to eq(false)
+             )).to eq(true)
+
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::DEBUG,
+        "Feature 'boolean_single_variable_feature' for variation '177773' is not enabled. Returning the default variable value 'true'."
+      )
     end
 
-    it 'should call listener with correct variable type and value, when user neither in experiment nor in rollout' do
+    it 'should call listener with default variable type and value, when user neither in experiment nor in rollout' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
