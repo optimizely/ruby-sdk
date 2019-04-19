@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2018, Optimizely and contributors
+#    Copyright 2017-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -388,7 +388,7 @@ describe Optimizely::DecisionService do
           expected_decision = Optimizely::DecisionService::Decision.new(
             config.experiment_key_map['test_experiment_multivariate'],
             config.variation_id_map['test_experiment_multivariate']['122231'],
-            Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
           expect(decision_service.get_variation_for_feature_experiment(feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
 
@@ -408,7 +408,7 @@ describe Optimizely::DecisionService do
           expected_decision = Optimizely::DecisionService::Decision.new(
             mutex_exp,
             variation,
-            Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
           allow(decision_service).to receive(:get_variation)
             .and_return(variation['id'])
@@ -487,7 +487,7 @@ describe Optimizely::DecisionService do
           feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
           rollout_experiment = config.rollout_id_map[feature_flag['rolloutId']]['experiments'][0]
           variation = rollout_experiment['variations'][0]
-          expected_decision = Optimizely::DecisionService::Decision.new(rollout_experiment, variation, Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT)
+          expected_decision = Optimizely::DecisionService::Decision.new(rollout_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
           allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
           allow(decision_service.bucketer).to receive(:bucket)
             .with(rollout_experiment, user_id, user_id)
@@ -527,7 +527,7 @@ describe Optimizely::DecisionService do
             rollout = config.rollout_id_map[feature_flag['rolloutId']]
             everyone_else_experiment = rollout['experiments'][2]
             variation = everyone_else_experiment['variations'][0]
-            expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT)
+            expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
             allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
             allow(decision_service.bucketer).to receive(:bucket)
               .with(rollout['experiments'][0], user_id, user_id)
@@ -554,7 +554,7 @@ describe Optimizely::DecisionService do
         rollout = config.rollout_id_map[feature_flag['rolloutId']]
         everyone_else_experiment = rollout['experiments'][2]
         variation = everyone_else_experiment['variations'][0]
-        expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT)
+        expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
         allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(false)
 
         allow(Optimizely::Audience).to receive(:user_in_experiment?)
@@ -652,7 +652,7 @@ describe Optimizely::DecisionService do
           expected_decision = Optimizely::DecisionService::Decision.new(
             nil,
             variation,
-            Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+            Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
           )
           allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_decision)

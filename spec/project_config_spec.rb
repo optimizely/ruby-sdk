@@ -59,6 +59,21 @@ describe Optimizely::ProjectConfig do
         'test_event_not_running' => config_body['events'][3]
       }
 
+      expected_experiment_feature_map = {
+        '133331' => [
+          config_body['featureFlags'][0]['id'],
+          config_body['featureFlags'][6]['id']
+        ],
+        '133332' => [
+          config_body['featureFlags'][0]['id'],
+          config_body['featureFlags'][6]['id']
+        ],
+        '122238' => [config_body['featureFlags'][1]['id']],
+        '122241' => [config_body['featureFlags'][2]['id']],
+        '122235' => [config_body['featureFlags'][4]['id']],
+        '122230' => [config_body['featureFlags'][5]['id']]
+      }
+
       expected_experiment_key_map = {
         'test_experiment' => config_body['experiments'][0],
         'test_experiment_not_started' => config_body['experiments'][1],
@@ -650,6 +665,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
       expect(project_config.event_key_map).to eq(expected_event_key_map)
+      expect(project_config.experiment_feature_map).to eq(expected_experiment_feature_map)
       expect(project_config.experiment_key_map).to eq(expected_experiment_key_map)
       expect(project_config.feature_flag_key_map).to eq(expected_feature_flag_key_map)
       expect(project_config.feature_variable_key_map).to eq(expected_feature_variable_key_map)
@@ -1067,6 +1083,20 @@ describe Optimizely::ProjectConfig do
 
     it 'should return attribute key as attribute ID when key has reserved prefix but is not present in data file' do
       expect(config.get_attribute_id('$opt_user_agent')).to eq('$opt_user_agent')
+    end
+  end
+
+  describe '#feature_experiment' do
+    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
+
+    it 'should return true if the experiment belongs to any feature' do
+      experiment = config.get_experiment_from_key('test_experiment_double_feature')
+      expect(config.feature_experiment?(experiment['id'])).to eq(true)
+    end
+
+    it 'should return false if the experiment does not belong to any feature' do
+      experiment = config.get_experiment_from_key('test_experiment')
+      expect(config.feature_experiment?(experiment['id'])).to eq(false)
     end
   end
 end

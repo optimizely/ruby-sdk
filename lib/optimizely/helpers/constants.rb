@@ -353,10 +353,11 @@ module Optimizely
         'to upgrade to a newer release of the Optimizely SDK.'
       }.freeze
 
-      DECISION_INFO_TYPES = {
-        'EXPERIMENT' => 'experiment',
+      DECISION_NOTIFICATION_TYPES = {
+        'AB_TEST' => 'ab-test',
         'FEATURE' => 'feature',
-        'FEATURE_VARIABLE' => 'feature_variable'
+        'FEATURE_TEST' => 'feature-test',
+        'FEATURE_VARIABLE' => 'feature-variable'
       }.freeze
     end
   end
