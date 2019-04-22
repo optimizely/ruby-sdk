@@ -137,6 +137,9 @@ module Optimizely
         }, @logger, Logger::ERROR
       )
 
+      experiment = @config.get_experiment_from_key(experiment_key)
+      return nil if experiment.nil?
+
       unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
@@ -144,10 +147,8 @@ module Optimizely
 
       variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
       variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
-      experiment = @config.get_experiment_from_key(experiment_key)
-      experiment_id = experiment['id'] if experiment
       variation_key = variation['key'] if variation
-      decision_notification_type = if @config.feature_experiment?(experiment_id)
+      decision_notification_type = if @config.feature_experiment?(experiment['id'])
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
                                    else
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
