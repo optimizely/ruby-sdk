@@ -47,6 +47,7 @@ module Optimizely
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
     attr_reader :event_key_map
+    attr_reader :experiment_feature_map
     attr_reader :experiment_id_map
     attr_reader :experiment_key_map
     attr_reader :feature_flag_key_map
@@ -140,9 +141,13 @@ module Optimizely
         @variation_key_map[key] = generate_key_map(variations, 'key')
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
+      @experiment_feature_map = {}
       @feature_variable_key_map = {}
       @feature_flag_key_map.each do |key, feature_flag|
         @feature_variable_key_map[key] = generate_key_map(feature_flag['variables'], 'key')
+        feature_flag['experimentIds'].each do |experiment_id|
+          @experiment_feature_map[experiment_id] = [feature_flag['id']]
+        end
       end
     end
 
@@ -449,6 +454,16 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Rollout with ID '#{rollout_id}' is not in the datafile."
       nil
+    end
+
+    def feature_experiment?(experiment_id)
+      # Determines if given experiment is a feature test.
+      #
+      # experiment_id - String experiment ID
+      #
+      # Returns true if experiment belongs to  any feature,
+      #              false otherwise.
+      @experiment_feature_map.key?(experiment_id)
     end
 
     private

@@ -137,6 +137,9 @@ module Optimizely
         }, @logger, Logger::ERROR
       )
 
+      experiment = @config.get_experiment_from_key(experiment_key)
+      return nil if experiment.nil?
+
       unless user_inputs_valid?(attributes)
         @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
         return nil
@@ -145,10 +148,14 @@ module Optimizely
       variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
       variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
-
+      decision_notification_type = if @config.feature_experiment?(experiment['id'])
+                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
+                                   else
+                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
+                                   end
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_INFO_TYPES['EXPERIMENT'], user_id, (attributes || {}),
+        decision_notification_type, user_id, (attributes || {}),
         experiment_key: experiment_key,
         variation_key: variation_key
       )
@@ -264,14 +271,16 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
 
       feature_enabled = false
-      source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       if decision.is_a?(Optimizely::DecisionService::Decision)
         variation = decision['variation']
         feature_enabled = variation['featureEnabled']
-        if decision.source == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-          source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-          experiment_key = decision.experiment['key']
-          variation_key = variation['key']
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          source_info = {
+            experiment_key: decision.experiment['key'],
+            variation_key: variation['key']
+          }
           # Send event if Decision came from an experiment.
           send_impression(decision.experiment, variation['key'], user_id, attributes)
         else
@@ -282,13 +291,12 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_INFO_TYPES['FEATURE'],
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE'],
         user_id, (attributes || {}),
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
-        source: source_string.upcase,
-        source_experiment_key: experiment_key,
-        source_variation_key: variation_key
+        source: source_string,
+        source_info: source_info || {}
       )
 
       if feature_enabled == true
@@ -481,22 +489,23 @@ module Optimizely
       return nil if variable.nil?
 
       feature_enabled = false
-
       # Returns nil if type differs
       if variable['type'] != variable_type
         @logger.log(Logger::WARN,
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
       else
-        source_string = Optimizely::DecisionService::DECISION_SOURCE_ROLLOUT
+        source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
-          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
-            experiment_key = decision.experiment['key']
-            variation_key = variation['key']
-            source_string = Optimizely::DecisionService::DECISION_SOURCE_EXPERIMENT
+          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+            source_info = {
+              experiment_key: decision.experiment['key'],
+              variation_key: variation['key']
+            }
+            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           end
           feature_enabled = variation['featureEnabled']
           if feature_enabled == true
@@ -524,15 +533,14 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_INFO_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
+        source: source_string,
         variable_key: variable_key,
         variable_type: variable_type,
         variable_value: variable_value,
-        source: source_string.upcase,
-        source_experiment_key: experiment_key,
-        source_variation_key: variation_key
+        source_info: source_info || {}
       )
 
       variable_value
