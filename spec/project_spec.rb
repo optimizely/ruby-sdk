@@ -660,7 +660,7 @@ describe 'Optimizely' do
       it 'should call decision listener when user not in experiment' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-          'ab-test', 'test_user', {},
+          'feature-test', 'test_user', {},
           experiment_key: 'test_experiment_with_audience', variation_key: nil
         )
 
@@ -1108,20 +1108,20 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'ab-test', 'test_user', {'browser_type' => 'firefox'},
-          experiment_key: 'test_experiment_with_audience', variation_key: 'control_with_audience'
+          experiment_key: 'test_experiment', variation_key: 'control'
         )
 
-        project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox')
+        project_instance.get_variation('test_experiment', 'test_user', 'browser_type' => 'firefox')
       end
 
       it 'should call decision listener when user not in experiment' do
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'ab-test', 'test_user', {'browser_type' => 'chrome'},
-          experiment_key: 'test_experiment_with_audience', variation_key: nil
+          experiment_key: 'test_experiment', variation_key: 'control'
         )
 
-        project_instance.get_variation('test_experiment_with_audience', 'test_user', 'browser_type' => 'chrome')
+        project_instance.get_variation('test_experiment', 'test_user', 'browser_type' => 'chrome')
       end
 
       it 'should call decision listener with type feature-test when get_variation returns feature experiment variation' do

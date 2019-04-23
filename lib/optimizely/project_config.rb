@@ -146,11 +146,7 @@ module Optimizely
       @feature_flag_key_map.each do |key, feature_flag|
         @feature_variable_key_map[key] = generate_key_map(feature_flag['variables'], 'key')
         feature_flag['experimentIds'].each do |experiment_id|
-          if @experiment_feature_map[experiment_id]
-            @experiment_feature_map[experiment_id].push(feature_flag['id'])
-          else
-            @experiment_feature_map[experiment_id] = [feature_flag['id']]
-          end
+          @experiment_feature_map[experiment_id] = [feature_flag['id']]
         end
       end
     end
@@ -461,7 +457,7 @@ module Optimizely
     end
 
     def feature_experiment?(experiment_id)
-      # Determines if a given experiment ID belongs to any Feature.
+      # Determines if given experiment is a feature test.
       #
       # experiment_id - String experiment ID
       #

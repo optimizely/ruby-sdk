@@ -60,14 +60,9 @@ describe Optimizely::ProjectConfig do
       }
 
       expected_experiment_feature_map = {
-        '133331' => [
-          config_body['featureFlags'][0]['id'],
-          config_body['featureFlags'][6]['id']
-        ],
-        '133332' => [
-          config_body['featureFlags'][0]['id'],
-          config_body['featureFlags'][6]['id']
-        ],
+        '122227' => [config_body['featureFlags'][0]['id']],
+        '133331' => [config_body['featureFlags'][6]['id']],
+        '133332' => [config_body['featureFlags'][6]['id']],
         '122238' => [config_body['featureFlags'][1]['id']],
         '122241' => [config_body['featureFlags'][2]['id']],
         '122235' => [config_body['featureFlags'][4]['id']],
@@ -1089,12 +1084,12 @@ describe Optimizely::ProjectConfig do
   describe '#feature_experiment' do
     let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
 
-    it 'should return true if the experiment belongs to any feature' do
+    it 'should return true if the experiment is a feature test' do
       experiment = config.get_experiment_from_key('test_experiment_double_feature')
       expect(config.feature_experiment?(experiment['id'])).to eq(true)
     end
 
-    it 'should return false if the experiment does not belong to any feature' do
+    it 'should return false if the experiment is not a feature test' do
       experiment = config.get_experiment_from_key('test_experiment')
       expect(config.feature_experiment?(experiment['id'])).to eq(false)
     end

@@ -415,11 +415,11 @@ describe Optimizely::DecisionService do
         end
 
         it 'should return the variation the user is bucketed into' do
-          feature_flag = config.feature_flag_key_map['boolean_feature']
+          feature_flag = config.feature_flag_key_map['mutex_group_feature']
           expect(decision_service.get_variation_for_feature_experiment(feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
           expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'boolean_feature'.")
+                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'mutex_group_feature'.")
         end
       end
 
@@ -436,11 +436,11 @@ describe Optimizely::DecisionService do
         end
 
         it 'should return nil and log a message' do
-          feature_flag = config.feature_flag_key_map['boolean_feature']
+          feature_flag = config.feature_flag_key_map['mutex_group_feature']
           expect(decision_service.get_variation_for_feature_experiment(feature_flag, user_id, user_attributes)).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'boolean_feature'.")
+                                                   .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'mutex_group_feature'.")
         end
       end
     end
