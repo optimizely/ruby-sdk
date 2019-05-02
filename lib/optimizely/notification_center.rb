@@ -21,6 +21,7 @@ module Optimizely
     attr_reader :notifications, :notification_id
 
     NOTIFICATION_TYPES = {
+      # DEPRECATED: ACTIVATE notification type is deprecated since relase 3.1.0. 
       ACTIVATE: 'ACTIVATE: experiment, user_id, attributes, variation, event',
       DECISION: 'DECISION: type, user_id, attributes, decision_info',
       TRACK: 'TRACK: event_key, user_id, attributes, event_tags, event'
