@@ -466,7 +466,7 @@ module OptimizelySpec
       'id' => '155549',
       'key' => 'boolean_feature',
       'rolloutId' => '',
-      'experimentIds' => %w[133331 133332],
+      'experimentIds' => ['122227'],
       'variables' => []
     }, {
       'id' => '155550',

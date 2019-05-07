@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2018, Optimizely and contributors
+#    Copyright 2017-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -35,8 +35,11 @@ module Optimizely
     attr_reader :config
 
     Decision = Struct.new(:experiment, :variation, :source)
-    DECISION_SOURCE_EXPERIMENT = 'experiment'
-    DECISION_SOURCE_ROLLOUT = 'rollout'
+
+    DECISION_SOURCES = {
+      'FEATURE_TEST' => 'feature-test',
+      'ROLLOUT' => 'rollout'
+    }.freeze
 
     def initialize(config, user_profile_service = nil)
       @config = config
@@ -172,7 +175,7 @@ module Optimizely
           Logger::INFO,
           "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
         )
-        return Decision.new(experiment, variation, DECISION_SOURCE_EXPERIMENT)
+        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'])
       end
 
       @config.logger.log(
@@ -236,7 +239,7 @@ module Optimizely
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation = @bucketer.bucket(rollout_rule, bucketing_id, user_id)
-        return Decision.new(rollout_rule, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
+        return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
         break
       end
@@ -255,7 +258,7 @@ module Optimizely
         return nil
       end
       variation = @bucketer.bucket(everyone_else_experiment, bucketing_id, user_id)
-      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT) unless variation.nil?
+      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
       nil
     end
