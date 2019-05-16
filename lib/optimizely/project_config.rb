@@ -55,6 +55,7 @@ module Optimizely
     attr_reader :group_key_map
     attr_reader :rollout_id_map
     attr_reader :rollout_experiment_id_map
+    attr_reader :rollout_experiment_key_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
@@ -120,13 +121,15 @@ module Optimizely
         end
       end
       @rollout_id_map = generate_key_map(@rollouts, 'id')
-      # split out the experiment id map for rollouts
+      # split out the experiment id and key map for rollouts
       @rollout_experiment_id_map = {}
+      @rollout_experiment_key_map = {}
       @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+        @rollout_experiment_key_map = @rollout_experiment_key_map.merge(generate_key_map(exps, 'key'))
       end
-      @all_experiments = @experiment_key_map.merge(@rollout_experiment_id_map)
+      @all_experiments = @experiment_key_map.merge(@rollout_experiment_key_map)
       @all_experiments.each do |key, exp|
         variations = exp.fetch('variations')
         variations.each do |variation|

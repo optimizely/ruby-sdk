@@ -264,6 +264,14 @@ describe Optimizely::ProjectConfig do
             feature_enabled => true,
             'variables' => []
           }
+        },
+        'rollout_exp_with_diff_id_and_key' => {
+          '177781' => {
+            'id' => '177781',
+            'key' => 'rollout_var_with_diff_id_and_key',
+            feature_enabled => true,
+            'variables' => []
+          }
         }
       }
 
@@ -445,6 +453,14 @@ describe Optimizely::ProjectConfig do
           '177780' => {
             'id' => '177780',
             'key' => '177780',
+            feature_enabled => true,
+            'variables' => []
+          }
+        },
+        'rollout_exp_with_diff_id_and_key' => {
+          'rollout_var_with_diff_id_and_key' => {
+            'id' => '177781',
+            'key' => 'rollout_var_with_diff_id_and_key',
             feature_enabled => true,
             'variables' => []
           }
@@ -641,7 +657,8 @@ describe Optimizely::ProjectConfig do
             'value' => 'false'
           }
         },
-        '177780' => {}
+        '177780' => {},
+        '177781' => {}
       }
 
       expected_rollout_id_map = {
@@ -654,7 +671,17 @@ describe Optimizely::ProjectConfig do
         '177772' => config_body['rollouts'][0]['experiments'][1],
         '177776' => config_body['rollouts'][0]['experiments'][2],
         '177774' => config_body['rollouts'][1]['experiments'][0],
-        '177779' => config_body['rollouts'][1]['experiments'][1]
+        '177779' => config_body['rollouts'][1]['experiments'][1],
+        '177780' => config_body['rollouts'][1]['experiments'][2]
+      }
+
+      expected_rollout_experiment_key_map = {
+        '177770' => config_body['rollouts'][0]['experiments'][0],
+        '177772' => config_body['rollouts'][0]['experiments'][1],
+        '177776' => config_body['rollouts'][0]['experiments'][2],
+        '177774' => config_body['rollouts'][1]['experiments'][0],
+        '177779' => config_body['rollouts'][1]['experiments'][1],
+        'rollout_exp_with_diff_id_and_key' => config_body['rollouts'][1]['experiments'][2]
       }
 
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
@@ -669,6 +696,7 @@ describe Optimizely::ProjectConfig do
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
+      expect(project_config.rollout_experiment_key_map).to eq(expected_rollout_experiment_key_map)
     end
 
     it 'should initialize properties correctly upon creating project with typed audience dict' do
