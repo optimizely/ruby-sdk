@@ -659,6 +659,22 @@ module OptimizelySpec
           'entityId' => '177780',
           'endOfRange' => 1500
         }]
+      }, {
+        'id' => '177780',
+        'key' => 'rollout_exp_with_diff_id_and_key',
+        'status' => 'Running',
+        'layerId' => '166661',
+        'audienceIds' => [],
+        'variations' => [{
+          'id' => '177781',
+          'key' => 'rollout_var_with_diff_id_and_key',
+          'featureEnabled' => true,
+          'variables' => []
+        }],
+        'trafficAllocation' => [{
+          'entityId' => '177781',
+          'endOfRange' => 1500
+        }]
       }]
     }]
   }.freeze
