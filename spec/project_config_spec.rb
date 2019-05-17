@@ -666,15 +666,6 @@ describe Optimizely::ProjectConfig do
         '166661' => config_body['rollouts'][1]
       }
 
-      expected_rollout_experiment_id_map = {
-        '177770' => config_body['rollouts'][0]['experiments'][0],
-        '177772' => config_body['rollouts'][0]['experiments'][1],
-        '177776' => config_body['rollouts'][0]['experiments'][2],
-        '177774' => config_body['rollouts'][1]['experiments'][0],
-        '177779' => config_body['rollouts'][1]['experiments'][1],
-        '177780' => config_body['rollouts'][1]['experiments'][2]
-      }
-
       expected_rollout_experiment_key_map = {
         '177770' => config_body['rollouts'][0]['experiments'][0],
         '177772' => config_body['rollouts'][0]['experiments'][1],
@@ -695,7 +686,6 @@ describe Optimizely::ProjectConfig do
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
-      expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
       expect(project_config.rollout_experiment_key_map).to eq(expected_rollout_experiment_key_map)
     end
 
