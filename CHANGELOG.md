@@ -1,3 +1,9 @@
+## 3.1.1
+May 28, 2019
+
+### Bug Fixes:
+- fix(is_feature_enabled): Added rollout experiment key map for onboarding datafile. ([#168](https://github.com/optimizely/ruby-sdk/pull/168))
+
 ## 3.1.0
 May 3rd, 2019
 
