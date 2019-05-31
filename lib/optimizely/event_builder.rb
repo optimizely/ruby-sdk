@@ -48,26 +48,16 @@ module Optimizely
   class BaseEventBuilder
     CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
-    attr_reader :config
-    attr_reader :logger
-
-    def initialize(config, logger)
-      @config = config
+    def initialize(logger)
       @logger = logger
     end
 
     private
 
-    def bot_filtering
-      # Get bot filtering bool
-      #
-      # Returns 'botFiltering' value in the datafile.
-      @config.bot_filtering
-    end
-
-    def get_common_params(user_id, attributes)
+    def get_common_params(project_config, user_id, attributes)
       # Get params which are used in both conversion and impression events.
       #
+      # project_config - +Object+ Instance of ProjectConfig
       # user_id -    +String+ ID for user
       # attributes - +Hash+ representing user attributes and values which need to be recorded.
       #
@@ -79,7 +69,7 @@ module Optimizely
         # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
         if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
-          attribute_id = @config.get_attribute_id attribute_key
+          attribute_id = project_config.get_attribute_id attribute_key
           if attribute_id
             visitor_attributes.push(
               entity_id: attribute_id,
@@ -91,18 +81,18 @@ module Optimizely
         end
       end
       # Append Bot Filtering Attribute
-      if bot_filtering == true || bot_filtering == false
+      if project_config.bot_filtering == true || project_config.bot_filtering == false
         visitor_attributes.push(
           entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
           key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
           type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-          value: bot_filtering
+          value: project_config.bot_filtering
         )
       end
 
       common_params = {
-        account_id: @config.account_id,
-        project_id: @config.project_id,
+        account_id: project_config.account_id,
+        project_id: project_config.project_id,
         visitors: [
           {
             attributes: visitor_attributes,
@@ -110,8 +100,8 @@ module Optimizely
             visitor_id: user_id
           }
         ],
-        anonymize_ip: @config.anonymize_ip,
-        revision: @config.revision,
+        anonymize_ip: project_config.anonymize_ip,
+        revision: project_config.revision,
         client_name: CLIENT_ENGINE,
         enrich_decisions: true,
         client_version: VERSION
@@ -126,9 +116,10 @@ module Optimizely
     POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
-    def create_impression_event(experiment, variation_id, user_id, attributes)
+    def create_impression_event(project_config, experiment, variation_id, user_id, attributes)
       # Create impression Event to be sent to the logging endpoint.
       #
+      # project_config - +Object+ Instance of ProjectConfig
       # experiment -   +Object+ Experiment for which impression needs to be recorded.
       # variation_id - +String+ ID for variation which would be presented to user.
       # user_id -      +String+ ID for user.
@@ -136,16 +127,17 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the impression event.
 
-      event_params = get_common_params(user_id, attributes)
-      impression_params = get_impression_params(experiment, variation_id)
+      event_params = get_common_params(project_config, user_id, attributes)
+      impression_params = get_impression_params(project_config, experiment, variation_id)
       event_params[:visitors][0][:snapshots].push(impression_params)
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
 
-    def create_conversion_event(event, user_id, attributes, event_tags)
+    def create_conversion_event(project_config, event, user_id, attributes, event_tags)
       # Create conversion Event to be sent to the logging endpoint.
       #
+      # project_config -           +Object+ Instance of ProjectConfig
       # event -                    +Object+ Event which needs to be recorded.
       # user_id -                  +String+ ID for user.
       # attributes -               +Hash+ representing user attributes and values which need to be recorded.
@@ -153,7 +145,7 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the conversion event.
 
-      event_params = get_common_params(user_id, attributes)
+      event_params = get_common_params(project_config, user_id, attributes)
       conversion_params = get_conversion_params(event, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
 
@@ -162,9 +154,10 @@ module Optimizely
 
     private
 
-    def get_impression_params(experiment, variation_id)
+    def get_impression_params(project_config, experiment, variation_id)
       # Creates object of params specific to impression events
       #
+      # project_config - +Object+ Instance of ProjectConfig
       # experiment -   +Hash+ experiment for which impression needs to be recorded
       # variation_id - +string+ ID for variation which would be presented to user
       #
@@ -175,12 +168,12 @@ module Optimizely
 
       impression_event_params = {
         decisions: [{
-          campaign_id: @config.experiment_key_map[experiment_key]['layerId'],
+          campaign_id: project_config.experiment_key_map[experiment_key]['layerId'],
           experiment_id: experiment_id,
           variation_id: variation_id
         }],
         events: [{
-          entity_id: @config.experiment_key_map[experiment_key]['layerId'],
+          entity_id: project_config.experiment_key_map[experiment_key]['layerId'],
           timestamp: create_timestamp,
           key: ACTIVATE_EVENT_KEY,
           uuid: create_uuid

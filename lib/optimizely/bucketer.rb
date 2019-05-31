@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2017, 2019 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -28,18 +28,17 @@ module Optimizely
     MAX_TRAFFIC_VALUE = 10_000
     UNSIGNED_MAX_32_BIT_VALUE = 0xFFFFFFFF
 
-    def initialize(config)
-      # Bucketer init method to set bucketing seed and project config data.
-      #
-      # config - ProjectConfig data to be used in making bucketing decisions.
-
+    def initialize(logger)
+      # Bucketer init method to set bucketing seed and logger.
+      # logger - Optional component which provides a log method to log messages.
+      @logger = logger
       @bucket_seed = HASH_SEED
-      @config = config
     end
 
-    def bucket(experiment, bucketing_id, user_id)
+    def bucket(project_config, experiment, bucketing_id, user_id)
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
+      # project_config - Instance of ProjectConfig
       # experiment - Experiment for which visitor is to be bucketed.
       # bucketing_id - String A customer-assigned value used to generate the bucketing key
       # user_id - String ID for user.
@@ -52,19 +51,19 @@ module Optimizely
       experiment_key = experiment['key']
       group_id = experiment['groupId']
       if group_id
-        group = @config.group_key_map.fetch(group_id)
+        group = project_config.group_key_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
           traffic_allocations = group.fetch('trafficAllocation')
           bucketed_experiment_id = find_bucket(bucketing_id, user_id, group_id, traffic_allocations)
           # return if the user is not bucketed into any experiment
           unless bucketed_experiment_id
-            @config.logger.log(Logger::INFO, "User '#{user_id}' is in no experiment.")
+            @logger.log(Logger::INFO, "User '#{user_id}' is in no experiment.")
             return nil
           end
 
           # return if the user is bucketed into a different experiment than the one specified
           if bucketed_experiment_id != experiment_id
-            @config.logger.log(
+            @logger.log(
               Logger::INFO,
               "User '#{user_id}' is not in experiment '#{experiment_key}' of group #{group_id}."
             )
@@ -72,7 +71,7 @@ module Optimizely
           end
 
           # continue bucketing if the user is bucketed into the experiment specified
-          @config.logger.log(
+          @logger.log(
             Logger::INFO,
             "User '#{user_id}' is in experiment '#{experiment_key}' of group #{group_id}."
           )
@@ -82,9 +81,9 @@ module Optimizely
       traffic_allocations = experiment['trafficAllocation']
       variation_id = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
       if variation_id && variation_id != ''
-        variation = @config.get_variation_from_id(experiment_key, variation_id)
+        variation = project_config.get_variation_from_id(experiment_key, variation_id)
         variation_key = variation ? variation['key'] : nil
-        @config.logger.log(
+        @logger.log(
           Logger::INFO,
           "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
         )
@@ -93,13 +92,13 @@ module Optimizely
 
       # Handle the case when the traffic range is empty due to sticky bucketing
       if variation_id == ''
-        @config.logger.log(
+        @logger.log(
           Logger::DEBUG,
           'Bucketed into an empty traffic range. Returning nil.'
         )
       end
 
-      @config.logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
+      @logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
       nil
     end
 
@@ -114,7 +113,7 @@ module Optimizely
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
       bucketing_key = format(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
       bucket_value = generate_bucket_value(bucketing_key)
-      @config.logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' "\
+      @logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' "\
                          "with bucketing ID: '#{bucketing_id}'.")
 
       traffic_allocations.each do |traffic_allocation|
