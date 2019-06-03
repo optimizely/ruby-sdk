@@ -173,7 +173,16 @@ module Optimizely
     # @return [Boolean] indicates if the set completed successfully.
 
     def set_forced_variation(experiment_key, user_id, variation_key)
-      @config.set_forced_variation(experiment_key, user_id, variation_key)
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('set_forced_variation').message)
+        return nil
+      end
+
+      input_values = {experiment_key: experiment_key, user_id: user_id}
+      input_values[:variation_key] = variation_key unless variation_key.nil?
+      return false unless Optimizely::Helpers::Validator.inputs_valid?(input_values, @logger, Logger::ERROR)
+
+      @decision_service.set_forced_variation(@config, experiment_key, user_id, variation_key)
     end
 
     # Gets the forced variation for a given user and experiment.
@@ -184,8 +193,20 @@ module Optimizely
     # @return [String] The forced variation key.
 
     def get_forced_variation(experiment_key, user_id)
+      unless @is_valid
+        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_forced_variation').message)
+        return nil
+      end
+
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          experiment_key: experiment_key,
+          user_id: user_id
+        }, @logger, Logger::ERROR
+      )
+
       forced_variation_key = nil
-      forced_variation = @config.get_forced_variation(experiment_key, user_id)
+      forced_variation = @decision_service.get_forced_variation(@config, experiment_key, user_id)
       forced_variation_key = forced_variation['key'] if forced_variation
 
       forced_variation_key
