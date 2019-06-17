@@ -2237,8 +2237,7 @@ describe 'Optimizely' do
 
     # setForcedVariation on a running experiment and then call getVariation.
     it 'should return expected variation id  when getVariation is called on a running experiment after setForcedVariation' do
-      result = project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
-      puts result
+      project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
       expect(project_instance.get_variation('test_experiment', 'test_user')). to eq('variation')
     end
 
