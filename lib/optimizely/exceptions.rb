@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2018, Optimizely and contributors
+#    Copyright 2016-2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -82,6 +82,14 @@ module Optimizely
     end
   end
 
+  class InvalidProjectConfigError < Error
+    # Raised when a public method fails due to an invalid datafile
+
+    def initialize(aborted_method)
+      super("Invalid config. Optimizely instance is not valid. Failing #{aborted_method}.")
+    end
+  end
+
   class InvalidDatafileVersionError < Error
     # Raised when a datafile with an unsupported version is provided
 
@@ -103,6 +111,14 @@ module Optimizely
 
     def initialize(msg = 'Provided notification type is invalid.')
       super
+    end
+  end
+
+  class InvalidInputsError < Error
+    # Raised when an invalid inputs are provided during Project instantiation
+
+    def initialize(msg)
+      super msg
     end
   end
 end

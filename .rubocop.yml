@@ -36,6 +36,9 @@ Metrics/PerceivedComplexity:
 Naming/VariableNumber:
   Enabled: false
 
+Naming/AccessorMethodName:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
 

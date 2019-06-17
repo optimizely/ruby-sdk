@@ -359,6 +359,21 @@ module Optimizely
         'FEATURE_TEST' => 'feature-test',
         'FEATURE_VARIABLE' => 'feature-variable'
       }.freeze
+
+      # Default config update interval of 5 minutes
+      # Minimum config update interval of 1 second
+      # Time in seconds before which request for datafile times out
+      CONFIG_MANAGER = {
+        'DATAFILE_URL_TEMPLATE' => 'https://cdn.optimizely.com/datafiles/%s.json',
+        'DEFAULT_UPDATE_INTERVAL' => 5 * 60,
+        'MIN_UPDATE_INTERVAL' => 1,
+        'REQUEST_TIMEOUT' => 10
+      }.freeze
+
+      HTTP_HEADERS = {
+        'IF_MODIFIED_SINCE' => 'If-Modified-Since',
+        'LAST_MODIFIED' => 'Last-Modified'
+      }.freeze
     end
   end
 end

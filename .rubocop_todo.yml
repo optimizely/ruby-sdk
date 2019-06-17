@@ -19,7 +19,7 @@ Lint/LiteralAsCondition:
 # Offense count: 1
 # Configuration parameters: CountKeywordArgs.
 Metrics/ParameterLists:
-  Max: 6
+  Max: 8
 
 # Offense count: 1
 # Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist, MethodDefinitionMacros.
