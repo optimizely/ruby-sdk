@@ -190,8 +190,8 @@ describe 'Optimizely' do
     it 'should properly activate a user, invoke Event object with right params, and return variation after a forced variation call' do
       params = @expected_activate_params
 
-      project_instance.config.set_forced_variation('test_experiment', 'test_user', 'control')
-      variation_to_return = project_instance.config.get_forced_variation('test_experiment', 'test_user')
+      project_instance.decision_service.set_forced_variation(project_instance.config, 'test_experiment', 'test_user', 'control')
+      variation_to_return = project_instance.decision_service.get_forced_variation(project_instance.config, 'test_experiment', 'test_user')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.config).to receive(:get_audience_ids_for_experiment)
@@ -484,8 +484,8 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      project_instance.config.set_forced_variation('test_experiment_with_audience', 'test_user', 'variation_with_audience')
-      variation_to_return = project_instance.config.get_forced_variation('test_experiment', 'test_user')
+      project_instance.decision_service.set_forced_variation(project_instance.config, 'test_experiment_with_audience', 'test_user', 'variation_with_audience')
+      variation_to_return = project_instance.decision_service.get_forced_variation(project_instance.config, 'test_experiment', 'test_user')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -754,7 +754,7 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params after forced variation' do
-      project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
+      project_instance.decision_service.set_forced_variation(project_instance.config, 'test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_track_event_params, post_headers)).once
@@ -766,7 +766,7 @@ describe 'Optimizely' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
 
-      project_instance.config.set_forced_variation('test_experiment', 'test_user', 'variation')
+      project_instance.decision_service.set_forced_variation(project_instance.config, 'test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, revenue: 42)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
@@ -2269,6 +2269,101 @@ describe 'Optimizely' do
     it 'should return expected variation id  when get_forced_variation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
       expect(project_instance.get_forced_variation('test_experiment', 'test_user')). to eq('variation')
+    end
+  end
+
+  describe '#set_forced_variation' do
+    user_id = 'test_user'
+    valid_experiment = {id: '111127', key: 'test_experiment'}
+    valid_variation = {id: '111128', key: 'control'}
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting set_forced_variation.')
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])
+    end
+
+    it 'should call inputs_valid? with the proper arguments' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          experiment_key: valid_experiment[:key],
+          user_id: user_id,
+          variation_key: valid_variation[:key]
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])
+    end
+
+    it 'should return false and log a message when an invalid user_id is passed' do
+      expect(project_instance.set_forced_variation(valid_experiment[:key], nil, valid_variation[:key])).to be false
+      expect(project_instance.set_forced_variation(valid_experiment[:key], 5, valid_variation[:key])).to be false
+      expect(project_instance.set_forced_variation(valid_experiment[:key], 5.5, valid_variation[:key])).to be false
+      expect(project_instance.set_forced_variation(valid_experiment[:key], true, valid_variation[:key])).to be false
+      expect(project_instance.set_forced_variation(valid_experiment[:key], {}, valid_variation[:key])).to be false
+      expect(project_instance.set_forced_variation(valid_experiment[:key], [], valid_variation[:key])).to be false
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(6).times
+    end
+    # Invalid Experiment key
+    it 'should return false when experiment_key is passed as invalid' do
+      expect(project_instance.set_forced_variation(nil, user_id, valid_variation[:key])).to eq(false)
+      expect(project_instance.set_forced_variation('', user_id, valid_variation[:key])).to eq(false)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR,
+                                                           'Experiment key is invalid')
+    end
+    # Variation key is an empty string
+    it 'should persist forced variation mapping, log a message and return false when variation_key is passed as empty string' do
+      expect(project_instance.set_forced_variation(valid_experiment[:key], user_id, '')).to eq(false)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                     'Variation key is invalid')
+      expect(project_instance.get_forced_variation(valid_experiment[:key], user_id)).to eq(nil)
+    end
+  end
+
+  describe '#get_forced_variation' do
+    user_id = 'test_user'
+    valid_experiment = {id: '111127', key: 'test_experiment'}
+
+    it 'should log an error when called with an invalid Project object' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(logger).to receive(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format. Aborting get_forced_variation.')
+
+      invalid_project = Optimizely::Project.new('invalid')
+      invalid_project.get_forced_variation(valid_experiment[:key], user_id)
+    end
+
+    it 'should call inputs_valid? with the proper arguments' do
+      expect(Optimizely::Helpers::Validator).to receive(:inputs_valid?).with(
+        {
+          experiment_key: valid_experiment[:key],
+          user_id: user_id
+        }, spy_logger, Logger::ERROR
+      )
+      project_instance.get_forced_variation(valid_experiment[:key], user_id)
+    end
+
+    it 'should return nil and log a message when invalid user_id is passed' do
+      expect(project_instance.get_forced_variation(valid_experiment[:key], nil)).to eq(nil)
+      expect(project_instance.get_forced_variation(valid_experiment[:key], 5)).to eq(nil)
+      expect(project_instance.get_forced_variation(valid_experiment[:key], 5.5)).to eq(nil)
+      expect(project_instance.get_forced_variation(valid_experiment[:key], true)).to eq(nil)
+      expect(project_instance.get_forced_variation(valid_experiment[:key], {})).to eq(nil)
+      expect(project_instance.get_forced_variation(valid_experiment[:key], [])).to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(6).times
+    end
+    # Experiment key is invalid
+    it 'should return nil and log a message when experiment_key is passed as invalid' do
+      expect(project_instance.get_forced_variation(nil, user_id)).to eq(nil)
+      expect(project_instance.get_forced_variation('', user_id)).to eq(nil)
+      expect(spy_logger).to have_received(:log).twice.with(Logger::ERROR,
+                                                           'Experiment key is invalid')
     end
   end
 end
