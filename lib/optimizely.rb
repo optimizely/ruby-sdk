@@ -74,8 +74,8 @@ module Optimizely
         return
       end
 
-      @decision_service = DecisionService.new(@config, @user_profile_service)
-      @event_builder = EventBuilder.new(@config, @logger)
+      @decision_service = DecisionService.new(@logger, @user_profile_service)
+      @event_builder = EventBuilder.new(@logger)
       @notification_center = NotificationCenter.new(@logger, @error_handler)
     end
 
@@ -145,7 +145,7 @@ module Optimizely
         return nil
       end
 
-      variation_id = @decision_service.get_variation(experiment_key, user_id, attributes)
+      variation_id = @decision_service.get_variation(@config, experiment_key, user_id, attributes)
       variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
       decision_notification_type = if @config.feature_experiment?(experiment['id'])
@@ -219,7 +219,7 @@ module Optimizely
         return nil
       end
 
-      conversion_event = @event_builder.create_conversion_event(event, user_id, attributes, event_tags)
+      conversion_event = @event_builder.create_conversion_event(@config, event, user_id, attributes, event_tags)
       @config.logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
       @logger.log(Logger::INFO,
                   "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
@@ -268,7 +268,7 @@ module Optimizely
         return false
       end
 
-      decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+      decision = @decision_service.get_variation_for_feature(@config, feature_flag, user_id, attributes)
 
       feature_enabled = false
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
@@ -496,7 +496,7 @@ module Optimizely
         return nil
       else
         source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-        decision = @decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+        decision = @decision_service.get_variation_for_feature(@config, feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
@@ -592,7 +592,7 @@ module Optimizely
     def send_impression(experiment, variation_key, user_id, attributes = nil)
       experiment_key = experiment['key']
       variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
-      impression_event = @event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
+      impression_event = @event_builder.create_impression_event(@config, experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
                   "Dispatching impression event to URL #{impression_event.url} with params #{impression_event.params}.")
       begin
