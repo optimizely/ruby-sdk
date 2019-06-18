@@ -16,11 +16,25 @@
 #    limitations under the License.
 #
 
+require_relative 'optimizely/error_handler'
+require_relative 'optimizely/logger'
+
 module Optimizely
-  class ProjectConfigManager
+  class BaseConfigManager
     # Interface for fetching ProjectConfig instance.
     #
     # Returns ProjectConfig instance.
+
+    def initialize(logger=nil, error_handler=nil)
+      # logger - Provides a logger instance.
+      # error_handler - Provides a handle_error method to handle exceptions.
+
+      @logger = logger || NoOpLogger.new
+      @error_handler = error_handler || NoOpErrorHandler.new
+    end
+
+    # Get config for use by Optimizely.
+    # The config should be an instance of ProjectConfig.
     def get_config(); end
   end
 end

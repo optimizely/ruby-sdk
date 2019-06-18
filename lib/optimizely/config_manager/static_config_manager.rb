@@ -16,16 +16,21 @@
 #    limitations under the License.
 #
 
-require_relative 'project_config_manager'
+require_relative 'base_config_manager'
 
 module Optimizely
-  class FallbackProjectConfigManager < ProjectConfigManager
-    # Implementation of ProjectConfigManager interface.
-    # Returns the stored ProjectConfig instance.
+  class StaticConfigManager < BaseConfigManager
+    # Config manager that returns ProjectConfig based on provided datafile.
 
     def initialize(datafile = nil, logger = nil, error_handler = nil, skip_json_validation = false)
-      @logger = logger
-      @error_handler = error_handler
+      #  datafile - JSON string representing the Optimizely project.
+      #  logger - Provides a logger instance.
+      #  error_handler - Provides a handle_error method to handle exceptions.
+      #  skip_json_validation - Optional boolean param which allows skipping JSON schema
+      #                         validation upon object invocation. By default
+      #                         JSON schema validation will be performed.
+
+      super(logger, error_handler)
       @config = nil
       @validate_schema = !skip_json_validation
       set_config(datafile)
@@ -35,8 +40,6 @@ module Optimizely
       # Returns object ProjectConfig instance.
       @config
     end
-
-    private
 
     def set_config(datafile)
       # Looks up and sets datafile and config based on response body.

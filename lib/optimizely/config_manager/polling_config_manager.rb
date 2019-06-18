@@ -16,18 +16,19 @@
 #    limitations under the License.
 #
 require_relative '../error_handler'
+require_relative 'base_config_manager'
 require_relative 'exceptions'
 require_relative 'helpers/constants'
 require_relative 'helpers/validator'
 require_relative 'logger'
 require_relative 'notification_center'
 require_relative 'project_config'
-require_relative 'project_config_manager'
+require_relative 'static_config_manager'
 
 require 'net/http'
 
 module Optimizely
-  class PollingProjectConfigManager < ProjectConfigManager
+  class PollingConfigManager < StaticConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
@@ -49,11 +50,12 @@ module Optimizely
       update_interval = nil,
       url = nil,
       url_template = nil,
-      _logger = nil,
-      _error_handler = nil,
+      logger = nil,
+      error_handler = nil,
       skip_json_validation = false
     )
 
+      super(logger, error_handler)
       url_template ||= Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE']
       @datafile_url = get_datafile_url(sdk_key, url, url_template)
       @update_interval = update_interval || Helpers::Constants::CONFIG_MANAGER['DEFAULT_UPDATE_INTERVAL']
@@ -63,33 +65,6 @@ module Optimizely
       @validate_schema = !skip_json_validation
       @polling_thread = Thread.new { run }
       set_config(datafile) if datafile
-    end
-
-    def set_config(datafile)
-      # Looks up and sets datafile and config based on response body.
-      #
-      # datafile: JSON string representing the Optimizely project.
-
-      if @validate_schema
-        unless Helpers::Validator.datafile_valid?(datafile)
-          @logger.log(Logger::ERROR, InvalidDatafileError.new('datafile').message)
-          return
-        end
-      end
-
-      begin
-        @config = ProjectConfig.new(datafile, @logger, @error_handler)
-      rescue StandardError => e
-        @logger = SimpleLogger.new
-        error_msg = e.class == InvalidDatafileVersionError ? e.message : InvalidInputError.new('datafile').message
-        error_to_handle = e.class == InvalidDatafileVersionError ? InvalidDatafileVersionError : InvalidInputError
-        @logger.log(Logger::ERROR, error_msg)
-        @error_handler.handle_error error_to_handle
-        return
-      end
-
-      # TODO(rashid): Add notification listener.
-      @logger.log(Logger::DEBUG, 'Received new datafile and updated config.')
     end
 
     def get_datafile_url(sdk_key, url, url_template)
@@ -172,6 +147,10 @@ module Optimizely
         fetch_datafile
         sleep @update_interval
       end
+    end
+
+    def stop
+      @polling_thread.stop
     end
   end
 end
