@@ -150,7 +150,7 @@ module Optimizely
     end
 
     def stop
-      @polling_thread.stop
+      @polling_thread.exit
     end
   end
 end

@@ -17,7 +17,6 @@
 #
 
 require_relative 'base_config_manager'
-
 module Optimizely
   class StaticConfigManager < BaseConfigManager
     # Config manager that returns ProjectConfig based on provided datafile.
@@ -41,11 +40,12 @@ module Optimizely
       @config
     end
 
+    private
+
     def set_config(datafile)
       # Looks up and sets datafile and config based on response body.
       #
       # datafile: JSON string representing the Optimizely project.
-
       if @validate_schema
         unless Helpers::Validator.datafile_valid?(datafile)
           @logger.log(Logger::ERROR, InvalidDatafileError.new('datafile').message)
@@ -54,7 +54,7 @@ module Optimizely
       end
 
       begin
-        @config = ProjectConfig.new(datafile, @logger, @error_handler)
+        config = ProjectConfig.new(datafile, @logger, @error_handler)
       rescue StandardError => e
         @logger = SimpleLogger.new
         error_msg = e.class == InvalidDatafileVersionError ? e.message : InvalidInputError.new('datafile').message
@@ -63,7 +63,15 @@ module Optimizely
         @error_handler.handle_error error_to_handle
         return
       end
-      @logger.log(Logger::DEBUG, 'Received new datafile and updated config.')
+
+      previous_revision = @config.revision if @config
+
+      return if previous_revision == config.revision
+
+      @config = config
+
+      @logger.log(Logger::DEBUG, 'Received new datafile and updated config. ' \
+        "Old revision number: #{previous_revision}. New revision number: #{config.revision}.")
     end
   end
 end
