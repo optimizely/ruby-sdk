@@ -35,6 +35,8 @@ module Optimizely
 
     # Get config for use by Optimizely.
     # The config should be an instance of ProjectConfig.
-    def get_config(); end
+    def get_config
+      throw :GetConfigError
+    end
   end
 end

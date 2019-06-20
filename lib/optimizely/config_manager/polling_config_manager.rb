@@ -15,18 +15,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require_relative '../error_handler'
 require_relative 'base_config_manager'
-require_relative 'exceptions'
-require_relative 'helpers/constants'
-require_relative 'helpers/validator'
-require_relative 'logger'
-require_relative 'notification_center'
-require_relative 'project_config'
 require_relative 'static_config_manager'
+require_relative '../helpers/constants'
+require_relative '../helpers/validator'
+require_relative '../error_handler'
+require_relative '../exceptions'
+require_relative '../logger'
+require_relative '../notification_center'
+require_relative '../project_config'
 
 require 'net/http'
-
 module Optimizely
   class PollingConfigManager < StaticConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
@@ -55,7 +54,8 @@ module Optimizely
       skip_json_validation = false
     )
 
-      super(logger, error_handler)
+      @logger = logger || NoOpLogger.new
+      @error_handler = error_handler || NoOpErrorHandler.new
       url_template ||= Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE']
       @datafile_url = get_datafile_url(sdk_key, url, url_template)
       @update_interval = update_interval || Helpers::Constants::CONFIG_MANAGER['DEFAULT_UPDATE_INTERVAL']
@@ -65,21 +65,6 @@ module Optimizely
       @validate_schema = !skip_json_validation
       @polling_thread = Thread.new { run }
       set_config(datafile) if datafile
-    end
-
-    def get_datafile_url(sdk_key, url, url_template)
-      # Helper method to determine URL from where to fetch the datafile.
-      # sdk_key - Key uniquely identifying the datafile.
-      # url - String representing URL from which to fetch the datafile.
-      # url_template - String representing template which is filled in with
-      #               SDK key to determine URL from which to fetch the datafile.
-      # Returns String representing URL to fetch datafile from.
-
-      raise InvalidInputsError, 'Must provide at least one of sdk_key or url.' if sdk_key.nil? && url.nil?
-
-      return (url_template % sdk_key) unless url
-
-      url
     end
 
     def update_interval(update_interval)
@@ -151,6 +136,29 @@ module Optimizely
 
     def stop
       @polling_thread.exit
+    end
+
+    private
+
+    def get_datafile_url(sdk_key, url, url_template)
+      # Helper method to determine URL from where to fetch the datafile.
+      # sdk_key - Key uniquely identifying the datafile.
+      # url - String representing URL from which to fetch the datafile.
+      # url_template - String representing template which is filled in with
+      #               SDK key to determine URL from which to fetch the datafile.
+      # Returns String representing URL to fetch datafile from.
+
+      raise InvalidInputsError, 'Must provide at least one of sdk_key or url.' if sdk_key.nil? && url.nil?
+
+      unless url
+        begin
+          return (url_template % sdk_key)
+        rescue
+          raise InvalidInputsError, "Invalid url_template #{url_template} provided."
+        end
+      end
+
+      url
     end
   end
 end

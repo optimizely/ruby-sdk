@@ -19,7 +19,9 @@ Lint/LiteralAsCondition:
 # Offense count: 1
 # Configuration parameters: CountKeywordArgs.
 Metrics/ParameterLists:
-  Max: 8
+  Max: 6
+  Exclude:
+    - 'lib/optimizely/config_manager/polling_config_manager.rb'
 
 # Offense count: 1
 # Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist, MethodDefinitionMacros.
