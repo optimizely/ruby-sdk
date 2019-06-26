@@ -2262,7 +2262,7 @@ describe 'Optimizely' do
     end
 
     # Adding this test case to cover this in code coverage. All test cases for getForceVariation are present in
-    # project_config_spec.rb which test the get_force_variation method in project_config. The one in optimizely.rb
+    # datafile_project_config_spec.rb which test the get_force_variation method in project_config. The one in optimizely.rb
     # only calls the other one
 
     # getForceVariation on a running experiment after setforcevariation

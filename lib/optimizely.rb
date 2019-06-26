@@ -16,6 +16,7 @@
 #    limitations under the License.
 #
 require_relative 'optimizely/audience'
+require_relative 'optimizely/config/datafile_project_config'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
@@ -27,7 +28,6 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
-require_relative 'optimizely/project_config'
 
 module Optimizely
   class Project
@@ -63,7 +63,7 @@ module Optimizely
       end
 
       begin
-        @config = ProjectConfig.new(datafile, @logger, @error_handler)
+        @config = DatafileProjectConfig.new(datafile, @logger, @error_handler)
       rescue StandardError => e
         @is_valid = false
         @logger = SimpleLogger.new
@@ -236,12 +236,12 @@ module Optimizely
 
       event = @config.get_event_from_key(event_key)
       unless event
-        @config.logger.log(Logger::INFO, "Not tracking user '#{user_id}' for event '#{event_key}'.")
+        @logger.log(Logger::INFO, "Not tracking user '#{user_id}' for event '#{event_key}'.")
         return nil
       end
 
       conversion_event = @event_builder.create_conversion_event(@config, event, user_id, attributes, event_tags)
-      @config.logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
+      @logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
       @logger.log(Logger::INFO,
                   "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
       begin
@@ -506,7 +506,7 @@ module Optimizely
 
       variable = @config.get_feature_variable(feature_flag, variable_key)
 
-      # Error message logged in ProjectConfig- get_feature_flag_from_key
+      # Error message logged in DatafileProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
 
       feature_enabled = false
