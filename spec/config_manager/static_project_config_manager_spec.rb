@@ -20,7 +20,7 @@ require 'optimizely/config_manager/static_project_config_manager'
 describe Optimizely::StaticProjectConfigManager do
   describe '#config' do
     it 'should return project config instance' do
-      expect_project_config = Optimizely::ProjectConfig.new(OptimizelySpec::VALID_CONFIG_BODY_JSON, nil, nil)
+      expect_project_config = Optimizely::DatafileProjectConfig.new(OptimizelySpec::VALID_CONFIG_BODY_JSON, nil, nil)
       project_config_manager = Optimizely::StaticProjectConfigManager.new(expect_project_config)
       expect(project_config_manager.config).to eq(expect_project_config)
     end

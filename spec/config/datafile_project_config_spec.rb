@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2019, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 #    limitations under the License.
 #
 require 'spec_helper'
-require 'optimizely/project_config'
+require 'optimizely/config/datafile_project_config'
 require 'optimizely/exceptions'
 
-describe Optimizely::ProjectConfig do
+describe Optimizely::DatafileProjectConfig do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
-  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
+  let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
   let(:feature_enabled) { 'featureEnabled' }
 
   describe '.initialize' do
     it 'should initialize properties correctly upon creating project' do
-      project_config = Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler)
+      project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
 
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
@@ -690,7 +690,7 @@ describe Optimizely::ProjectConfig do
     end
 
     it 'should initialize properties correctly upon creating project with typed audience dict' do
-      project_config = Optimizely::ProjectConfig.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger, error_handler)
+      project_config = Optimizely::DatafileProjectConfig.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger, error_handler)
       config_body = OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES
 
       expect(project_config.audiences).to eq(config_body['audiences'])
@@ -713,7 +713,7 @@ describe Optimizely::ProjectConfig do
 
   describe '@logger' do
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     describe 'get_experiment_from_key' do
       it 'should log a message when provided experiment key is invalid' do
@@ -763,7 +763,7 @@ describe Optimizely::ProjectConfig do
         config_body['experiments'][1]['variations'][1][feature_enabled] = nil
 
         config_body_json = JSON.dump(config_body)
-        project_config = Optimizely::ProjectConfig.new(config_body_json, logger, error_handler)
+        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
 
         expect(project_config.get_variation_from_id(experiment_key, variation_id)[feature_enabled]).to eq(false)
       end
@@ -813,7 +813,7 @@ describe Optimizely::ProjectConfig do
 
   describe '@error_handler' do
     let(:raise_error_handler) { Optimizely::RaiseErrorHandler.new }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, raise_error_handler) }
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, raise_error_handler) }
 
     describe 'get_experiment_from_key' do
       it 'should raise an error when provided experiment key is invalid' do
@@ -869,7 +869,7 @@ describe Optimizely::ProjectConfig do
   end
 
   describe '#experiment_running' do
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
 
     it 'should return true if the experiment is running' do
       experiment = config.get_experiment_from_key('test_experiment')
@@ -891,7 +891,7 @@ describe Optimizely::ProjectConfig do
 
   describe 'get_attribute_id_valid_key' do
     let(:spy_logger) { spy('logger') }
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
 
     it 'should return attribute ID when provided valid attribute key has reserved prefix' do
       config.attribute_key_map['$opt_bot'] = {'key' => '$opt_bot', 'id' => '111'}
@@ -912,7 +912,7 @@ describe Optimizely::ProjectConfig do
   end
 
   describe '#feature_experiment' do
-    let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, logger, error_handler) }
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
 
     it 'should return true if the experiment is a feature test' do
       experiment = config.get_experiment_from_key('test_experiment_double_feature')

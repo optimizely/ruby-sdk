@@ -410,7 +410,7 @@ describe Optimizely::NotificationCenter do
       let(:invitation) { Invitation.new(spy_logger) }
       let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, raise_error_handler) }
       before(:example) do
-        config = Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler)
+        config = Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler)
         @event_builder = Optimizely::EventBuilder.new(spy_logger)
         @args = [
           config.get_experiment_from_key('test_experiment'),

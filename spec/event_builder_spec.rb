@@ -31,7 +31,7 @@ describe Optimizely::EventBuilder do
   end
 
   before(:example) do
-    config = Optimizely::ProjectConfig.new(@config_body_json, @logger, @error_handler)
+    config = Optimizely::DatafileProjectConfig.new(@config_body_json, @logger, @error_handler)
     @event_builder = Optimizely::EventBuilder.new(@logger)
     @event = config.get_event_from_key('test_event')
 
