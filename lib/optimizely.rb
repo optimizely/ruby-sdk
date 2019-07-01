@@ -17,6 +17,7 @@
 #
 require_relative 'optimizely/audience'
 require_relative 'optimizely/config/datafile_project_config'
+require_relative 'optimizely/config_manager/static_project_config_manager'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
@@ -33,7 +34,7 @@ module Optimizely
   class Project
     attr_reader :notification_center
     # @api no-doc
-    attr_reader :is_valid, :config, :decision_service, :error_handler,
+    attr_reader :config_manager, :decision_service, :error_handler,
                 :event_builder, :event_dispatcher, :logger
 
     # Constructor for Projects.
@@ -47,33 +48,19 @@ module Optimizely
     # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
 
     def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
-      @is_valid = true
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new
       @user_profile_service = user_profile_service
 
       begin
-        validate_instantiation_options(datafile, skip_json_validation)
+        validate_instantiation_options
       rescue InvalidInputError => e
-        @is_valid = false
         @logger = SimpleLogger.new
         @logger.log(Logger::ERROR, e.message)
-        return
       end
 
-      begin
-        @config = DatafileProjectConfig.new(datafile, @logger, @error_handler)
-      rescue StandardError => e
-        @is_valid = false
-        @logger = SimpleLogger.new
-        error_msg = e.class == InvalidDatafileVersionError ? e.message : InvalidInputError.new('datafile').message
-        error_to_handle = e.class == InvalidDatafileVersionError ? InvalidDatafileVersionError : InvalidInputError
-        @logger.log(Logger::ERROR, error_msg)
-        @error_handler.handle_error error_to_handle
-        return
-      end
-
+      @config_manager = StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
       @decision_service = DecisionService.new(@logger, @user_profile_service)
       @event_builder = EventBuilder.new(@logger)
       @notification_center = NotificationCenter.new(@logger, @error_handler)
@@ -89,8 +76,9 @@ module Optimizely
     # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
     def activate(experiment_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('activate').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('activate').message)
         return nil
       end
 
@@ -109,8 +97,8 @@ module Optimizely
       end
 
       # Create and dispatch impression event
-      experiment = @config.get_experiment_from_key(experiment_key)
-      send_impression(experiment, variation_key, user_id, attributes)
+      experiment = config.get_experiment_from_key(experiment_key)
+      send_impression(config, experiment, variation_key, user_id, attributes)
 
       variation_key
     end
@@ -125,8 +113,9 @@ module Optimizely
     # @return [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
 
     def get_variation(experiment_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_variation').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_variation').message)
         return nil
       end
 
@@ -137,7 +126,7 @@ module Optimizely
         }, @logger, Logger::ERROR
       )
 
-      experiment = @config.get_experiment_from_key(experiment_key)
+      experiment = config.get_experiment_from_key(experiment_key)
       return nil if experiment.nil?
 
       unless user_inputs_valid?(attributes)
@@ -145,10 +134,10 @@ module Optimizely
         return nil
       end
 
-      variation_id = @decision_service.get_variation(@config, experiment_key, user_id, attributes)
-      variation = @config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
+      variation_id = @decision_service.get_variation(config, experiment_key, user_id, attributes)
+      variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
-      decision_notification_type = if @config.feature_experiment?(experiment['id'])
+      decision_notification_type = if config.feature_experiment?(experiment['id'])
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
                                    else
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
@@ -173,8 +162,9 @@ module Optimizely
     # @return [Boolean] indicates if the set completed successfully.
 
     def set_forced_variation(experiment_key, user_id, variation_key)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('set_forced_variation').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('set_forced_variation').message)
         return nil
       end
 
@@ -182,7 +172,7 @@ module Optimizely
       input_values[:variation_key] = variation_key unless variation_key.nil?
       return false unless Optimizely::Helpers::Validator.inputs_valid?(input_values, @logger, Logger::ERROR)
 
-      @decision_service.set_forced_variation(@config, experiment_key, user_id, variation_key)
+      @decision_service.set_forced_variation(config, experiment_key, user_id, variation_key)
     end
 
     # Gets the forced variation for a given user and experiment.
@@ -193,8 +183,9 @@ module Optimizely
     # @return [String] The forced variation key.
 
     def get_forced_variation(experiment_key, user_id)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_forced_variation').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_forced_variation').message)
         return nil
       end
 
@@ -206,7 +197,7 @@ module Optimizely
       )
 
       forced_variation_key = nil
-      forced_variation = @decision_service.get_forced_variation(@config, experiment_key, user_id)
+      forced_variation = @decision_service.get_forced_variation(config, experiment_key, user_id)
       forced_variation_key = forced_variation['key'] if forced_variation
 
       forced_variation_key
@@ -220,8 +211,9 @@ module Optimizely
     # @param event_tags - Hash representing metadata associated with the event.
 
     def track(event_key, user_id, attributes = nil, event_tags = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('track').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('track').message)
         return nil
       end
 
@@ -234,13 +226,13 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes, event_tags)
 
-      event = @config.get_event_from_key(event_key)
+      event = config.get_event_from_key(event_key)
       unless event
         @logger.log(Logger::INFO, "Not tracking user '#{user_id}' for event '#{event_key}'.")
         return nil
       end
 
-      conversion_event = @event_builder.create_conversion_event(@config, event, user_id, attributes, event_tags)
+      conversion_event = @event_builder.create_conversion_event(config, event, user_id, attributes, event_tags)
       @logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
       @logger.log(Logger::INFO,
                   "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
@@ -269,8 +261,9 @@ module Optimizely
     # @return [False] if the feature is not found.
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('is_feature_enabled').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('is_feature_enabled').message)
         return false
       end
 
@@ -283,13 +276,13 @@ module Optimizely
 
       return false unless user_inputs_valid?(attributes)
 
-      feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
+      feature_flag = config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
         return false
       end
 
-      decision = @decision_service.get_variation_for_feature(@config, feature_flag, user_id, attributes)
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
 
       feature_enabled = false
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
@@ -303,7 +296,7 @@ module Optimizely
             variation_key: variation['key']
           }
           # Send event if Decision came from an experiment.
-          send_impression(decision.experiment, variation['key'], user_id, attributes)
+          send_impression(config, decision.experiment, variation['key'], user_id, attributes)
         else
           @logger.log(Logger::DEBUG,
                       "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
@@ -339,9 +332,9 @@ module Optimizely
 
     def get_enabled_features(user_id, attributes = nil)
       enabled_features = []
-
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_enabled_features').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_enabled_features').message)
         return enabled_features
       end
 
@@ -353,7 +346,7 @@ module Optimizely
 
       return enabled_features unless user_inputs_valid?(attributes)
 
-      @config.feature_flags.each do |feature|
+      config.feature_flags.each do |feature|
         enabled_features.push(feature['key']) if is_feature_enabled(
           feature['key'],
           user_id,
@@ -374,12 +367,14 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_string').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_string').message)
         return nil
       end
 
       variable_value = get_feature_variable_for_type(
+        config,
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['STRING'],
@@ -401,12 +396,14 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_boolean').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_boolean').message)
         return nil
       end
 
       variable_value = get_feature_variable_for_type(
+        config,
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['BOOLEAN'],
@@ -428,12 +425,14 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_double').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_double').message)
         return nil
       end
 
       variable_value = get_feature_variable_for_type(
+        config,
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['DOUBLE'],
@@ -455,11 +454,14 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
-      unless @is_valid
-        @logger.log(Logger::ERROR, InvalidDatafileError.new('get_feature_variable_integer').message)
+      config = project_config
+      unless config.is_a?(Optimizely::ProjectConfig)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_integer').message)
         return nil
       end
+
       variable_value = get_feature_variable_for_type(
+        config,
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['INTEGER'],
@@ -470,9 +472,14 @@ module Optimizely
       variable_value
     end
 
+    def is_valid
+      config = project_config
+      config.is_a?(Optimizely::ProjectConfig)
+    end
+
     private
 
-    def get_feature_variable_for_type(feature_flag_key, variable_key, variable_type, user_id, attributes = nil)
+    def get_feature_variable_for_type(config, feature_flag_key, variable_key, variable_type, user_id, attributes = nil)
       # Get the variable value for the given feature variable and cast it to the specified type
       # The default value is returned if the feature flag is not enabled for the user.
       #
@@ -498,13 +505,13 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes)
 
-      feature_flag = @config.get_feature_flag_from_key(feature_flag_key)
+      feature_flag = config.get_feature_flag_from_key(feature_flag_key)
       unless feature_flag
         @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
         return nil
       end
 
-      variable = @config.get_feature_variable(feature_flag, variable_key)
+      variable = config.get_feature_variable(feature_flag, variable_key)
 
       # Error message logged in DatafileProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
@@ -517,7 +524,7 @@ module Optimizely
         return nil
       else
         source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-        decision = @decision_service.get_variation_for_feature(@config, feature_flag, user_id, attributes)
+        decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
@@ -530,7 +537,7 @@ module Optimizely
           end
           feature_enabled = variation['featureEnabled']
           if feature_enabled == true
-            variation_variable_usages = @config.variation_id_to_variable_usage_map[variation['id']]
+            variation_variable_usages = config.variation_id_to_variable_usage_map[variation['id']]
             variable_id = variable['id']
             if variation_variable_usages&.key?(variable_id)
               variable_value = variation_variable_usages[variable_id]['value']
@@ -600,20 +607,24 @@ module Optimizely
       true
     end
 
-    def validate_instantiation_options(datafile, skip_json_validation)
-      unless skip_json_validation
-        raise InvalidInputError, 'datafile' unless Helpers::Validator.datafile_valid?(datafile)
+    def validate_instantiation_options
+      raise InvalidInputError, 'logger' unless Helpers::Validator.logger_valid?(@logger)
+
+      unless Helpers::Validator.error_handler_valid?(@error_handler)
+        @error_handler = NoOpErrorHandler.new
+        raise InvalidInputError, 'error_handler'
       end
 
-      raise InvalidInputError, 'logger' unless Helpers::Validator.logger_valid?(@logger)
-      raise InvalidInputError, 'error_handler' unless Helpers::Validator.error_handler_valid?(@error_handler)
-      raise InvalidInputError, 'event_dispatcher' unless Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
+      return if Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
+
+      @event_dispatcher = EventDispatcher.new
+      raise InvalidInputError, 'event_dispatcher'
     end
 
-    def send_impression(experiment, variation_key, user_id, attributes = nil)
+    def send_impression(config, experiment, variation_key, user_id, attributes = nil)
       experiment_key = experiment['key']
-      variation_id = @config.get_variation_id_from_key(experiment_key, variation_key)
-      impression_event = @event_builder.create_impression_event(@config, experiment, variation_id, user_id, attributes)
+      variation_id = config.get_variation_id_from_key(experiment_key, variation_key)
+      impression_event = @event_builder.create_impression_event(config, experiment, variation_id, user_id, attributes)
       @logger.log(Logger::INFO,
                   "Dispatching impression event to URL #{impression_event.url} with params #{impression_event.params}.")
       begin
@@ -621,11 +632,15 @@ module Optimizely
       rescue => e
         @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
       end
-      variation = @config.get_variation_from_id(experiment_key, variation_id)
+      variation = config.get_variation_from_id(experiment_key, variation_id)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment, user_id, attributes, variation, impression_event
       )
+    end
+
+    def project_config
+      @config_manager.config
     end
   end
 end

@@ -16,15 +16,21 @@
 #    limitations under the License.
 #
 
+require_relative '../helpers/config_manager_utils'
 require_relative 'project_config_manager'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
     attr_reader :config
 
-    def initialize(config)
+    def initialize(datafile, logger, error_handler, skip_json_validation)
       # config - Instance of ProjectConfig
-      @config = config
+      @config = Helpers::ConfigManagerUtils.create_project_config_from_datafile(
+        datafile,
+        logger,
+        error_handler,
+        skip_json_validation
+      )
     end
   end
 end
