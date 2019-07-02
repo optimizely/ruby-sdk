@@ -88,14 +88,14 @@ module Optimizely
         }, @logger, Logger::ERROR
       )
 
-      variation_key = get_variation(experiment_key, user_id, attributes)
+      config = project_config
+
+      variation_key = get_variation_with_config(experiment_key, user_id, attributes, config)
 
       if variation_key.nil?
         @logger.log(Logger::INFO, "Not activating user '#{user_id}'.")
         return nil
       end
-
-      config = project_config
 
       # Create and dispatch impression event
       experiment = config.get_experiment_from_key(experiment_key)
@@ -128,30 +128,7 @@ module Optimizely
 
       config = project_config
 
-      experiment = config.get_experiment_from_key(experiment_key)
-      return nil if experiment.nil?
-
-      unless user_inputs_valid?(attributes)
-        @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
-        return nil
-      end
-
-      variation_id = @decision_service.get_variation(config, experiment_key, user_id, attributes)
-      variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
-      variation_key = variation['key'] if variation
-      decision_notification_type = if config.feature_experiment?(experiment['id'])
-                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
-                                   else
-                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
-                                   end
-      @notification_center.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        decision_notification_type, user_id, (attributes || {}),
-        experiment_key: experiment_key,
-        variation_key: variation_key
-      )
-
-      variation_key
+      get_variation_with_config(experiment_key, user_id, attributes, config)
     end
 
     # Force a user into a variation for a given experiment.
@@ -457,6 +434,42 @@ module Optimizely
     end
 
     private
+
+    def get_variation_with_config(experiment_key, user_id, attributes, config)
+      # Gets variation where visitor will be bucketed.
+      #
+      # experiment_key - Experiment for which visitor variation needs to be determined.
+      # user_id - String ID for user.
+      # attributes - Hash representing user attributes.
+      # config - Instance of DatfileProjectConfig
+      #
+      # Returns [variation key] where visitor will be bucketed.
+      # Returns [nil] if experiment is not Running, if user is not in experiment, or if datafile is invalid.
+      experiment = config.get_experiment_from_key(experiment_key)
+      return nil if experiment.nil?
+
+      unless user_inputs_valid?(attributes)
+        @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
+        return nil
+      end
+
+      variation_id = @decision_service.get_variation(config, experiment_key, user_id, attributes)
+      variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
+      variation_key = variation['key'] if variation
+      decision_notification_type = if config.feature_experiment?(experiment['id'])
+                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
+                                   else
+                                     Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
+                                   end
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        decision_notification_type, user_id, (attributes || {}),
+        experiment_key: experiment_key,
+        variation_key: variation_key
+      )
+
+      variation_key
+    end
 
     def get_feature_variable_for_type(feature_flag_key, variable_key, variable_type, user_id, attributes = nil)
       # Get the variable value for the given feature variable and cast it to the specified type
