@@ -2114,10 +2114,8 @@ describe 'Optimizely' do
     it 'should return nil when attributes are invalid' do
       expect(Optimizely::Helpers::Validator).to receive(:attributes_valid?).once.with('invalid')
       expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'integer_single_variable_feature',
                'integer_variable',
                'integer',
@@ -2167,10 +2165,8 @@ describe 'Optimizely' do
         }
       )
 
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'integer_single_variable_feature',
                'integer_variable',
                'integer',
@@ -2213,10 +2209,8 @@ describe 'Optimizely' do
         }
       )
 
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'integer_single_variable_feature',
                'integer_variable',
                'integer',
@@ -2251,10 +2245,8 @@ describe 'Optimizely' do
         source_info: {}
       )
 
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'boolean_single_variable_feature',
                'boolean_variable',
                'boolean',
@@ -2287,10 +2279,8 @@ describe 'Optimizely' do
         source_info: {}
       )
 
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'boolean_single_variable_feature',
                'boolean_variable',
                'boolean',
@@ -2318,10 +2308,8 @@ describe 'Optimizely' do
         variable_value: 7,
         source_info: {}
       )
-      config = project_instance.send(:project_config)
       expect(project_instance.send(
                :get_feature_variable_for_type,
-               config,
                'integer_single_variable_feature',
                'integer_variable',
                'integer',

@@ -16,7 +16,7 @@
 #    limitations under the License.
 #
 
-require_relative '../helpers/config_manager_utils'
+require_relative '../config/datafile_project_config'
 require_relative 'project_config_manager'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
@@ -25,7 +25,7 @@ module Optimizely
 
     def initialize(datafile, logger, error_handler, skip_json_validation)
       # config - Instance of ProjectConfig
-      @config = Helpers::ConfigManagerUtils.create_project_config_from_datafile(
+      @config = DatafileProjectConfig.create_project_config_from_datafile(
         datafile,
         logger,
         error_handler,
