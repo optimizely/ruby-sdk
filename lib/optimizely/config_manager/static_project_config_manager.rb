@@ -16,15 +16,28 @@
 #    limitations under the License.
 #
 
+require_relative '../config/datafile_project_config'
 require_relative 'project_config_manager'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
     attr_reader :config
 
-    def initialize(config)
-      # config - Instance of ProjectConfig
-      @config = config
+    def initialize(datafile, logger, error_handler, skip_json_validation)
+      # Looks up and sets datafile and config based on response body.
+      #
+      # datafile - JSON string representing the Optimizely project.
+      # logger - Provides a logger instance.
+      # error_handler - Provides a handle_error method to handle exceptions.
+      # skip_json_validation - Optional boolean param which allows skipping JSON schema
+      #                       validation upon object invocation. By default JSON schema validation will be performed.
+      # Returns instance of DatafileProjectConfig, nil otherwise.
+      @config = DatafileProjectConfig.create_project_config_from_datafile(
+        datafile,
+        logger,
+        error_handler,
+        skip_json_validation
+      )
     end
   end
 end

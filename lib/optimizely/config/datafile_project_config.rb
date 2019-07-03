@@ -18,7 +18,6 @@ require 'json'
 require 'optimizely/project_config'
 require 'optimizely/helpers/constants'
 require 'optimizely/helpers/validator'
-
 module Optimizely
   class DatafileProjectConfig < ProjectConfig
     # Representation of the Optimizely project config.
@@ -139,6 +138,35 @@ module Optimizely
           @experiment_feature_map[experiment_id] = [feature_flag['id']]
         end
       end
+    end
+
+    def self.create_project_config_from_datafile(datafile, logger, error_handler, skip_json_validation)
+      # Looks up and sets datafile and config based on response body.
+      #
+      # datafile - JSON string representing the Optimizely project.
+      # logger - Provides a logger instance.
+      # error_handler - Provides a handle_error method to handle exceptions.
+      # skip_json_validation - Optional boolean param which allows skipping JSON schema
+      #                       validation upon object invocation. By default JSON schema validation will be performed.
+      # Returns instance of DatafileProjectConfig, nil otherwise.
+      if !skip_json_validation && !Helpers::Validator.datafile_valid?(datafile)
+        default_logger = SimpleLogger.new
+        default_logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        return nil
+      end
+
+      begin
+        config = new(datafile, logger, error_handler)
+      rescue StandardError => e
+        default_logger = SimpleLogger.new
+        error_msg = e.class == InvalidDatafileVersionError ? e.message : InvalidInputError.new('datafile').message
+        error_to_handle = e.class == InvalidDatafileVersionError ? InvalidDatafileVersionError : InvalidInputError
+        default_logger.log(Logger::ERROR, error_msg)
+        error_handler.handle_error error_to_handle
+        return nil
+      end
+
+      config
     end
 
     def experiment_running?(experiment)

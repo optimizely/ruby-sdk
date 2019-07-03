@@ -17,12 +17,34 @@
 #
 require 'spec_helper'
 require 'optimizely/config_manager/static_project_config_manager'
+require 'optimizely/error_handler'
+require 'optimizely/logger'
 describe Optimizely::StaticProjectConfigManager do
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
+  let(:error_handler) { Optimizely::NoOpErrorHandler.new }
+  let(:spy_logger) { spy('logger') }
+  let(:datafile_project_config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+
   describe '#config' do
     it 'should return project config instance' do
-      expect_project_config = Optimizely::DatafileProjectConfig.new(OptimizelySpec::VALID_CONFIG_BODY_JSON, nil, nil)
-      project_config_manager = Optimizely::StaticProjectConfigManager.new(expect_project_config)
-      expect(project_config_manager.config).to eq(expect_project_config)
+      static_config_manager = Optimizely::StaticProjectConfigManager.new(config_body_JSON, spy_logger, error_handler, false)
+
+      # All instance variables values of static_config_manager
+      static_config_manager_arr = static_config_manager.config.instance_variables.map do |attr|
+        static_config_manager.config.instance_variable_get attr
+      end
+
+      # All instance variables values of datafile_project_config
+      datafile_project_config_arr = datafile_project_config.instance_variables.map do |attr|
+        datafile_project_config.instance_variable_get attr
+      end
+
+      expect(static_config_manager_arr).to eql(datafile_project_config_arr)
+    end
+
+    it 'should return nil when called with an invalid datafile' do
+      static_config_manager = Optimizely::StaticProjectConfigManager.new('invalid', spy_logger, error_handler, false)
+      expect(static_config_manager.config).to be_nil
     end
   end
 end
