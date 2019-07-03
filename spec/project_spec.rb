@@ -1065,10 +1065,10 @@ describe 'Optimizely' do
         .to eq('control_with_audience')
     end
 
-    it 'should have get_variation return nil when attributes are invalid' do
-      allow(project_instance).to receive(:attributes_valid?).and_return(false)
-      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid')).to eq(nil)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user.")
+    it 'should log and raise an exception when called with attributes in an invalid format' do
+      expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.get_variation('test_experiment_with_audience', 'test_user', 'invalid_attributes')).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
     end
 
     it 'should have get_variation return nil when audience conditions do not match' do

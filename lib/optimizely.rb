@@ -351,6 +351,10 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_string').message)
+        return nil
+      end
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -373,6 +377,11 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_boolean').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -395,6 +404,11 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_double').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -417,6 +431,11 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_integer').message)
+        return nil
+      end
+
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
@@ -448,10 +467,7 @@ module Optimizely
       experiment = config.get_experiment_from_key(experiment_key)
       return nil if experiment.nil?
 
-      unless user_inputs_valid?(attributes)
-        @logger.log(Logger::INFO, "Not activating user '#{user_id}.")
-        return nil
-      end
+      return nil unless user_inputs_valid?(attributes)
 
       variation_id = @decision_service.get_variation(config, experiment_key, user_id, attributes)
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
@@ -484,12 +500,6 @@ module Optimizely
       # Returns the type-casted variable value.
       # Returns nil if the feature flag or variable or user ID is empty
       #             in case of variable type mismatch
-
-      caller_method = caller_locations.first.label
-      unless is_valid
-        @logger.log(Logger::ERROR, InvalidProjectConfigError.new(caller_method).message)
-        return nil
-      end
 
       return nil unless Optimizely::Helpers::Validator.inputs_valid?(
         {
