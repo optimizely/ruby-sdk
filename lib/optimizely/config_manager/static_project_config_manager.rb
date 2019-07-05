@@ -18,7 +18,6 @@
 
 require_relative '../config/datafile_project_config'
 require_relative 'project_config_manager'
-require_relative '../config/datafile_project_config'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
