@@ -20,6 +20,13 @@ Lint/LiteralAsCondition:
 # Configuration parameters: CountKeywordArgs.
 Metrics/ParameterLists:
   Max: 6
+  Exclude:
+    - 'lib/optimizely/config_manager/http_project_config_manager.rb'
+    - 'lib/optimizely.rb'
+
+Naming/AccessorMethodName:
+  Exclude:
+    - 'lib/optimizely/config_manager/http_project_config_manager.rb'
 
 # Offense count: 1
 # Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist, MethodDefinitionMacros.

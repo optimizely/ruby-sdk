@@ -18,6 +18,7 @@
 require 'spec_helper'
 require 'optimizely'
 require 'optimizely/audience'
+require 'optimizely/config_manager/http_project_config_manager'
 require 'optimizely/helpers/validator'
 require 'optimizely/exceptions'
 require 'optimizely/version'
@@ -692,6 +693,62 @@ describe 'Optimizely' do
         expect(project_instance.notification_center).to receive(:send_notifications).ordered
 
         project_instance.activate('test_experiment', 'test_user')
+      end
+    end
+
+    describe '.Optimizely with config manager' do
+      it 'should update config, send update notification when url is provided' do
+        WebMock.allow_net_connect!
+        notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+
+        expect(notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE]
+        ).ordered
+
+        expect(notification_center).to receive(:send_notifications).ordered
+
+        expect(notification_center).to receive(:send_notifications).ordered
+        http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+          url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json',
+          notification_center: notification_center
+        )
+
+        project_instance = Optimizely::Project.new(
+          config_body_JSON, nil, spy_logger, error_handler,
+          false, nil, http_project_config_manager, notification_center
+        )
+
+        until http_project_config_manager.ready?; end
+
+        expect(http_project_config_manager.get_config).not_to eq(nil)
+        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+      end
+
+      it 'should update config, send update notification when sdk key is provided' do
+        WebMock.allow_net_connect!
+        notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+
+        expect(notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE]
+        ).ordered
+
+        expect(notification_center).to receive(:send_notifications).ordered
+        expect(notification_center).to receive(:send_notifications).ordered
+
+        http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+          sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+          notification_center: notification_center
+        )
+
+        project_instance = Optimizely::Project.new(
+          config_body_JSON, nil, spy_logger, error_handler,
+          false, nil, http_project_config_manager, notification_center
+        )
+
+        until http_project_config_manager.ready?; end
+
+        expect(http_project_config_manager.get_config).not_to eq(nil)
+        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
       end
     end
   end

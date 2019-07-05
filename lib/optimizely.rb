@@ -46,8 +46,10 @@ module Optimizely
     #                 By default all exceptions will be suppressed.
     # @param user_profile_service - Optional component which provides methods to store and retreive user profiles.
     # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
+    # @param config_manager - Optional Responds to get_config.
+    # @param notification_center - Optional Instance of NotificationCenter.
 
-    def initialize(datafile, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil)
+    def initialize(datafile = nil, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil, config_manager = nil, notification_center = nil)
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new
@@ -60,10 +62,14 @@ module Optimizely
         @logger.log(Logger::ERROR, e.message)
       end
 
-      @config_manager = StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
+      @config_manager = if config_manager.respond_to?(:get_config)
+                          config_manager
+                        else
+                          StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
+                        end
       @decision_service = DecisionService.new(@logger, @user_profile_service)
       @event_builder = EventBuilder.new(@logger)
-      @notification_center = NotificationCenter.new(@logger, @error_handler)
+      @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
