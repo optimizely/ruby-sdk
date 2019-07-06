@@ -21,8 +21,8 @@ describe Optimizely::Audience do
   let(:config_typed_audience_JSON) { JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES) }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
-  let(:typed_audience_config) { Optimizely::ProjectConfig.new(config_typed_audience_JSON, spy_logger, error_handler) }
+  let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+  let(:typed_audience_config) { Optimizely::DatafileProjectConfig.new(config_typed_audience_JSON, spy_logger, error_handler) }
 
   it 'should return true for user_in_experiment? when experiment is using no audience' do
     user_attributes = {}
@@ -33,7 +33,8 @@ describe Optimizely::Audience do
 
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be true
+                                                    user_attributes,
+                                                    spy_logger)).to be true
 
     # Audience Ids exist but Audience Conditions is Empty
     experiment = config.experiment_key_map['test_experiment']
@@ -42,7 +43,8 @@ describe Optimizely::Audience do
 
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be true
+                                                    user_attributes,
+                                                    spy_logger)).to be true
 
     # Audience Ids is Empty and  Audience Conditions is nil
     experiment = config.experiment_key_map['test_experiment']
@@ -51,7 +53,8 @@ describe Optimizely::Audience do
 
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be true
+                                                    user_attributes,
+                                                    spy_logger)).to be true
   end
 
   it 'should pass conditions when audience conditions exist else audienceIds are passed' do
@@ -64,14 +67,16 @@ describe Optimizely::Audience do
     experiment['audienceConditions'] = ['and', %w[or 3468206642 3988293898], %w[or 3988293899 3468206646 3468206647 3468206644 3468206643]]
     Optimizely::Audience.user_in_experiment?(config,
                                              experiment,
-                                             user_attributes)
+                                             user_attributes,
+                                             spy_logger)
     expect(Optimizely::ConditionTreeEvaluator).to have_received(:evaluate).with(experiment['audienceConditions'], any_args).once
 
     # Audience Ids exist but Audience Conditions is nil
     experiment['audienceConditions'] = nil
     Optimizely::Audience.user_in_experiment?(config,
                                              experiment,
-                                             user_attributes)
+                                             user_attributes,
+                                             spy_logger)
     expect(Optimizely::ConditionTreeEvaluator).to have_received(:evaluate).with(experiment['audienceIds'], any_args).once
   end
 
@@ -82,13 +87,15 @@ describe Optimizely::Audience do
     # attributes set to empty dict
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    {})).to be false
+                                                    {},
+                                                    spy_logger)).to be false
     # attributes set to nil
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    nil)).to be false
+                                                    nil,
+                                                    spy_logger)).to be false
     # asserts nil attributes default to empty dict
-    expect(Optimizely::CustomAttributeConditionEvaluator).to have_received(:new).with({}, config.logger).twice
+    expect(Optimizely::CustomAttributeConditionEvaluator).to have_received(:new).with({}, spy_logger).twice
   end
 
   it 'should return true for user_in_experiment? when condition tree evaluator returns true' do
@@ -99,7 +106,8 @@ describe Optimizely::Audience do
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate).and_return(true)
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be true
+                                                    user_attributes,
+                                                    spy_logger)).to be true
   end
 
   it 'should return false for user_in_experiment? when condition tree evaluator returns false or nil' do
@@ -112,13 +120,15 @@ describe Optimizely::Audience do
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate).and_return(nil)
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be false
+                                                    user_attributes,
+                                                    spy_logger)).to be false
 
     # condition tree evaluator returns false
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate).and_return(false)
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be false
+                                                    user_attributes,
+                                                    spy_logger)).to be false
   end
 
   it 'should correctly evaluate audience Ids and call custom attribute evaluator for leaf nodes' do
@@ -205,7 +215,8 @@ describe Optimizely::Audience do
 
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be false
+                                                    user_attributes,
+                                                    spy_logger)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11110"].'
@@ -227,7 +238,8 @@ describe Optimizely::Audience do
 
     expect(Optimizely::Audience.user_in_experiment?(config,
                                                     experiment,
-                                                    user_attributes)).to be false
+                                                    user_attributes,
+                                                    spy_logger)).to be false
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
       "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11154", "11155"].'
@@ -271,7 +283,7 @@ describe Optimizely::Audience do
     experiment['audienceIds'] = []
     experiment['audienceConditions'] = ['or', %w[or 3468206647 3988293898 3468206646]]
 
-    Optimizely::Audience.user_in_experiment?(typed_audience_config, experiment, user_attributes)
+    Optimizely::Audience.user_in_experiment?(typed_audience_config, experiment, user_attributes, spy_logger)
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,

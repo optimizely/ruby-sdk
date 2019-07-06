@@ -33,6 +33,10 @@ module Optimizely
 
     attr_reader :bucketer
 
+    # Hash of user IDs to a Hash of experiments to variations.
+    # This contains all the forced variations set by the user by calling setForcedVariation.
+    attr_reader :forced_variation_map
+
     Decision = Struct.new(:experiment, :variation, :source)
 
     DECISION_SOURCES = {
@@ -44,6 +48,7 @@ module Optimizely
       @logger = logger
       @user_profile_service = user_profile_service
       @bucketer = Bucketer.new(logger)
+      @forced_variation_map = {}
     end
 
     def get_variation(project_config, experiment_key, user_id, attributes = nil)
@@ -70,7 +75,7 @@ module Optimizely
       end
 
       # Check if a forced variation is set for the user
-      forced_variation = project_config.get_forced_variation(experiment_key, user_id)
+      forced_variation = get_forced_variation(project_config, experiment_key, user_id)
       return forced_variation['id'] if forced_variation
 
       # Check if user is in a white-listed variation
@@ -89,7 +94,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      unless Audience.user_in_experiment?(project_config, experiment, attributes)
+      unless Audience.user_in_experiment?(project_config, experiment, attributes, @logger)
         @logger.log(
           Logger::INFO,
           "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -231,7 +236,7 @@ module Optimizely
         audience_name = audience['name']
 
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_in_experiment?(project_config, rollout_rule, attributes)
+        unless Audience.user_in_experiment?(project_config, rollout_rule, attributes, @logger)
           @logger.log(
             Logger::DEBUG,
             "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
@@ -250,7 +255,7 @@ module Optimizely
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
       # Check that user meets audience conditions for last rule
-      unless Audience.user_in_experiment?(project_config, everyone_else_experiment, attributes)
+      unless Audience.user_in_experiment?(project_config, everyone_else_experiment, attributes, @logger)
         audience_id = everyone_else_experiment['audienceIds'][0]
         audience = project_config.get_audience_from_id(audience_id)
         audience_name = audience['name']
@@ -264,6 +269,86 @@ module Optimizely
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
       nil
+    end
+
+    def set_forced_variation(project_config, experiment_key, user_id, variation_key)
+      # Sets a Hash of user IDs to a Hash of experiments to forced variations.
+      #
+      # project_config - Instance of ProjectConfig
+      # experiment_key - String Key for experiment
+      # user_id - String ID for user.
+      # variation_key - String Key for variation. If null, then clear the existing experiment-to-variation mapping
+      #
+      # Returns a boolean value that indicates if the set completed successfully
+
+      experiment = project_config.get_experiment_from_key(experiment_key)
+      experiment_id = experiment['id'] if experiment
+      #  check if the experiment exists in the datafile
+      return false if experiment_id.nil? || experiment_id.empty?
+
+      #  clear the forced variation if the variation key is null
+      if variation_key.nil?
+        @forced_variation_map[user_id].delete(experiment_id) if @forced_variation_map.key? user_id
+        @logger.log(Logger::DEBUG, "Variation mapped to experiment '#{experiment_key}' has been removed for user "\
+                    "'#{user_id}'.")
+        return true
+      end
+
+      variation_id = project_config.get_variation_id_from_key(experiment_key, variation_key)
+
+      #  check if the variation exists in the datafile
+      unless variation_id
+        #  this case is logged in get_variation_id_from_key
+        return false
+      end
+
+      @forced_variation_map[user_id] = {} unless @forced_variation_map.key? user_id
+      @forced_variation_map[user_id][experiment_id] = variation_id
+      @logger.log(Logger::DEBUG, "Set variation '#{variation_id}' for experiment '#{experiment_id}' and "\
+                  "user '#{user_id}' in the forced variation map.")
+      true
+    end
+
+    def get_forced_variation(project_config, experiment_key, user_id)
+      # Gets the forced variation for the given user and experiment.
+      #
+      # project_config - Instance of ProjectConfig
+      # experiment_key - String Key for experiment
+      # user_id - String ID for user
+      #
+      # Returns Variation The variation which the given user and experiment should be forced into
+
+      unless @forced_variation_map.key? user_id
+        @logger.log(Logger::DEBUG, "User '#{user_id}' is not in the forced variation map.")
+        return nil
+      end
+
+      experiment_to_variation_map = @forced_variation_map[user_id]
+      experiment = project_config.get_experiment_from_key(experiment_key)
+      experiment_id = experiment['id'] if experiment
+      # check for nil and empty string experiment ID
+      # this case is logged in get_experiment_from_key
+      return nil if experiment_id.nil? || experiment_id.empty?
+
+      unless experiment_to_variation_map.key? experiment_id
+        @logger.log(Logger::DEBUG, "No experiment '#{experiment_key}' mapped to user '#{user_id}' "\
+                    'in the forced variation map.')
+        return nil
+      end
+
+      variation_id = experiment_to_variation_map[experiment_id]
+      variation_key = ''
+      variation = project_config.get_variation_from_id(experiment_key, variation_id)
+      variation_key = variation['key'] if variation
+
+      # check if the variation exists in the datafile
+      # this case is logged in get_variation_from_id
+      return nil if variation_key.empty?
+
+      @logger.log(Logger::DEBUG, "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' "\
+                  "and user '#{user_id}' in the forced variation map")
+
+      variation
     end
 
     private

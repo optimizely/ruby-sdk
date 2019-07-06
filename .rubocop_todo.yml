@@ -14,7 +14,7 @@ Lint/HandleExceptions:
 # Offense count: 1
 Lint/LiteralAsCondition:
   Exclude:
-    - 'lib/optimizely/project_config.rb'
+    - 'lib/optimizely/config/datafile_project_config.rb'
 
 # Offense count: 1
 # Configuration parameters: CountKeywordArgs.

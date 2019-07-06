@@ -51,7 +51,7 @@ module Optimizely
       experiment_key = experiment['key']
       group_id = experiment['groupId']
       if group_id
-        group = project_config.group_key_map.fetch(group_id)
+        group = project_config.group_id_map.fetch(group_id)
         if Helpers::Group.random_policy?(group)
           traffic_allocations = group.fetch('trafficAllocation')
           bucketed_experiment_id = find_bucket(bucketing_id, user_id, group_id, traffic_allocations)

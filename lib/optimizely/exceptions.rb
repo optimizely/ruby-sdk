@@ -105,4 +105,12 @@ module Optimizely
       super
     end
   end
+
+  class InvalidProjectConfigError < Error
+    # Raised when a public method fails due to an invalid datafile
+
+    def initialize(aborted_method)
+      super("Optimizely instance is not valid. Failing '#{aborted_method}'.")
+    end
+  end
 end

@@ -24,7 +24,7 @@ describe Optimizely::Bucketer do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:config) { Optimizely::ProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
+  let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:bucketer) { Optimizely::Bucketer.new(spy_logger) }
 
   def get_bucketing_key(bucketing_id, entity_id = nil)
