@@ -34,7 +34,7 @@ module Optimizely
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
-    # sdk_key - Optional string uniquely identifying the datafile.
+    # sdk_key - Optional string uniquely identifying the datafile. It's required unless a URL is passed in.
     # datafile: Optional JSON string representing the project.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
@@ -92,8 +92,17 @@ module Optimizely
     end
 
     def get_config
+      # Get Project Config.
+
+      # Returns config immediately if the config has been initialized. When a hardcoded
+      # datafile is passed on init, config becomes ready immediately.
+
       return @config if ready?
 
+      # If config hasn't been initalized, we check if the background datafile polling
+      # thread is running. If it is, we wait and block maximum for @blocking_timeout.
+      # If the config gets ready within this period, we return the updated config otherwise
+      # we return None.
       if @async_scheduler.running
         @mutex.synchronize do
           @resource.wait(@mutex, @blocking_timeout)
