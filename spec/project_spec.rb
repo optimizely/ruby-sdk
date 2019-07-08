@@ -715,7 +715,7 @@ describe 'Optimizely' do
 
         project_instance = Optimizely::Project.new(
           config_body_JSON, nil, spy_logger, error_handler,
-          false, nil, http_project_config_manager, notification_center
+          false, nil, nil, http_project_config_manager, notification_center
         )
 
         until http_project_config_manager.ready?; end
@@ -742,12 +742,38 @@ describe 'Optimizely' do
 
         project_instance = Optimizely::Project.new(
           config_body_JSON, nil, spy_logger, error_handler,
-          false, nil, http_project_config_manager, notification_center
+          false, nil, nil, http_project_config_manager, notification_center
         )
 
         until http_project_config_manager.ready?; end
 
         expect(http_project_config_manager.get_config).not_to eq(nil)
+        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+      end
+    end
+
+    describe '.Optimizely with sdk key' do
+      it 'should update config, send update notification when sdk key is provided' do
+        WebMock.allow_net_connect!
+        notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+
+        expect(notification_center).to receive(:send_notifications).with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE]
+        ).ordered
+
+        expect(notification_center).to receive(:send_notifications).ordered
+        expect(notification_center).to receive(:send_notifications).ordered
+
+        project_instance = Optimizely::Project.new(
+          nil, nil, spy_logger, error_handler,
+          false, nil, 'QBw9gFM8oTn7ogY9ANCC1z', nil, notification_center
+        )
+
+        expect(project_instance.is_valid).to be false
+
+        sleep 3
+
+        expect(project_instance.is_valid).to be true
         expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
       end
     end

@@ -50,11 +50,7 @@ module Optimizely
         @running = true
         @thread = Thread.new { execution_wrapper(@callback) }
       rescue StandardError => e
-        @logger.log(
-          Logger::ERROR,
-          "Couldn't create a new thread for async scheduler."
-        )
-        @logger.log(Logger::DEBUG, e.message)
+        @logger.log(Logger::ERROR, e.message)
       end
     end
 

@@ -17,6 +17,7 @@
 #
 require_relative 'optimizely/audience'
 require_relative 'optimizely/config/datafile_project_config'
+require_relative 'optimizely/config_manager/http_project_config_manager'
 require_relative 'optimizely/config_manager/static_project_config_manager'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
@@ -46,10 +47,22 @@ module Optimizely
     #                 By default all exceptions will be suppressed.
     # @param user_profile_service - Optional component which provides methods to store and retreive user profiles.
     # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
+    # @params sdk_key - Optional string uniquely identifying the datafile corresponding to project and environment combination.
+    #                   Must provide at least one of datafile or sdk_key.
     # @param config_manager - Optional Responds to get_config.
     # @param notification_center - Optional Instance of NotificationCenter.
 
-    def initialize(datafile = nil, event_dispatcher = nil, logger = nil, error_handler = nil, skip_json_validation = false, user_profile_service = nil, config_manager = nil, notification_center = nil)
+    def initialize(
+      datafile = nil,
+      event_dispatcher = nil,
+      logger = nil,
+      error_handler = nil,
+      skip_json_validation = false,
+      user_profile_service = nil,
+      sdk_key = nil,
+      config_manager = nil,
+      notification_center = nil
+    )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new
@@ -64,6 +77,15 @@ module Optimizely
 
       @config_manager = if config_manager.respond_to?(:get_config)
                           config_manager
+                        elsif sdk_key
+                          HTTPProjectConfigManager.new(
+                            sdk_key: sdk_key,
+                            datafile: datafile,
+                            logger: @logger,
+                            error_handler: @error_handler,
+                            skip_json_validation: skip_json_validation,
+                            notification_center: notification_center
+                          )
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
