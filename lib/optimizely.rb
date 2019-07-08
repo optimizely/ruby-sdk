@@ -75,6 +75,8 @@ module Optimizely
         @logger.log(Logger::ERROR, e.message)
       end
 
+      @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
+
       @config_manager = if config_manager.respond_to?(:get_config)
                           config_manager
                         elsif sdk_key
@@ -84,14 +86,13 @@ module Optimizely
                             logger: @logger,
                             error_handler: @error_handler,
                             skip_json_validation: skip_json_validation,
-                            notification_center: notification_center
+                            notification_center: @notification_center
                           )
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
       @decision_service = DecisionService.new(@logger, @user_profile_service)
       @event_builder = EventBuilder.new(@logger)
-      @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
