@@ -70,11 +70,11 @@ module Optimizely
       blocking_timeout ||= Helpers::Constants::CONFIG_MANAGER['BLOCKING_TIMEOUT']
       @blocking_timeout = blocking_timeout
       @last_modified = nil
-      @async_scheduler = AsyncScheduler.new(method(:fetch_datafile), @polling_interval, auto_update, @logger)
+      @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
       @async_scheduler.start! if start_by_default == true
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
-      @config = datafile.nil? ? nil : DatafileProjectConfig.create_project_config_from_datafile(datafile, @logger, @error_handler, @skip_json_validation)
+      @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
       @mutex = Mutex.new
       @resource = ConditionVariable.new
     end
@@ -94,28 +94,34 @@ module Optimizely
     def get_config
       # Get Project Config.
 
-      # Returns config immediately if the config has been initialized. When a hardcoded
-      # datafile is passed on init, config becomes ready immediately.
-
-      return @config if ready?
-
-      # If config hasn't been initalized, we check if the background datafile polling
-      # thread is running. If it is, we wait and block maximum for @blocking_timeout.
-      # If the config gets ready within this period, we return the updated config otherwise
-      # we return None.
+      # If the background datafile polling thread is running. and config has been initalized,
+      # we simply return config.
+      # If it is not, we wait and block maximum for @blocking_timeout.
+      # If thread is not running, we fetch the datafile and update config.
       if @async_scheduler.running
+        return @config if ready?
+
         @mutex.synchronize do
           @resource.wait(@mutex, @blocking_timeout)
           return @config
         end
       end
 
+      fetch_datafile_config
       @config
     end
 
-    def fetch_datafile
-      # Fetch datafile and set ProjectConfig.
+    private
 
+    def fetch_datafile_config
+      # Fetch datafile, handle response and send notification on config update.
+      config = request_config
+      return unless config
+
+      set_config config
+    end
+
+    def request_config
       @logger.log(
         Logger::DEBUG,
         "Fetching datafile from #{@datafile_url}"
@@ -137,13 +143,53 @@ module Optimizely
           Logger::ERROR,
           "Fetching datafile from #{@datafile_url} failed. Error: #{e}"
         )
+        return nil
+      end
+
+      response = handle_response response
+      return nil unless response
+
+      config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation) if response.body
+
+      config
+    end
+
+    def handle_response(response)
+      # Helper method to handle response containing datafile.
+      #
+      # response - requests.Response
+
+      # Leave datafile and config unchanged if it has not been modified.
+      if response.code == '304'
+        @logger.log(
+          Logger::DEBUG,
+          "Not updating config as datafile has not updated since #{@last_modified}."
+        )
         return
       end
 
-      handle_response response
+      @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
+
+      response
     end
 
-    private
+    def set_config(config)
+      # Send notification if project config is updated.
+      previous_revision = @config.revision if @config
+      return if previous_revision == config.revision
+
+      unless ready?
+        @config = config
+        @mutex.synchronize { @resource.signal }
+      end
+
+      @config = config
+
+      @notification_center.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE])
+
+      @logger.log(Logger::DEBUG, 'Received new datafile and updated config. ' \
+        "Old revision number: #{previous_revision}. New revision number: #{@config.revision}.")
+    end
 
     def polling_interval(polling_interval)
       # Sets frequency at which datafile has to be polled and ProjectConfig updated.
@@ -184,40 +230,6 @@ module Optimizely
       end
 
       url
-    end
-
-    def handle_response(response)
-      # Helper method to handle response containing datafile.
-      #
-      # response - requests.Response
-
-      # Leave datafile and config unchanged if it has not been modified.
-      if response.code == '304'
-        @logger.log(
-          Logger::DEBUG,
-          "Not updating config as datafile has not updated since #{@last_modified}."
-        )
-        return
-      end
-
-      @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
-      config = DatafileProjectConfig.create_project_config_from_datafile(response.body, @logger, @error_handler, @skip_json_validation) if response.body
-      return unless config
-
-      previous_revision = @config.revision if @config
-      return if previous_revision == config.revision
-
-      unless ready?
-        @config = config
-        @mutex.synchronize { @resource.signal }
-      end
-
-      @config = config
-
-      @notification_center.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE])
-
-      @logger.log(Logger::DEBUG, 'Received new datafile and updated config. ' \
-        "Old revision number: #{previous_revision}. New revision number: #{@config.revision}.")
     end
   end
 end

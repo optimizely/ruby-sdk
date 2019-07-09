@@ -187,8 +187,6 @@ describe Optimizely::HTTPProjectConfigManager do
 
   describe '.Initialize(sdk_key, datafile, auto_update: true)' do
     it 'should get project config instance' do
-      datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler)
-
       http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
         datafile: config_body_JSON,
@@ -197,17 +195,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler
       )
 
-      # All instance variables values of http_project_config_manager
-      http_project_config_manager_arr = http_project_config_manager.get_config.instance_variables.map do |attr|
-        http_project_config_manager.get_config.instance_variable_get attr
-      end
-
-      # All instance variables values of datafile_project_config
-      datafile_project_config_arr = datafile_project_config.instance_variables.map do |attr|
-        datafile_project_config.instance_variable_get attr
-      end
-
-      expect(http_project_config_manager_arr).to eql(datafile_project_config_arr)
+      expect(http_project_config_manager.get_config).not_to eq(nil)
     end
 
     it 'should get instance ready immediately' do
@@ -218,7 +206,7 @@ describe Optimizely::HTTPProjectConfigManager do
         start_by_default: false
       )
 
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.ready?).to be true
       finish = Time.now
       expect(finish - start).to be < 1
     end

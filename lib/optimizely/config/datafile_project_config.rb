@@ -140,7 +140,7 @@ module Optimizely
       end
     end
 
-    def self.create_project_config_from_datafile(datafile, logger, error_handler, skip_json_validation)
+    def self.create(datafile, logger, error_handler, skip_json_validation)
       # Looks up and sets datafile and config based on response body.
       #
       # datafile - JSON string representing the Optimizely project.
