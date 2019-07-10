@@ -23,10 +23,12 @@ Metrics/ParameterLists:
   Exclude:
     - 'lib/optimizely/config_manager/http_project_config_manager.rb'
     - 'lib/optimizely.rb'
+    - 'lib/optimizely/optimizely_factory.rb'
 
 Naming/AccessorMethodName:
   Exclude:
     - 'lib/optimizely/config_manager/http_project_config_manager.rb'
+    - 'spec/optimizely_factory_spec.rb'
 
 # Offense count: 1
 # Configuration parameters: NamePrefix, NamePrefixBlacklist, NameWhitelist, MethodDefinitionMacros.
