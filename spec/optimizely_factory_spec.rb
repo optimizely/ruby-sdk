@@ -30,11 +30,11 @@ describe Optimizely::OptimizelyFactory do
   let(:event_dispatcher) { Optimizely::EventDispatcher.new }
   let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, error_handler) }
 
-  describe '.initialize' do
+  describe '.create_default_instance' do
     it 'should take static project config manager when sdk_key and config manager are not given' do
       allow(Optimizely::StaticProjectConfigManager).to receive(:new)
       static_project_config_manager = Optimizely::StaticProjectConfigManager.new(datafile, spy_logger, error_handler, false)
-      instance_with_config_manager = Optimizely::OptimizelyFactory.initialize(
+      optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance(
         datafile,
         event_dispatcher,
         spy_logger,
@@ -45,32 +45,42 @@ describe Optimizely::OptimizelyFactory do
         nil,
         notification_center
       )
-      expect(instance_with_config_manager.config_manager). to eq(static_project_config_manager)
+      expect(optimizely_instance.config_manager). to eq(static_project_config_manager)
     end
   end
 
-  describe '.initialize_optimizely_with_config_manager' do
+  describe '.create_default_instance_with_config_manager' do
     it 'should take provided custom config manager' do
       class CustomConfigManager
         def get_config; end
       end
 
       custom_config_manager = CustomConfigManager.new
-      instance_with_config_manager = Optimizely::OptimizelyFactory.initialize_optimizely_with_config_manager(
-        datafile,
-        event_dispatcher,
-        spy_logger,
-        error_handler,
-        false,
-        user_profile_service,
-        custom_config_manager,
-        notification_center
-      )
-      expect(instance_with_config_manager.config_manager). to eq(custom_config_manager)
+      optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_config_manager(custom_config_manager)
+      expect(optimizely_instance.config_manager). to eq(custom_config_manager)
     end
   end
 
-  describe '.initialize_optimizely_with_sdk_key' do
+  describe '.create_default_instance_with_sdk_key' do
+    it 'should take http config manager' do
+      allow(Optimizely::HTTPProjectConfigManager).to receive(:new)
+
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'sdk_key',
+        datafile: nil,
+        logger: spy_logger,
+        error_handler: error_handler,
+        skip_json_validation: false,
+        notification_center: notification_center
+      )
+
+      optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key('sdk_key')
+
+      expect(optimizely_instance.config_manager). to eq(http_project_config_manager)
+    end
+  end
+
+  describe '.create_default_instance_with_sdk_key_and_datafile' do
     it 'should take http config manager' do
       allow(Optimizely::HTTPProjectConfigManager).to receive(:new)
 
@@ -83,18 +93,9 @@ describe Optimizely::OptimizelyFactory do
         notification_center: notification_center
       )
 
-      instance_with_config_manager = Optimizely::OptimizelyFactory.initialize_optimizely_with_sdk_key(
-        datafile,
-        spy_logger,
-        event_dispatcher,
-        error_handler,
-        false,
-        user_profile_service,
-        'sdk_key',
-        notification_center
-      )
+      optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key_and_datafile('sdk_key', datafile)
 
-      expect(instance_with_config_manager.config_manager). to eq(http_project_config_manager)
+      expect(optimizely_instance.config_manager). to eq(http_project_config_manager)
     end
   end
 end

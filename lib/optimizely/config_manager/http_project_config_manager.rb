@@ -146,19 +146,6 @@ module Optimizely
         return nil
       end
 
-      response = handle_response response
-      return nil unless response
-
-      config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation) if response.body
-
-      config
-    end
-
-    def handle_response(response)
-      # Helper method to handle response containing datafile.
-      #
-      # response - requests.Response
-
       # Leave datafile and config unchanged if it has not been modified.
       if response.code == '304'
         @logger.log(
@@ -170,7 +157,9 @@ module Optimizely
 
       @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
 
-      response
+      config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation) if response.body
+
+      config
     end
 
     def set_config(config)

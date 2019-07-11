@@ -19,7 +19,19 @@
 require 'optimizely'
 module Optimizely
   class OptimizelyFactory
-    def self.initialize(
+    def self.create_default_instance_with_sdk_key(sdk_key)
+      Optimizely::Project.new(nil, nil, nil, nil, nil, nil, sdk_key)
+    end
+
+    def self.create_default_instance_with_sdk_key_and_datafile(sdk_key, datafile = nil)
+      Optimizely::Project.new(datafile, nil, nil, nil, nil, nil, sdk_key)
+    end
+
+    def self.create_default_instance_with_config_manager(config_manager)
+      Optimizely::Project.new(nil, nil, nil, nil, nil, nil, nil, config_manager)
+    end
+
+    def self.create_default_instance(
       datafile = nil,
       event_dispatcher = nil,
       logger = nil,
@@ -38,52 +50,6 @@ module Optimizely
         skip_json_validation,
         user_profile_service,
         sdk_key,
-        config_manager,
-        notification_center
-      )
-    end
-
-    def self.initialize_optimizely_with_sdk_key(
-      datafile = nil,
-      logger = nil,
-      event_dispatcher = nil,
-      error_handler = nil,
-      skip_json_validation = false,
-      user_profile_service = nil,
-      sdk_key = nil,
-      notification_center = nil
-    )
-      Optimizely::Project.new(
-        datafile,
-        event_dispatcher,
-        logger,
-        error_handler,
-        skip_json_validation,
-        user_profile_service,
-        sdk_key,
-        nil,
-        notification_center
-      )
-    end
-
-    def self.initialize_optimizely_with_config_manager(
-      datafile = nil,
-      event_dispatcher = nil,
-      logger = nil,
-      error_handler = nil,
-      skip_json_validation = false,
-      user_profile_service = nil,
-      config_manager = nil,
-      notification_center = nil
-    )
-      Optimizely::Project.new(
-        datafile,
-        event_dispatcher,
-        logger,
-        error_handler,
-        skip_json_validation,
-        user_profile_service,
-        nil,
         config_manager,
         notification_center
       )
