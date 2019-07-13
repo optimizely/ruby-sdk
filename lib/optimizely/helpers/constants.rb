@@ -359,6 +359,23 @@ module Optimizely
         'FEATURE_TEST' => 'feature-test',
         'FEATURE_VARIABLE' => 'feature-variable'
       }.freeze
+
+      CONFIG_MANAGER = {
+        # Maximum time in seconds to block the get_config call until config has been initialized.
+        'BLOCKING_TIMEOUT' => 15,
+        'DATAFILE_URL_TEMPLATE' => 'https://cdn.optimizely.com/datafiles/%s.json',
+        # Default config update interval of 5 minutes
+        'DEFAULT_UPDATE_INTERVAL' => 5 * 60,
+        # Minimum config update interval of 1 second
+        'MIN_UPDATE_INTERVAL' => 1,
+        # Time in seconds before which request for datafile times out
+        'REQUEST_TIMEOUT' => 10
+      }.freeze
+
+      HTTP_HEADERS = {
+        'IF_MODIFIED_SINCE' => 'If-Modified-Since',
+        'LAST_MODIFIED' => 'Last-Modified'
+      }.freeze
     end
   end
 end
