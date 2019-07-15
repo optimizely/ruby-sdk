@@ -34,7 +34,7 @@ You can initialize the Optimizely instance in three ways: with a datafile, by pr
       ~~~~~~~~~~~~
       optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key('put_your_sdk_key_here')
 
-  TThe `OptimizelyFactory` class also exposes a method to initialize the Optimizely instance with your `sdk_key` along with a default datafile. This hard-coded datafile will be used initially before any update.
+  The `OptimizelyFactory` class also exposes a method to initialize the Optimizely instance with your `sdk_key` along with a default datafile. This hard-coded datafile will be used initially before any update.
     
     
     optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key_and_datafile('put_your_sdk_key_here', datafile)
