@@ -24,21 +24,22 @@ To access the Feature Management configuration in the Optimizely dashboard, plea
 
 ### Using the SDK
 
-To use the SDK, the Optimizely instance can be initialized in three different ways as per your requirement. Ruby SDK also includes a factory class, OptimizelyFactory, which provides methods to create Optimizely instance with default configuration.
+You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing a Config Manager. Each method is described below. The Ruby SDK also includes a factory class, `OptimizelyFactory`, which provides methods to create an Optimizely instance with the default configuration.
 
- 1. Initialize Optimizely with a datafile. This datafile will be used as ProjectConfig throughout the life of Optimizely instance.
+ 1. Initialize Optimizely with a datafile. This datafile will be used as ProjectConfig throughout the life of the Optimizely instance.
     ~~~~~~~~~~~~
     optimizely_instance = Optimizely::Project.new(datafile)
-2. Initialize Optimizely by providing an 'sdk_key'. This will initialize an HTTPConfigManager that makes an HTTP GET request to the URL ( formed using your provided sdk key and the default datafile CDN url template) to asynchronously download the project datafile at regular intervals and update ProjectConfig when a new datafile is recieved. 
+
+2. Initialize Optimizely by providing an `sdk_key`. This will initialize an HTTPConfigManager that makes an HTTP GET request to the URL (formed using your provided `sdk_key` and the default datafile CDN url template) to asynchronously download the project datafile at regular intervals and update ProjectConfig when a new datafile is recieved. 
       ~~~~~~~~~~~~
       optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key('put_your_sdk_key_here')
 
-  The OptimizelyFactory class also exposes method to initialize Optimizely instance with sdk_key along with a default datafile. This hard-coded datafile will be used initially before any update.
+  TThe `OptimizelyFactory` class also exposes a method to initialize the Optimizely instance with your `sdk_key` along with a default datafile. This hard-coded datafile will be used initially before any update.
     
     
     optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_sdk_key_and_datafile('put_your_sdk_key_here', datafile)
    
- 3. Initialize Optimizely by providing a Config Manager that implements a 'get_config' method.You may use our HTTP Config Manager and customize it to your need. 
+ 3. Initialize Optimizely by providing a Config Manager that implements a 'get_config' method. You can customize our `HTTPConfigManager` as needed.
     ~~~~~~~~~~~~
     custom_config_manager = CustomConfigManager.new
     optimizely_instance = Optimizely::OptimizelyFactory.create_default_instance_with_config_manager(custom_config_manager)
@@ -46,7 +47,7 @@ To use the SDK, the Optimizely instance can be initialized in three different wa
 
 #### HTTP Config Manager
 
-The HTTPConfigManager asynchronously polls for datafiles from a specified URL at regular intervals by making HTTP request.
+The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL at regular intervals by making HTTP requests.
 
 
 ~~~~~~
@@ -65,44 +66,44 @@ The HTTPConfigManager asynchronously polls for datafiles from a specified URL at
         notification_center: notification_center
       )
 ~~~~~~   
-**Note**: One of the sdk_key or url must be provided. When both are provided, url takes the preference.
+**Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
 
 **sdk_key**
-The sdk_key is used to compose the outbound HTTP request to the default datafile location on the Optimizely CDN.
+The `sdk_key` is used to compose the outbound HTTP request to the default datafile location on the Optimizely CDN.
 
 **datafile**
-You can provide an initial datafile to bootstrap the  `DataFileProjectCongig`  so that it can be used immediately. The initial datafile also serves as a fallback datafile if HTTP connection cannot be established. The initial datafile will be discarded after the first successful datafile poll.
+You can provide an initial datafile to bootstrap the  `DataFileProjectConfig`  so that it can be used immediately. The initial datafile also serves as a fallback datafile if HTTP connection cannot be established. The initial datafile will be discarded after the first successful datafile poll.
 
 **polling_interval**
 The polling_interval is used to specify a fixed delay in seconds between consecutive HTTP requests for the datafile.
 
 **url_template**
-A string with placeholder `{sdk_key}` can be provided so that this template along with the provided sdk key is used to form the target URL.
+A string with placeholder `{sdk_key}` can be provided so that this template along with the provided `sdk_key` is used to form the target URL.
 
 **start_by_default**
-Boolean flag used to start the AsyncScheduler for datafile polling if set to True.
+Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `True`.
 
 **blocking_timeout**
-Maximum time in seconds to block the get_config call until config has been initialized.
+Maximum time in seconds to block the `get_config` call until config has been initialized.
 
-You may also provide your own logger, error handler or notification center. 
+You may also provide your own logger, error handler, or notification center. 
 
 
 #### Advanced configuration
-The following properties can be set to override the default configurations for HTTPConfigManager.
+The following properties can be set to override the default configurations for `HTTPConfigManager`.
 
 | **PropertyName** | **Default Value** | **Description**
 | -- | -- | --
 | update_interval | 5 minutes | Fixed delay between fetches for the datafile 
 | sdk_key | nil | Optimizely project SDK key
-| url | nil | URL override location used to specify custom HTTP source for the Optimizely datafile. 
-| url_template | 'https://cdn.optimizely.com/datafiles/{sdk_key}.json' | Parameterized datafile URL by SDK key.
-| datafile | nil | Initial datafile, typically sourced from a local cached source.
-| auto_update | true | Boolean flag to specify if callback needs to execute infinitely or once only.
-| start_by_default | true | Boolean flag to specify if datafile polling should start right away as soon as the HTTPConfigManager initializes
-| blocking_timeout | 15 seconds | Maximum time in seconds to block the get_config call until config has been initialized.
+| url | nil | URL override location used to specify custom HTTP source for the Optimizely datafile 
+| url_template | 'https://cdn.optimizely.com/datafiles/{sdk_key}.json' | Parameterized datafile URL by SDK key
+| datafile | nil | Initial datafile, typically sourced from a local cached source
+| auto_update | true | Boolean flag to specify if callback needs to execute infinitely or only once
+| start_by_default | true | Boolean flag to specify if datafile polling should start right away as soon as `HTTPConfigManager` initializes
+| blocking_timeout | 15 seconds | Maximum time in seconds to block the `get_config` call until config has been initialized
 
-A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications you can use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
+A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
 
 See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Full Stack project and use the SDK.
 
