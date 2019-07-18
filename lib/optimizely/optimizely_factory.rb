@@ -30,7 +30,7 @@ module Optimizely
     # Returns a new optimizely instance.
     #
     # @param config_manager - Required ConfigManagerInterface Responds to get_config.
-    def self.default_instance_with_manager(config_manager)
+    def self.default_instance_with_config_manager(config_manager)
       Optimizely::Project.new(nil, nil, nil, nil, nil, nil, nil, config_manager)
     end
 
@@ -64,38 +64,6 @@ module Optimizely
         user_profile_service,
         sdk_key,
         nil,
-        notification_center
-      )
-    end
-
-    # Returns a new optimizely instance.
-    #
-    # @param config_manager - Required ConfigManagerInterface Responds to get_config.
-    # @param event_dispatcher - Optional EventDispatcherInterface Provides a dispatch_event method which if given a URL and params sends a request to it.
-    # @param logger - Optional LoggerInterface which provides a log method to log messages. By default nothing would be logged.
-    # @param error_handler - Optional ErrorHandlerInterface which provides a handle_error method to handle exceptions.
-    #                 By default all exceptions will be suppressed.
-    # @param user_profile_service - Optional UserProfileServiceInterface which provides methods to store and retreive user profiles.
-    # @param skip_json_validation - Optional Boolean param to skip JSON schema validation of the provided datafile.
-    # @param notification_center - Optional Instance of NotificationCenter.
-    def self.custom_instance_with_manager(
-      config_manager,
-      event_dispatcher = nil,
-      logger = nil,
-      error_handler = nil,
-      skip_json_validation = false,
-      user_profile_service = nil,
-      notification_center = nil
-    )
-      Optimizely::Project.new(
-        nil,
-        event_dispatcher,
-        logger,
-        error_handler,
-        skip_json_validation,
-        user_profile_service,
-        nil,
-        config_manager,
         notification_center
       )
     end

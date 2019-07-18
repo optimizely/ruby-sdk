@@ -56,7 +56,7 @@ describe Optimizely::OptimizelyFactory do
       end
 
       custom_config_manager = CustomConfigManager.new
-      optimizely_instance = Optimizely::OptimizelyFactory.default_instance_with_manager(custom_config_manager)
+      optimizely_instance = Optimizely::OptimizelyFactory.default_instance_with_config_manager(custom_config_manager)
       expect(optimizely_instance.config_manager). to eq(custom_config_manager)
     end
   end
@@ -84,26 +84,6 @@ describe Optimizely::OptimizelyFactory do
         notification_center
       )
       expect(optimizely_instance.config_manager). to eq(http_project_config_manager)
-    end
-  end
-
-  describe '.custom_instance_with_manager' do
-    it 'should take provided custom config manager' do
-      class CustomConfigManager
-        def get_config; end
-      end
-
-      custom_config_manager = CustomConfigManager.new
-      optimizely_instance = Optimizely::OptimizelyFactory.custom_instance_with_manager(
-        custom_config_manager,
-        event_dispatcher,
-        spy_logger,
-        error_handler,
-        false,
-        user_profile_service,
-        notification_center
-      )
-      expect(optimizely_instance.config_manager). to eq(custom_config_manager)
     end
   end
 end
