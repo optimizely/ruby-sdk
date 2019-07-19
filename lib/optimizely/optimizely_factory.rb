@@ -22,9 +22,9 @@ module Optimizely
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the fallback datafile corresponding to project.
-    # @param fallback - Optional JSON string datafile.
-    def self.default_instance(sdk_key, fallback = nil)
-      Optimizely::Project.new(fallback, nil, nil, nil, nil, nil, sdk_key)
+    # @param fallback datafile - Optional JSON string datafile.
+    def self.default_instance(sdk_key, datafile = nil)
+      Optimizely::Project.new(datafile, nil, nil, nil, nil, nil, sdk_key)
     end
 
     # Returns a new optimizely instance.
@@ -37,7 +37,7 @@ module Optimizely
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the datafile corresponding to project.
-    # @param fallback - Optional JSON string datafile.
+    # @param fallback datafile - Optional JSON string datafile.
     # @param event_dispatcher - Optional EventDispatcherInterface Provides a dispatch_event method which if given a URL and params sends a request to it.
     # @param logger - Optional LoggerInterface Provides a log method to log messages. By default nothing would be logged.
     # @param error_handler - Optional ErrorHandlerInterface which provides a handle_error method to handle exceptions.
@@ -48,7 +48,7 @@ module Optimizely
     # @param notification_center - Optional Instance of NotificationCenter.
     def self.custom_instance(
       sdk_key,
-      fallback = nil,
+      datafile = nil,
       event_dispatcher = nil,
       logger = nil,
       error_handler = nil,
@@ -58,7 +58,7 @@ module Optimizely
       notification_center = nil
     )
       Optimizely::Project.new(
-        fallback,
+        datafile,
         event_dispatcher,
         logger,
         error_handler,
