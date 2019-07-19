@@ -81,6 +81,7 @@ describe Optimizely::OptimizelyFactory do
         error_handler,
         false,
         user_profile_service,
+        nil,
         notification_center
       )
       expect(optimizely_instance.config_manager). to eq(http_project_config_manager)

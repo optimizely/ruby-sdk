@@ -53,6 +53,7 @@ module Optimizely
       error_handler = nil,
       skip_json_validation = false,
       user_profile_service = nil,
+      config_manager = nil,
       notification_center = nil
     )
       Optimizely::Project.new(
@@ -63,7 +64,7 @@ module Optimizely
         skip_json_validation,
         user_profile_service,
         sdk_key,
-        nil,
+        config_manager,
         notification_center
       )
     end
