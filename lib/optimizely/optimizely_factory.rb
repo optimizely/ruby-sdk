@@ -44,6 +44,7 @@ module Optimizely
     #                 By default all exceptions will be suppressed.
     # @param skip_json_validation - Optional Boolean param to skip JSON schema validation of the provided datafile.
     # @param user_profile_service - Optional UserProfileServiceInterface Provides methods to store and retreive user profiles.
+    # @param config_manager - Optional ConfigManagerInterface Responds to get_config.
     # @param notification_center - Optional Instance of NotificationCenter.
     def self.custom_instance(
       sdk_key,
