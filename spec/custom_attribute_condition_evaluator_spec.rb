@@ -325,7 +325,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
         "Audience condition #{@substring_conditions} has an unsupported condition value. You may need to upgrade "\
-					'to a newer release of the Optimizely SDK.'
+          'to a newer release of the Optimizely SDK.'
       )
     end
   end
@@ -437,7 +437,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
         "Audience condition #{@gt_integer_conditions} has an unsupported condition value. You may need to upgrade "\
-  					'to a newer release of the Optimizely SDK.'
+            'to a newer release of the Optimizely SDK.'
       )
     end
   end
@@ -549,7 +549,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
         "Audience condition #{@lt_integer_conditions} has an unsupported condition value. You may need to upgrade "\
-					'to a newer release of the Optimizely SDK.'
+          'to a newer release of the Optimizely SDK.'
       )
     end
   end
