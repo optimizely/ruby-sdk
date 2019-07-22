@@ -84,7 +84,7 @@ describe Optimizely::EventBatch do
             key: 'test_event',
             value: 1.5,
             revenue: 42,
-            event_tags: {
+            tags: {
               'revenue' => 42,
               'non-revenue' => 42,
               'value': 1.5
@@ -153,7 +153,7 @@ describe Optimizely::EventBatch do
       key: 'test_event',
       value: 1.5,
       revenue: 42,
-      event_tags: {
+      tags: {
         'revenue' => 42,
         'non-revenue' => 42,
         'value': 1.5

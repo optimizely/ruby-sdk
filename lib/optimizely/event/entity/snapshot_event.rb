@@ -17,7 +17,7 @@
 #
 module Optimizely
   class SnapshotEvent
-    attr_reader :entity_id, :uuid, :key, :timestamp, :revenue, :value, :event_tags
+    attr_reader :entity_id, :uuid, :key, :timestamp, :revenue, :value, :tags
 
     def initialize(
       entity_id: nil,
@@ -26,7 +26,7 @@ module Optimizely
       timestamp: nil,
       revenue: nil,
       value: nil,
-      event_tags: nil
+      tags: nil
     )
       @entity_id = entity_id
       @uuid = uuid
@@ -34,7 +34,7 @@ module Optimizely
       @timestamp = timestamp
       @revenue = revenue
       @value = value
-      @event_tags = event_tags
+      @tags = tags
     end
 
     def as_json(_options = {})
@@ -45,7 +45,7 @@ module Optimizely
         timestamp: @timestamp,
         revenue: @revenue,
         value: @value,
-        event_tags: @event_tags
+        tags: @tags
       }
       hash.delete_if { |_key, value| value.nil? }
       hash

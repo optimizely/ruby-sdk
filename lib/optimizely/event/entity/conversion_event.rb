@@ -18,7 +18,6 @@
 require_relative 'user_event'
 module Optimizely
   class ConversionEvent < UserEvent
-    attr_accessor :event, :event_tags
-    attr_reader :user_id, :user_attributes
+    attr_reader :event, :event_tags, :user_id, :visitor_attributes, :bot_filtering
   end
 end

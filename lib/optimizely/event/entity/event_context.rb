@@ -18,18 +18,9 @@
 
 module Optimizely
   class EventContext
-    attr_reader :account_id, :project_id, :revision, :client_name,
-                :client_version, :anonymize_ip
-  end
+    protected
 
-  def as_json(_options = {})
-    {
-      account_id: @account_id,
-      project_id: @project_id,
-      revision: @revision,
-      client_name: @client_name,
-      client_version: @client_version,
-      anonymize_ip: @anonymize_ip
-    }
+    attr_accessor :account_id, :project_id, :revision, :client_name,
+                  :client_version, :anonymize_ip
   end
 end

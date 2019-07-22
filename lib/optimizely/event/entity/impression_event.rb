@@ -18,7 +18,7 @@
 require_relative 'user_event'
 module Optimizely
   class ImpressionEvent < UserEvent
-    attr_reader :user_id, :user_attributes
-    attr_accessor :experiment, :variation
+    attr_reader :user_id, :visitor_attributes
+    attr_accessor :experiment, :variation, :bot_filtering
   end
 end
