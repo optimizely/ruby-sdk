@@ -17,8 +17,6 @@
 #
 module Optimizely
   class UserEvent
-    protected
-
-    attr_accessor :event_context, :uuid, :timestamp
+    attr_reader :event_context, :uuid, :timestamp
   end
 end

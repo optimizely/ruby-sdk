@@ -15,7 +15,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
 module Optimizely
   class Decision
     attr_reader :campaign_id, :experiment_id, :variation_id
@@ -26,7 +25,7 @@ module Optimizely
       @variation_id = variation_id
     end
 
-    def as_json(_options = {})
+    def as_json
       {
         campaign_id: @campaign_id,
         experiment_id: @experiment_id,

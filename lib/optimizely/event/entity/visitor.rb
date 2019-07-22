@@ -24,7 +24,7 @@ module Optimizely
       @visitor_id = visitor_id
     end
 
-    def as_json(_options = {})
+    def as_json
       {
         snapshots: @snapshots,
         attributes: @attributes,

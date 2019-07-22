@@ -24,7 +24,7 @@ module Optimizely
       @events = events
     end
 
-    def as_json(_options = {})
+    def as_json
       hash = {
         events: @events,
         decisions: @decisions

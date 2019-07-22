@@ -37,7 +37,7 @@ module Optimizely
       @tags = tags
     end
 
-    def as_json(_options = {})
+    def as_json
       hash = {
         entity_id: @entity_id,
         uuid: @uuid,

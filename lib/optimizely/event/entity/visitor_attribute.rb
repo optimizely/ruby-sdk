@@ -25,7 +25,7 @@ module Optimizely
       @value = value
     end
 
-    def as_json(_options = {})
+    def as_json
       {
         entity_id: @entity_id,
         key: @key,

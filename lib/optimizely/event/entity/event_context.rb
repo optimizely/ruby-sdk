@@ -15,12 +15,24 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
 module Optimizely
   class EventContext
-    protected
-
-    attr_accessor :account_id, :project_id, :revision, :client_name,
-                  :client_version, :anonymize_ip
+    attr_reader :account_id, :project_id, :revision, :client_name,
+                :client_version, :anonymize_ip
+    def initialize(
+      account_id,
+      project_id,
+      revision,
+      client_name,
+      client_version,
+      anonymize_ip
+    )
+      @account_id = account_id
+      @project_id = project_id
+      @revision = revision
+      @client_name = client_name
+      @client_version = client_version
+      @anonymize_ip = anonymize_ip
+    end
   end
 end

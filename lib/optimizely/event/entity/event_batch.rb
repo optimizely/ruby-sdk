@@ -15,14 +15,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
-require 'json'
 module Optimizely
   class EventBatch
     attr_accessor :account_id, :project_id, :revision, :client_name, :client_version,
                   :anonymize_ip, :enrich_decisions, :visitors
 
-    def as_json(_options = {})
+    def as_json
       {
         account_id: @account_id,
         project_id: @project_id,
