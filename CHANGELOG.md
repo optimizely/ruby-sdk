@@ -1,8 +1,8 @@
 ## 3.2.0
-July 24th, 2019
+July 25th, 2019
 
  ### New Features:
-* Added support for automatic datafile management via `HttpProjectConfigManager`:
+* Added support for automatic datafile management via `HTTPProjectConfigManager`:
   * The [`HTTPProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/http_project_config_manager.rb) is an implementation of the Interface
       [`ProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/project_config_manager.rb).
     - Users must first build the `HTTPProjectConfigManager` with an SDK key and then provide that instance to the `Optimizely` instance.
