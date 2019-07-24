@@ -1,3 +1,17 @@
+## 3.2.0
+July 24th, 2019
+
+ ### New Features:
+* Added support for automatic datafile management via `HttpProjectConfigManager`:
+  * The [`HTTPProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/http_project_config_manager.rb) is an implementation of the Interface
+      [`ProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/project_config_manager.rb).
+    - Users must first build the `HTTPProjectConfigManager` with an SDK key and then provide that instance to the `Optimizely` instance.
+    - An initial datafile can be provided to the `HTTPProjectConfigManager` to bootstrap before making HTTP requests for the hosted datafile.
+    - Requests for the datafile are made in a separate thread and are scheduled with fixed delay.
+    - Configuration updates can be subscribed to via the NotificationCenter built with the `HTTPProjectConfigManager`.
+    - `Optimizely` instance must be disposed after the use or `HTTPProjectConfigManager` must be disposed after the use to release resources.
+- The [`OptimizelyFactory`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/optimizely_factory.rb) provides basic methods for instantiating the Optimizely SDK with a minimal number of parameters. Check [`README.md`](https://github.com/optimizely/ruby-sdk#initialization-by-optimizelyfactory) for more details.
+
 ## 3.1.1
 May 30th, 2019
 
