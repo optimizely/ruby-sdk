@@ -23,6 +23,111 @@ gem install optimizely-sdk
 To access the Feature Management configuration in the Optimizely dashboard, please contact your Optimizely account executive.
 
 ### Using the SDK
+
+You can initialize the Optimizely instance in two ways: directly with a datafile, or by using a factory class, `OptimizelyFactory`, which provides methods to create an Optimizely instance with the default configuration.
+
+#### Initialization with datafile
+
+ Initialize Optimizely with a datafile. This datafile will be used as ProjectConfig throughout the life of the Optimizely instance.
+
+ ```
+ optimizely_instance = Optimizely::Project.new(datafile)
+ ```
+
+#### Initialization by OptimizelyFactory
+
+ 1. Initialize Optimizely by providing an `sdk_key` and an optional `datafile`. This will initialize an HTTPConfigManager that makes an HTTP GET request to the URL (formed using your provided `sdk_key` and the default datafile CDN url template) to asynchronously download the project datafile at regular intervals and update ProjectConfig when a new datafile is recieved.
+
+    ```
+    optimizely_instance = Optimizely::OptimizelyFactory.default_instance('put_your_sdk_key_here', datafile)
+    ```
+
+   When the `datafile` is given then it will be used initially before any update.
+
+ 2. Initialize Optimizely by providing a Config Manager that implements a 'get_config' method. You can customize our `HTTPConfigManager` as needed.
+
+    ```
+    custom_config_manager = CustomConfigManager.new
+    optimizely_instance = Optimizely::OptimizelyFactory.default_instance_with_config_manager(custom_config_manager)
+    ```
+
+ 3. Initialize Optimizely with required `sdk_key` and other optional arguments.
+
+      ```
+       optimizely_instance = Optimizely::OptimizelyFactory.custom_instance(
+          sdk_key,
+          datafile,
+          event_dispatcher,
+          logger,
+          error_handler,
+          skip_json_validation,
+          user_profile_service,
+          config_manager,
+          notification_center
+      )
+      ```   
+
+
+#### HTTP Config Manager
+
+The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL at regular intervals by making HTTP requests.
+
+
+~~~~~~
+ http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: nil,
+        url: nil,
+        datafile: nil,
+        url_template: nil,
+        auto_update: nil,
+        polling_interval: nil,
+        start_by_default: nil,
+        blocking_timeout: nil,
+        logger: nil,
+        error_handler: nil,
+        skip_json_validation: false,
+        notification_center: notification_center
+      )
+~~~~~~   
+**Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
+
+**sdk_key**
+The `sdk_key` is used to compose the outbound HTTP request to the default datafile location on the Optimizely CDN.
+
+**datafile**
+You can provide an initial datafile to bootstrap the  `DataFileProjectConfig`  so that it can be used immediately. The initial datafile also serves as a fallback datafile if HTTP connection cannot be established. The initial datafile will be discarded after the first successful datafile poll.
+
+**polling_interval**
+The polling_interval is used to specify a fixed delay in seconds between consecutive HTTP requests for the datafile.
+
+**url_template**
+A string with placeholder `{sdk_key}` can be provided so that this template along with the provided `sdk_key` is used to form the target URL.
+
+**start_by_default**
+Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `True`.
+
+**blocking_timeout**
+Maximum time in seconds to block the `get_config` call until config has been initialized.
+
+You may also provide your own logger, error handler, or notification center.
+
+
+#### Advanced configuration
+The following properties can be set to override the default configurations for `HTTPConfigManager`.
+
+| **PropertyName** | **Default Value** | **Description**
+| -- | -- | --
+| update_interval | 5 minutes | Fixed delay between fetches for the datafile
+| sdk_key | nil | Optimizely project SDK key
+| url | nil | URL override location used to specify custom HTTP source for the Optimizely datafile
+| url_template | 'https://cdn.optimizely.com/datafiles/{sdk_key}.json' | Parameterized datafile URL by SDK key
+| datafile | nil | Initial datafile, typically sourced from a local cached source
+| auto_update | true | Boolean flag to specify if callback needs to execute infinitely or only once
+| start_by_default | true | Boolean flag to specify if datafile polling should start right away as soon as `HTTPConfigManager` initializes
+| blocking_timeout | 15 seconds | Maximum time in seconds to block the `get_config` call until config has been initialized
+
+A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
+
 See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Full Stack project and use the SDK.
 
 ## Development
