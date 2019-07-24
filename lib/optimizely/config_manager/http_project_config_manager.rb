@@ -187,7 +187,7 @@ module Optimizely
 
       # If polling interval is less than minimum allowed interval then set it to default update interval.
 
-      if polling_interval.to_i >= Helpers::Constants::CONFIG_MANAGER['MIN_UPDATE_INTERVAL']
+      if (polling_interval.is_a? Integer) && (polling_interval >= Helpers::Constants::CONFIG_MANAGER['MIN_UPDATE_INTERVAL'])
         @polling_interval = polling_interval
         return
       end
@@ -206,15 +206,18 @@ module Optimizely
       # url_template - String representing template which is filled in with
       #               SDK key to determine URL from which to fetch the datafile.
       # Returns String representing URL to fetch datafile from.
-
-      raise InvalidInputsError, 'Must provide at least one of sdk_key or url.' if sdk_key.nil? && url.nil?
+      if sdk_key.nil? && url.nil?
+        @logger.log(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
+        @error_handler.handle_error(InvalidInputsError)
+      end
 
       unless url
         url_template ||= Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE']
         begin
           return (url_template % sdk_key)
         rescue
-          raise InvalidInputsError, "Invalid url_template #{url_template} provided."
+          @logger.log(Logger::ERROR, "Invalid url_template #{url_template} provided.")
+          @error_handler.handle_error(InvalidInputsError)
         end
       end
 

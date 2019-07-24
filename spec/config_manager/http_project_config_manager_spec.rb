@@ -279,14 +279,16 @@ describe Optimizely::HTTPProjectConfigManager do
   end
 
   describe '#get_datafile_url' do
-    it 'should raise exception when both sdk key and url are nil' do
-      expect do
-        Optimizely::HTTPProjectConfigManager.new(
-          sdk_key: nil,
-          url: nil
-        )
-      end
-        .to raise_error(Optimizely::InvalidInputsError, 'Must provide at least one of sdk_key or url.')
+    it 'should log an error when both sdk key and url are nil' do
+      expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidInputsError)
+
+      Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: nil,
+        url: nil,
+        error_handler: error_handler,
+        logger: spy_logger
+      )
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
     end
   end
 end
