@@ -303,7 +303,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Polling interval is not given. Defaulting to 300.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Polling interval is not provided. Defaulting to 300.')
     end
 
     it 'should log an error when polling_interval has invalid type' do
@@ -315,7 +315,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Polling interval 'true' has invalid type. Defaulting to 300.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Polling interval 'true' has invalid type. Defaulting to 300.")
     end
 
     it 'should log an error when polling_interval has invalid range' do
@@ -341,7 +341,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Blocking timeout is not given. Defaulting to 15.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Blocking timeout is not provided. Defaulting to 15.')
     end
 
     it 'should log an error when blocking_timeout has invalid type' do
@@ -353,7 +353,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Blocking timeout 'true' has invalid type. Defaulting to 15.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Blocking timeout 'true' has invalid type. Defaulting to 15.")
     end
 
     it 'should log an error when blocking_timeout has invalid range' do

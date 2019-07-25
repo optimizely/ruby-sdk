@@ -98,7 +98,7 @@ The `sdk_key` is used to compose the outbound HTTP request to the default datafi
 You can provide an initial datafile to bootstrap the  `DataFileProjectConfig`  so that it can be used immediately. The initial datafile also serves as a fallback datafile if HTTP connection cannot be established. The initial datafile will be discarded after the first successful datafile poll.
 
 **polling_interval**
-The polling_interval is used to specify a fixed delay in seconds between consecutive HTTP requests for the datafile.
+The polling interval is used to specify a fixed delay between consecutive HTTP requests for the datafile. Between 1 to 2592000 seconds is valid duration. Otherwise default 5 minutes will be used.
 
 **url_template**
 A string with placeholder `{sdk_key}` can be provided so that this template along with the provided `sdk_key` is used to form the target URL.
@@ -107,7 +107,7 @@ A string with placeholder `{sdk_key}` can be provided so that this template alon
 Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `True`.
 
 **blocking_timeout**
-Maximum time in seconds to block the `get_config` call until config has been initialized.
+The blocking timeout period is used to specify a maximum time to wait for initial bootstrapping.Between 1 to 2592000 seconds is valid blocking timeout period. Otherwise default value 15 seconds will be used.
 
 You may also provide your own logger, error handler, or notification center.
 
@@ -162,11 +162,11 @@ License (MIT): [https://github.com/jnunemaker/httparty/blob/master/MIT-LICENSE](
 
 **JSON Schema Validator** [https://github.com/ruby-json-schema/json-schema](https://github.com/ruby-json-schema/json-schema)  
 Copyright &copy; 2010-2011, Lookingglass Cyber Solutions  
-License (MIT): [https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md](https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md) 
+License (MIT): [https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md](https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md)
 
 **Murmurhash3** [https://github.com/funny-falcon/murmurhash3-ruby](https://github.com/funny-falcon/murmurhash3-ruby)  
 Copyright &copy; 2012 Sokolov Yura 'funny-falcon'  
-License (MIT): [https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE](https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE) 
+License (MIT): [https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE](https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE)
 
 
 ### Additional Code
@@ -198,4 +198,3 @@ License (MIT): [https://github.com/rubocop-hq/rubocop/blob/master/LICENSE.txt](h
 **WebMock** [https://github.com/bblimke/webmock](https://github.com/bblimke/webmock)  
 Copyright &copy; 2009-2010 Bartosz Blimke    
 License (MIT): [https://github.com/bblimke/webmock/blob/master/LICENSE](https://github.com/bblimke/webmock/blob/master/LICENSE)
-
