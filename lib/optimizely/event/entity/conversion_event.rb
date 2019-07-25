@@ -16,19 +16,23 @@
 #    limitations under the License.
 #
 require_relative 'user_event'
+require 'optimizely/helpers/date_time_utils'
 module Optimizely
   class ConversionEvent < UserEvent
-    attr_reader :event_context, :event, :user_id, :visitor_attributes, :tags, :bot_filtering
+    # Represents conversion event
+    attr_reader :event, :user_id, :visitor_attributes, :tags, :bot_filtering
 
     def initialize(
-      event_context,
-      event,
-      user_id,
-      visitor_attributes,
-      tags,
-      bot_filtering = nil
+      event_context:,
+      event:,
+      user_id:,
+      visitor_attributes:,
+      tags:,
+      bot_filtering:
     )
       @event_context = event_context
+      @uuid = SecureRandom.uuid
+      @timestamp = Helpers::DateTimeUtils.create_timestamp
       @event = event
       @user_id = user_id
       @visitor_attributes = visitor_attributes

@@ -19,7 +19,7 @@ module Optimizely
   class Decision
     attr_reader :campaign_id, :experiment_id, :variation_id
 
-    def initialize(campaign_id, experiment_id, variation_id)
+    def initialize(campaign_id:, experiment_id:, variation_id:)
       @campaign_id = campaign_id
       @experiment_id = experiment_id
       @variation_id = variation_id

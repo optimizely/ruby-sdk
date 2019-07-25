@@ -16,23 +16,28 @@
 #    limitations under the License.
 #
 require_relative 'user_event'
+require 'optimizely/helpers/date_time_utils'
 module Optimizely
   class ImpressionEvent < UserEvent
-    attr_reader :event_context, :user_id, :experiment, :variation, :visitor_attributes,
-                :bot_filtering
+    attr_reader :user_id, :experiment_layer_id, :experiment_id, :variation_id,
+                :visitor_attributes, :bot_filtering
 
     def initialize(
-      event_context,
-      user_id,
-      experiment,
-      variation,
-      visitor_attributes,
-      bot_filtering
+      event_context:,
+      user_id:,
+      experiment_layer_id:,
+      experiment_id:,
+      variation_id:,
+      visitor_attributes:,
+      bot_filtering:
     )
       @event_context = event_context
+      @uuid = SecureRandom.uuid
+      @timestamp = Helpers::DateTimeUtils.create_timestamp
       @user_id = user_id
-      @experiment = experiment
-      @variation = variation
+      @experiment_layer_id = experiment_layer_id
+      @experiment_id = experiment_id
+      @variation_id = variation_id
       @visitor_attributes = visitor_attributes
       @bot_filtering = bot_filtering
     end
