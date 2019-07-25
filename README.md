@@ -98,7 +98,7 @@ The `sdk_key` is used to compose the outbound HTTP request to the default datafi
 You can provide an initial datafile to bootstrap the  `DataFileProjectConfig`  so that it can be used immediately. The initial datafile also serves as a fallback datafile if HTTP connection cannot be established. The initial datafile will be discarded after the first successful datafile poll.
 
 **polling_interval**
-The polling interval is used to specify a fixed delay between consecutive HTTP requests for the datafile. Between 1 to 2592000 seconds is valid duration. Otherwise default 5 minutes will be used.
+The polling interval is used to specify a fixed delay between consecutive HTTP requests for the datafile. Valid duration is between 1 and 2592000 seconds. Default is 5 minutes.
 
 **url_template**
 A string with placeholder `{sdk_key}` can be provided so that this template along with the provided `sdk_key` is used to form the target URL.
@@ -107,7 +107,7 @@ A string with placeholder `{sdk_key}` can be provided so that this template alon
 Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `True`.
 
 **blocking_timeout**
-The blocking timeout period is used to specify a maximum time to wait for initial bootstrapping.Between 1 to 2592000 seconds is valid blocking timeout period. Otherwise default value 15 seconds will be used.
+The blocking timeout period is used to specify a maximum time to wait for initial bootstrapping. Valid blocking timeout period is between 1 and 2592000 seconds. Default is 15 seconds.
 
 You may also provide your own logger, error handler, or notification center.
 
