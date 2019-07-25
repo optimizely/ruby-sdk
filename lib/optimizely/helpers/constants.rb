@@ -361,13 +361,15 @@ module Optimizely
       }.freeze
 
       CONFIG_MANAGER = {
-        # Maximum time in seconds to block the get_config call until config has been initialized.
-        'BLOCKING_TIMEOUT' => 15,
         'DATAFILE_URL_TEMPLATE' => 'https://cdn.optimizely.com/datafiles/%s.json',
+        # Default time in seconds to block the get_config call until config has been initialized.
+        'DEFAULT_BLOCKING_TIMEOUT' => 15,
         # Default config update interval of 5 minutes
         'DEFAULT_UPDATE_INTERVAL' => 5 * 60,
-        # Minimum config update interval of 1 second
-        'MIN_UPDATE_INTERVAL' => 1,
+        # Maximum update interval or blocking timeout: 30 days
+        'MAX_SECONDS_LIMIT' => 2_592_000,
+        # Minimum update interval or blocking timeout: 1 second
+        'MIN_SECONDS_LIMIT' => 1,
         # Time in seconds before which request for datafile times out
         'REQUEST_TIMEOUT' => 10
       }.freeze
