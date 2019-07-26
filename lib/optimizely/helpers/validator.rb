@@ -132,6 +132,15 @@ module Optimizely
           variables.delete :user_id
         end
 
+        if variables.include? :variable_type
+          # Empty variable_type is a valid user ID.
+          unless variables[:variable_type].is_a?(String) || !variables[:variable_type]
+            is_valid = false
+            logger.log(level, "#{Constants::INPUT_VARIABLES['VARIABLE_TYPE']} is invalid")
+          end
+          variables.delete :variable_type
+        end
+
         variables.each do |key, value|
           next if value.is_a?(String) && !value.empty?
 
