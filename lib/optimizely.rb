@@ -584,9 +584,7 @@ module Optimizely
       feature_enabled = false
 
       # If variable_type is nil, set it equal to variable['type']
-      unless variable_type
-        variable_type = variable['type']
-      end
+      variable_type ||= variable['type']
       # Returns nil if type differs
       if variable['type'] != variable_type
         @logger.log(Logger::WARN,

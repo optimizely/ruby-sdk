@@ -2184,10 +2184,10 @@ describe 'Optimizely' do
             'variation' => variation_to_return
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
-    
+
           expect(project_instance.get_feature_variable('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
             .to eq(true)
-    
+
           expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
@@ -2204,12 +2204,12 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-    
+
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
-    
+
           expect(project_instance.get_feature_variable('double_single_variable_feature', 'double_variable', user_id, user_attributes))
             .to eq(42.42)
-    
+
           expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
@@ -2226,12 +2226,12 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-    
+
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
-    
+
           expect(project_instance.get_feature_variable('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
             .to eq(42)
-    
+
           expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
