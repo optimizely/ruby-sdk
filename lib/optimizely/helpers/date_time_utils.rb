@@ -16,22 +16,15 @@
 #    limitations under the License.
 #
 module Optimizely
-  class VisitorAttribute
-    attr_reader :entity_id, :key, :type, :value
-    def initialize(entity_id:, key:, type:, value:)
-      @entity_id = entity_id
-      @key = key
-      @type = type
-      @value = value
-    end
+  module Helpers
+    module DateTimeUtils
+      module_function
 
-    def as_json
-      {
-        entity_id: @entity_id,
-        key: @key,
-        type: @type,
-        value: @value
-      }
+      def create_timestamp
+        # Returns Integer Current timestamp
+
+        (Time.now.to_f * 1000).to_i
+      end
     end
   end
 end

@@ -53,7 +53,7 @@ describe Optimizely::EventBatch do
           }],
           events: [{
             entity_id: '7719770039',
-            timestamp: (@time_now.to_f * 1000).to_i,
+            timestamp: Optimizely::Helpers::DateTimeUtils.create_timestamp,
             uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             key: 'campaign_activated'
           }]
@@ -79,7 +79,7 @@ describe Optimizely::EventBatch do
         snapshots: [{
           events: [{
             entity_id: '111095',
-            timestamp: (@time_now.to_f * 1000).to_i,
+            timestamp: Optimizely::Helpers::DateTimeUtils.create_timestamp,
             uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             key: 'test_event',
             value: 1.5,
@@ -111,24 +111,30 @@ describe Optimizely::EventBatch do
     builder.with_anonymize_ip(false)
     builder.with_enrich_decisions(true)
 
-    visitor_attribute_1 = Optimizely::VisitorAttribute.new('7723280020', 'device_type', 'custom', 'iPhone')
+    visitor_attribute_1 = Optimizely::VisitorAttribute.new(
+      entity_id: '7723280020', key: 'device_type', type: 'custom', value: 'iPhone'
+    )
     visitor_attribute_2 = Optimizely::VisitorAttribute.new(
-      Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
-      Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
-      'custom',
-      true
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
+      type: 'custom',
+      value: true
     )
 
     snapshot_event = Optimizely::SnapshotEvent.new(
       entity_id: '7719770039',
-      timestamp: (@time_now.to_f * 1000).to_i,
+      timestamp: Optimizely::Helpers::DateTimeUtils.create_timestamp,
       uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
       key: 'campaign_activated'
     )
 
-    decision = Optimizely::Decision.new('7719770039', '111127', '111128')
-    snapshot = Optimizely::Snapshot.new([snapshot_event.as_json], [decision.as_json])
-    visitor = Optimizely::Visitor.new([snapshot.as_json], [visitor_attribute_1.as_json, visitor_attribute_2.as_json], 'test_user')
+    decision = Optimizely::Decision.new(campaign_id: '7719770039', experiment_id: '111127', variation_id: '111128')
+    snapshot = Optimizely::Snapshot.new(events: [snapshot_event.as_json], decisions: [decision.as_json])
+    visitor = Optimizely::Visitor.new(
+      snapshots: [snapshot.as_json],
+      visitor_id: 'test_user',
+      attributes: [visitor_attribute_1.as_json, visitor_attribute_2.as_json]
+    )
     builder.with_visitors([visitor.as_json])
     event_batch = builder.build
 
@@ -144,11 +150,14 @@ describe Optimizely::EventBatch do
     builder.with_client_name(Optimizely::CLIENT_ENGINE)
     builder.with_anonymize_ip(false)
     builder.with_enrich_decisions(true)
-    visitor_attribute = Optimizely::VisitorAttribute.new('111094', 'test_value', 'custom', 'test_attribute')
+    visitor_attribute = Optimizely::VisitorAttribute.new(
+      entity_id: '111094', key: 'test_value',
+      type: 'custom', value: 'test_attribute'
+    )
 
     snapshot_event = Optimizely::SnapshotEvent.new(
       entity_id: '111095',
-      timestamp: (@time_now.to_f * 1000).to_i,
+      timestamp: Optimizely::Helpers::DateTimeUtils.create_timestamp,
       uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
       key: 'test_event',
       value: 1.5,
@@ -160,8 +169,13 @@ describe Optimizely::EventBatch do
       }
     )
 
-    snapshot = Optimizely::Snapshot.new([snapshot_event.as_json])
-    visitor = Optimizely::Visitor.new([snapshot.as_json], [visitor_attribute.as_json], 'test_user')
+    snapshot = Optimizely::Snapshot.new(events: [snapshot_event.as_json])
+    visitor = Optimizely::Visitor.new(
+      snapshots: [snapshot.as_json],
+      visitor_id: 'test_user',
+      attributes: [visitor_attribute.as_json]
+    )
+
     builder.with_visitors([visitor.as_json])
     event_batch = builder.build
 

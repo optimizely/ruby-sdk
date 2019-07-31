@@ -17,22 +17,34 @@
 #
 module Optimizely
   class EventContext
-    attr_reader :account_id, :project_id, :revision, :client_name,
-                :client_version, :anonymize_ip
+    attr_reader :account_id, :project_id, :anonymize_ip, :revision, :client_name,
+                :client_version
+
     def initialize(
-      account_id,
-      project_id,
-      revision,
-      client_name,
-      client_version,
-      anonymize_ip
+      account_id:,
+      project_id:,
+      anonymize_ip:,
+      revision:,
+      client_name:,
+      client_version:
     )
       @account_id = account_id
       @project_id = project_id
+      @anonymize_ip = anonymize_ip
       @revision = revision
       @client_name = client_name
       @client_version = client_version
-      @anonymize_ip = anonymize_ip
+    end
+
+    def as_json
+      {
+        account_id: @account_id,
+        project_id: @project_id,
+        anonymize_ip: @anonymize_ip,
+        revision: @revision,
+        client_name: @client_name,
+        client_version: @client_version
+      }
     end
   end
 end

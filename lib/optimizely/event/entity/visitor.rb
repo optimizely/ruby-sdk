@@ -17,18 +17,18 @@
 #
 module Optimizely
   class Visitor
-    attr_reader :snapshots, :attributes, :visitor_id
-    def initialize(snapshots, attributes, visitor_id)
+    attr_reader :snapshots, :visitor_id, :attributes
+    def initialize(snapshots:, visitor_id:, attributes:)
       @snapshots = snapshots
-      @attributes = attributes
       @visitor_id = visitor_id
+      @attributes = attributes
     end
 
     def as_json
       {
         snapshots: @snapshots,
-        attributes: @attributes,
-        visitor_id: @visitor_id
+        visitor_id: @visitor_id,
+        attributes: @attributes
       }
     end
   end

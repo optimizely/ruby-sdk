@@ -17,19 +17,16 @@
 #
 module Optimizely
   class Snapshot
-    attr_reader :decisions, :events
+    attr_reader :events, :decisions
 
-    def initialize(events, decisions = nil)
+    def initialize(events:, decisions: nil)
       @decisions = decisions
       @events = events
     end
 
     def as_json
-      hash = {
-        events: @events,
-        decisions: @decisions
-      }
-      hash.delete_if { |_key, value| value.nil? }
+      hash = {events: @events}
+      hash[:decisions] = @decisions unless @decisions.nil?
       hash
     end
   end

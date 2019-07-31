@@ -20,10 +20,10 @@ module Optimizely
     attr_reader :entity_id, :uuid, :key, :timestamp, :revenue, :value, :tags
 
     def initialize(
-      entity_id: nil,
-      uuid: nil,
-      key: nil,
-      timestamp: nil,
+      entity_id:,
+      uuid:,
+      key:,
+      timestamp:,
       revenue: nil,
       value: nil,
       tags: nil
@@ -38,16 +38,10 @@ module Optimizely
     end
 
     def as_json
-      hash = {
-        entity_id: @entity_id,
-        uuid: @uuid,
-        key: @key,
-        timestamp: @timestamp,
-        revenue: @revenue,
-        value: @value,
-        tags: @tags
-      }
-      hash.delete_if { |_key, value| value.nil? }
+      hash = {entity_id: @entity_id, uuid: @uuid, key: @key, timestamp: @timestamp}
+      hash[:revenue] = @revenue unless @revenue.nil?
+      hash[:value] = @value unless @value.nil?
+      hash[:tags] = @tags unless @tags.nil?
       hash
     end
   end
