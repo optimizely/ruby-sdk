@@ -38,7 +38,8 @@ module Optimizely
       flush_interval:,
       timeout_interval:,
       start_by_default: false,
-      logger:
+      logger:,
+      notification_center: nil
     )
       @event_queue = event_queue || []
       @event_dispatcher = event_dispatcher
@@ -46,6 +47,7 @@ module Optimizely
       @flush_interval = flush_interval || DEFAULT_BATCH_INTERVAL
       @timeout_interval = timeout_interval || DEFAULT_TIMEOUT_INTERVAL
       @logger = logger
+      @notification_center = notification_center
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
@@ -155,6 +157,12 @@ module Optimizely
       return if @current_batch.empty?
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
+
+      @notification_center&.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+        log_event
+      )
+
       begin
         @event_dispatcher.dispatch_event(log_event)
       rescue StandardError => e

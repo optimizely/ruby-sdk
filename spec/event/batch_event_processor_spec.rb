@@ -241,4 +241,33 @@ describe Optimizely::BatchEventProcessor do
     event_processor.stop!
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
   end
+
+  it 'should send notification log event when event is dispatched' do
+    notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+    allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+    allow(notification_center).to receive(:send_notifications)
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+
+    event_processor = Optimizely::BatchEventProcessor.new(
+      event_queue: @event_queue,
+      event_dispatcher: @event_dispatcher,
+      batch_size: MAX_BATCH_SIZE,
+      flush_interval: MAX_DURATION_MS,
+      timeout_interval: TIMEOUT_INTERVAL_MS,
+      start_by_default: true,
+      logger: spy_logger,
+      notification_center: notification_center
+    )
+
+    event_processor.process(conversion_event)
+    sleep 1.5
+
+    expect(notification_center).to have_received(:send_notifications).with(
+      Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+      log_event
+    ).once
+
+    expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
+  end
 end
