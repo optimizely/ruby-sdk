@@ -28,6 +28,7 @@ Metrics/ParameterLists:
     - 'lib/optimizely/event/entity/snapshot_event.rb'
     - 'lib/optimizely/event/entity/conversion_event.rb'
     - 'lib/optimizely/event/entity/event_context.rb'
+    - 'lib/optimizely/event/batch_event_processor.rb'
 
 Naming/AccessorMethodName:
   Exclude:
