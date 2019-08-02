@@ -36,7 +36,6 @@ describe Optimizely::BatchEventProcessor do
 
   MAX_BATCH_SIZE = 10
   MAX_DURATION_MS = 1000
-  TIMEOUT_INTERVAL_MS = 5000
 
   before(:example) do
     @event_queue = []
@@ -44,21 +43,24 @@ describe Optimizely::BatchEventProcessor do
     allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
   end
 
-  it 'return empty event queue event is processed' do
-    user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+  it 'return return empty event queue and dispatch log event when event is processed' do
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+
     event_processor = Optimizely::BatchEventProcessor.new(
       event_queue: @event_queue,
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
 
-    event_processor.process(user_event)
+    event_processor.process(conversion_event)
     sleep 1.5
+
     expect(event_processor.event_queue).to be_empty
+    expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
   end
 
   it 'it should flush the current batch when deadline exceeded' do
@@ -68,7 +70,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS * 3,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
@@ -88,7 +89,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
@@ -112,7 +112,7 @@ describe Optimizely::BatchEventProcessor do
     ).once
 
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Received add to batch signal. with event: #{event['key']}.").exactly(10).times
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Adding user event: #{event['key']} to btach.").exactly(10).times
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Adding user event: #{event['key']} to batch.").exactly(10).times
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
   end
 
@@ -125,7 +125,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS / 2,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
@@ -146,24 +145,25 @@ describe Optimizely::BatchEventProcessor do
 
   it 'it should flush on mismatch revision' do
     allow(project_config).to receive(:revision).and_return('1', '2')
-    conversion_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    conversion_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    log_event = Optimizely::EventFactory.create_log_event(conversion_event2, spy_logger)
-
+    user_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    user_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(user_event2, spy_logger)
     event_processor = Optimizely::BatchEventProcessor.new(
       event_queue: @event_queue,
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
 
-    event_processor.process(conversion_event1)
-    event_processor.process(conversion_event2)
+    expect(user_event1.event_context[:revision]).to eq('1')
+    event_processor.process(user_event1)
 
-    sleep 1
+    expect(user_event2.event_context[:revision]).to eq('2')
+    event_processor.process(user_event2)
+
+    sleep 0.25
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
 
@@ -173,24 +173,25 @@ describe Optimizely::BatchEventProcessor do
 
   it 'it should flush on mismatch project id' do
     allow(project_config).to receive(:project_id).and_return('X', 'Y')
-    conversion_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    conversion_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    log_event = Optimizely::EventFactory.create_log_event(conversion_event2, spy_logger)
-
+    user_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    user_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(user_event2, spy_logger)
     event_processor = Optimizely::BatchEventProcessor.new(
       event_queue: @event_queue,
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
 
-    event_processor.process(conversion_event1)
-    event_processor.process(conversion_event2)
+    expect(user_event1.event_context[:project_id]).to eq('X')
+    event_processor.process(user_event1)
 
-    sleep 1
+    expect(user_event2.event_context[:project_id]).to eq('Y')
+    event_processor.process(user_event2)
+
+    sleep 0.25
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
 
@@ -207,7 +208,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )
@@ -232,7 +232,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      timeout_interval: TIMEOUT_INTERVAL_MS,
       start_by_default: true,
       logger: spy_logger
     )

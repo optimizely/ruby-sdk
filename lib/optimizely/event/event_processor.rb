@@ -19,7 +19,7 @@ module Optimizely
   class EventProcessor
     # EventProcessor interface is used to provide an intermediary processing stage within
     # event production. It's assumed that the EventProcessor dispatches events via a provided
-    # EventHandler.
+    # EventDispatcher.
     def process(user_event); end
   end
 end
