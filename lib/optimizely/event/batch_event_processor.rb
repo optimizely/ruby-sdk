@@ -26,7 +26,6 @@ module Optimizely
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_FLUSH_INTERVAL = 30_000
-    DEFAULT_TIMEOUT_INTERVAL = (5000 * 60)
 
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
@@ -36,7 +35,6 @@ module Optimizely
       event_dispatcher:,
       batch_size:,
       flush_interval:,
-      timeout_interval:,
       start_by_default: false,
       logger:
     )
@@ -44,7 +42,6 @@ module Optimizely
       @event_dispatcher = event_dispatcher
       @batch_size = batch_size || DEFAULT_BATCH_SIZE
       @flush_interval = flush_interval || DEFAULT_BATCH_INTERVAL
-      @timeout_interval = timeout_interval || DEFAULT_TIMEOUT_INTERVAL
       @logger = logger
       @mutex = Mutex.new
       @received = ConditionVariable.new
@@ -121,11 +118,12 @@ module Optimizely
           flush_queue!
         end
 
+        item = nil
+
         @mutex.synchronize do
           @received.wait(@mutex, 0.05)
+          item = @event_queue.pop
         end
-
-        item = @event_queue.pop
 
         if item.nil?
           @logger.log(Logger::DEBUG, 'Empty item, sleeping for 50ms.')
@@ -172,7 +170,7 @@ module Optimizely
       # Reset the deadline if starting a new batch.
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval if @current_batch.empty?
 
-      @logger.log(Logger::DEBUG, "Adding user event: #{user_event.event['key']} to btach.")
+      @logger.log(Logger::DEBUG, "Adding user event: #{user_event.event['key']} to batch.")
       @current_batch << user_event
       return unless @current_batch.length >= @batch_size
 
