@@ -69,9 +69,19 @@ describe Optimizely::ForwardingEventProcessor do
   end
 
   describe '.process' do
-    it 'should dispatch event when valid user event is provided' do
-      forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(@event_dispatcher, spy_logger)
+    it 'should dispatch and send log event when valid event is provided' do
+      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+      allow(notification_center).to receive(:send_notifications)
+      forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(
+        @event_dispatcher, spy_logger, notification_center
+      )
+
       forwarding_event_processor.process(@conversion_event)
+
+      expect(notification_center).to have_received(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+        Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
+      ).once
 
       expect(@event_dispatcher).to have_received(:dispatch_event).with(
         Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
