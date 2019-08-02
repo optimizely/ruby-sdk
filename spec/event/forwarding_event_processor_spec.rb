@@ -89,14 +89,21 @@ describe Optimizely::ForwardingEventProcessor do
     end
 
     it 'should log an error when dispatch event raises timeout exception' do
+      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+      allow(notification_center).to receive(:send_notifications)
       log_event = Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
       allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
 
       timeout_error = Timeout::Error.new
       allow(@event_dispatcher).to receive(:dispatch_event).and_raise(timeout_error)
 
-      forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(@event_dispatcher, spy_logger)
+      forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(
+        @event_dispatcher, spy_logger, notification_center
+      )
+
       forwarding_event_processor.process(@conversion_event)
+
+      expect(notification_center).not_to have_received(:send_notifications)
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,

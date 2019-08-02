@@ -29,13 +29,13 @@ module Optimizely
     def process(user_event)
       log_event = Optimizely::EventFactory.create_log_event(user_event, @logger)
 
-      @notification_center&.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
-        log_event
-      )
-
       begin
         @event_dispatcher.dispatch_event(log_event)
+
+        @notification_center&.send_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+          log_event
+        )
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end
