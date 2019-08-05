@@ -43,6 +43,36 @@ describe Optimizely::BatchEventProcessor do
     allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
   end
 
+  it 'should log waring when service is already started' do
+    event_processor = Optimizely::BatchEventProcessor.new(
+      event_queue: @event_queue,
+      event_dispatcher: @event_dispatcher,
+      batch_size: MAX_BATCH_SIZE,
+      flush_interval: MAX_DURATION_MS,
+      logger: spy_logger
+    )
+    event_processor.start!
+    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Service already started.').once
+  end
+
+  it 'should log waring when payload not accepted by the queue' do
+    @event_queue = SizedQueue.new(2)
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    event_processor = Optimizely::BatchEventProcessor.new(
+      event_queue: @event_queue,
+      event_dispatcher: @event_dispatcher,
+      batch_size: MAX_BATCH_SIZE,
+      flush_interval: MAX_DURATION_MS,
+      logger: spy_logger
+    )
+
+    event_processor.process(conversion_event)
+    event_processor.process(conversion_event)
+    event_processor.process(conversion_event)
+    sleep 1
+    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Payload not accepted by the queue.').once
+  end
+
   it 'return return empty event queue and dispatch log event when event is processed' do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
@@ -52,14 +82,13 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 
     event_processor.process(conversion_event)
     sleep 1.5
 
-    expect(event_processor.event_queue).to be_empty
+    expect(event_processor.event_queue.length).to eq(0)
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
   end
 
@@ -70,14 +99,13 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS * 3,
-      start_by_default: true,
       logger: spy_logger
     )
     sleep 3.025
     event_processor.process(user_event)
 
     sleep 1
-    expect(event_processor.event_queue).to be_empty
+    expect(event_processor.event_queue.length).to eq(0)
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').once
   end
 
@@ -89,7 +117,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 
@@ -125,7 +152,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS / 2,
-      start_by_default: true,
       logger: spy_logger
     )
 
@@ -139,7 +165,7 @@ describe Optimizely::BatchEventProcessor do
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).twice
 
-    expect(event_processor.event_queue).to be_empty
+    expect(event_processor.event_queue.length).to eq(0)
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received flush signal.').twice
   end
 
@@ -153,7 +179,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 
@@ -181,7 +206,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 
@@ -208,7 +232,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 
@@ -232,7 +255,6 @@ describe Optimizely::BatchEventProcessor do
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      start_by_default: true,
       logger: spy_logger
     )
 

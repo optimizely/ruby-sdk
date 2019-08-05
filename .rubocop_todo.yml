@@ -21,14 +21,14 @@ Lint/LiteralAsCondition:
 Metrics/ParameterLists:
   Max: 6
   Exclude:
-    - 'lib/optimizely/config_manager/http_project_config_manager.rb'
     - 'lib/optimizely.rb'
-    - 'lib/optimizely/optimizely_factory.rb'
-    - 'lib/optimizely/event/entity/impression_event.rb'
-    - 'lib/optimizely/event/entity/snapshot_event.rb'
+    - 'lib/optimizely/config_manager/http_project_config_manager.rb'
+    - 'lib/optimizely/event/batch_event_processor.rb'
     - 'lib/optimizely/event/entity/conversion_event.rb'
     - 'lib/optimizely/event/entity/event_context.rb'
-    - 'lib/optimizely/event/batch_event_processor.rb'
+    - 'lib/optimizely/event/entity/impression_event.rb'
+    - 'lib/optimizely/event/entity/snapshot_event.rb'
+    - 'lib/optimizely/optimizely_factory.rb'
 
 Naming/AccessorMethodName:
   Exclude:

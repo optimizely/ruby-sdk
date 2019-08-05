@@ -25,34 +25,33 @@ module Optimizely
     attr_reader :event_queue
 
     DEFAULT_BATCH_SIZE = 10
-    DEFAULT_FLUSH_INTERVAL = 30_000
+    DEFAULT_BATCH_INTERVAL = 30_000
+    DEFAULT_QUEUE_CAPACITY = 1000
 
-    SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
+    SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
 
     def initialize(
       event_queue:,
       event_dispatcher:,
       batch_size:,
       flush_interval:,
-      start_by_default: false,
-      logger:
+      logger: nil
     )
-      @event_queue = event_queue || []
+      @event_queue = event_queue || SizedQueue.new(DEFAULT_QUEUE_CAPACITY)
       @event_dispatcher = event_dispatcher
       @batch_size = batch_size || DEFAULT_BATCH_SIZE
       @flush_interval = flush_interval || DEFAULT_BATCH_INTERVAL
-      @logger = logger
+      @logger = logger || NoOpLogger.new
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
-      @disposed = false
       @is_started = false
-      start! if start_by_default == true
+      start!
     end
 
     def start!
-      if (@is_started == true) && !@disposed
+      if @is_started == true
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
@@ -71,24 +70,24 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      if @disposed == true
+      unless @thread.alive?
         @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
         return
       end
 
-      if @event_queue.include? user_event
-        @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
-        return
-      end
-
       @mutex.synchronize do
-        @event_queue << user_event
+        begin
+          @event_queue << user_event
+        rescue Exception
+          @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
+          return
+        end
         @received.signal
       end
     end
 
     def stop!
-      return if @disposed
+      return unless @thread.alive?
 
       @mutex.synchronize do
         @event_queue << SHUTDOWN_SIGNAL
@@ -97,13 +96,7 @@ module Optimizely
 
       @is_started = false
       @logger.log(Logger::WARN, 'Stopping scheduler.')
-      @thread.exit
-    end
-
-    def dispose
-      return if @disposed == true
-
-      @disposed = true
+      @thread.join
     end
 
     private
@@ -168,7 +161,7 @@ module Optimizely
       end
 
       # Reset the deadline if starting a new batch.
-      @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval if @current_batch.empty?
+      @flushing_interval_deadline = (Helpers::DateTimeUtils.create_timestamp + @flush_interval) if @current_batch.empty?
 
       @logger.log(Logger::DEBUG, "Adding user event: #{user_event.event['key']} to batch.")
       @current_batch << user_event
