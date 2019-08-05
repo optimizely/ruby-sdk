@@ -181,7 +181,7 @@ describe Optimizely::BatchEventProcessor do
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
 
     @event_processor.process(conversion_event)
-    sleep 1.5
+    sleep 1.75
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
 
     @event_processor.stop!
@@ -189,7 +189,7 @@ describe Optimizely::BatchEventProcessor do
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     @event_processor.start!
     @event_processor.stop!
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').exactly(5).times
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').at_least(1).times
   end
 
   it 'should not dispatch event when close is called during process' do
