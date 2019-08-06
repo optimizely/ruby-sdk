@@ -138,6 +138,10 @@ module Optimizely
       end
     end
 
+    def notification_count(notification_type)
+      @notifications.include?(notification_type) ? @notifications[notification_type].count : 0
+    end
+
     private
 
     def notification_type_valid?(notification_type)

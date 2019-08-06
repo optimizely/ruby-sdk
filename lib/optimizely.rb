@@ -22,6 +22,9 @@ require_relative 'optimizely/config_manager/static_project_config_manager'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
+require_relative 'optimizely/event/forwarding_event_processor'
+require_relative 'optimizely/event/event_factory'
+require_relative 'optimizely/event/user_event_factory'
 require_relative 'optimizely/event_dispatcher'
 require_relative 'optimizely/exceptions'
 require_relative 'optimizely/helpers/constants'
@@ -30,13 +33,12 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
-
 module Optimizely
   class Project
     attr_reader :notification_center
     # @api no-doc
-    attr_reader :config_manager, :decision_service, :error_handler,
-                :event_builder, :event_dispatcher, :logger
+    attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
+                :event_processor, :logger, :stopped
 
     # Constructor for Projects.
     #
@@ -61,7 +63,8 @@ module Optimizely
       user_profile_service = nil,
       sdk_key = nil,
       config_manager = nil,
-      notification_center = nil
+      notification_center = nil,
+      event_processor = nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -92,7 +95,13 @@ module Optimizely
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
       @decision_service = DecisionService.new(@logger, @user_profile_service)
-      @event_builder = EventBuilder.new(@logger)
+
+      @event_processor = if event_processor.respond_to?(:process)
+                           event_processor
+                         else
+                           ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
+                         end
+      # @event_builder = EventBuilder.new(@logger)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
@@ -243,20 +252,17 @@ module Optimizely
         return nil
       end
 
-      conversion_event = @event_builder.create_conversion_event(config, event, user_id, attributes, event_tags)
+      user_event = UserEventFactory.create_conversion_event(config, event, user_id, attributes, event_tags)
+      @event_processor.process(user_event)
       @logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
-      @logger.log(Logger::INFO,
-                  "Dispatching conversion event to URL #{conversion_event.url} with params #{conversion_event.params}.")
-      begin
-        @event_dispatcher.dispatch_event(conversion_event)
-      rescue => e
-        @logger.log(Logger::ERROR, "Unable to dispatch conversion event. Error: #{e}")
-      end
 
-      @notification_center.send_notifications(
-        NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-        event_key, user_id, attributes, event_tags, conversion_event
-      )
+      if @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:TRACK]).positive?
+        conversion_event = EventFactory.create_log_event(user_event, @logger)
+        @notification_center.send_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          event_key, user_id, attributes, event_tags, conversion_event
+        )
+      end
       nil
     end
 
@@ -507,6 +513,14 @@ module Optimizely
       config.is_a?(Optimizely::ProjectConfig)
     end
 
+    def close
+      return if @stopped
+
+      @stopped = true
+      @config_manager.stop! if @config_manager.respond_to?(:stop!)
+      @event_processor.stop! if @event_processor.respond_to?(:stop!)
+    end
+
     private
 
     def get_variation_with_config(experiment_key, user_id, attributes, config)
@@ -692,15 +706,14 @@ module Optimizely
     def send_impression(config, experiment, variation_key, user_id, attributes = nil)
       experiment_key = experiment['key']
       variation_id = config.get_variation_id_from_key(experiment_key, variation_key)
-      impression_event = @event_builder.create_impression_event(config, experiment, variation_id, user_id, attributes)
-      @logger.log(Logger::INFO,
-                  "Dispatching impression event to URL #{impression_event.url} with params #{impression_event.params}.")
-      begin
-        @event_dispatcher.dispatch_event(impression_event)
-      rescue => e
-        @logger.log(Logger::ERROR, "Unable to dispatch impression event. Error: #{e}")
-      end
+      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, user_id, attributes)
+      @event_processor.process(user_event)
+
+      return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
+
+      @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
       variation = config.get_variation_from_id(experiment_key, variation_id)
+      impression_event = EventFactory.create_log_event(user_event, @logger)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment, user_id, attributes, variation, impression_event

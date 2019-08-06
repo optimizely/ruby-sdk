@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :config
+    attr_reader :config, :stopped
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -85,10 +85,13 @@ module Optimizely
 
     def start!
       @async_scheduler.start!
+      @stopped = false
     end
 
     def stop!
       @async_scheduler.stop!
+      @config = nil
+      @stopped = true
     end
 
     def get_config
