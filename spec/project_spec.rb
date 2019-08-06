@@ -2834,7 +2834,7 @@ describe 'Optimizely' do
         false, nil, nil, http_project_config_manager
       )
 
-      sleep 1.5
+      until http_project_config_manager.ready?; end
 
       expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
       expect(project_instance.is_valid).to be true
