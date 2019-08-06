@@ -3,13 +3,14 @@
 ## [Unreleased]
 Changes that have landed but are not yet released.
 
+### New Features:
 - Added non-typed `get_feature_variable` method ([#190](https://github.com/optimizely/ruby-sdk/pull/190)) as a more idiomatic approach to getting values of feature variables.
   - Typed `get_feature_variable` methods will still be available for use.
 
 ## 3.2.0
 July 25th, 2019
 
- ### New Features:
+### New Features:
 * Added support for automatic datafile management via `HTTPProjectConfigManager`:
   * The [`HTTPProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/http_project_config_manager.rb) is an implementation of the Interface
       [`ProjectConfigManager`](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/config_manager/project_config_manager.rb).
