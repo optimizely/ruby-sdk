@@ -78,11 +78,11 @@ module Optimizely
       @mutex.synchronize do
         begin
           @event_queue << user_event
+          @received.signal
         rescue Exception
           @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
           return
         end
-        @received.signal
       end
     end
 
@@ -96,7 +96,7 @@ module Optimizely
 
       @is_started = false
       @logger.log(Logger::WARN, 'Stopping scheduler.')
-      @thread.join
+      @thread.exit
     end
 
     private
@@ -115,7 +115,7 @@ module Optimizely
 
         @mutex.synchronize do
           @received.wait(@mutex, 0.05)
-          item = @event_queue.pop
+          item = @event_queue.pop if @event_queue.length.positive?
         end
 
         if item.nil?

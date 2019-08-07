@@ -38,7 +38,7 @@ describe Optimizely::BatchEventProcessor do
   MAX_DURATION_MS = 1000
 
   before(:example) do
-    @event_queue = []
+    @event_queue = SizedQueue.new(100)
     @event_dispatcher = Optimizely::EventDispatcher.new
     allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -49,6 +49,11 @@ describe Optimizely::BatchEventProcessor do
       flush_interval: MAX_DURATION_MS,
       logger: spy_logger
     )
+  end
+
+  after(:example) do
+    @event_processor.stop!
+    @event_queue.clear
   end
 
   it 'should log waring when service is already started' do
@@ -67,7 +72,7 @@ describe Optimizely::BatchEventProcessor do
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
   end
 
-  it 'it should flush the current batch when deadline exceeded' do
+  it 'should flush the current batch when deadline exceeded' do
     user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     logger = spy('logger')
     event_processor = Optimizely::BatchEventProcessor.new(
@@ -85,14 +90,14 @@ describe Optimizely::BatchEventProcessor do
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
   end
 
-  it 'it should flush the current batch when max batch size' do
-    allow(Optimizely::EventFactory).to receive(:create_log_event)
+  it 'should flush the current batch when max batch size' do
+    allow(Optimizely::EventFactory).to receive(:create_log_event).with(any_args)
     expected_batch = []
     counter = 0
     until counter >= 10
       event['key'] = event['key'] + counter.to_s
       user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-      expected_batch.unshift user_event
+      expected_batch << user_event
       @event_processor.process(user_event)
       counter += 1
     end
@@ -110,7 +115,7 @@ describe Optimizely::BatchEventProcessor do
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
   end
 
-  it 'it should dispatch the event when flush is called' do
+  it 'should dispatch the event when flush is called' do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
 
@@ -136,11 +141,11 @@ describe Optimizely::BatchEventProcessor do
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received flush signal.').twice
   end
 
-  it 'it should flush on mismatch revision' do
+  it 'should flush on mismatch revision' do
     allow(project_config).to receive(:revision).and_return('1', '2')
     user_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     user_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    log_event = Optimizely::EventFactory.create_log_event(user_event2, spy_logger)
+    log_event = Optimizely::EventFactory.create_log_event(user_event1, spy_logger)
 
     expect(user_event1.event_context[:revision]).to eq('1')
     @event_processor.process(user_event1)
@@ -156,11 +161,11 @@ describe Optimizely::BatchEventProcessor do
     expect(spy_logger).not_to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
   end
 
-  it 'it should flush on mismatch project id' do
+  it 'should flush on mismatch project id' do
     allow(project_config).to receive(:project_id).and_return('X', 'Y')
     user_event1 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     user_event2 = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    log_event = Optimizely::EventFactory.create_log_event(user_event2, spy_logger)
+    log_event = Optimizely::EventFactory.create_log_event(user_event1, spy_logger)
 
     expect(user_event1.event_context[:project_id]).to eq('X')
     @event_processor.process(user_event1)
