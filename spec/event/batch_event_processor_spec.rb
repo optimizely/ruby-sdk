@@ -94,7 +94,7 @@ describe Optimizely::BatchEventProcessor do
     allow(Optimizely::EventFactory).to receive(:create_log_event).with(any_args)
     expected_batch = []
     counter = 0
-    until counter >= 10
+    until counter >= 11
       event['key'] = event['key'] + counter.to_s
       user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
       expected_batch << user_event
@@ -104,8 +104,10 @@ describe Optimizely::BatchEventProcessor do
 
     sleep 1
 
-    expect(Optimizely::EventFactory).to have_received(:create_log_event).with(expected_batch, spy_logger).once
+    expected_batch.pop # Removes 11th element
+    expect(@event_processor.current_batch.size).to be 10
 
+    expect(Optimizely::EventFactory).to have_received(:create_log_event).with(expected_batch, spy_logger).once
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
       Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
     ).once
