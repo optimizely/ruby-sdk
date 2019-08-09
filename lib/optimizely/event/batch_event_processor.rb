@@ -22,7 +22,7 @@ module Optimizely
     # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
 
-    attr_reader :event_queue, :started
+    attr_reader :event_queue, :current_batch, :started
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000
