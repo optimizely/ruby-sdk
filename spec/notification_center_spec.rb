@@ -486,37 +486,6 @@ describe Optimizely::NotificationCenter do
       end
     end
 
-    describe '.notification_count' do
-      it 'should return count of added notification types' do
-        notification_center.add_notification_listener(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-          @callback_reference
-        )
-
-        notification_center.add_notification_listener(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-          method(:test)
-        )
-
-        notification_center.add_notification_listener(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          method(:test)
-        )
-
-        expect(
-          notification_center.notification_count(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE])
-        ).to eq(2)
-
-        expect(
-          notification_center.notification_count(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK])
-        ).to eq(1)
-
-        expect(
-          notification_center.notification_count(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT])
-        ).to eq(0)
-      end
-    end
-
     describe '@error_handler' do
       let(:raise_error_handler) { Optimizely::RaiseErrorHandler.new }
       let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, raise_error_handler) }

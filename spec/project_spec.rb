@@ -605,11 +605,6 @@ describe 'Optimizely' do
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
       ).ordered
 
-      # Log event
-      expect(project_instance.notification_center).to receive(:send_notifications).with(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
-      ).ordered
-
       # Activate listener
       expect(project_instance.notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
@@ -725,6 +720,7 @@ describe 'Optimizely' do
         expect(notification_center).to receive(:send_notifications).ordered
 
         expect(notification_center).to receive(:send_notifications).ordered
+
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
           url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json',
           notification_center: notification_center
@@ -750,6 +746,7 @@ describe 'Optimizely' do
         ).ordered
 
         expect(notification_center).to receive(:send_notifications).ordered
+
         expect(notification_center).to receive(:send_notifications).ordered
 
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
@@ -907,11 +904,6 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
-
-      expect(project_instance.notification_center).to receive(:send_notifications)
-        .with(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
-        ).ordered
 
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
@@ -1507,11 +1499,6 @@ describe 'Optimizely' do
 
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
-        ).ordered
-
-      expect(project_instance.notification_center).to receive(:send_notifications)
-        .with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
           experiment_to_return, 'test_user', nil, variation_to_return,
           instance_of(Optimizely::Event)
@@ -1590,7 +1577,6 @@ describe 'Optimizely' do
         )
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
-
         expect(project_instance.notification_center).to receive(:send_notifications).ordered
 
         # DECISION listener called when the user is in experiment with variation feature off.
@@ -1778,7 +1764,7 @@ describe 'Optimizely' do
         )
 
         expect(project_instance.notification_center).to receive(:send_notifications).twice.with(
-          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE], any_args
         )
 
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(

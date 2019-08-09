@@ -100,7 +100,7 @@ module Optimizely
       @event_processor = if event_processor.respond_to?(:process)
                            event_processor
                          else
-                           ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
+                           ForwardingEventProcessor.new(@event_dispatcher, @logger)
                          end
     end
 
@@ -256,13 +256,11 @@ module Optimizely
       @event_processor.process(user_event)
       @logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
 
-      if @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:TRACK]).positive?
-        log_event = EventFactory.create_log_event(user_event, @logger)
-        @notification_center.send_notifications(
-          NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          event_key, user_id, attributes, event_tags, log_event
-        )
-      end
+      log_event = EventFactory.create_log_event(user_event, @logger)
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+        event_key, user_id, attributes, event_tags, log_event
+      )
       nil
     end
 
@@ -708,8 +706,6 @@ module Optimizely
       variation_id = config.get_variation_id_from_key(experiment_key, variation_key)
       user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, user_id, attributes)
       @event_processor.process(user_event)
-
-      return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
       @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
       variation = config.get_variation_from_id(experiment_key, variation_id)

@@ -69,19 +69,12 @@ describe Optimizely::ForwardingEventProcessor do
   end
 
   describe '.process' do
-    it 'should dispatch and send log event when valid event is provided' do
-      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
-      allow(notification_center).to receive(:send_notifications)
+    it 'should dispatch log event when valid event is provided' do
       forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(
-        @event_dispatcher, spy_logger, notification_center
+        @event_dispatcher, spy_logger
       )
 
       forwarding_event_processor.process(@conversion_event)
-
-      expect(notification_center).to have_received(:send_notifications).with(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
-        Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
-      ).once
 
       expect(@event_dispatcher).to have_received(:dispatch_event).with(
         Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
@@ -89,8 +82,6 @@ describe Optimizely::ForwardingEventProcessor do
     end
 
     it 'should log an error when dispatch event raises timeout exception' do
-      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
-      allow(notification_center).to receive(:send_notifications)
       log_event = Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
       allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
 
@@ -98,12 +89,10 @@ describe Optimizely::ForwardingEventProcessor do
       allow(@event_dispatcher).to receive(:dispatch_event).and_raise(timeout_error)
 
       forwarding_event_processor = Optimizely::ForwardingEventProcessor.new(
-        @event_dispatcher, spy_logger, notification_center
+        @event_dispatcher, spy_logger
       )
 
       forwarding_event_processor.process(@conversion_event)
-
-      expect(notification_center).not_to have_received(:send_notifications)
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
