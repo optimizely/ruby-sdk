@@ -587,11 +587,6 @@ describe 'Optimizely' do
     end
 
     it 'should log and send activate notification when an impression event is dispatched' do
-      def callback(_args); end
-      project_instance.notification_center.add_notification_listener(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-        method(:callback)
-      )
       variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -720,7 +715,6 @@ describe 'Optimizely' do
         expect(notification_center).to receive(:send_notifications).ordered
 
         expect(notification_center).to receive(:send_notifications).ordered
-
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
           url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json',
           notification_center: notification_center
@@ -746,7 +740,6 @@ describe 'Optimizely' do
         ).ordered
 
         expect(notification_center).to receive(:send_notifications).ordered
-
         expect(notification_center).to receive(:send_notifications).ordered
 
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
@@ -891,26 +884,15 @@ describe 'Optimizely' do
 
     it 'should send track notification and properly track an event by calling dispatch_event with right params with revenue provided' do
       params = @expected_track_event_params
-      params[:visitors][0][:snapshots][0][:events][0].merge!(
-        revenue: 42,
-        tags: {'revenue' => 42}
-      )
-
-      def callback(_args); end
-      project_instance.notification_center.add_notification_listener(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-        method(:callback)
-      )
-
+      params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 42,
+                                                             tags: {'revenue' => 42})
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
-
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
           'test_event', 'test_user', nil, {'revenue' => 42}, conversion_event
-        ).ordered
-
+        ).once
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
@@ -1481,14 +1463,7 @@ describe 'Optimizely' do
     end
 
     it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
-      def callback(_args); end
-      project_instance.notification_center.add_notification_listener(
-        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-        method(:callback)
-      )
-
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][0]
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -1577,6 +1552,7 @@ describe 'Optimizely' do
         )
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
         expect(project_instance.notification_center).to receive(:send_notifications).ordered
 
         # DECISION listener called when the user is in experiment with variation feature off.
@@ -2793,12 +2769,12 @@ describe 'Optimizely' do
 
       project_instance = Optimizely::Project.new(nil, nil, nil, nil, true, nil, nil, config_manager, nil, event_processor)
 
-      expect(config_manager.started).to be true
+      expect(config_manager.closed).to be false
       expect(event_processor.started).to be true
 
       project_instance.close
 
-      expect(config_manager.started).to be false
+      expect(config_manager.closed).to be true
       expect(event_processor.started).to be false
       expect(project_instance.stopped).to be true
     end

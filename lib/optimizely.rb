@@ -33,6 +33,7 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
+
 module Optimizely
   class Project
     attr_reader :notification_center
@@ -53,6 +54,7 @@ module Optimizely
     #                   Must provide at least one of datafile or sdk_key.
     # @param config_manager - Optional Responds to get_config.
     # @param notification_center - Optional Instance of NotificationCenter.
+    # @param event_processor - Optional Responds to process.
 
     def initialize(
       datafile = nil,
