@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :config, :stopped
+    attr_reader :config, :started
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -72,6 +72,7 @@ module Optimizely
       @last_modified = nil
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
       @async_scheduler.start! if start_by_default == true
+      @started = start_by_default
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
@@ -84,14 +85,24 @@ module Optimizely
     end
 
     def start!
+      if @started
+        @logger.log(Logger::WARN, 'Manager already started.')
+        return
+      end
+
       @async_scheduler.start!
-      @stopped = false
+      @started = true
     end
 
     def stop!
+      unless @started
+        @logger.log(Logger::WARN, 'Not pausing. Manager has not been started.')
+        return
+      end
+
       @async_scheduler.stop!
       @config = nil
-      @stopped = true
+      @started = false
     end
 
     def get_config

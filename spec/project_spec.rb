@@ -19,8 +19,10 @@ require 'spec_helper'
 require 'optimizely'
 require 'optimizely/audience'
 require 'optimizely/config_manager/http_project_config_manager'
-require 'optimizely/helpers/validator'
+require 'optimizely/event_dispatcher'
+require 'optimizely/event/batch_event_processor'
 require 'optimizely/exceptions'
+require 'optimizely/helpers/validator'
 require 'optimizely/version'
 
 describe 'Optimizely' do
@@ -2793,20 +2795,26 @@ describe 'Optimizely' do
   end
 
   describe '.close' do
-    it 'should stop config manager when optimizely close is called' do
-      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+    it 'should stop config manager and event processor when optimizely close is called' do
+      config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
         start_by_default: true
       )
 
-      project_instance = Optimizely::Project.new(
-        config_body_JSON, nil, spy_logger, error_handler,
-        false, nil, nil, http_project_config_manager
-      )
+      event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: Optimizely::EventDispatcher.new)
+
+      Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+
+      project_instance = Optimizely::Project.new(nil, nil, nil, nil, true, nil, nil, config_manager, nil, event_processor)
+
+      expect(config_manager.started).to be true
+      expect(event_processor.started).to be true
 
       project_instance.close
+
+      expect(config_manager.started).to be false
+      expect(event_processor.started).to be false
       expect(project_instance.stopped).to be true
-      expect(http_project_config_manager.stopped).to be true
     end
 
     it 'should stop invalid object' do

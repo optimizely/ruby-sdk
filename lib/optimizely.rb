@@ -94,6 +94,7 @@ module Optimizely
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
+
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
       @event_processor = if event_processor.respond_to?(:process)
@@ -101,7 +102,6 @@ module Optimizely
                          else
                            ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
                          end
-      # @event_builder = EventBuilder.new(@logger)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
@@ -257,10 +257,10 @@ module Optimizely
       @logger.log(Logger::INFO, "Tracking event '#{event_key}' for user '#{user_id}'.")
 
       if @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:TRACK]).positive?
-        conversion_event = EventFactory.create_log_event(user_event, @logger)
+        log_event = EventFactory.create_log_event(user_event, @logger)
         @notification_center.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          event_key, user_id, attributes, event_tags, conversion_event
+          event_key, user_id, attributes, event_tags, log_event
         )
       end
       nil
@@ -713,10 +713,10 @@ module Optimizely
 
       @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
       variation = config.get_variation_from_id(experiment_key, variation_id)
-      impression_event = EventFactory.create_log_event(user_event, @logger)
+      log_event = EventFactory.create_log_event(user_event, @logger)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-        experiment, user_id, attributes, variation, impression_event
+        experiment, user_id, attributes, variation, log_event
       )
     end
 

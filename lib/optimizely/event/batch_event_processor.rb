@@ -22,7 +22,7 @@ module Optimizely
     # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
 
-    attr_reader :event_queue
+    attr_reader :event_queue, :started
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000
@@ -32,34 +32,34 @@ module Optimizely
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
 
     def initialize(
-      event_queue:,
+      event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
       event_dispatcher:,
-      batch_size:,
-      flush_interval:,
-      logger: nil,
+      batch_size: DEFAULT_BATCH_SIZE,
+      flush_interval: DEFAULT_BATCH_INTERVAL,
+      logger: NoOpLogger.new,
       notification_center: nil
     )
-      @event_queue = event_queue || SizedQueue.new(DEFAULT_QUEUE_CAPACITY)
+      @event_queue = event_queue
       @event_dispatcher = event_dispatcher
-      @batch_size = batch_size || DEFAULT_BATCH_SIZE
-      @flush_interval = flush_interval || DEFAULT_BATCH_INTERVAL
-      @logger = logger || NoOpLogger.new
+      @batch_size = batch_size
+      @flush_interval = flush_interval
+      @logger = logger
       @notification_center = notification_center
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
-      @is_started = false
+      @started = false
       start!
     end
 
     def start!
-      if @is_started == true
+      if @started == true
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
       @thread = Thread.new { run }
-      @is_started = true
+      @started = true
     end
 
     def flush
@@ -96,7 +96,7 @@ module Optimizely
         @received.signal
       end
 
-      @is_started = false
+      @started = false
       @logger.log(Logger::WARN, 'Stopping scheduler.')
       @thread.exit
     end
