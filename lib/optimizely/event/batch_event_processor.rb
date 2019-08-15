@@ -119,7 +119,6 @@ module Optimizely
         end
 
         if item.nil?
-          @logger.log(Logger::DEBUG, 'Empty item, sleeping for 50ms.')
           sleep(0.05)
           next
         end
