@@ -111,8 +111,6 @@ describe Optimizely::BatchEventProcessor do
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
       Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
     ).once
-
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Received add to batch signal. with event: #{event['key']}.").exactly(10).times
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Adding user event: #{event['key']} to batch.").exactly(10).times
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
   end

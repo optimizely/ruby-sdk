@@ -134,10 +134,7 @@ module Optimizely
           next
         end
 
-        if item.is_a? Optimizely::UserEvent
-          @logger.log(Logger::DEBUG, "Received add to batch signal. with event: #{item.event['key']}.")
-          add_to_batch(item)
-        end
+        add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
     end
 
