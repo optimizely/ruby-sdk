@@ -131,7 +131,7 @@ describe Optimizely::BatchEventProcessor do
 
     event_processor.process(conversion_event)
     event_processor.flush
-    sleep 0.5
+    sleep 1.5
 
     event_processor.process(conversion_event)
     event_processor.flush
