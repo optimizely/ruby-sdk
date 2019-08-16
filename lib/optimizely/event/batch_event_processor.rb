@@ -16,13 +16,14 @@
 #    limitations under the License.
 #
 require_relative 'event_processor'
+require_relative '../helpers/validator'
 module Optimizely
   class BatchEventProcessor < EventProcessor
     # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
     # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
 
-    attr_reader :event_queue, :current_batch
+    attr_reader :event_queue, :current_batch, :batch_size, :flush_interval
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000
@@ -32,17 +33,21 @@ module Optimizely
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
 
     def initialize(
-      event_queue:,
+      event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
       event_dispatcher:,
-      batch_size:,
-      flush_interval:,
-      logger: nil
+      batch_size: DEFAULT_BATCH_SIZE,
+      flush_interval: DEFAULT_BATCH_INTERVAL,
+      logger: NoOpLogger.new
     )
-      @event_queue = event_queue || SizedQueue.new(DEFAULT_QUEUE_CAPACITY)
+      @event_queue = event_queue
       @event_dispatcher = event_dispatcher
-      @batch_size = batch_size || DEFAULT_BATCH_SIZE
-      @flush_interval = flush_interval || DEFAULT_BATCH_INTERVAL
-      @logger = logger || NoOpLogger.new
+      @batch_size = if (batch_size.is_a? Integer) && positive_number?(batch_size)
+                      batch_size
+                    else
+                      DEFAULT_BATCH_SIZE
+                    end
+      @flush_interval = positive_number?(flush_interval) ? flush_interval : DEFAULT_BATCH_INTERVAL
+      @logger = logger
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
@@ -184,6 +189,12 @@ module Optimizely
         return true
       end
       false
+    end
+
+    def positive_number?(value)
+      # Returns true if the given value is positive finite number.
+      #   false otherwise.
+      Helpers::Validator.finite_number?(value) && value.positive?
     end
   end
 end
