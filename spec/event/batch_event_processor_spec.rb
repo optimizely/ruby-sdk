@@ -111,8 +111,6 @@ describe Optimizely::BatchEventProcessor do
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
       Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
     ).once
-
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Received add to batch signal. with event: #{event['key']}.").exactly(10).times
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "Adding user event: #{event['key']} to batch.").exactly(10).times
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
   end
@@ -131,7 +129,7 @@ describe Optimizely::BatchEventProcessor do
 
     event_processor.process(conversion_event)
     event_processor.flush
-    sleep 0.5
+    sleep 1.5
 
     event_processor.process(conversion_event)
     event_processor.flush
@@ -205,5 +203,59 @@ describe Optimizely::BatchEventProcessor do
     @event_processor.process(conversion_event)
     @event_processor.stop!
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
+  end
+
+  it 'should set default batch size when provided invalid' do
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 'test')
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: [])
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 0)
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: -5)
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 5.5)
+    expect(event_processor.batch_size).to eq(10)
+    event_processor.stop!
+  end
+
+  it 'should set batch size when provided valid' do
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 5)
+    expect(event_processor.batch_size).to eq(5)
+    event_processor.stop!
+  end
+
+  it 'should set default flush interval when provided invalid' do
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
+    expect(event_processor.flush_interval).to eq(30_000)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 'test')
+    expect(event_processor.flush_interval).to eq(30_000)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: [])
+    expect(event_processor.flush_interval).to eq(30_000)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 0)
+    expect(event_processor.flush_interval).to eq(30_000)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: -5)
+    expect(event_processor.flush_interval).to eq(30_000)
+    event_processor.stop!
+  end
+
+  it 'should set flush interval when provided valid' do
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 2000)
+    expect(event_processor.flush_interval).to eq(2000)
+    event_processor.stop!
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 2000.5)
+    expect(event_processor.flush_interval).to eq(2000.5)
+    event_processor.stop!
   end
 end
