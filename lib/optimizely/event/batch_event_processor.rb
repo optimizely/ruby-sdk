@@ -22,11 +22,13 @@ module Optimizely
     # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
     # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
+    # the BlockingQueue and buffers them for either a configured batch size or for a
+    # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
     attr_reader :event_queue, :current_batch, :started, :batch_size, :flush_interval
 
     DEFAULT_BATCH_SIZE = 10
-    DEFAULT_BATCH_INTERVAL = 30_000
+    DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
@@ -40,14 +42,15 @@ module Optimizely
       logger: NoOpLogger.new
     )
       @event_queue = event_queue
+      @logger = logger
       @event_dispatcher = event_dispatcher
       @batch_size = if (batch_size.is_a? Integer) && positive_number?(batch_size)
                       batch_size
                     else
+                      @logger.log(Logger::DEBUG, "Setting to default batch_size: #{DEFAULT_BATCH_SIZE}.")
                       DEFAULT_BATCH_SIZE
                     end
       @flush_interval = positive_number?(flush_interval) ? flush_interval : DEFAULT_BATCH_INTERVAL
-      @logger = logger
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
@@ -176,13 +179,14 @@ module Optimizely
       return false if @current_batch.empty?
 
       current_context = @current_batch.last.event_context
-
       new_context = user_event.event_context
+
       # Revisions should match
       unless current_context[:revision] == new_context[:revision]
         @logger.log(Logger::DEBUG, 'Revisions mismatched: Flushing current batch.')
         return true
       end
+
       # Projects should match
       unless current_context[:project_id] == new_context[:project_id]
         @logger.log(Logger::DEBUG, 'Project Ids mismatched: Flushing current batch.')
