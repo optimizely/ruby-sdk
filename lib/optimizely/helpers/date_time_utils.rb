@@ -21,9 +21,9 @@ module Optimizely
       module_function
 
       def create_timestamp
-        # Returns Integer Current timestamp
-
-        (Time.now.to_f * 1000).to_i
+        # Returns Integer current UTC timestamp
+        utc = Time.now.getutc
+        (utc.to_f * 1000).to_i
       end
     end
   end

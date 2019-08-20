@@ -209,21 +209,22 @@ describe Optimizely::BatchEventProcessor do
     event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 'test')
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 'test', logger: spy_logger)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: [])
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: [], logger: spy_logger)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 0)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 0, logger: spy_logger)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: -5)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: -5, logger: spy_logger)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 5.5)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, batch_size: 5.5, logger: spy_logger)
     expect(event_processor.batch_size).to eq(10)
     event_processor.stop!
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Setting to default batch_size: 10.').exactly(5).times
   end
 
   it 'should set batch size when provided valid' do
