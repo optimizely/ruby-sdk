@@ -16,15 +16,10 @@
 #    limitations under the License.
 #
 module Optimizely
-  module Helpers
-    module DateTimeUtils
-      module_function
-
-      def create_timestamp
-        # Returns Integer current UTC timestamp
-        utc = Time.now.getutc
-        (utc.to_f * 1000).to_i
-      end
-    end
+  class EventProcessor
+    # EventProcessor interface is used to provide an intermediary processing stage within
+    # event production. It's assumed that the EventProcessor dispatches events via a provided
+    # EventDispatcher.
+    def process(user_event); end
   end
 end

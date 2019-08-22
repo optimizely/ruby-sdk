@@ -87,7 +87,7 @@ module Optimizely
           )
         end
 
-        return unless Helpers::Validator.boolean? project_config.bot_filtering
+        return visitor_attributes unless Helpers::Validator.boolean? project_config.bot_filtering
 
         # Append Bot Filtering Attribute
         visitor_attributes.push(
