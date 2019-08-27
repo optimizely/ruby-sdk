@@ -78,7 +78,7 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      unless @thread.alive?
+      if !@started || !@thread.alive?
         @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
         return
       end
@@ -95,7 +95,7 @@ module Optimizely
     end
 
     def stop!
-      return unless @thread.alive?
+      return unless @started
 
       @mutex.synchronize do
         @event_queue << SHUTDOWN_SIGNAL
