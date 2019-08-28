@@ -25,7 +25,7 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :event_queue, :current_batch, :batch_size, :flush_interval
+    attr_reader :event_queue, :current_batch, :started, :batch_size, :flush_interval
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
@@ -54,18 +54,18 @@ module Optimizely
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
-      @is_started = false
+      @started = false
       start!
     end
 
     def start!
-      if @is_started == true
+      if @started == true
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
       @thread = Thread.new { run }
-      @is_started = true
+      @started = true
     end
 
     def flush
@@ -78,7 +78,7 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      unless @thread.alive?
+      if !@started || !@thread.alive?
         @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
         return
       end
@@ -95,14 +95,14 @@ module Optimizely
     end
 
     def stop!
-      return unless @thread.alive?
+      return unless @started
 
       @mutex.synchronize do
         @event_queue << SHUTDOWN_SIGNAL
         @received.signal
       end
 
-      @is_started = false
+      @started = false
       @logger.log(Logger::WARN, 'Stopping scheduler.')
       @thread.exit
     end
@@ -153,7 +153,7 @@ module Optimizely
       begin
         @event_dispatcher.dispatch_event(log_event)
       rescue StandardError => e
-        @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}")
+        @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end
       @current_batch = []
     end
@@ -167,7 +167,7 @@ module Optimizely
       # Reset the deadline if starting a new batch.
       @flushing_interval_deadline = (Helpers::DateTimeUtils.create_timestamp + @flush_interval) if @current_batch.empty?
 
-      @logger.log(Logger::DEBUG, "Adding user event: #{user_event.event['key']} to batch.")
+      @logger.log(Logger::DEBUG, "Adding user event: #{user_event} to batch.")
       @current_batch << user_event
       return unless @current_batch.length >= @batch_size
 

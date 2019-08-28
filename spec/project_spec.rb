@@ -19,8 +19,10 @@ require 'spec_helper'
 require 'optimizely'
 require 'optimizely/audience'
 require 'optimizely/config_manager/http_project_config_manager'
-require 'optimizely/helpers/validator'
+require 'optimizely/event_dispatcher'
+require 'optimizely/event/batch_event_processor'
 require 'optimizely/exceptions'
+require 'optimizely/helpers/validator'
 require 'optimizely/version'
 
 describe 'Optimizely' do
@@ -585,7 +587,6 @@ describe 'Optimizely' do
     end
 
     it 'should log and send activate notification when an impression event is dispatched' do
-      params = @expected_activate_params
       variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -595,7 +596,9 @@ describe 'Optimizely' do
       experiment = project_instance.config_manager.config.get_experiment_from_key('test_experiment')
 
       # Decision listener
-      expect(project_instance.notification_center).to receive(:send_notifications).ordered
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
+      ).ordered
 
       # Activate listener
       expect(project_instance.notification_center).to receive(:send_notifications).with(
@@ -606,16 +609,20 @@ describe 'Optimizely' do
 
       project_instance.activate('test_experiment', 'test_user')
 
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, include('Dispatching impression event to' \
-                                                                                " URL #{impression_log_url} with params #{params}"))
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment'.")
     end
 
     it 'should log when an exception has occurred during dispatching the impression event' do
+      params = @expected_activate_params
+      stub_request(:post, impression_log_url).with(query: params)
+      log_event = Optimizely::Event.new(:post, impression_log_url, params, post_headers)
+      allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
+
       variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Unable to dispatch impression event. Error: RuntimeError')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Error dispatching event: #{log_event} RuntimeError.")
     end
 
     it 'should raise an exception when called with invalid attributes' do
@@ -865,9 +872,14 @@ describe 'Optimizely' do
     end
 
     it 'should log a message if an exception has occurred during dispatching of the event' do
+      params = @expected_track_event_params
+      stub_request(:post, conversion_log_url).with(query: params)
+      log_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
+      allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
+
       project_instance.track('test_event', 'test_user')
-      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Unable to dispatch conversion event. Error: RuntimeError')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Error dispatching event: #{log_event} RuntimeError.")
     end
 
     it 'should send track notification and properly track an event by calling dispatch_event with right params with revenue provided' do
@@ -1014,13 +1026,13 @@ describe 'Optimizely' do
 
     it 'should log when a conversion event is dispatched' do
       params = @expected_track_event_params
-      params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 42,
-                                                             tags: {'revenue' => 42})
-
+      params[:visitors][0][:snapshots][0][:events][0].merge!(
+        revenue: 42,
+        tags: {'revenue' => 42}
+      )
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
-      expect(spy_logger).to have_received(:log).with(Logger::INFO, include('Dispatching conversion event to' \
-                                                                                " URL #{conversion_log_url} with params #{params}"))
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, "Tracking event 'test_event' for user 'test_user'.")
     end
 
     it 'should raise an exception when called with attributes in an invalid format' do
@@ -1467,14 +1479,15 @@ describe 'Optimizely' do
           instance_of(Optimizely::Event)
         ).ordered
 
-      expect(project_instance.notification_center).to receive(:send_notifications).ordered
+      expect(project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
+        ).ordered
 
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-      expected_params = @expected_bucketed_params
-
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Dispatching impression event to URL https://logx.optimizely.com/v1/events with params #{expected_params}.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment_multivariate'.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
 
@@ -2740,6 +2753,112 @@ describe 'Optimizely' do
     it 'should return false when called with an invalid datafile' do
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.is_valid).to be false
+    end
+  end
+
+  describe '.close' do
+    it 'should stop config manager and event processor when optimizely close is called' do
+      config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        start_by_default: true
+      )
+
+      event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: Optimizely::EventDispatcher.new)
+
+      Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+
+      project_instance = Optimizely::Project.new(nil, nil, nil, nil, true, nil, nil, config_manager, nil, event_processor)
+
+      expect(config_manager.closed).to be false
+      expect(event_processor.started).to be true
+
+      project_instance.close
+
+      expect(config_manager.closed).to be true
+      expect(event_processor.started).to be false
+      expect(project_instance.stopped).to be true
+    end
+
+    it 'should stop invalid object' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+      )
+
+      project_instance = Optimizely::Project.new(
+        nil, nil, spy_logger, error_handler,
+        false, nil, nil, http_project_config_manager
+      )
+
+      project_instance.close
+      expect(project_instance.is_valid).to be false
+    end
+
+    it 'shoud return optimizely as invalid for an API when close is called' do
+      WebMock.allow_net_connect!
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+      )
+
+      project_instance = Optimizely::Project.new(
+        config_body_JSON, nil, spy_logger, error_handler,
+        false, nil, nil, http_project_config_manager
+      )
+
+      until http_project_config_manager.ready?; end
+
+      expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+      expect(project_instance.is_valid).to be true
+
+      project_instance.close
+
+      expect(project_instance.is_valid).to be false
+      expect(project_instance.activate('checkout_flow_experiment', 'test_user')).to eq(nil)
+    end
+
+    it 'should not raise exception for static config manager' do
+      static_project_config_manager = Optimizely::StaticProjectConfigManager.new(
+        config_body_JSON, spy_logger, error_handler, false
+      )
+
+      project_instance = Optimizely::Project.new(
+        nil, nil, spy_logger, error_handler,
+        false, nil, nil, static_project_config_manager
+      )
+
+      project_instance.close
+      expect(project_instance.stopped).to be true
+    end
+
+    it 'should not raise exception in any API using static config manager' do
+      static_project_config_manager = Optimizely::StaticProjectConfigManager.new(
+        config_body_JSON, spy_logger, error_handler, false
+      )
+
+      project_instance = Optimizely::Project.new(
+        nil, nil, spy_logger, error_handler,
+        false, nil, nil, static_project_config_manager
+      )
+
+      project_instance.close
+
+      expect(project_instance.stopped).to be true
+      expect(project_instance.activate('checkout_flow_experiment', 'test_user')).to eq(nil)
+      expect(project_instance.get_variation('checkout_flow_experiment', 'test_user')).to eq(nil)
+      expect(project_instance.track('test_event', 'test_user')).to eq(nil)
+      expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
+      expect(project_instance.get_enabled_features('test_user')).to be_empty
+      expect(project_instance.set_forced_variation('test_experiment', 'test', 'variation')).to eq(nil)
+      expect(project_instance.get_forced_variation('test_experiment', 'test_user')).to eq(nil)
+      expect(project_instance.get_feature_variable('integer_single_variable_feature', 'integer_variable', 'test_user', nil))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', 'test_user', nil))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', 'test_user', nil))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', 'test_user', nil))
+        .to eq(nil)
+      expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 'test_user', nil))
+        .to eq(nil)
     end
   end
 end
