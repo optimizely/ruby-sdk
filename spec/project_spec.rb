@@ -587,6 +587,11 @@ describe 'Optimizely' do
     end
 
     it 'should log and send activate notification when an impression event is dispatched' do
+      def callback(_args); end
+      project_instance.notification_center.add_notification_listener(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+        method(:callback)
+      )
       variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -598,6 +603,11 @@ describe 'Optimizely' do
       # Decision listener
       expect(project_instance.notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
+      ).ordered
+
+      # Log event
+      expect(project_instance.notification_center).to receive(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
       ).ordered
 
       # Activate listener
@@ -886,13 +896,26 @@ describe 'Optimizely' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0].merge!(revenue: 42,
                                                              tags: {'revenue' => 42})
+
+      def callback(_args); end
+      project_instance.notification_center.add_notification_listener(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+        method(:callback)
+      )
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       conversion_event = Optimizely::Event.new(:post, conversion_log_url, params, post_headers)
+
+      expect(project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
+
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
           'test_event', 'test_user', nil, {'revenue' => 42}, conversion_event
-        ).once
+        ).ordered
+
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
@@ -1463,6 +1486,12 @@ describe 'Optimizely' do
     end
 
     it 'should return true, send activate notification and an impression if the user is bucketed into a feature experiment' do
+      def callback(_args); end
+      project_instance.notification_center.add_notification_listener(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+        method(:callback)
+      )
+
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       experiment_to_return = config_body['experiments'][3]
       variation_to_return = experiment_to_return['variations'][0]
@@ -1471,6 +1500,11 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
       )
+
+      expect(project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
 
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
@@ -1709,6 +1743,12 @@ describe 'Optimizely' do
 
     describe '.decision listener' do
       it 'should return enabled features and call decision listener for all features' do
+        def callback(_args); end
+        project_instance.notification_center.add_notification_listener(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+          method(:callback)
+        )
+
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
         enabled_features = %w[boolean_feature integer_single_variable_feature]
@@ -1737,6 +1777,10 @@ describe 'Optimizely' do
           nil,
           Optimizely::DecisionService::Decision,
           nil
+        )
+
+        expect(project_instance.notification_center).to receive(:send_notifications).twice.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
         )
 
         expect(project_instance.notification_center).to receive(:send_notifications).twice.with(

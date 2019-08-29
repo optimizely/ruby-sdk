@@ -39,7 +39,8 @@ module Optimizely
       event_dispatcher:,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
-      logger: NoOpLogger.new
+      logger: NoOpLogger.new,
+      notification_center: nil
     )
       @event_queue = event_queue
       @logger = logger
@@ -50,7 +51,13 @@ module Optimizely
                       @logger.log(Logger::DEBUG, "Setting to default batch_size: #{DEFAULT_BATCH_SIZE}.")
                       DEFAULT_BATCH_SIZE
                     end
-      @flush_interval = positive_number?(flush_interval) ? flush_interval : DEFAULT_BATCH_INTERVAL
+      @flush_interval = if positive_number?(flush_interval)
+                          flush_interval
+                        else
+                          @logger.log(Logger::DEBUG, "Setting to default flush_interval: #{DEFAULT_BATCH_INTERVAL} ms.")
+                          DEFAULT_BATCH_INTERVAL
+                        end
+      @notification_center = notification_center
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
@@ -152,6 +159,10 @@ module Optimizely
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
       begin
         @event_dispatcher.dispatch_event(log_event)
+        @notification_center&.send_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+          log_event
+        )
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end

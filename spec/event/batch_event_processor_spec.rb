@@ -41,13 +41,16 @@ describe Optimizely::BatchEventProcessor do
     @event_queue = SizedQueue.new(100)
     @event_dispatcher = Optimizely::EventDispatcher.new
     allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+    @notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
+    allow(@notification_center).to receive(:send_notifications)
 
     @event_processor = Optimizely::BatchEventProcessor.new(
       event_queue: @event_queue,
       event_dispatcher: @event_dispatcher,
       batch_size: MAX_BATCH_SIZE,
       flush_interval: MAX_DURATION_MS,
-      logger: spy_logger
+      logger: spy_logger,
+      notification_center: @notification_center
     )
   end
 
@@ -236,18 +239,19 @@ describe Optimizely::BatchEventProcessor do
     event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 'test')
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 'test', logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: [])
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: [], logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 0)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 0, logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: -5)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: -5, logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Setting to default flush_interval: 30000 ms.').exactly(4).times
   end
 
   it 'should set flush interval when provided valid' do
@@ -257,5 +261,39 @@ describe Optimizely::BatchEventProcessor do
     event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 2000.5)
     expect(event_processor.flush_interval).to eq(2000.5)
     event_processor.stop!
+  end
+
+  it 'should send log event notification when event is dispatched' do
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+
+    @event_processor.process(conversion_event)
+    sleep 1.5
+
+    expect(@notification_center).to have_received(:send_notifications).with(
+      Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+      log_event
+    ).once
+
+    expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
+  end
+
+  it 'should log an error when dispatch event raises timeout exception' do
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+    allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
+
+    timeout_error = Timeout::Error.new
+    allow(@event_dispatcher).to receive(:dispatch_event).and_raise(timeout_error)
+
+    @event_processor.process(conversion_event)
+    sleep 1.5
+
+    expect(@notification_center).not_to have_received(:send_notifications)
+
+    expect(spy_logger).to have_received(:log).once.with(
+      Logger::ERROR,
+      "Error dispatching event: #{log_event} Timeout::Error."
+    )
   end
 end

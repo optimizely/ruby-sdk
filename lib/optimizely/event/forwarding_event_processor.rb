@@ -20,9 +20,10 @@ module Optimizely
   class ForwardingEventProcessor < EventProcessor
     # ForwardingEventProcessor is a basic transformation stage for converting
     # the event batch into a LogEvent to be dispatched.
-    def initialize(event_dispatcher, logger = nil)
+    def initialize(event_dispatcher, logger = nil, notification_center = nil)
       @event_dispatcher = event_dispatcher
       @logger = logger || NoOpLogger.new
+      @notification_center = notification_center
     end
 
     def process(user_event)
@@ -30,6 +31,10 @@ module Optimizely
 
       begin
         @event_dispatcher.dispatch_event(log_event)
+        @notification_center&.send_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+          log_event
+        )
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end
