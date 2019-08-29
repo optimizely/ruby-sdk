@@ -239,18 +239,19 @@ describe Optimizely::BatchEventProcessor do
     event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 'test')
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 'test', logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: [])
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: [], logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 0)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: 0, logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
-    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: -5)
+    event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher, flush_interval: -5, logger: spy_logger)
     expect(event_processor.flush_interval).to eq(30_000)
     event_processor.stop!
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Setting to default flush_interval: 30000 ms.').exactly(4).times
   end
 
   it 'should set flush interval when provided valid' do
