@@ -110,10 +110,10 @@ describe Optimizely::BatchEventProcessor do
     expected_batch.pop # Removes 11th element
     expect(@event_processor.current_batch.size).to be 10
 
-    expect(Optimizely::EventFactory).to have_received(:create_log_event).with(expected_batch, spy_logger).once
+    expect(Optimizely::EventFactory).to have_received(:create_log_event).with(expected_batch, spy_logger).twice
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
       Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
-    ).once
+    ).twice
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
   end
 
@@ -295,5 +295,35 @@ describe Optimizely::BatchEventProcessor do
       Logger::ERROR,
       "Error dispatching event: #{log_event} Timeout::Error."
     )
+  end
+
+  it 'should flush pending events when stop is called' do
+    allow(Optimizely::EventFactory).to receive(:create_log_event).with(any_args)
+    expected_batch = []
+    counter = 0
+    until counter >= 10
+      event['key'] = event['key'] + counter.to_s
+      user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+      expected_batch << user_event
+      @event_processor.process(user_event)
+      counter += 1
+    end
+
+    sleep 0.25
+
+    # max batch size not occurred and batch is not dispatched.
+    expect(@event_processor.current_batch.size).to be < 10
+    expect(@event_dispatcher).not_to have_received(:dispatch_event)
+
+    # Stop should flush the queue!
+    @event_processor.stop!
+    sleep 0.75
+
+    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Exiting processing loop. Attempting to flush pending events.')
+    expect(@event_dispatcher).to have_received(:dispatch_event).with(
+      Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
+    )
+
+    expect(spy_logger).not_to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!')
   end
 end

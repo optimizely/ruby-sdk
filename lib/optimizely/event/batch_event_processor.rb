@@ -151,6 +151,16 @@ module Optimizely
 
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
+    rescue SignalException
+      @logger.log(Logger::INFO, 'Interrupted while processing buffer.')
+    rescue Exception => e
+      @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
+    ensure
+      @logger.log(
+        Logger::INFO,
+        'Exiting processing loop. Attempting to flush pending events.'
+      )
+      flush_queue!
     end
 
     def flush_queue!
