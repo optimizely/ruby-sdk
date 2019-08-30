@@ -17,8 +17,56 @@
 #
 
 require 'optimizely'
+require 'optimizely/event_dispatcher'
+require 'optimizely/event/batch_event_processor'
 module Optimizely
   class OptimizelyFactory
+    attr_reader :max_event_batch_size, :max_event_flush_interval
+
+    # Convenience method for setting the maximum number of events contained within a batch.
+    # @param batch_size Integer - Sets size of EventQueue.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.max_event_batch_size(batch_size, logger)
+      unless batch_size.is_a? Integer
+        logger.log(
+          Logger::ERROR,
+          'Batch size has invalid type. Reverting to default configuration.'
+        )
+        return
+      end
+
+      unless batch_size.positive?
+        logger.log(
+          Logger::ERROR,
+          'Batch size cannot be <= 0. Reverting to default configuration.'
+        )
+        return
+      end
+      @max_event_batch_size = batch_size
+    end
+
+    # Convenience method for setting the maximum time interval in milliseconds between event dispatches.
+    # @param flush_interval Numeric - Time interval between event dispatches.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.max_event_flush_interval(flush_interval, logger)
+      unless flush_interval.is_a? Numeric
+        logger.log(
+          Logger::ERROR,
+          'Flush interval has invalid type. Reverting to default configuration.'
+        )
+        return
+      end
+
+      unless flush_interval.positive?
+        logger.log(
+          Logger::ERROR,
+          'Flush interval cannot be <= 0. Reverting to default configuration.'
+        )
+        return
+      end
+      @max_event_flush_interval = flush_interval
+    end
+
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the fallback datafile corresponding to project.
@@ -57,6 +105,13 @@ module Optimizely
       config_manager = nil,
       notification_center = nil
     )
+      event_processor = BatchEventProcessor.new(
+        event_dispatcher: event_dispatcher || EventDispatcher.new,
+        batch_size: @max_event_batch_size,
+        flush_interval: @max_event_flush_interval,
+        notification_center: notification_center
+      )
+
       Optimizely::Project.new(
         datafile,
         event_dispatcher,
@@ -66,7 +121,8 @@ module Optimizely
         user_profile_service,
         sdk_key,
         config_manager,
-        notification_center
+        notification_center,
+        event_processor
       )
     end
   end
