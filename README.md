@@ -156,7 +156,7 @@ The following properties can be used to customize the `BatchEventProcessor` conf
 | **Property Name** | **Default Value** | **Description**
 | -- | -- | --
 | `event_queue` | 1000 | `SizedQueue.new(100)` or `Queue.new`. Queues individual events to be batched and dispatched by the executor. Default value is 1000.
-| `event_dispatcher` | nil | Used to dispatch event payload to Optimizely.
+| `event_dispatcher` | nil | Used to dispatch event payload to Optimizely. By default `EventDispatcher.new` will be set.
 | `batch_size` | 10 | The maximum number of events to batch before dispatching. Once this number is reached, all queued events are flushed and sent to Optimizely.
 | `flush_interval` | 30000 ms | Maximum time to wait before batching and dispatching events. In milliseconds.
 | `notification_center` | nil | Notification center instance to be used to trigger any notifications.
