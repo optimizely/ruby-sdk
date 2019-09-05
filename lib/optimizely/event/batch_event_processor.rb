@@ -25,7 +25,7 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :event_queue, :event_dispatcher, :current_batch, :started, :batch_size, :flush_interval
+    attr_reader :event_queue, :current_batch, :started, :batch_size, :flush_interval
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
@@ -36,7 +36,7 @@ module Optimizely
 
     def initialize(
       event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher: Optimizely::EventDispatcher.new,
+      event_dispatcher:,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
       logger: NoOpLogger.new,
