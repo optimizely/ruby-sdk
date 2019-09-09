@@ -210,7 +210,7 @@ module Optimizely
         return
       end
 
-      unless polling_interval.is_a? Integer
+      unless polling_interval.is_a? Numeric
         @logger.log(
           Logger::ERROR,
           "Polling interval '#{polling_interval}' has invalid type. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_UPDATE_INTERVAL']} seconds."
@@ -219,7 +219,7 @@ module Optimizely
         return
       end
 
-      unless polling_interval.between?(Helpers::Constants::CONFIG_MANAGER['MIN_SECONDS_LIMIT'], Helpers::Constants::CONFIG_MANAGER['MAX_SECONDS_LIMIT'])
+      unless polling_interval.positive? && polling_interval <= Helpers::Constants::CONFIG_MANAGER['MAX_SECONDS_LIMIT']
         @logger.log(
           Logger::DEBUG,
           "Polling interval '#{polling_interval}' has invalid range. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_UPDATE_INTERVAL']} seconds."
