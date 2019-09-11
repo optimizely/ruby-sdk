@@ -38,9 +38,9 @@ module Optimizely
     # datafile: Optional JSON string representing the project.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
-    # blocking_timeout -
-    # auto_update -
-    # start_by_default -
+    # blocking_timeout - Optional Time in seconds to block the get_config call until config has been initialized.
+    # auto_update - Boolean indicates to run infinitely or only once.
+    # start_by_default - Boolean indicates to start by default AsyncScheduler.
     # url - Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
     # url_template - Optional string template which in conjunction with sdk_key
     #               determines URL from where to fetch the datafile.
@@ -234,7 +234,7 @@ module Optimizely
     def blocking_timeout(blocking_timeout)
       # Sets time in seconds to block the get_config call until config has been initialized.
       #
-      # blocking_timeout - Time in seconds after which to update datafile.
+      # blocking_timeout - Time in seconds to block the get_config call.
 
       # If valid set given timeout, default blocking_timeout otherwise.
 
@@ -243,7 +243,7 @@ module Optimizely
           Logger::DEBUG,
           "Blocking timeout is not provided. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
@@ -252,7 +252,7 @@ module Optimizely
           Logger::ERROR,
           "Blocking timeout '#{blocking_timeout}' has invalid type. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
@@ -261,7 +261,7 @@ module Optimizely
           Logger::DEBUG,
           "Blocking timeout '#{blocking_timeout}' has invalid range. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
