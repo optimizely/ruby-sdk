@@ -30,7 +30,7 @@ module Optimizely
       unless batch_size.is_a? Integer
         logger.log(
           Logger::ERROR,
-          'Batch size has invalid type. Reverting to default configuration.'
+          "Batch size is invalid, setting to default batch size #{BatchEventProcessor::DEFAULT_BATCH_SIZE}."
         )
         return
       end
@@ -38,7 +38,7 @@ module Optimizely
       unless batch_size.positive?
         logger.log(
           Logger::ERROR,
-          'Batch size cannot be <= 0. Reverting to default configuration.'
+          "Batch size is negative, setting to default batch size #{BatchEventProcessor::DEFAULT_BATCH_SIZE}."
         )
         return
       end
@@ -52,7 +52,7 @@ module Optimizely
       unless flush_interval.is_a? Numeric
         logger.log(
           Logger::ERROR,
-          'Flush interval has invalid type. Reverting to default configuration.'
+          "Flush interval is invalid, setting to default flush interval #{BatchEventProcessor::DEFAULT_BATCH_INTERVAL}."
         )
         return
       end
@@ -60,7 +60,7 @@ module Optimizely
       unless flush_interval.positive?
         logger.log(
           Logger::ERROR,
-          'Flush interval cannot be <= 0. Reverting to default configuration.'
+          "Flush interval is negative, setting to default flush interval #{BatchEventProcessor::DEFAULT_BATCH_INTERVAL}."
         )
         return
       end
@@ -94,6 +94,9 @@ module Optimizely
     # @param user_profile_service - Optional UserProfileServiceInterface Provides methods to store and retreive user profiles.
     # @param config_manager - Optional ConfigManagerInterface Responds to get_config.
     # @param notification_center - Optional Instance of NotificationCenter.
+    #
+    # if @max_event_batch_size and @max_event_flush_interval are nil then default batchsize and flush_interval
+    # will be used to setup batchEventProcessor.
     def self.custom_instance(
       sdk_key,
       datafile = nil,

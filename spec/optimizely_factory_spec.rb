@@ -122,10 +122,10 @@ describe Optimizely::OptimizelyFactory do
       expect(Optimizely::OptimizelyFactory.max_event_batch_size('test', spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_batch_size(5.2, spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_batch_size(nil, spy_logger)). to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size has invalid type. Reverting to default configuration.').exactly(5).times
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is invalid, setting to default batch size 10.').exactly(5).times
       expect(Optimizely::OptimizelyFactory.max_event_batch_size(0, spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_batch_size(-2, spy_logger)). to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size cannot be <= 0. Reverting to default configuration.').twice
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is negative, setting to default batch size 10.').twice
     end
 
     it 'should not log error and return batch size and when valid batch size provided' do
@@ -140,10 +140,10 @@ describe Optimizely::OptimizelyFactory do
       expect(Optimizely::OptimizelyFactory.max_event_flush_interval(true, spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_flush_interval('test', spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_flush_interval(nil, spy_logger)). to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval has invalid type. Reverting to default configuration.').exactly(4).times
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is invalid, setting to default flush interval 30000.').exactly(4).times
       expect(Optimizely::OptimizelyFactory.max_event_flush_interval(0, spy_logger)). to eq(nil)
       expect(Optimizely::OptimizelyFactory.max_event_flush_interval(-2, spy_logger)). to eq(nil)
-      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval cannot be <= 0. Reverting to default configuration.').twice
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is negative, setting to default flush interval 30000.').twice
     end
 
     it 'should not log error and return batch size and when valid flush interval provided' do
