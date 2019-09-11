@@ -33,6 +33,7 @@ Metrics/ParameterLists:
 Naming/AccessorMethodName:
   Exclude:
     - 'lib/optimizely/config_manager/http_project_config_manager.rb'
+    - 'lib/optimizely/config_manager/static_project_config_manager.rb'
     - 'spec/optimizely_factory_spec.rb'
 
 # Offense count: 1

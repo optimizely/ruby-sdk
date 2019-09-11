@@ -21,7 +21,6 @@ require_relative 'project_config_manager'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
-    attr_reader :config
 
     def initialize(datafile, logger, error_handler, skip_json_validation)
       # Looks up and sets datafile and config based on response body.
@@ -38,6 +37,10 @@ module Optimizely
         error_handler,
         skip_json_validation
       )
+    end
+
+    def get_config
+      @config
     end
   end
 end

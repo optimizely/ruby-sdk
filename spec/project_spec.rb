@@ -35,6 +35,7 @@ describe 'Optimizely' do
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:conversion_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_config) { project_instance.config_manager.get_config }
   let(:time_now) { Time.now }
   let(:post_headers) { {'Content-Type' => 'application/json'} }
 
@@ -176,10 +177,10 @@ describe 'Optimizely' do
     it 'should properly activate a user, invoke Event object with right params, and return variation' do
       params = @expected_activate_params
 
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
+      variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.config_manager.config).to receive(:get_audience_ids_for_experiment)
+      allow(project_config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')
         .and_return([])
 
@@ -193,11 +194,11 @@ describe 'Optimizely' do
     it 'should properly activate a user, invoke Event object with right params, and return variation after a forced variation call' do
       params = @expected_activate_params
 
-      project_instance.decision_service.set_forced_variation(project_instance.config_manager.config, 'test_experiment', 'test_user', 'control')
-      variation_to_return = project_instance.decision_service.get_forced_variation(project_instance.config_manager.config, 'test_experiment', 'test_user')
+      project_instance.decision_service.set_forced_variation(project_config, 'test_experiment', 'test_user', 'control')
+      variation_to_return = project_instance.decision_service.get_forced_variation(project_config, 'test_experiment', 'test_user')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.config_manager.config).to receive(:get_audience_ids_for_experiment)
+      allow(project_config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')
         .and_return([])
 
@@ -222,7 +223,7 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -235,6 +236,7 @@ describe 'Optimizely' do
     describe '.typed audiences' do
       before(:example) do
         @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        @project_config = @project_typed_audience_instance.config_manager.get_config
         @expected_activate_params = {
           account_id: '4879520872',
           project_id: '11624721371',
@@ -287,7 +289,7 @@ describe 'Optimizely' do
         }]
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1630555627'
 
-        variation_to_return = @project_typed_audience_instance.config_manager.config.get_variation_from_id('typed_audience_experiment', '1423767503')
+        variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -314,7 +316,7 @@ describe 'Optimizely' do
         }]
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1630555627'
 
-        variation_to_return = @project_typed_audience_instance.config_manager.config.get_variation_from_id('typed_audience_experiment', '1423767503')
+        variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -326,7 +328,7 @@ describe 'Optimizely' do
       end
 
       it 'should return nil when typed audience conditions mismatch' do
-        variation_to_return = @project_typed_audience_instance.config_manager.config.get_variation_from_id('typed_audience_experiment', '1423767503')
+        variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -363,7 +365,7 @@ describe 'Optimizely' do
         }]
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1323241598'
 
-        variation_to_return = @project_typed_audience_instance.config_manager.config.get_variation_from_id('audience_combinations_experiment', '1423767504')
+        variation_to_return = @project_config.get_variation_from_id('audience_combinations_experiment', '1423767504')
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -417,7 +419,7 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -455,7 +457,7 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment_with_audience', '122228')
+      variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -487,8 +489,8 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
-      project_instance.decision_service.set_forced_variation(project_instance.config_manager.config, 'test_experiment_with_audience', 'test_user', 'variation_with_audience')
-      variation_to_return = project_instance.decision_service.get_forced_variation(project_instance.config_manager.config, 'test_experiment', 'test_user')
+      project_instance.decision_service.set_forced_variation(project_config, 'test_experiment_with_audience', 'test_user', 'variation_with_audience')
+      variation_to_return = project_instance.decision_service.get_forced_variation(project_config, 'test_experiment', 'test_user')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -592,13 +594,13 @@ describe 'Optimizely' do
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         method(:callback)
       )
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
+      variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.config_manager.config).to receive(:get_audience_ids_for_experiment)
+      allow(project_config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')
         .and_return([])
-      experiment = project_instance.config_manager.config.get_experiment_from_key('test_experiment')
+      experiment = project_config.get_experiment_from_key('test_experiment')
 
       # Decision listener
       expect(project_instance.notification_center).to receive(:send_notifications).with(
@@ -628,7 +630,7 @@ describe 'Optimizely' do
       log_event = Optimizely::Event.new(:post, impression_log_url, params, post_headers)
       allow(Optimizely::EventFactory).to receive(:create_log_event).and_return(log_event)
 
-      variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
+      variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
@@ -675,7 +677,7 @@ describe 'Optimizely' do
 
     it 'should return nil and log an error when Config Manager returns nil config' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.activate('test_experiment', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -695,7 +697,7 @@ describe 'Optimizely' do
       end
 
       it 'should call decision listener when user in experiment' do
-        variation_to_return = project_instance.config_manager.config.get_variation_from_id('test_experiment', '111128')
+        variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
         allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         expect(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -786,7 +788,7 @@ describe 'Optimizely' do
           false, nil, 'QBw9gFM8oTn7ogY9ANCC1z', nil, notification_center
         )
 
-        expect(project_instance.is_valid).to be false
+        expect(project_instance.is_valid).to be true
 
         until project_instance.config_manager.ready?; end
 
@@ -863,7 +865,7 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event by calling dispatch_event with right params after forced variation' do
-      project_instance.decision_service.set_forced_variation(project_instance.config_manager.config, 'test_experiment', 'test_user', 'variation')
+      project_instance.decision_service.set_forced_variation(project_config, 'test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_track_event_params, post_headers)).once
@@ -875,7 +877,7 @@ describe 'Optimizely' do
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
 
-      project_instance.decision_service.set_forced_variation(project_instance.config_manager.config, 'test_experiment', 'test_user', 'variation')
+      project_instance.decision_service.set_forced_variation(project_config, 'test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user', nil, revenue: 42)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
@@ -1089,7 +1091,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and does not call dispatch_event if event is not in datafile' do
-      allow(project_instance.config_manager.config).to receive(:get_event_from_key).with(any_args).and_return(nil)
+      allow(project_config).to receive(:get_event_from_key).with(any_args).and_return(nil)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
 
       expect(project_instance.track('invalid_event', 'test_user')).to eq(nil)
@@ -1128,7 +1130,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.track('test_event', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1238,7 +1240,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_variation('test_exp', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1371,7 +1373,7 @@ describe 'Optimizely' do
     end
 
     it 'should return false and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1712,7 +1714,7 @@ describe 'Optimizely' do
     end
 
     it 'should return empty and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).to be_empty
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1722,7 +1724,7 @@ describe 'Optimizely' do
 
     it 'should return only enabled feature flags keys' do
       # Sets all feature-flags keys with randomly assigned status
-      features_keys = project_instance.config_manager.config.feature_flags.map do |item|
+      features_keys = project_config.feature_flags.map do |item|
         {key: (item['key']).to_s, value: [true, false].sample} # '[true, false].sample' generates random boolean
       end
 
@@ -1886,7 +1888,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1897,7 +1899,7 @@ describe 'Optimizely' do
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
         it 'should return the default variable value' do
-          variation_to_return = project_instance.config_manager.config.rollout_id_map['166661']['experiments'][0]['variations'][0]
+          variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
           decision_to_return = {
             'experiment' => nil,
             'variation' => variation_to_return
@@ -1917,7 +1919,7 @@ describe 'Optimizely' do
       describe 'and a variable usage instance is found' do
         describe 'and the variable type boolean is not a string' do
           it 'should log a warning' do
-            variation_to_return = project_instance.config_manager.config.rollout_id_map['166660']['experiments'][0]['variations'][0]
+            variation_to_return = project_config.rollout_id_map['166660']['experiments'][0]['variations'][0]
             decision_to_return = {
               'experiment' => nil,
               'variation' => variation_to_return
@@ -1936,8 +1938,8 @@ describe 'Optimizely' do
 
         describe 'and the variable type integer is not a string' do
           it 'should log a warning' do
-            integer_feature = project_instance.config_manager.config.feature_flag_key_map['integer_single_variable_feature']
-            experiment_to_return = project_instance.config_manager.config.experiment_id_map[integer_feature['experimentIds'][0]]
+            integer_feature = project_config.feature_flag_key_map['integer_single_variable_feature']
+            experiment_to_return = project_config.experiment_id_map[integer_feature['experimentIds'][0]]
             variation_to_return = experiment_to_return['variations'][0]
             decision_to_return = {
               'experiment' => experiment_to_return,
@@ -1956,7 +1958,7 @@ describe 'Optimizely' do
         end
 
         it 'should return the variable value for the variation for the user is bucketed into' do
-          experiment_to_return = project_instance.config_manager.config.experiment_key_map['test_experiment_with_feature_rollout']
+          experiment_to_return = project_config.experiment_key_map['test_experiment_with_feature_rollout']
           variation_to_return = experiment_to_return['variations'][0]
           decision_to_return = {
             'experiment' => experiment_to_return,
@@ -2040,7 +2042,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2050,8 +2052,8 @@ describe 'Optimizely' do
     end
 
     it 'should return the variable value for the variation for the user is bucketed into' do
-      boolean_feature = project_instance.config_manager.config.feature_flag_key_map['boolean_single_variable_feature']
-      rollout = project_instance.config_manager.config.rollout_id_map[boolean_feature['rolloutId']]
+      boolean_feature = project_config.feature_flag_key_map['boolean_single_variable_feature']
+      rollout = project_config.rollout_id_map[boolean_feature['rolloutId']]
       variation_to_return = rollout['experiments'][0]['variations'][0]
       decision_to_return = {
         'experiment' => nil,
@@ -2087,7 +2089,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2097,8 +2099,8 @@ describe 'Optimizely' do
     end
 
     it 'should return the variable value for the variation for the user is bucketed into' do
-      double_feature = project_instance.config_manager.config.feature_flag_key_map['double_single_variable_feature']
-      experiment_to_return = project_instance.config_manager.config.experiment_id_map[double_feature['experimentIds'][0]]
+      double_feature = project_config.feature_flag_key_map['double_single_variable_feature']
+      experiment_to_return = project_config.experiment_id_map[double_feature['experimentIds'][0]]
       variation_to_return = experiment_to_return['variations'][0]
       decision_to_return = {
         'experiment' => experiment_to_return,
@@ -2135,7 +2137,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2145,8 +2147,8 @@ describe 'Optimizely' do
     end
 
     it 'should return the variable value for the variation for the user is bucketed into' do
-      integer_feature = project_instance.config_manager.config.feature_flag_key_map['integer_single_variable_feature']
-      experiment_to_return = project_instance.config_manager.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      integer_feature = project_config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_config.experiment_id_map[integer_feature['experimentIds'][0]]
       variation_to_return = experiment_to_return['variations'][0]
       decision_to_return = {
         'experiment' => experiment_to_return,
@@ -2183,7 +2185,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2194,7 +2196,7 @@ describe 'Optimizely' do
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
         it 'should return the default variable value!!!' do
-          variation_to_return = project_instance.config_manager.config.rollout_id_map['166661']['experiments'][0]['variations'][0]
+          variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
           decision_to_return = {
             'experiment' => nil,
             'variation' => variation_to_return
@@ -2213,7 +2215,7 @@ describe 'Optimizely' do
 
       describe 'and a variable usage instance is found' do
         it 'should return the string variable value for the variation for the user is bucketed into' do
-          experiment_to_return = project_instance.config_manager.config.experiment_key_map['test_experiment_with_feature_rollout']
+          experiment_to_return = project_config.experiment_key_map['test_experiment_with_feature_rollout']
           variation_to_return = experiment_to_return['variations'][0]
           decision_to_return = {
             'experiment' => experiment_to_return,
@@ -2233,8 +2235,8 @@ describe 'Optimizely' do
         end
 
         it 'should return the boolean variable value for the variation for the user is bucketed into' do
-          boolean_feature = project_instance.config_manager.config.feature_flag_key_map['boolean_single_variable_feature']
-          rollout = project_instance.config_manager.config.rollout_id_map[boolean_feature['rolloutId']]
+          boolean_feature = project_config.feature_flag_key_map['boolean_single_variable_feature']
+          rollout = project_config.rollout_id_map[boolean_feature['rolloutId']]
           variation_to_return = rollout['experiments'][0]['variations'][0]
           decision_to_return = {
             'experiment' => nil,
@@ -2254,8 +2256,8 @@ describe 'Optimizely' do
         end
 
         it 'should return the double variable value for the variation for the user is bucketed into' do
-          double_feature = project_instance.config_manager.config.feature_flag_key_map['double_single_variable_feature']
-          experiment_to_return = project_instance.config_manager.config.experiment_id_map[double_feature['experimentIds'][0]]
+          double_feature = project_config.feature_flag_key_map['double_single_variable_feature']
+          experiment_to_return = project_config.experiment_id_map[double_feature['experimentIds'][0]]
           variation_to_return = experiment_to_return['variations'][0]
           decision_to_return = {
             'experiment' => experiment_to_return,
@@ -2276,8 +2278,8 @@ describe 'Optimizely' do
         end
 
         it 'should return the integer variable value for the variation for the user is bucketed into' do
-          integer_feature = project_instance.config_manager.config.feature_flag_key_map['integer_single_variable_feature']
-          experiment_to_return = project_instance.config_manager.config.experiment_id_map[integer_feature['experimentIds'][0]]
+          integer_feature = project_config.feature_flag_key_map['integer_single_variable_feature']
+          experiment_to_return = project_config.experiment_id_map[integer_feature['experimentIds'][0]]
           variation_to_return = experiment_to_return['variations'][0]
           decision_to_return = {
             'experiment' => experiment_to_return,
@@ -2456,8 +2458,8 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should call decision listener with default variable type and value, when user in experiment and feature is not enabled' do
-      integer_feature = project_instance.config_manager.config.feature_flag_key_map['integer_single_variable_feature']
-      experiment_to_return = project_instance.config_manager.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      integer_feature = project_config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_config.experiment_id_map[integer_feature['experimentIds'][0]]
       variation_to_return = experiment_to_return['variations'][0]
       variation_to_return['featureEnabled'] = false
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -2500,8 +2502,8 @@ describe 'Optimizely' do
     end
 
     it 'should call decision listener with correct variable type and value, when user in experiment and feature is enabled' do
-      integer_feature = project_instance.config_manager.config.feature_flag_key_map['integer_single_variable_feature']
-      experiment_to_return = project_instance.config_manager.config.experiment_id_map[integer_feature['experimentIds'][0]]
+      integer_feature = project_config.feature_flag_key_map['integer_single_variable_feature']
+      experiment_to_return = project_config.experiment_id_map[integer_feature['experimentIds'][0]]
       variation_to_return = experiment_to_return['variations'][0]
       variation_to_return['featureEnabled'] = true
       decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -2698,7 +2700,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2757,7 +2759,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
       expect(project_instance.get_forced_variation(valid_experiment[:key], user_id)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2875,11 +2877,11 @@ describe 'Optimizely' do
 
     it 'should not raise exception in any API using static config manager' do
       static_project_config_manager = Optimizely::StaticProjectConfigManager.new(
-        config_body_JSON, spy_logger, error_handler, false
+        nil, spy_logger, error_handler, false
       )
 
       project_instance = Optimizely::Project.new(
-        nil, nil, spy_logger, error_handler,
+        config_body_JSON, nil, spy_logger, error_handler,
         false, nil, nil, static_project_config_manager
       )
 

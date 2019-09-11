@@ -722,7 +722,7 @@ module Optimizely
     end
 
     def project_config
-      @config_manager.config
+      @config_manager.get_config
     end
   end
 end
