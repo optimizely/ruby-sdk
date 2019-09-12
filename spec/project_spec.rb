@@ -35,7 +35,7 @@ describe 'Optimizely' do
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:conversion_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
-  let(:project_config) { project_instance.config_manager.get_config }
+  let(:project_config) { project_instance.config_manager.config }
   let(:time_now) { Time.now }
   let(:post_headers) { {'Content-Type' => 'application/json'} }
 
@@ -236,7 +236,7 @@ describe 'Optimizely' do
     describe '.typed audiences' do
       before(:example) do
         @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
-        @project_config = @project_typed_audience_instance.config_manager.get_config
+        @project_config = @project_typed_audience_instance.config_manager.config
         @expected_activate_params = {
           account_id: '4879520872',
           project_id: '11624721371',
@@ -677,7 +677,7 @@ describe 'Optimizely' do
 
     it 'should return nil and log an error when Config Manager returns nil config' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event)
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.activate('test_experiment', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -739,7 +739,7 @@ describe 'Optimizely' do
 
         until http_project_config_manager.ready?; end
 
-        expect(http_project_config_manager.get_config).not_to eq(nil)
+        expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
       end
 
@@ -766,7 +766,7 @@ describe 'Optimizely' do
 
         until http_project_config_manager.ready?; end
 
-        expect(http_project_config_manager.get_config).not_to eq(nil)
+        expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
       end
     end
@@ -787,6 +787,8 @@ describe 'Optimizely' do
           nil, nil, spy_logger, error_handler,
           false, nil, 'QBw9gFM8oTn7ogY9ANCC1z', nil, notification_center
         )
+
+        until project_instance.config_manager.ready?; end
 
         expect(project_instance.is_valid).to be true
         expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
@@ -1126,7 +1128,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.track('test_event', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1236,7 +1238,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_variation('test_exp', 'test_user')).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1369,7 +1371,7 @@ describe 'Optimizely' do
     end
 
     it 'should return false and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1710,7 +1712,7 @@ describe 'Optimizely' do
     end
 
     it 'should return empty and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'chrome')).to be_empty
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -1884,7 +1886,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2038,7 +2040,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2085,7 +2087,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2133,7 +2135,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -2181,7 +2183,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2696,7 +2698,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -2755,7 +2757,7 @@ describe 'Optimizely' do
     end
 
     it 'should return nil and log an error when Config Manager returns nil config' do
-      allow(project_instance.config_manager).to receive(:get_config).and_return(nil)
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
       expect(project_instance.get_forced_variation(valid_experiment[:key], user_id)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,

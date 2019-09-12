@@ -30,8 +30,8 @@ describe Optimizely::StaticProjectConfigManager do
       static_config_manager = Optimizely::StaticProjectConfigManager.new(config_body_JSON, spy_logger, error_handler, false)
 
       # All instance variables values of static_config_manager
-      static_config_manager_arr = static_config_manager.get_config.instance_variables.map do |attr|
-        static_config_manager.get_config.instance_variable_get attr
+      static_config_manager_arr = static_config_manager.config.instance_variables.map do |attr|
+        static_config_manager.config.instance_variable_get attr
       end
 
       # All instance variables values of datafile_project_config

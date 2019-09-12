@@ -52,7 +52,7 @@ describe Optimizely::OptimizelyFactory do
   describe '.default_instance_with_manager' do
     it 'should take provided custom config manager' do
       class CustomConfigManager
-        def get_config; end
+        attr_reader :config
       end
 
       custom_config_manager = CustomConfigManager.new

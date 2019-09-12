@@ -52,7 +52,7 @@ module Optimizely
     # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
     # @params sdk_key - Optional string uniquely identifying the datafile corresponding to project and environment combination.
     #                   Must provide at least one of datafile or sdk_key.
-    # @param config_manager - Optional Responds to get_config.
+    # @param config_manager - Optional Responds to config method.
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
 
@@ -82,7 +82,7 @@ module Optimizely
 
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
-      @config_manager = if config_manager.respond_to?(:get_config)
+      @config_manager = if config_manager.respond_to?(:config)
                           config_manager
                         elsif sdk_key
                           HTTPProjectConfigManager.new(
@@ -722,7 +722,7 @@ module Optimizely
     end
 
     def project_config
-      @config_manager.get_config
+      @config_manager.config
     end
   end
 end

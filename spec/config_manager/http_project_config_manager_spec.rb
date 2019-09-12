@@ -36,7 +36,7 @@ describe Optimizely::HTTPProjectConfigManager do
       )
 
       until http_project_config_manager.ready?; end
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should get project config when sdk_key is given' do
@@ -45,7 +45,7 @@ describe Optimizely::HTTPProjectConfigManager do
       )
 
       until http_project_config_manager.ready?; end
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should get project config when sdk_key and valid url_template is given' do
@@ -55,7 +55,7 @@ describe Optimizely::HTTPProjectConfigManager do
       )
       until http_project_config_manager.ready?; end
 
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should get instance ready immediately when datafile is provided' do
@@ -80,7 +80,7 @@ describe Optimizely::HTTPProjectConfigManager do
       until http_project_config_manager.ready?; end
       finish = Time.now
       expect(finish - start).to be > 0
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should send config update notification when project config is updated' do
@@ -96,7 +96,7 @@ describe Optimizely::HTTPProjectConfigManager do
       )
 
       until http_project_config_manager.ready?; end
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should not send config update notification when datafile is provided' do
@@ -129,8 +129,8 @@ describe Optimizely::HTTPProjectConfigManager do
       http_project_config_manager.start!
 
       # All instance variables values of http_project_config_manager
-      http_project_config_manager_arr = http_project_config_manager.get_config.instance_variables.map do |attr|
-        http_project_config_manager.get_config.instance_variable_get attr
+      http_project_config_manager_arr = http_project_config_manager.config.instance_variables.map do |attr|
+        http_project_config_manager.config.instance_variable_get attr
       end
 
       # All instance variables values of datafile_project_config
@@ -149,7 +149,7 @@ describe Optimizely::HTTPProjectConfigManager do
         auto_update: false,
         start_by_default: false
       )
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
       finish = Time.now
       expect(finish - start).to be < 1
     end
@@ -181,7 +181,7 @@ describe Optimizely::HTTPProjectConfigManager do
         'Old revision number: 42. New revision number: 81.').once
 
       # Asserts that config has updated from URL.
-      expect(http_project_config_manager.get_config.account_id).not_to eql(datafile_project_config.account_id)
+      expect(http_project_config_manager.config.account_id).not_to eql(datafile_project_config.account_id)
     end
   end
 
@@ -195,7 +195,7 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler
       )
 
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should get instance ready immediately' do
@@ -236,7 +236,7 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
         'Old revision number: 42. New revision number: 81.').once
 
-      expect(http_project_config_manager.get_config.account_id).not_to eql(datafile_project_config.account_id)
+      expect(http_project_config_manager.config.account_id).not_to eql(datafile_project_config.account_id)
     end
   end
 
@@ -246,7 +246,7 @@ describe Optimizely::HTTPProjectConfigManager do
         sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
       )
 
-      expect(http_project_config_manager.get_config).not_to eq(nil)
+      expect(http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should fetch datafile url and get instance ready' do
@@ -275,7 +275,7 @@ describe Optimizely::HTTPProjectConfigManager do
         blocking_timeout: 5
       )
       http_project_config_manager.start!
-      expect(http_project_config_manager.get_config).to eq(nil)
+      expect(http_project_config_manager.config).to eq(nil)
     end
   end
 

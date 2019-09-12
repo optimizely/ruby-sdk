@@ -44,7 +44,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 
    When the `datafile` is given then it will be used initially before any update.
 
- 2. Initialize Optimizely by providing a Config Manager that implements a 'get_config' method. You can customize our `HTTPConfigManager` as needed.
+ 2. Initialize Optimizely by providing a Config Manager that implements a 'config' method. You can customize our `HTTPConfigManager` as needed.
 
     ```
     custom_config_manager = CustomConfigManager.new
@@ -124,7 +124,7 @@ The following properties can be set to override the default configurations for `
 | datafile | nil | Initial datafile, typically sourced from a local cached source
 | auto_update | true | Boolean flag to specify if callback needs to execute infinitely or only once
 | start_by_default | true | Boolean flag to specify if datafile polling should start right away as soon as `HTTPConfigManager` initializes
-| blocking_timeout | 15 seconds | Maximum time in seconds to block the `get_config` call until config has been initialized
+| blocking_timeout | 15 seconds | Maximum time in seconds to block the `config` call until config has been initialized
 
 A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
 

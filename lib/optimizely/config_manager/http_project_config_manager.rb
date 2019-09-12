@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :config, :closed
+    attr_reader :closed
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -38,7 +38,7 @@ module Optimizely
     # datafile: Optional JSON string representing the project.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
-    # blocking_timeout - Optional Time in seconds to block the get_config call until config has been initialized.
+    # blocking_timeout - Optional Time in seconds to block the config call until config has been initialized.
     # auto_update - Boolean indicates to run infinitely or only once.
     # start_by_default - Boolean indicates to start by default AsyncScheduler.
     # url - Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
@@ -105,7 +105,7 @@ module Optimizely
       @closed = true
     end
 
-    def get_config
+    def config
       # Get Project Config.
 
       # If the background datafile polling thread is running. and config has been initalized,
@@ -234,9 +234,9 @@ module Optimizely
     end
 
     def blocking_timeout(blocking_timeout)
-      # Sets time in seconds to block the get_config call until config has been initialized.
+      # Sets time in seconds to block the config call until config has been initialized.
       #
-      # blocking_timeout - Time in seconds to block the get_config call.
+      # blocking_timeout - Time in seconds to block the config call.
 
       # If valid set given timeout, default blocking_timeout otherwise.
 
