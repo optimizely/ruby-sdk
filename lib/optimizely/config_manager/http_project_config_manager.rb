@@ -38,7 +38,7 @@ module Optimizely
     # datafile: Optional JSON string representing the project.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
-    # blocking_timeout - Optional Time in seconds to block the config call until config has been initialized.
+    # blocking_timeout - Optional Time in seconds to block the config call until config object has been initialized.
     # auto_update - Boolean indicates to run infinitely or only once.
     # start_by_default - Boolean indicates to start by default AsyncScheduler.
     # url - Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
