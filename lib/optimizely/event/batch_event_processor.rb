@@ -25,7 +25,7 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :event_queue, :current_batch, :started, :batch_size, :flush_interval
+    attr_reader :event_queue, :event_dispatcher, :current_batch, :started, :batch_size, :flush_interval
 
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
@@ -36,10 +36,11 @@ module Optimizely
 
     def initialize(
       event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher:,
+      event_dispatcher: Optimizely::EventDispatcher.new,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
-      logger: NoOpLogger.new
+      logger: NoOpLogger.new,
+      notification_center: nil
     )
       @event_queue = event_queue
       @logger = logger
@@ -50,7 +51,13 @@ module Optimizely
                       @logger.log(Logger::DEBUG, "Setting to default batch_size: #{DEFAULT_BATCH_SIZE}.")
                       DEFAULT_BATCH_SIZE
                     end
-      @flush_interval = positive_number?(flush_interval) ? flush_interval : DEFAULT_BATCH_INTERVAL
+      @flush_interval = if positive_number?(flush_interval)
+                          flush_interval
+                        else
+                          @logger.log(Logger::DEBUG, "Setting to default flush_interval: #{DEFAULT_BATCH_INTERVAL} ms.")
+                          DEFAULT_BATCH_INTERVAL
+                        end
+      @notification_center = notification_center
       @mutex = Mutex.new
       @received = ConditionVariable.new
       @current_batch = []
@@ -144,6 +151,16 @@ module Optimizely
 
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
+    rescue SignalException
+      @logger.log(Logger::INFO, 'Interrupted while processing buffer.')
+    rescue Exception => e
+      @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
+    ensure
+      @logger.log(
+        Logger::INFO,
+        'Exiting processing loop. Attempting to flush pending events.'
+      )
+      flush_queue!
     end
 
     def flush_queue!
@@ -152,6 +169,10 @@ module Optimizely
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
       begin
         @event_dispatcher.dispatch_event(log_event)
+        @notification_center&.send_notifications(
+          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+          log_event
+        )
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end
