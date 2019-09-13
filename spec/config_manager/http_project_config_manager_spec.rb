@@ -294,8 +294,8 @@ describe Optimizely::HTTPProjectConfigManager do
   end
 
   describe '.polling_interval' do
-    it 'should log an error when polling_interval is nil' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when polling_interval is nil' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: nil,
@@ -303,11 +303,13 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Polling interval is not provided. Defaulting to 300 seconds.')
     end
 
-    it 'should log an error when polling_interval has invalid type' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when polling_interval has invalid type' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: true,
@@ -315,11 +317,13 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Polling interval 'true' has invalid type. Defaulting to 300 seconds.")
     end
 
-    it 'should log an error when polling_interval has invalid range' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when polling_interval has invalid range' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: 999_999_999_999_999_999,
@@ -327,13 +331,15 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Polling interval '999999999999999999' has invalid range. Defaulting to 300 seconds.")
     end
   end
 
   describe '.blocking_timeout' do
-    it 'should log an error when blocking_timeout is nil' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when blocking_timeout is nil' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: 5,
@@ -341,11 +347,13 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Blocking timeout is not provided. Defaulting to 15 seconds.')
     end
 
-    it 'should log an error when blocking_timeout has invalid type' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when blocking_timeout has invalid type' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: 5,
@@ -353,11 +361,13 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Blocking timeout 'true' has invalid type. Defaulting to 15 seconds.")
     end
 
-    it 'should log an error when blocking_timeout has invalid range' do
-      Optimizely::HTTPProjectConfigManager.new(
+    it 'should set default and log an error when blocking_timeout has invalid range' do
+      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'sdk_key',
         url: nil,
         polling_interval: 5,
@@ -365,6 +375,8 @@ describe Optimizely::HTTPProjectConfigManager do
         error_handler: error_handler,
         logger: spy_logger
       )
+
+      expect(http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Blocking timeout '999999999999999999' has invalid range. Defaulting to 15 seconds.")
     end
   end

@@ -112,7 +112,7 @@ module Optimizely
       # we simply return config.
       # If it is not, we wait and block maximum for @blocking_timeout.
       # If thread is not running, we fetch the datafile and update config.
-      return nil if @closed == true
+      return @config if @closed
 
       if @async_scheduler.running
         return @config if ready?
