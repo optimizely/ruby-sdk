@@ -17,8 +17,56 @@
 #
 
 require 'optimizely'
+require 'optimizely/event_dispatcher'
+require 'optimizely/event/batch_event_processor'
 module Optimizely
   class OptimizelyFactory
+    attr_reader :max_event_batch_size, :max_event_flush_interval
+
+    # Convenience method for setting the maximum number of events contained within a batch.
+    # @param batch_size Integer - Sets size of EventQueue.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.max_event_batch_size(batch_size, logger)
+      unless batch_size.is_a? Integer
+        logger.log(
+          Logger::ERROR,
+          "Batch size is invalid, setting to default batch size #{BatchEventProcessor::DEFAULT_BATCH_SIZE}."
+        )
+        return
+      end
+
+      unless batch_size.positive?
+        logger.log(
+          Logger::ERROR,
+          "Batch size is negative, setting to default batch size #{BatchEventProcessor::DEFAULT_BATCH_SIZE}."
+        )
+        return
+      end
+      @max_event_batch_size = batch_size
+    end
+
+    # Convenience method for setting the maximum time interval in milliseconds between event dispatches.
+    # @param flush_interval Numeric - Time interval between event dispatches.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.max_event_flush_interval(flush_interval, logger)
+      unless flush_interval.is_a? Numeric
+        logger.log(
+          Logger::ERROR,
+          "Flush interval is invalid, setting to default flush interval #{BatchEventProcessor::DEFAULT_BATCH_INTERVAL}."
+        )
+        return
+      end
+
+      unless flush_interval.positive?
+        logger.log(
+          Logger::ERROR,
+          "Flush interval is negative, setting to default flush interval #{BatchEventProcessor::DEFAULT_BATCH_INTERVAL}."
+        )
+        return
+      end
+      @max_event_flush_interval = flush_interval
+    end
+
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the fallback datafile corresponding to project.
@@ -46,6 +94,9 @@ module Optimizely
     # @param user_profile_service - Optional UserProfileServiceInterface Provides methods to store and retreive user profiles.
     # @param config_manager - Optional ConfigManagerInterface Responds to get_config.
     # @param notification_center - Optional Instance of NotificationCenter.
+    #
+    # if @max_event_batch_size and @max_event_flush_interval are nil then default batchsize and flush_interval
+    # will be used to setup batchEventProcessor.
     def self.custom_instance(
       sdk_key,
       datafile = nil,
@@ -57,6 +108,13 @@ module Optimizely
       config_manager = nil,
       notification_center = nil
     )
+      event_processor = BatchEventProcessor.new(
+        event_dispatcher: event_dispatcher || EventDispatcher.new,
+        batch_size: @max_event_batch_size,
+        flush_interval: @max_event_flush_interval,
+        notification_center: notification_center
+      )
+
       Optimizely::Project.new(
         datafile,
         event_dispatcher,
@@ -66,7 +124,8 @@ module Optimizely
         user_profile_service,
         sdk_key,
         config_manager,
-        notification_center
+        notification_center,
+        event_processor
       )
     end
   end
