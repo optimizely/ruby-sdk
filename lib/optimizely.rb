@@ -52,7 +52,7 @@ module Optimizely
     # @param skip_json_validation - Optional boolean param to skip JSON schema validation of the provided datafile.
     # @params sdk_key - Optional string uniquely identifying the datafile corresponding to project and environment combination.
     #                   Must provide at least one of datafile or sdk_key.
-    # @param config_manager - Optional Responds to config method.
+    # @param config_manager - Optional Responds to 'config' method.
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
 

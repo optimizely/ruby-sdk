@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :closed
+    attr_reader :stopped
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -72,7 +72,7 @@ module Optimizely
       @last_modified = nil
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
       @async_scheduler.start! if start_by_default == true
-      @closed = false
+      @stopped = false
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
@@ -85,34 +85,35 @@ module Optimizely
     end
 
     def start!
-      if @closed
-        @logger.log(Logger::WARN, 'Not starting. Already closed.')
+      if @stopped
+        @logger.log(Logger::WARN, 'Not starting. Already stopped.')
         return
       end
 
       @async_scheduler.start!
-      @closed = false
+      @stopped = false
     end
 
     def stop!
-      if @closed
+      if @stopped
         @logger.log(Logger::WARN, 'Not pausing. Manager has not been started.')
         return
       end
 
       @async_scheduler.stop!
       @config = nil
-      @closed = true
+      @stopped = true
     end
 
     def config
       # Get Project Config.
 
+      # if stopped is true, then simply return @config.
       # If the background datafile polling thread is running. and config has been initalized,
-      # we simply return config.
+      # we simply return @config.
       # If it is not, we wait and block maximum for @blocking_timeout.
       # If thread is not running, we fetch the datafile and update config.
-      return @config if @closed
+      return @config if @stopped
 
       if @async_scheduler.running
         return @config if ready?

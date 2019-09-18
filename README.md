@@ -44,7 +44,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 
    When the `datafile` is given then it will be used initially before any update.
 
- 2. Initialize Optimizely by providing a Config Manager that implements a 'config' method. You can customize our `HTTPConfigManager` as needed.
+ 2. Initialize Optimizely by providing a Config Manager that implements a `config` method. You can customize our `HTTPConfigManager` as needed.
 
     ```
     custom_config_manager = CustomConfigManager.new
