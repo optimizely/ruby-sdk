@@ -63,7 +63,8 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
           skip_json_validation,
           user_profile_service,
           config_manager,
-          notification_center
+          notification_center,
+          event_processor
       )
       ```   
 
@@ -127,6 +128,48 @@ The following properties can be set to override the default configurations for `
 | blocking_timeout | 15 seconds | Maximum time in seconds to block the `config` call until config has been initialized
 
 A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
+
+
+#### BatchEventProcessor
+
+[BatchEventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/batch_event_processor.rb) is a batched implementation of the [EventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/event_processor.rb)  
+
+   * Events passed to the `BatchEventProcessor` are immediately added to a `Queue`.
+
+   * The `BatchEventProcessor` maintains a single consumer thread that pulls events off of the `Queue` and buffers them for either a configured batch size or for a maximum duration before the resulting `LogEvent` is sent to the `NotificationCenter`.
+
+##### Use BatchEventProcessor
+~~~~~~
+event_processor = Optimizely::BatchEventProcessor.new(
+    event_queue: SizedQueue.new(10),
+    event_dispatcher: event_dispatcher,
+    batch_size: 10,
+    flush_interval: 30000,
+    logger: logger,
+    notification_center: notification_center
+)
+~~~~~~   
+
+#### Advanced configuration
+The following properties can be used to customize the `BatchEventProcessor` configuration.
+
+| **Property Name** | **Default Value** | **Description**
+| -- | -- | --
+| `event_queue` | 1000 | `SizedQueue.new(100)` or `Queue.new`. Queues individual events to be batched and dispatched by the executor. Default value is 1000.
+| `event_dispatcher` | nil | Used to dispatch event payload to Optimizely. By default `EventDispatcher.new` will be set.
+| `batch_size` | 10 | The maximum number of events to batch before dispatching. Once this number is reached, all queued events are flushed and sent to Optimizely.
+| `flush_interval` | 30000 ms | Maximum time to wait before batching and dispatching events. In milliseconds.
+| `notification_center` | nil | Notification center instance to be used to trigger any notifications.
+
+
+#### Close Optimizely
+If you enable event batching, make sure that you call the `close` method, `optimizely.close()`, prior to exiting. This ensures that queued events are flushed as soon as possible to avoid any data loss.
+
+**Note:** Because the Optimizely client maintains a buffer of queued events, we recommend that you call `close()` on the Optimizely instance before shutting down your application or whenever dereferencing the instance.
+
+| **Method** | **Description**
+| -- | --
+| `close()` | Stops all timers and flushes the event queue. This method will also stop any timers that are happening for the datafile manager.
 
 See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Full Stack project and use the SDK.
 
