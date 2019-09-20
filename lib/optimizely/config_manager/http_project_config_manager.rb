@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :config, :closed
+    attr_reader :stopped
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -38,9 +38,9 @@ module Optimizely
     # datafile: Optional JSON string representing the project.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
-    # blocking_timeout -
-    # auto_update -
-    # start_by_default -
+    # blocking_timeout - Optional Time in seconds to block the config call until config object has been initialized.
+    # auto_update - Boolean indicates to run infinitely or only once.
+    # start_by_default - Boolean indicates to start by default AsyncScheduler.
     # url - Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
     # url_template - Optional string template which in conjunction with sdk_key
     #               determines URL from where to fetch the datafile.
@@ -72,7 +72,7 @@ module Optimizely
       @last_modified = nil
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
       @async_scheduler.start! if start_by_default == true
-      @closed = false
+      @stopped = false
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
@@ -85,33 +85,36 @@ module Optimizely
     end
 
     def start!
-      if @closed
-        @logger.log(Logger::WARN, 'Not starting. Already closed.')
+      if @stopped
+        @logger.log(Logger::WARN, 'Not starting. Already stopped.')
         return
       end
 
       @async_scheduler.start!
-      @closed = false
+      @stopped = false
     end
 
     def stop!
-      if @closed
+      if @stopped
         @logger.log(Logger::WARN, 'Not pausing. Manager has not been started.')
         return
       end
 
       @async_scheduler.stop!
       @config = nil
-      @closed = true
+      @stopped = true
     end
 
-    def get_config
+    def config
       # Get Project Config.
 
+      # if stopped is true, then simply return @config.
       # If the background datafile polling thread is running. and config has been initalized,
-      # we simply return config.
+      # we simply return @config.
       # If it is not, we wait and block maximum for @blocking_timeout.
       # If thread is not running, we fetch the datafile and update config.
+      return @config if @stopped
+
       if @async_scheduler.running
         return @config if ready?
 
@@ -232,9 +235,9 @@ module Optimizely
     end
 
     def blocking_timeout(blocking_timeout)
-      # Sets time in seconds to block the get_config call until config has been initialized.
+      # Sets time in seconds to block the config call until config has been initialized.
       #
-      # blocking_timeout - Time in seconds after which to update datafile.
+      # blocking_timeout - Time in seconds to block the config call.
 
       # If valid set given timeout, default blocking_timeout otherwise.
 
@@ -243,7 +246,7 @@ module Optimizely
           Logger::DEBUG,
           "Blocking timeout is not provided. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
@@ -252,7 +255,7 @@ module Optimizely
           Logger::ERROR,
           "Blocking timeout '#{blocking_timeout}' has invalid type. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
@@ -261,7 +264,7 @@ module Optimizely
           Logger::DEBUG,
           "Blocking timeout '#{blocking_timeout}' has invalid range. Defaulting to #{Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']} seconds."
         )
-        @polling_interval = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
+        @blocking_timeout = Helpers::Constants::CONFIG_MANAGER['DEFAULT_BLOCKING_TIMEOUT']
         return
       end
 
