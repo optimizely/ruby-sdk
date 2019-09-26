@@ -1,7 +1,7 @@
 # Optimizely Ruby SDK Changelog
 
 ## 3.3.0
-September 20th, 2019
+September 26th, 2019
 
 ### New Features:
 - Added non-typed `get_feature_variable` method ([#190](https://github.com/optimizely/ruby-sdk/pull/190)) as a more idiomatic approach to getting values of feature variables.
