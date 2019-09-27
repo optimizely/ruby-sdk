@@ -19,14 +19,16 @@
 require 'optimizely'
 require 'optimizely/event_dispatcher'
 require 'optimizely/event/batch_event_processor'
+require 'optimizely/error_handler'
+require 'optimizely/logger'
+require 'optimizely/notification_center'
+
 module Optimizely
   class OptimizelyFactory
-    attr_reader :max_event_batch_size, :max_event_flush_interval
-
     # Convenience method for setting the maximum number of events contained within a batch.
     # @param batch_size Integer - Sets size of EventQueue.
     # @param logger - Optional LoggerInterface Provides a log method to log messages.
-    def self.max_event_batch_size(batch_size, logger)
+    def self.set_max_event_batch_size(batch_size, logger = NoOpLogger.new)
       unless batch_size.is_a? Integer
         logger.log(
           Logger::ERROR,
@@ -48,7 +50,7 @@ module Optimizely
     # Convenience method for setting the maximum time interval in milliseconds between event dispatches.
     # @param flush_interval Numeric - Time interval between event dispatches.
     # @param logger - Optional LoggerInterface Provides a log method to log messages.
-    def self.max_event_flush_interval(flush_interval, logger)
+    def self.set_max_event_flush_interval(flush_interval, logger = NoOpLogger.new)
       unless flush_interval.is_a? Numeric
         logger.log(
           Logger::ERROR,
@@ -67,12 +69,42 @@ module Optimizely
       @max_event_flush_interval = flush_interval
     end
 
+    # Convenience method for setting frequency at which datafile has to be polled and ProjectConfig updated.
+    #
+    # @param polling_interval Numeric - Time in seconds after which to update datafile.
+    def self.set_polling_interval(polling_interval)
+      @polling_interval = polling_interval
+    end
+
+    # Convenience method for setting timeout to block the config call until config has been initialized.
+    #
+    # @param blocking_timeout Numeric - Time in seconds.
+    def self.set_blocking_timeout(blocking_timeout)
+      @blocking_timeout = blocking_timeout
+    end
+
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the fallback datafile corresponding to project.
     # @param fallback datafile - Optional JSON string datafile.
     def self.default_instance(sdk_key, datafile = nil)
-      Optimizely::Project.new(datafile, nil, nil, nil, nil, nil, sdk_key)
+      error_handler = NoOpErrorHandler.new
+      logger = NoOpLogger.new
+      notification_center = NotificationCenter.new(logger, error_handler)
+
+      config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: sdk_key,
+        polling_interval: @polling_interval,
+        blocking_timeout: @blocking_timeout,
+        datafile: datafile,
+        logger: logger,
+        error_handler: error_handler,
+        notification_center: notification_center
+      )
+
+      Optimizely::Project.new(
+        datafile, nil, logger, error_handler, nil, nil, sdk_key, config_manager, notification_center
+      )
     end
 
     # Returns a new optimizely instance.
@@ -108,10 +140,27 @@ module Optimizely
       config_manager = nil,
       notification_center = nil
     )
+
+      error_handler ||= NoOpErrorHandler.new
+      logger ||= NoOpLogger.new
+      notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(logger, error_handler)
+
       event_processor = BatchEventProcessor.new(
         event_dispatcher: event_dispatcher || EventDispatcher.new,
         batch_size: @max_event_batch_size,
         flush_interval: @max_event_flush_interval,
+        logger: logger,
+        notification_center: notification_center
+      )
+
+      config_manager ||= Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: sdk_key,
+        polling_interval: @polling_interval,
+        blocking_timeout: @blocking_timeout,
+        datafile: datafile,
+        logger: logger,
+        error_handler: error_handler,
+        skip_json_validation: skip_json_validation,
         notification_center: notification_center
       )
 

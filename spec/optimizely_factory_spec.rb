@@ -30,22 +30,37 @@ describe Optimizely::OptimizelyFactory do
   let(:event_dispatcher) { Optimizely::EventDispatcher.new }
   let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, error_handler) }
 
-  describe '.default_instance' do
-    it 'should take http config manager' do
-      allow(Optimizely::HTTPProjectConfigManager).to receive(:new)
-
-      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'sdk_key',
-        datafile: datafile,
-        logger: spy_logger,
-        error_handler: error_handler,
-        skip_json_validation: false,
-        notification_center: notification_center
+  before(:example) do
+    WebMock.allow_net_connect!
+    stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk_key.json')
+      .with(
+        headers: {
+          'Content-Type' => 'application/json'
+        }
       )
+      .to_return(status: 200, body: '', headers: {})
+  end
 
+  describe '.default_instance' do
+    it 'should create http config manager when sdk is given' do
+      optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
+      expect(optimizely_instance.config_manager). to be_instance_of(Optimizely::HTTPProjectConfigManager)
+    end
+
+    it 'should create http config manager when polling interval and blocking timeout are set' do
+      Optimizely::OptimizelyFactory.set_polling_interval(40)
+      Optimizely::OptimizelyFactory.set_blocking_timeout(5)
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
 
-      expect(optimizely_instance.config_manager). to eq(http_project_config_manager)
+      expect(optimizely_instance.config_manager.polling_interval). to eq(40)
+      expect(optimizely_instance.config_manager.blocking_timeout). to eq(5)
+    end
+
+    it 'should create http config manager with the same components as the instance' do
+      optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
+      expect(optimizely_instance.error_handler). to be(optimizely_instance.config_manager.error_handler)
+      expect(optimizely_instance.logger). to be(optimizely_instance.config_manager.logger)
+      expect(optimizely_instance.notification_center). to be(optimizely_instance.config_manager.notification_center)
     end
   end
 
@@ -57,52 +72,47 @@ describe Optimizely::OptimizelyFactory do
 
       custom_config_manager = CustomConfigManager.new
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance_with_config_manager(custom_config_manager)
-      expect(optimizely_instance.config_manager). to eq(custom_config_manager)
+      expect(optimizely_instance.config_manager). to be(custom_config_manager)
     end
   end
 
   describe '.custom_instance' do
-    it 'should take http config manager when sdk key is given' do
-      allow(Optimizely::HTTPProjectConfigManager).to receive(:new)
-      http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'sdk_key',
-        datafile: datafile,
-        logger: spy_logger,
-        error_handler: error_handler,
-        skip_json_validation: false,
-        notification_center: notification_center
-      )
-
+    it 'should take http config manager when sdk key, polling interval, blocking timeout are given' do
+      Optimizely::OptimizelyFactory.set_polling_interval(50)
+      Optimizely::OptimizelyFactory.set_blocking_timeout(10)
       optimizely_instance = Optimizely::OptimizelyFactory.custom_instance(
         'sdk_key',
         datafile,
         event_dispatcher,
-        spy_logger,
+        Optimizely::NoOpLogger.new,
         error_handler,
         false,
         user_profile_service,
         nil,
         notification_center
       )
-      expect(optimizely_instance.config_manager). to eq(http_project_config_manager)
+      expect(optimizely_instance.config_manager.polling_interval). to eq(50)
+      expect(optimizely_instance.config_manager.blocking_timeout). to eq(10)
     end
 
     it 'should take event processor when flush interval and batch size are set' do
-      Optimizely::OptimizelyFactory.max_event_flush_interval(5, spy_logger)
-      Optimizely::OptimizelyFactory.max_event_batch_size(100, spy_logger)
+      Optimizely::OptimizelyFactory.set_max_event_flush_interval(5)
+      Optimizely::OptimizelyFactory.set_max_event_batch_size(100)
 
-      event_processor = Optimizely::BatchEventProcessor.new(
-        event_dispatcher: event_dispatcher,
-        batch_size: 100,
-        flush_interval: 5,
-        notification_center: notification_center
-      )
+      optimizely_instance = Optimizely::OptimizelyFactory.custom_instance('sdk_key')
 
+      expect(optimizely_instance.event_processor.flush_interval).to eq(5)
+      expect(optimizely_instance.event_processor.batch_size).to eq(100)
+      optimizely_instance.close
+    end
+
+    it 'should assign passed components to both the instance and http manager' do
+      logger = Optimizely::NoOpLogger.new
       optimizely_instance = Optimizely::OptimizelyFactory.custom_instance(
         'sdk_key',
         datafile,
         event_dispatcher,
-        spy_logger,
+        logger,
         error_handler,
         false,
         user_profile_service,
@@ -110,45 +120,50 @@ describe Optimizely::OptimizelyFactory do
         notification_center
       )
 
-      expect(optimizely_instance.event_processor).equal? event_processor
-      optimizely_instance.close
+      expect(error_handler). to be(optimizely_instance.config_manager.error_handler)
+      expect(logger). to be(optimizely_instance.config_manager.logger)
+      expect(notification_center). to be(optimizely_instance.config_manager.notification_center)
+
+      expect(error_handler). to be(optimizely_instance.error_handler)
+      expect(logger). to be(optimizely_instance.logger)
+      expect(notification_center). to be(optimizely_instance.notification_center)
     end
   end
 
   describe '.max_event_batch_size' do
     it 'should log error message and return nil when invalid batch size provided' do
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size([], spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(true, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size('test', spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(5.2, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(nil, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size([], spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(true, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size('test', spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(5.2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(nil, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is invalid, setting to default batch size 10.').exactly(5).times
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(0, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(-2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(0, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(-2, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is negative, setting to default batch size 10.').twice
     end
 
     it 'should not log error and return batch size and when valid batch size provided' do
-      expect(Optimizely::OptimizelyFactory.max_event_batch_size(5, spy_logger)). to eq(5)
+      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(5, spy_logger)). to eq(5)
       expect(spy_logger).not_to have_received(:log)
     end
   end
 
   describe '.max_event_flush_interval' do
     it 'should log error message and return nil when invalid flush interval provided' do
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval([], spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(true, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval('test', spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(nil, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval([], spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(true, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval('test', spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(nil, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is invalid, setting to default flush interval 30000.').exactly(4).times
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(0, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(-2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(0, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(-2, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is negative, setting to default flush interval 30000.').twice
     end
 
     it 'should not log error and return batch size and when valid flush interval provided' do
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(5, spy_logger)). to eq(5)
-      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(5.5, spy_logger)). to eq(5.5)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(5, spy_logger)). to eq(5)
+      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(5.5, spy_logger)). to eq(5.5)
       expect(spy_logger).not_to have_received(:log)
     end
   end

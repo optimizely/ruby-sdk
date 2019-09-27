@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :stopped
+    attr_reader :blocking_timeout, :error_handler, :logger, :notification_center, :polling_interval, :stopped
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -66,9 +66,9 @@ module Optimizely
       @error_handler = error_handler || NoOpErrorHandler.new
       @datafile_url = get_datafile_url(sdk_key, url, url_template)
       @polling_interval = nil
-      polling_interval(polling_interval)
+      set_polling_interval(polling_interval)
       @blocking_timeout = nil
-      blocking_timeout(blocking_timeout)
+      set_blocking_timeout(blocking_timeout)
       @last_modified = nil
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
       @async_scheduler.start! if start_by_default == true
@@ -197,7 +197,7 @@ module Optimizely
         "Old revision number: #{previous_revision}. New revision number: #{@config.revision}.")
     end
 
-    def polling_interval(polling_interval)
+    def set_polling_interval(polling_interval)
       # Sets frequency at which datafile has to be polled and ProjectConfig updated.
       #
       # polling_interval - Time in seconds after which to update datafile.
@@ -234,7 +234,7 @@ module Optimizely
       @polling_interval = polling_interval
     end
 
-    def blocking_timeout(blocking_timeout)
+    def set_blocking_timeout(blocking_timeout)
       # Sets time in seconds to block the config call until config has been initialized.
       #
       # blocking_timeout - Time in seconds to block the config call.
