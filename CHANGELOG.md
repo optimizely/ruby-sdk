@@ -1,5 +1,11 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.3.1
+October 10th, 2019
+
+### Bug Fixes:
+- Include LICENSE file in built gem ([#208](https://github.com/optimizely/ruby-sdk/pull/190)) as per rubygems guidelines around license files.
+
 ## 3.3.0
 September 26th, 2019
 
