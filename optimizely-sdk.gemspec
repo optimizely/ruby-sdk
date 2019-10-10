@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://www.optimizely.com/'
   spec.license       = 'Apache-2.0'
 
-  spec.files         = Dir['lib/**/*']
+  spec.files         = Dir['lib/**/*', 'LICENSE']
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler'
