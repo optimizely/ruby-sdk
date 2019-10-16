@@ -47,3 +47,6 @@ Style/SignalException:
 
 Lint/RescueException:
   Enabled: false
+
+Layout/EndOfLine:
+  EnforcedStyle: lf
