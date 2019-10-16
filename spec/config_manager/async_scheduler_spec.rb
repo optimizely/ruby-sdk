@@ -28,6 +28,7 @@ describe Optimizely::AsyncScheduler do
     scheduler = Optimizely::AsyncScheduler.new(method(:some_callback), 10, false, spy_logger)
     scheduler.start!
 
+    while scheduler.running; end
     expect(spy_logger).to have_received(:log).with(
       Logger::ERROR,
       'Something went wrong when executing passed callback. wrong number of arguments (given 0, expected 1)'
