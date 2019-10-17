@@ -293,7 +293,7 @@ describe Optimizely::HTTPProjectConfigManager do
         sdk_key: 'invalid_sdk_key',
         start_by_default: false,
         polling_interval: 1,
-        blocking_timeout: 2
+        blocking_timeout: 5
       )
       @http_project_config_manager.start!
       expect(@http_project_config_manager.config).to eq(nil)

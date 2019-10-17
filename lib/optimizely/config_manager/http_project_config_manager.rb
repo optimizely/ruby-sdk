@@ -70,7 +70,6 @@ module Optimizely
       @blocking_timeout = nil
       blocking_timeout(blocking_timeout)
       @last_modified = nil
-      @stopped = false
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
@@ -80,6 +79,7 @@ module Optimizely
       # Start async scheduler in the end to avoid race condition where scheduler executes
       # callback which makes use of variables not yet initialized by the main thread.
       @async_scheduler.start! if start_by_default == true
+      @stopped = false
     end
 
     def ready?
