@@ -77,6 +77,8 @@ module Optimizely
       @mutex = Mutex.new
       @resource = ConditionVariable.new
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
+      # Start async scheduler in the end to avoid race condition where scheduler executes
+      # callback which makes use of variables not yet initialized by the main thread.
       @async_scheduler.start! if start_by_default == true
     end
 

@@ -23,22 +23,35 @@ require 'optimizely/helpers/constants'
 require 'optimizely/helpers/validator'
 require 'optimizely/logger'
 describe Optimizely::HTTPProjectConfigManager do
-  # WebMock.allow_net_connect!
-
-  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
+  let(:spy_logger) { spy('logger') }
+
+  before(:context) do
+    VALID_SDK_KEY_CONFIG = OptimizelySpec::VALID_CONFIG_BODY.dup
+    VALID_SDK_KEY_CONFIG['accountId'] = '12002'
+    VALID_SDK_KEY_CONFIG['revision'] = '81'
+    VALID_SDK_KEY_CONFIG_JSON = JSON.dump(VALID_SDK_KEY_CONFIG)
+  end
 
   before(:example) do
-    @spy_logger = spy('logger')
     @http_project_config_manager = nil
-    stub_request(:get, 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json')
+
+    stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
       .with(
         headers: {
           'Content-Type' => 'application/json'
         }
       )
-      .to_return(status: 200, body: OptimizelySpec::VALID_CONFIG_BODY_WITH_DIFF_ACCOUNT_ID_JSON, headers: {})
+      .to_return(status: 200, body: VALID_SDK_KEY_CONFIG_JSON, headers: {})
+
+    stub_request(:get, 'https://cdn.optimizely.com/datafiles/invalid_sdk_key.json')
+      .with(
+        headers: {
+          'Content-Type' => 'application/json'
+        }
+      )
+      .to_return(status: 403, body: '', headers: {})
   end
 
   after(:example) do
@@ -48,44 +61,45 @@ describe Optimizely::HTTPProjectConfigManager do
   describe '.project_config_manager' do
     it 'should get project config when valid url is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json'
+        url: 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json'
       )
 
       until @http_project_config_manager.ready?; end
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
     it 'should get project config when sdk_key is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+        sdk_key: 'valid_sdk_key'
       )
 
       until @http_project_config_manager.ready?; end
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
     it 'should get project config when sdk_key and valid url_template is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         url_template: 'https://cdn.optimizely.com/datafiles/%s.json'
       )
       until @http_project_config_manager.ready?; end
 
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
     it 'should get instance ready immediately when datafile is provided' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         start_by_default: false
       )
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      # This expectation on main thread confirms that instance got ready immediately
+      expect(@http_project_config_manager.ready?).to be true
     end
 
     it 'should wait to get project config when datafile is not provided' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         start_by_default: false
       )
       start = Time.now
@@ -93,7 +107,7 @@ describe Optimizely::HTTPProjectConfigManager do
       until @http_project_config_manager.ready?; end
       finish = Time.now
       expect(finish - start).to be > 0
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
     it 'should send config update notification when project config is updated' do
@@ -104,12 +118,11 @@ describe Optimizely::HTTPProjectConfigManager do
       ).once
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         notification_center: notification_center
       )
 
       until @http_project_config_manager.ready?; end
-      expect(@http_project_config_manager.config).not_to eq(nil)
     end
 
     it 'should not send config update notification when datafile is provided' do
@@ -118,7 +131,7 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(notification_center).not_to receive(:send_notifications)
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         start_by_default: false,
         notification_center: notification_center
@@ -133,7 +146,7 @@ describe Optimizely::HTTPProjectConfigManager do
       datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         auto_update: false,
         start_by_default: false,
@@ -158,7 +171,7 @@ describe Optimizely::HTTPProjectConfigManager do
 
     it 'should get instance ready immediately' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         auto_update: false,
         start_by_default: false
@@ -167,29 +180,29 @@ describe Optimizely::HTTPProjectConfigManager do
     end
 
     it 'should update config, send config update notification and does not schedule a future update' do
-      notification_center = Optimizely::NotificationCenter.new(@spy_logger, error_handler)
+      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
 
-      datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, @spy_logger, error_handler)
+      datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler)
 
       expect(notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE]
       ).once
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
-        polling_interval: 1,
+        polling_interval: 0.1,
         auto_update: false,
         notification_center: notification_center,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       # Sleep to ensure that new request is not scheduled.
-      sleep 3
+      sleep 0.3
 
-      expect(@spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json').once
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/valid_sdk_key.json').once
 
-      expect(@spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
         'Old revision number: 42. New revision number: 81.').once
 
       # Asserts that config has updated from URL.
@@ -200,10 +213,10 @@ describe Optimizely::HTTPProjectConfigManager do
   describe '.Initialize(sdk_key, datafile, auto_update: true)' do
     it 'should get project config instance' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         start_by_default: false,
-        logger: @spy_logger,
+        logger: spy_logger,
         error_handler: error_handler
       )
 
@@ -212,7 +225,7 @@ describe Optimizely::HTTPProjectConfigManager do
 
     it 'should get instance ready immediately' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
         start_by_default: false
       )
@@ -220,28 +233,28 @@ describe Optimizely::HTTPProjectConfigManager do
     end
 
     it 'should update config, send config update notification and schedules next call after previous timeout' do
-      notification_center = Optimizely::NotificationCenter.new(@spy_logger, error_handler)
+      notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
 
-      datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, @spy_logger, error_handler)
+      datafile_project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler)
 
       expect(notification_center).to receive(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE]
       ).once
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         datafile: config_body_JSON,
-        polling_interval: 1,
+        polling_interval: 0.1,
         blocking_timeout: 2,
         notification_center: notification_center,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
-      sleep 4
+      sleep 0.3
 
-      expect(@spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json').at_least(2)
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/valid_sdk_key.json').at_least(2)
 
-      expect(@spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
         'Old revision number: 42. New revision number: 81.').once
 
       expect(@http_project_config_manager.config.account_id).not_to eql(datafile_project_config.account_id)
@@ -251,15 +264,15 @@ describe Optimizely::HTTPProjectConfigManager do
   describe '.Initialize(sdk_key, auto_update: true)' do
     it 'should fetch project config with default datafile url' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+        sdk_key: 'valid_sdk_key'
       )
-
-      expect(@http_project_config_manager.config).not_to eq(nil)
+      until @http_project_config_manager.ready?; end
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
     it 'should fetch datafile url and get instance ready' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         start_by_default: false
       )
 
@@ -273,19 +286,11 @@ describe Optimizely::HTTPProjectConfigManager do
     end
 
     it 'should not update project config when response body is not valid json' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/invalid_sdk.json')
-        .with(
-          headers: {
-            'Content-Type' => 'application/json'
-          }
-        )
-        .to_return(status: 403, body: '', headers: {})
-
       logger = double('logger')
       allow(logger).to receive(:log)
       allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'invalid_sdk',
+        sdk_key: 'invalid_sdk_key',
         start_by_default: false,
         polling_interval: 1,
         blocking_timeout: 2
@@ -303,9 +308,9 @@ describe Optimizely::HTTPProjectConfigManager do
         sdk_key: nil,
         url: nil,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
-      expect(@spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
     end
   end
 
@@ -317,11 +322,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: nil,
         blocking_timeout: 5,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Polling interval is not provided. Defaulting to 300 seconds.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Polling interval is not provided. Defaulting to 300 seconds.')
     end
 
     it 'should set default and log an error when polling_interval has invalid type' do
@@ -331,11 +336,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: true,
         blocking_timeout: 5,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::ERROR, "Polling interval 'true' has invalid type. Defaulting to 300 seconds.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Polling interval 'true' has invalid type. Defaulting to 300 seconds.")
     end
 
     it 'should set default and log an error when polling_interval has invalid range' do
@@ -345,11 +350,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: 999_999_999_999_999_999,
         blocking_timeout: 5,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@polling_interval)).to eq(300)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Polling interval '999999999999999999' has invalid range. Defaulting to 300 seconds.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Polling interval '999999999999999999' has invalid range. Defaulting to 300 seconds.")
     end
   end
 
@@ -361,11 +366,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: 5,
         blocking_timeout: nil,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Blocking timeout is not provided. Defaulting to 15 seconds.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'Blocking timeout is not provided. Defaulting to 15 seconds.')
     end
 
     it 'should set default and log an error when blocking_timeout has invalid type' do
@@ -375,11 +380,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: 5,
         blocking_timeout: true,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::ERROR, "Blocking timeout 'true' has invalid type. Defaulting to 15 seconds.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Blocking timeout 'true' has invalid type. Defaulting to 15 seconds.")
     end
 
     it 'should set default and log an error when blocking_timeout has invalid range' do
@@ -389,11 +394,11 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: 5,
         blocking_timeout: 999_999_999_999_999_999,
         error_handler: error_handler,
-        logger: @spy_logger
+        logger: spy_logger
       )
 
       expect(@http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
-      expect(@spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Blocking timeout '999999999999999999' has invalid range. Defaulting to 15 seconds.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Blocking timeout '999999999999999999' has invalid range. Defaulting to 15 seconds.")
     end
   end
 end
