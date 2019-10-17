@@ -58,8 +58,6 @@ module Optimizely
                           DEFAULT_BATCH_INTERVAL
                         end
       @notification_center = notification_center
-      @mutex = Mutex.new
-      @received = ConditionVariable.new
       @current_batch = []
       @started = false
       start!
@@ -76,10 +74,7 @@ module Optimizely
     end
 
     def flush
-      @mutex.synchronize do
-        @event_queue << FLUSH_SIGNAL
-        @received.signal
-      end
+      @event_queue << FLUSH_SIGNAL
     end
 
     def process(user_event)
@@ -90,28 +85,21 @@ module Optimizely
         return
       end
 
-      @mutex.synchronize do
-        begin
-          @event_queue << user_event
-          @received.signal
-        rescue Exception
-          @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
-          return
-        end
+      begin
+        @event_queue << user_event
+      rescue Exception
+        @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
+        return
       end
     end
 
     def stop!
       return unless @started
 
-      @mutex.synchronize do
-        @event_queue << SHUTDOWN_SIGNAL
-        @received.signal
-      end
-
-      @started = false
       @logger.log(Logger::WARN, 'Stopping scheduler.')
-      @thread.exit
+      @event_queue << SHUTDOWN_SIGNAL
+      @thread.join
+      @started = false
     end
 
     private
@@ -126,12 +114,7 @@ module Optimizely
           flush_queue!
         end
 
-        item = nil
-
-        @mutex.synchronize do
-          @received.wait(@mutex, 0.05)
-          item = @event_queue.pop if @event_queue.length.positive?
-        end
+        item = @event_queue.pop if @event_queue.length.positive?
 
         if item.nil?
           sleep(0.05)
