@@ -37,6 +37,7 @@ describe Optimizely::HTTPProjectConfigManager do
   before(:example) do
     @http_project_config_manager = nil
 
+    WebMock.reset_callbacks
     stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
       .with(
         headers: {
@@ -97,17 +98,38 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(@http_project_config_manager.ready?).to be true
     end
 
-    it 'should wait to get project config when datafile is not provided' do
+    it 'should wait to get project config upto blocking timeout when datafile is not provided' do
+      # Add delay of 2 seconds in http response to the async thread.
+      WebMock.after_request do |_request_signature, _response|
+        sleep 2
+      end
+
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'valid_sdk_key',
-        start_by_default: false
+        start_by_default: false,
+        blocking_timeout: 3
       )
-      start = Time.now
+
       @http_project_config_manager.start!
-      until @http_project_config_manager.ready?; end
-      finish = Time.now
-      expect(finish - start).to be > 0
+      # This expectation would only pass if the .config call waits upto blocking timeout.
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
+    end
+
+    it 'should not wait more than blocking timeout to get project config when datafile is not provided' do
+      # Add delay of 3 seconds in http response to the async thread.
+      WebMock.after_request do |_request_signature, _response|
+        sleep 3
+      end
+
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        start_by_default: false,
+        blocking_timeout: 2
+      )
+
+      @http_project_config_manager.start!
+      # This expectation would only pass if the .config call does not wait more than blocking timeout.
+      expect(@http_project_config_manager.config).to be nil
     end
 
     it 'should send config update notification when project config is updated' do
