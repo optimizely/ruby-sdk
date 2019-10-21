@@ -20,7 +20,7 @@ require_relative '../helpers/validator'
 module Optimizely
   class BatchEventProcessor < EventProcessor
     # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
-    # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
+    # Events passed to the BatchEventProcessor are immediately added to an EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
@@ -30,6 +30,7 @@ module Optimizely
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
+    DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -69,6 +70,7 @@ module Optimizely
         return
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+      @logger.log(Logger::INFO, 'Starting scheduler.')
       @thread = Thread.new { run }
       @started = true
     end
@@ -86,7 +88,7 @@ module Optimizely
       end
 
       begin
-        @event_queue << user_event
+        @event_queue.push(user_event, true)
       rescue Exception
         @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
         return
@@ -96,9 +98,9 @@ module Optimizely
     def stop!
       return unless @started
 
-      @logger.log(Logger::WARN, 'Stopping scheduler.')
+      @logger.log(Logger::INFO, 'Stopping scheduler.')
       @event_queue << SHUTDOWN_SIGNAL
-      @thread.join
+      @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
     end
 
@@ -106,13 +108,7 @@ module Optimizely
 
     def run
       loop do
-        if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
-          @logger.log(
-            Logger::DEBUG,
-            'Deadline exceeded flushing current batch.'
-          )
-          flush_queue!
-        end
+        flush_queue! if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
 
         item = @event_queue.pop if @event_queue.length.positive?
 
@@ -122,7 +118,7 @@ module Optimizely
         end
 
         if item == SHUTDOWN_SIGNAL
-          @logger.log(Logger::INFO, 'Received shutdown signal.')
+          @logger.log(Logger::DEBUG, 'Received shutdown signal.')
           break
         end
 
@@ -135,7 +131,7 @@ module Optimizely
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
     rescue SignalException
-      @logger.log(Logger::INFO, 'Interrupted while processing buffer.')
+      @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
     rescue Exception => e
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
@@ -171,7 +167,7 @@ module Optimizely
       # Reset the deadline if starting a new batch.
       @flushing_interval_deadline = (Helpers::DateTimeUtils.create_timestamp + @flush_interval) if @current_batch.empty?
 
-      @logger.log(Logger::DEBUG, "Adding user event: #{user_event} to batch.")
+      @logger.log(Logger::DEBUG, "Adding user events: #{user_event} to batch.")
       @current_batch << user_event
       return unless @current_batch.length >= @batch_size
 
