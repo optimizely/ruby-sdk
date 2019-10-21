@@ -75,10 +75,10 @@ module Optimizely
       loop do
         begin
           callback.call
-        rescue
+        rescue StandardError => e
           @logger.log(
             Logger::ERROR,
-            'Something went wrong when running passed function.'
+            "Something went wrong when executing passed callback. #{e.message}"
           )
           stop!
         end
