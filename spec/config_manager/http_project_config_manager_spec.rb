@@ -225,7 +225,7 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/valid_sdk_key.json').once
 
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
-        'Old revision number: 42. New revision number: 83.').once
+        'Old revision number: 42. New revision number: 81.').once
 
       # Asserts that config has updated from URL.
       expect(@http_project_config_manager.config.account_id).not_to eql(datafile_project_config.account_id)
@@ -277,7 +277,7 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/valid_sdk_key.json').at_least(2)
 
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
-        'Old revision number: 42. New revision number: 83.').once
+        'Old revision number: 42. New revision number: 81.').once
 
       expect(@http_project_config_manager.config.account_id).not_to eql(datafile_project_config.account_id)
     end
