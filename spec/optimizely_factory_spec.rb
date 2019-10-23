@@ -48,20 +48,20 @@ describe Optimizely::OptimizelyFactory do
     end
 
     it 'should create http config manager when polling interval and blocking timeout are set' do
-      Optimizely::OptimizelyFactory.set_polling_interval(40)
-      Optimizely::OptimizelyFactory.set_blocking_timeout(5)
+      Optimizely::OptimizelyFactory.polling_interval(40)
+      Optimizely::OptimizelyFactory.blocking_timeout(5)
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
 
       # Verify that values set in OptimizelyFactory are being used inside config manager.
-      expect(optimizely_instance.config_manager.polling_interval). to eq(40)
-      expect(optimizely_instance.config_manager.blocking_timeout). to eq(5)
+      expect(optimizely_instance.config_manager.instance_variable_get(:@polling_interval)). to eq(40)
+      expect(optimizely_instance.config_manager.instance_variable_get(:@blocking_timeout)). to eq(5)
     end
 
     it 'should create http config manager with the same components as the instance' do
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
-      expect(optimizely_instance.error_handler). to be(optimizely_instance.config_manager.error_handler)
-      expect(optimizely_instance.logger). to be(optimizely_instance.config_manager.logger)
-      expect(optimizely_instance.notification_center). to be(optimizely_instance.config_manager.notification_center)
+      expect(optimizely_instance.error_handler). to be(optimizely_instance.config_manager.instance_variable_get(:@error_handler))
+      expect(optimizely_instance.logger). to be(optimizely_instance.config_manager.instance_variable_get(:@logger))
+      expect(optimizely_instance.notification_center). to be(optimizely_instance.config_manager.instance_variable_get(:@notification_center))
     end
   end
 
@@ -79,8 +79,8 @@ describe Optimizely::OptimizelyFactory do
 
   describe '.custom_instance' do
     it 'should take http config manager when sdk key, polling interval, blocking timeout are given' do
-      Optimizely::OptimizelyFactory.set_polling_interval(50)
-      Optimizely::OptimizelyFactory.set_blocking_timeout(10)
+      Optimizely::OptimizelyFactory.polling_interval(50)
+      Optimizely::OptimizelyFactory.blocking_timeout(10)
       optimizely_instance = Optimizely::OptimizelyFactory.custom_instance(
         'sdk_key',
         datafile,
@@ -94,8 +94,8 @@ describe Optimizely::OptimizelyFactory do
       )
 
       # Verify that values set in OptimizelyFactory are being used inside config manager.
-      expect(optimizely_instance.config_manager.polling_interval). to eq(50)
-      expect(optimizely_instance.config_manager.blocking_timeout). to eq(10)
+      expect(optimizely_instance.config_manager.instance_variable_get(:@polling_interval)). to eq(50)
+      expect(optimizely_instance.config_manager.instance_variable_get(:@blocking_timeout)). to eq(10)
     end
 
     it 'should take event processor when flush interval and batch size are set' do
@@ -123,9 +123,9 @@ describe Optimizely::OptimizelyFactory do
         notification_center
       )
 
-      expect(error_handler). to be(optimizely_instance.config_manager.error_handler)
-      expect(logger). to be(optimizely_instance.config_manager.logger)
-      expect(notification_center). to be(optimizely_instance.config_manager.notification_center)
+      expect(error_handler). to be(optimizely_instance.config_manager.instance_variable_get(:@error_handler))
+      expect(logger). to be(optimizely_instance.config_manager.instance_variable_get(:@logger))
+      expect(notification_center). to be(optimizely_instance.config_manager.instance_variable_get(:@notification_center))
 
       expect(error_handler). to be(optimizely_instance.error_handler)
       expect(logger). to be(optimizely_instance.logger)

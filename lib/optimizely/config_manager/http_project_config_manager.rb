@@ -30,7 +30,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :blocking_timeout, :error_handler, :logger, :notification_center, :polling_interval, :stopped
+    attr_reader :stopped
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #

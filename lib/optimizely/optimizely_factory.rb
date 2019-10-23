@@ -72,14 +72,14 @@ module Optimizely
     # Convenience method for setting frequency at which datafile has to be polled and ProjectConfig updated.
     #
     # @param polling_interval Numeric - Time in seconds after which to update datafile.
-    def self.set_polling_interval(polling_interval)
+    def self.polling_interval(polling_interval)
       @polling_interval = polling_interval
     end
 
     # Convenience method for setting timeout to block the config call until config has been initialized.
     #
     # @param blocking_timeout Numeric - Time in seconds.
-    def self.set_blocking_timeout(blocking_timeout)
+    def self.blocking_timeout(blocking_timeout)
       @blocking_timeout = blocking_timeout
     end
 
