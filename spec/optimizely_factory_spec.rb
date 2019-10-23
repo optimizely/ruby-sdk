@@ -42,7 +42,7 @@ describe Optimizely::OptimizelyFactory do
   end
 
   describe '.default_instance' do
-    it 'should create http config manager when sdk is given' do
+    it 'should create http config manager when sdk_key is given' do
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
       expect(optimizely_instance.config_manager). to be_instance_of(Optimizely::HTTPProjectConfigManager)
     end
@@ -52,6 +52,7 @@ describe Optimizely::OptimizelyFactory do
       Optimizely::OptimizelyFactory.set_blocking_timeout(5)
       optimizely_instance = Optimizely::OptimizelyFactory.default_instance('sdk_key', datafile)
 
+      # Verify that values set in OptimizelyFactory are being used inside config manager.
       expect(optimizely_instance.config_manager.polling_interval). to eq(40)
       expect(optimizely_instance.config_manager.blocking_timeout). to eq(5)
     end
@@ -91,13 +92,15 @@ describe Optimizely::OptimizelyFactory do
         nil,
         notification_center
       )
+
+      # Verify that values set in OptimizelyFactory are being used inside config manager.
       expect(optimizely_instance.config_manager.polling_interval). to eq(50)
       expect(optimizely_instance.config_manager.blocking_timeout). to eq(10)
     end
 
     it 'should take event processor when flush interval and batch size are set' do
-      Optimizely::OptimizelyFactory.set_max_event_flush_interval(5)
-      Optimizely::OptimizelyFactory.set_max_event_batch_size(100)
+      Optimizely::OptimizelyFactory.max_event_flush_interval(5)
+      Optimizely::OptimizelyFactory.max_event_batch_size(100)
 
       optimizely_instance = Optimizely::OptimizelyFactory.custom_instance('sdk_key')
 
@@ -132,38 +135,38 @@ describe Optimizely::OptimizelyFactory do
 
   describe '.max_event_batch_size' do
     it 'should log error message and return nil when invalid batch size provided' do
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size([], spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(true, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size('test', spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(5.2, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(nil, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size([], spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(true, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size('test', spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(5.2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(nil, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is invalid, setting to default batch size 10.').exactly(5).times
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(0, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(-2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(0, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(-2, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Batch size is negative, setting to default batch size 10.').twice
     end
 
     it 'should not log error and return batch size and when valid batch size provided' do
-      expect(Optimizely::OptimizelyFactory.set_max_event_batch_size(5, spy_logger)). to eq(5)
+      expect(Optimizely::OptimizelyFactory.max_event_batch_size(5, spy_logger)). to eq(5)
       expect(spy_logger).not_to have_received(:log)
     end
   end
 
   describe '.max_event_flush_interval' do
     it 'should log error message and return nil when invalid flush interval provided' do
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval([], spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(true, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval('test', spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(nil, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval([], spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(true, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval('test', spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(nil, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is invalid, setting to default flush interval 30000.').exactly(4).times
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(0, spy_logger)). to eq(nil)
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(-2, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(0, spy_logger)). to eq(nil)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(-2, spy_logger)). to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Flush interval is negative, setting to default flush interval 30000.').twice
     end
 
     it 'should not log error and return batch size and when valid flush interval provided' do
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(5, spy_logger)). to eq(5)
-      expect(Optimizely::OptimizelyFactory.set_max_event_flush_interval(5.5, spy_logger)). to eq(5.5)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(5, spy_logger)). to eq(5)
+      expect(Optimizely::OptimizelyFactory.max_event_flush_interval(5.5, spy_logger)). to eq(5.5)
       expect(spy_logger).not_to have_received(:log)
     end
   end

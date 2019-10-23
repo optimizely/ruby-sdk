@@ -17,9 +17,9 @@
 #
 
 require 'optimizely'
+require 'optimizely/error_handler'
 require 'optimizely/event_dispatcher'
 require 'optimizely/event/batch_event_processor'
-require 'optimizely/error_handler'
 require 'optimizely/logger'
 require 'optimizely/notification_center'
 
@@ -28,7 +28,7 @@ module Optimizely
     # Convenience method for setting the maximum number of events contained within a batch.
     # @param batch_size Integer - Sets size of EventQueue.
     # @param logger - Optional LoggerInterface Provides a log method to log messages.
-    def self.set_max_event_batch_size(batch_size, logger = NoOpLogger.new)
+    def self.max_event_batch_size(batch_size, logger = NoOpLogger.new)
       unless batch_size.is_a? Integer
         logger.log(
           Logger::ERROR,
@@ -50,7 +50,7 @@ module Optimizely
     # Convenience method for setting the maximum time interval in milliseconds between event dispatches.
     # @param flush_interval Numeric - Time interval between event dispatches.
     # @param logger - Optional LoggerInterface Provides a log method to log messages.
-    def self.set_max_event_flush_interval(flush_interval, logger = NoOpLogger.new)
+    def self.max_event_flush_interval(flush_interval, logger = NoOpLogger.new)
       unless flush_interval.is_a? Numeric
         logger.log(
           Logger::ERROR,
