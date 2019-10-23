@@ -66,9 +66,9 @@ module Optimizely
       @error_handler = error_handler || NoOpErrorHandler.new
       @datafile_url = get_datafile_url(sdk_key, url, url_template)
       @polling_interval = nil
-      set_polling_interval(polling_interval)
+      polling_interval(polling_interval)
       @blocking_timeout = nil
-      set_blocking_timeout(blocking_timeout)
+      blocking_timeout(blocking_timeout)
       @last_modified = nil
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
@@ -199,7 +199,7 @@ module Optimizely
         "Old revision number: #{previous_revision}. New revision number: #{@config.revision}.")
     end
 
-    def set_polling_interval(polling_interval)
+    def polling_interval(polling_interval)
       # Sets frequency at which datafile has to be polled and ProjectConfig updated.
       #
       # polling_interval - Time in seconds after which to update datafile.
@@ -236,7 +236,7 @@ module Optimizely
       @polling_interval = polling_interval
     end
 
-    def set_blocking_timeout(blocking_timeout)
+    def blocking_timeout(blocking_timeout)
       # Sets time in seconds to block the config call until config has been initialized.
       #
       # blocking_timeout - Time in seconds to block the config call.
