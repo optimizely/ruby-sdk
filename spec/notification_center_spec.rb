@@ -30,7 +30,11 @@ describe Optimizely::NotificationCenter do
 
   before(:context) do
     class CallBack
-      def call; end
+      attr_reader :args
+
+      def call(*args)
+        @args = args
+      end
     end
 
     @callback = CallBack.new
@@ -504,6 +508,27 @@ describe Optimizely::NotificationCenter do
           :arg1, "arg2", arg3: 4)
 
         expect(actual_args).to eq([:arg1, "arg2", arg3: 4])
+      end
+
+      it 'should send notifications to lambdas' do
+        actual_args = []
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+                                                      ->(*args) { actual_args = args })
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          :arg1, "arg2", arg3: 4)
+
+        expect(actual_args).to eq([:arg1, "arg2", arg3: 4])
+      end
+
+      it 'should send notifications to callables' do
+        callback = CallBack.new
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK], callback)
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          :arg1, "arg2", arg3: 4)
+
+        expect(callback.args).to eq([:arg1, "arg2", arg3: 4])
       end
     end
 
