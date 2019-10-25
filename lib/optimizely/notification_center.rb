@@ -47,6 +47,11 @@ module Optimizely
     def add_notification_listener(notification_type, notification_callback = nil, &block)
       return nil unless notification_type_valid?(notification_type)
 
+      if notification_callback && block_given?
+        @logger.log Logger::ERROR, 'Callback and block are mutually exclusive.'
+        return nil
+      end
+
       notification_callback ||= block
 
       unless notification_callback

@@ -73,6 +73,15 @@ describe Optimizely::NotificationCenter do
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Invalid notification callback given.')
       end
+
+      it 'should log and return nil if given both callback and block' do
+        result = notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+          @callback_reference) { }
+
+        expect(result).to be_nil
+        expect(spy_logger).to have_received(:log).once
+          .with(Logger::ERROR, 'Callback and block are mutually exclusive.')
+      end
     end
 
     describe 'test add notification with valid type and callback' do
