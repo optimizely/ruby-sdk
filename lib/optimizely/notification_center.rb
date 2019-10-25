@@ -44,15 +44,17 @@ module Optimizely
     #
     # @return [notification ID] Used to remove the notification
 
-    def add_notification_listener(notification_type, notification_callback)
+    def add_notification_listener(notification_type, notification_callback = nil, &block)
       return nil unless notification_type_valid?(notification_type)
+
+      notification_callback ||= block
 
       unless notification_callback
         @logger.log Logger::ERROR, 'Callback can not be empty.'
         return nil
       end
 
-      unless notification_callback.is_a? Method
+      unless notification_callback.respond_to? :call
         @logger.log Logger::ERROR, 'Invalid notification callback given.'
         return nil
       end

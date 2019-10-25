@@ -484,6 +484,18 @@ describe Optimizely::NotificationCenter do
         expect(spy_logger).to_not have_received(:log)
           .with(Logger::INFO, 'delivered three.')
       end
+
+      it 'should send notifications to blocks' do
+        actual_args = []
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK]) do |*args|
+          actual_args = args
+        end
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+          :arg1, "arg2", arg3: 4)
+
+        expect(actual_args).to eq([:arg1, "arg2", arg3: 4])
+      end
     end
 
     describe '.notification_count' do
