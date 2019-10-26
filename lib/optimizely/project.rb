@@ -15,24 +15,22 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require_relative 'audience'
 require_relative 'config/datafile_project_config'
 require_relative 'config_manager/http_project_config_manager'
 require_relative 'config_manager/static_project_config_manager'
 require_relative 'decision_service'
 require_relative 'error_handler'
-require_relative 'event_builder'
 require_relative 'event/forwarding_event_processor'
 require_relative 'event/event_factory'
 require_relative 'event/user_event_factory'
 require_relative 'event_dispatcher'
 require_relative 'exceptions'
 require_relative 'helpers/constants'
-require_relative 'helpers/group'
 require_relative 'helpers/validator'
 require_relative 'helpers/variable_type'
 require_relative 'logger'
 require_relative 'notification_center'
+require_relative 'project_config'
 
 module Optimizely
   class Project
