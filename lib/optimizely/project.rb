@@ -78,7 +78,7 @@ module Optimizely
         @logger.log(Logger::ERROR, e.message)
       end
 
-      @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
+      @notification_center = notification_center.is_a?(NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
       @config_manager = if config_manager.respond_to?(:config)
                           config_manager
@@ -119,7 +119,7 @@ module Optimizely
         return nil
       end
 
-      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+      return nil unless Helpers::Validator.inputs_valid?(
         {
           experiment_key: experiment_key,
           user_id: user_id
@@ -157,7 +157,7 @@ module Optimizely
         return nil
       end
 
-      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+      return nil unless Helpers::Validator.inputs_valid?(
         {
           experiment_key: experiment_key,
           user_id: user_id
@@ -186,7 +186,7 @@ module Optimizely
 
       input_values = {experiment_key: experiment_key, user_id: user_id}
       input_values[:variation_key] = variation_key unless variation_key.nil?
-      return false unless Optimizely::Helpers::Validator.inputs_valid?(input_values, @logger, Logger::ERROR)
+      return false unless Helpers::Validator.inputs_valid?(input_values, @logger, Logger::ERROR)
 
       config = project_config
 
@@ -206,7 +206,7 @@ module Optimizely
         return nil
       end
 
-      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+      return nil unless Helpers::Validator.inputs_valid?(
         {
           experiment_key: experiment_key,
           user_id: user_id
@@ -235,7 +235,7 @@ module Optimizely
         return nil
       end
 
-      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+      return nil unless Helpers::Validator.inputs_valid?(
         {
           event_key: event_key,
           user_id: user_id
@@ -283,7 +283,7 @@ module Optimizely
         return false
       end
 
-      return false unless Optimizely::Helpers::Validator.inputs_valid?(
+      return false unless Helpers::Validator.inputs_valid?(
         {
           feature_flag_key: feature_flag_key,
           user_id: user_id
@@ -303,12 +303,12 @@ module Optimizely
       decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
 
       feature_enabled = false
-      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-      if decision.is_a?(Optimizely::DecisionService::Decision)
+      source_string = DecisionService::DECISION_SOURCES['ROLLOUT']
+      if decision.is_a?(DecisionService::Decision)
         variation = decision['variation']
         feature_enabled = variation['featureEnabled']
-        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-          source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        if decision.source == DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          source_string = DecisionService::DECISION_SOURCES['FEATURE_TEST']
           source_info = {
             experiment_key: decision.experiment['key'],
             variation_key: variation['key']
@@ -355,7 +355,7 @@ module Optimizely
         return enabled_features
       end
 
-      return enabled_features unless Optimizely::Helpers::Validator.inputs_valid?(
+      return enabled_features unless Helpers::Validator.inputs_valid?(
         {
           user_id: user_id
         }, @logger, Logger::ERROR
@@ -419,7 +419,7 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES['STRING'],
+        Helpers::Constants::VARIABLE_TYPES['STRING'],
         user_id,
         attributes
       )
@@ -446,7 +446,7 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES['BOOLEAN'],
+        Helpers::Constants::VARIABLE_TYPES['BOOLEAN'],
         user_id,
         attributes
       )
@@ -473,7 +473,7 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES['DOUBLE'],
+        Helpers::Constants::VARIABLE_TYPES['DOUBLE'],
         user_id,
         attributes
       )
@@ -500,7 +500,7 @@ module Optimizely
       variable_value = get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
-        Optimizely::Helpers::Constants::VARIABLE_TYPES['INTEGER'],
+        Helpers::Constants::VARIABLE_TYPES['INTEGER'],
         user_id,
         attributes
       )
@@ -510,7 +510,7 @@ module Optimizely
 
     def is_valid
       config = project_config
-      config.is_a?(Optimizely::ProjectConfig)
+      config.is_a?(ProjectConfig)
     end
 
     def close
@@ -570,7 +570,7 @@ module Optimizely
       # Returns nil if the feature flag or variable or user ID is empty
       #             in case of variable type mismatch
 
-      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+      return nil unless Helpers::Validator.inputs_valid?(
         {
           feature_flag_key: feature_flag_key,
           variable_key: variable_key,
@@ -605,17 +605,17 @@ module Optimizely
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
       else
-        source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        source_string = DecisionService::DECISION_SOURCES['ROLLOUT']
         decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
         variable_value = variable['defaultValue']
         if decision
           variation = decision['variation']
-          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          if decision['source'] == DecisionService::DECISION_SOURCES['FEATURE_TEST']
             source_info = {
               experiment_key: decision.experiment['key'],
               variation_key: variation['key']
             }
-            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+            source_string = DecisionService::DECISION_SOURCES['FEATURE_TEST']
           end
           feature_enabled = variation['featureEnabled']
           if feature_enabled == true
