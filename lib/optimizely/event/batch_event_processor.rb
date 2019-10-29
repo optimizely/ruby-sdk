@@ -20,7 +20,7 @@ require_relative '../helpers/validator'
 module Optimizely
   class BatchEventProcessor < EventProcessor
     # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
-    # Events passed to the BatchEventProcessor are immediately added to a EventQueue.
+    # Events passed to the BatchEventProcessor are immediately added to an EventQueue.
     # The BatchEventProcessor maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
@@ -30,6 +30,7 @@ module Optimizely
     DEFAULT_BATCH_SIZE = 10
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
+    DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -58,8 +59,6 @@ module Optimizely
                           DEFAULT_BATCH_INTERVAL
                         end
       @notification_center = notification_center
-      @mutex = Mutex.new
-      @received = ConditionVariable.new
       @current_batch = []
       @started = false
       start!
@@ -71,15 +70,13 @@ module Optimizely
         return
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+      @logger.log(Logger::INFO, 'Starting scheduler.')
       @thread = Thread.new { run }
       @started = true
     end
 
     def flush
-      @mutex.synchronize do
-        @event_queue << FLUSH_SIGNAL
-        @received.signal
-      end
+      @event_queue << FLUSH_SIGNAL
     end
 
     def process(user_event)
@@ -90,48 +87,30 @@ module Optimizely
         return
       end
 
-      @mutex.synchronize do
-        begin
-          @event_queue << user_event
-          @received.signal
-        rescue Exception
-          @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
-          return
-        end
+      begin
+        @event_queue.push(user_event, true)
+      rescue Exception
+        @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
+        return
       end
     end
 
     def stop!
       return unless @started
 
-      @mutex.synchronize do
-        @event_queue << SHUTDOWN_SIGNAL
-        @received.signal
-      end
-
+      @logger.log(Logger::INFO, 'Stopping scheduler.')
+      @event_queue << SHUTDOWN_SIGNAL
+      @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
-      @logger.log(Logger::WARN, 'Stopping scheduler.')
-      @thread.exit
     end
 
     private
 
     def run
       loop do
-        if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
-          @logger.log(
-            Logger::DEBUG,
-            'Deadline exceeded flushing current batch.'
-          )
-          flush_queue!
-        end
+        flush_queue! if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
 
-        item = nil
-
-        @mutex.synchronize do
-          @received.wait(@mutex, 0.05)
-          item = @event_queue.pop if @event_queue.length.positive?
-        end
+        item = @event_queue.pop if @event_queue.length.positive?
 
         if item.nil?
           sleep(0.05)
@@ -139,7 +118,7 @@ module Optimizely
         end
 
         if item == SHUTDOWN_SIGNAL
-          @logger.log(Logger::INFO, 'Received shutdown signal.')
+          @logger.log(Logger::DEBUG, 'Received shutdown signal.')
           break
         end
 
@@ -152,7 +131,7 @@ module Optimizely
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
     rescue SignalException
-      @logger.log(Logger::INFO, 'Interrupted while processing buffer.')
+      @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
     rescue Exception => e
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
@@ -168,6 +147,11 @@ module Optimizely
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
       begin
+        @logger.log(
+          Logger::INFO,
+          'Flushing Queue.'
+        )
+
         @event_dispatcher.dispatch_event(log_event)
         @notification_center&.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
@@ -192,7 +176,7 @@ module Optimizely
       @current_batch << user_event
       return unless @current_batch.length >= @batch_size
 
-      @logger.log(Logger::DEBUG, 'Flushing on max batch size!')
+      @logger.log(Logger::DEBUG, 'Flushing on max batch size.')
       flush_queue!
     end
 
