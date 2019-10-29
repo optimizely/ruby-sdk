@@ -147,6 +147,11 @@ module Optimizely
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
       begin
+        @logger.log(
+          Logger::INFO,
+          'Flushing Queue.'
+        )
+
         @event_dispatcher.dispatch_event(log_event)
         @notification_center&.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
@@ -171,7 +176,7 @@ module Optimizely
       @current_batch << user_event
       return unless @current_batch.length >= @batch_size
 
-      @logger.log(Logger::DEBUG, 'Flushing on max batch size!')
+      @logger.log(Logger::DEBUG, 'Flushing on max batch size.')
       flush_queue!
     end
 

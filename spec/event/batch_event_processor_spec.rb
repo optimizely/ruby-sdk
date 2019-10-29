@@ -69,6 +69,7 @@ describe Optimizely::BatchEventProcessor do
       Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
       log_event
     ).once
+    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Flushing Queue.').once
   end
 
   it 'should flush the current batch when max batch size met' do
@@ -98,7 +99,7 @@ describe Optimizely::BatchEventProcessor do
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
       Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
     ).once
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!').once
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size.').once
   end
 
   it 'should dispatch the event when flush is called' do
