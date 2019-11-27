@@ -28,26 +28,37 @@ module Optimizely
     # @api constants
     REQUEST_TIMEOUT = 10
 
+    def initialize(logger: nil, error_handler: nil)
+      @logger = logger || NoOpLogger.new
+      @error_handler = error_handler || NoOpErrorHandler.new
+    end
+
     # Dispatch the event being represented by the Event object.
     #
     # @param event - Event object
     def dispatch_event(event)
-      if event.http_verb == :get
-        begin
-          HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
-        rescue Timeout::Error => e
-          return e
-        end
-      elsif event.http_verb == :post
-        begin
-          HTTParty.post(event.url,
+      begin
+        if event.http_verb == :get
+        
+          response = HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
+        elsif event.http_verb == :post
+          response = HTTParty.post(event.url,
                         body: event.params.to_json,
                         headers: event.headers,
                         timeout: REQUEST_TIMEOUT)
-        rescue Timeout::Error => e
-          return e
+
         end
-      end
+
+        case response.code
+          when 400..600
+           @logger.log(Logger::ERROR, 'Event failed to disptach with response code: #{response.code}')
+           @error_handler.handle_error(InvalidInputsError)
+        end
+
+      rescue Timeout::Error => e
+          return e
+      end 
+      
     end
   end
 end
