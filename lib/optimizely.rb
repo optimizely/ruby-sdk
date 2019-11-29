@@ -33,6 +33,7 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
+require_relative 'optimizely/optimizely_config'
 
 module Optimizely
   class Project
@@ -521,6 +522,11 @@ module Optimizely
       @stopped = true
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
+    end
+
+    def get_optimizely_config
+      optimizely_config = OptimizelyConfig.new(project_config)
+      return optimizely_config.get_optimizely_config
     end
 
     private
