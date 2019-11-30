@@ -524,10 +524,10 @@ module Optimizely
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
     end
 
-    def get_optimizely_config
+    def get_optimizely_config # rubocop:disable Naming/AccessorMethodName
       # Get OptimizelyConfig object containing experiments and features data
       # Returns Object
-      # 
+      #
       # OptimizelyConfig Object Schema
       # {
       #   'experimentsMap' => {
@@ -547,7 +547,7 @@ module Optimizely
       #             }
       #           }
       #         }
-      #       } 
+      #       }
       #     }
       #   },
       #   'featuresMap' => {
@@ -555,14 +555,14 @@ module Optimizely
       #       'id' => '333333',
       #       'key' => 'awesome-feature',
       #       'experimentsMap' => Object,
-      #       'variablesMap' => Object, 
-      #     } 
+      #       'variablesMap' => Object,
+      #     }
       #   },
       #   'revision' => '13',
       # }
       #
       optimizely_config = OptimizelyConfig.new(project_config)
-      return optimizely_config.get_optimizely_config
+      optimizely_config.optimizely_config
     end
 
     private
