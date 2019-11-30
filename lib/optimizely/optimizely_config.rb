@@ -38,61 +38,59 @@ module Optimizely
         result_map.update(feature['id'] => feature['variables'])
       }
       return @project_config.experiments.reduce({}) { |experiments_map, experiment|
-        exp = {
+        experiments_map.update(experiment['key'] => {
           'id' => experiment['id'],
           'key' => experiment['key'],
-          'variationsMap' => experiment['variations'].reduce({}) { |variations_map, variation|
+          'variationsMap' => experiment['variations'].reduce({}) { |variations_map, variation|            
             variation_object = {
               'id' => variation['id'],
               'key' => variation['key'],              
-              'variablesMap' => variation['variables'].reduce({}) { |variables_map, variable|
-                variables_map.update(variable['id'] => {
-                  'id' => variable['id'],
-                  'value' => variable['value'],
-                })
-              },
+              'variablesMap' => get_merged_variables_map(variation, experiment['id'], feature_variables_map),
             }
             if @project_config.feature_experiment?(experiment['id'])
               variation_object['featureEnabled'] = variation['featureEnabled']
             end
             variations_map.update(variation['key'] => variation_object)
           }
-        }
-        feature_ids = @project_config.experiment_feature_map[experiment['id']]
-        if feature_ids
-          merge_feature_variables(exp, feature_variables_map[feature_ids[0]])
-        end
-        experiments_map.update(experiment['key'] => exp)
+        })
       }
     end
 
-    def merge_feature_variables(experiment, feature_variables)
-      experiment['variationsMap'].each_value { |variation|
-        feature_variables.each { |feature_variable|
-          variation_variable = variation['variablesMap'][feature_variable['id']]
+    # Merges feature key and type from feature variables to variation variables.
+    def get_merged_variables_map(variation, experiment_id, feature_variables_map)
+      feature_ids = @project_config.experiment_feature_map[experiment_id]
+      variables_object = {}
+      if feature_ids
+        experiment_feature_variables = feature_variables_map[feature_ids[0]]
+        # temporary variation variables map to get values to merge.
+        temp_variables_id_map = variation['variables'].reduce({}) { |variables_map, variable|
+          variables_map.update(variable['id'] => {
+            'id' => variable['id'],
+            'value' => variable['value'],
+          })
+        }
+        variables_object = experiment_feature_variables.reduce({}) { |variables_map, feature_variable|
+          variation_variable = temp_variables_id_map[feature_variable['id']]
           variable_value = variation['featureEnabled'] && variation_variable ? variation_variable['value'] : feature_variable['defaultValue'] 
-          variation['variablesMap'][feature_variable['key']] = {
+          variables_map.update(feature_variable['key'] => {
             'id' => feature_variable['id'],
             'key' => feature_variable['key'],
             'type' => feature_variable['type'],
             'value' => variable_value,
-          }
-          # deleting the temporary entry
-          if variation_variable
-            variation['variablesMap'].delete(feature_variable['id'])
-          end
+          })
         }
-      }
+      end
+      return variables_object
     end
 
-    def get_features_map(experiments_map)
+    def get_features_map(all_experiments_map)
       return @project_config.feature_flags.reduce({}) do |features_map, feature|
         features_map.update(feature['key'] => {
           'id' => feature['id'],
           'key' => feature['key'],
-          'experimentsMap' => feature['experimentIds'].reduce({}) { |experiments, experiment_id|
+          'experimentsMap' => feature['experimentIds'].reduce({}) { |experiments_map, experiment_id|
             experiment_key = @project_config.experiment_id_map[experiment_id]['key']
-            experiments.update(experiment_key => experiments_map[experiment_key])
+            experiments_map.update(experiment_key => all_experiments_map[experiment_key])
           },
           'variablesMap' => feature['variables'].reduce({}) { |variables, variable|
             variables.update(variable['key'] => {
