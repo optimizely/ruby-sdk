@@ -525,6 +525,42 @@ module Optimizely
     end
 
     def get_optimizely_config
+      # Get OptimizelyConfig object containing experiments and features data
+      # Returns Object
+      # 
+      # OptimizelyConfig Object Schema
+      # {
+      #   'experimentsMap' => {
+      #     '111111' => {
+      #       'id' => '111111',
+      #       'key' => 'my-fist-experiment'
+      #       'variationsMap' => {
+      #         '121212' => {
+      #           'id' => '121212',
+      #           'key' => 'variation_1',
+      #           'variablesMap' => {
+      #             '222222' => {
+      #               'id' => '222222',
+      #               'key' => 'age',
+      #               'type' => 'integer',
+      #               'value' => '0',
+      #             }
+      #           }
+      #         }
+      #       } 
+      #     }
+      #   },
+      #   'featuresMap' => {
+      #     '333333' => {
+      #       'id' => '333333',
+      #       'key' => 'awesome-feature',
+      #       'experimentsMap' => Object,
+      #       'variablesMap' => Object, 
+      #     } 
+      #   },
+      #   'revision' => '13',
+      # }
+      #
       optimizely_config = OptimizelyConfig.new(project_config)
       return optimizely_config.get_optimizely_config
     end
