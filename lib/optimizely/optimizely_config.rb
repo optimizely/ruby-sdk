@@ -63,13 +63,16 @@ module Optimizely
 
       experiment_feature_variables = feature_variables_map[feature_ids[0]]
       # temporary variation variables map to get values to merge.
-      temp_variables_id_map = variation['variables'].reduce({}) do |variables_map, variable|
-        variables_map.update(
-          variable['id'] => {
-            'id' => variable['id'],
-            'value' => variable['value']
-          }
-        )
+      temp_variables_id_map = {}
+      if variation['variables']
+        temp_variables_id_map = variation['variables'].reduce({}) do |variables_map, variable|
+          variables_map.update(
+            variable['id'] => {
+              'id' => variable['id'],
+              'value' => variable['value']
+            }
+          )
+        end
       end
       experiment_feature_variables.reduce({}) do |variables_map, feature_variable|
         variation_variable = temp_variables_id_map[feature_variable['id']]
