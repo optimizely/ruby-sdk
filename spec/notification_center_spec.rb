@@ -80,11 +80,11 @@ describe Optimizely::NotificationCenter do
 
       it 'should log and return nil if given both callback and block' do
         result = notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
-          @callback_reference) { }
+                                                               @callback_reference) {}
 
         expect(result).to be_nil
         expect(spy_logger).to have_received(:log).once
-          .with(Logger::ERROR, 'Callback and block are mutually exclusive.')
+                                                 .with(Logger::ERROR, 'Callback and block are mutually exclusive.')
       end
     end
 
@@ -505,9 +505,9 @@ describe Optimizely::NotificationCenter do
         end
 
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          :arg1, "arg2", arg3: 4)
+                                               :arg1, 'arg2', arg3: 4)
 
-        expect(actual_args).to eq([:arg1, "arg2", arg3: 4])
+        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
       end
 
       it 'should send notifications to lambdas' do
@@ -516,9 +516,9 @@ describe Optimizely::NotificationCenter do
                                                       ->(*args) { actual_args = args })
 
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          :arg1, "arg2", arg3: 4)
+                                               :arg1, 'arg2', arg3: 4)
 
-        expect(actual_args).to eq([:arg1, "arg2", arg3: 4])
+        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
       end
 
       it 'should send notifications to callables' do
@@ -526,9 +526,9 @@ describe Optimizely::NotificationCenter do
         notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK], callback)
 
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
-          :arg1, "arg2", arg3: 4)
+                                               :arg1, 'arg2', arg3: 4)
 
-        expect(callback.args).to eq([:arg1, "arg2", arg3: 4])
+        expect(callback.args).to eq([:arg1, 'arg2', arg3: 4])
       end
     end
 
