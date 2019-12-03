@@ -30,7 +30,11 @@ describe Optimizely::NotificationCenter do
 
   before(:context) do
     class CallBack
-      def call; end
+      attr_reader :args
+
+      def call(*args)
+        @args = args
+      end
     end
 
     @callback = CallBack.new
@@ -72,6 +76,15 @@ describe Optimizely::NotificationCenter do
                )).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, 'Invalid notification callback given.')
+      end
+
+      it 'should log and return nil if given both callback and block' do
+        result = notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
+                                                               @callback_reference) {}
+
+        expect(result).to be_nil
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(Logger::ERROR, 'Callback and block are mutually exclusive.')
       end
     end
 
@@ -483,6 +496,39 @@ describe Optimizely::NotificationCenter do
         # Verifies that all callbacks for NotificationType::ACTIVATE are called and no other callbacks are called
         expect(spy_logger).to_not have_received(:log)
           .with(Logger::INFO, 'delivered three.')
+      end
+
+      it 'should send notifications to blocks' do
+        actual_args = []
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK]) do |*args|
+          actual_args = args
+        end
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+                                               :arg1, 'arg2', arg3: 4)
+
+        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
+      end
+
+      it 'should send notifications to lambdas' do
+        actual_args = []
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+                                                      ->(*args) { actual_args = args })
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+                                               :arg1, 'arg2', arg3: 4)
+
+        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
+      end
+
+      it 'should send notifications to callables' do
+        callback = CallBack.new
+        notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK], callback)
+
+        notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
+                                               :arg1, 'arg2', arg3: 4)
+
+        expect(callback.args).to eq([:arg1, 'arg2', arg3: 4])
       end
     end
 
