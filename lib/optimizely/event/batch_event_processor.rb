@@ -37,7 +37,7 @@ module Optimizely
 
     def initialize(
       event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher: nil ,
+      event_dispatcher: nil,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
       logger: NoOpLogger.new,
