@@ -21,7 +21,7 @@ module Optimizely
       @project_config = project_config
     end
 
-    def optimizely_config
+    def config
       experiments_map_object = experiments_map
       features_map = get_features_map(experiments_map_object)
       {

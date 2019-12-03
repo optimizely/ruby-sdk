@@ -531,15 +531,15 @@ module Optimizely
       # OptimizelyConfig Object Schema
       # {
       #   'experimentsMap' => {
-      #     '111111' => {
+      #     'my-fist-experiment' => {
       #       'id' => '111111',
       #       'key' => 'my-fist-experiment'
       #       'variationsMap' => {
-      #         '121212' => {
+      #         'variation_1' => {
       #           'id' => '121212',
       #           'key' => 'variation_1',
       #           'variablesMap' => {
-      #             '222222' => {
+      #             'age' => {
       #               'id' => '222222',
       #               'key' => 'age',
       #               'type' => 'integer',
@@ -551,7 +551,7 @@ module Optimizely
       #     }
       #   },
       #   'featuresMap' => {
-      #     '333333' => {
+      #     'awesome-feature' => {
       #       'id' => '333333',
       #       'key' => 'awesome-feature',
       #       'experimentsMap' => Object,
@@ -561,8 +561,13 @@ module Optimizely
       #   'revision' => '13',
       # }
       #
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_optimizely_config').message)
+        return nil
+      end
+
       optimizely_config = OptimizelyConfig.new(project_config)
-      optimizely_config.optimizely_config
+      optimizely_config.config
     end
 
     private
