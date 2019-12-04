@@ -31,6 +31,7 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
+    MAX_NIL_COUNT = 2
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -107,17 +108,22 @@ module Optimizely
     private
 
     def run
+      @nil_count = 0
       loop do
         if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
           flush_queue!
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
         end
 
-        item = @event_queue.pop
+        item = @event_queue.pop if @event_queue.length.positive? || @nil_count > MAX_NIL_COUNT
 
         if item.nil?
+          sleep(@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp)
+          @nil_count++
           next
         end
+
+        @nil_count = 0
 
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
