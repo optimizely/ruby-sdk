@@ -113,10 +113,9 @@ module Optimizely
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
         end
 
-        item = @event_queue.pop if @event_queue.length.positive?
+        item = @event_queue.pop
 
         if item.nil?
-          sleep(@flush_interval)
           next
         end
 
