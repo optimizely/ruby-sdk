@@ -524,7 +524,7 @@ module Optimizely
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
     end
 
-    def get_optimizely_config # rubocop:disable Naming/AccessorMethodName
+    def get_optimizely_config
       # Get OptimizelyConfig object containing experiments and features data
       # Returns Object
       #
