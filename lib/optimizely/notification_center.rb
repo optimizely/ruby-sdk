@@ -39,20 +39,28 @@ module Optimizely
 
     # Adds notification callback to the notification center
     #
-    # @param notification_type -  One of the constants in NOTIFICATION_TYPES
-    # @param notification_callback -  Function to call when the event is sent
+    # @param notification_type - One of the constants in NOTIFICATION_TYPES
+    # @param notification_callback [lambda, Method, Callable] (default: block) - Called when the event is sent
+    # @yield Block to be used as callback if callback omitted.
     #
     # @return [notification ID] Used to remove the notification
 
-    def add_notification_listener(notification_type, notification_callback)
+    def add_notification_listener(notification_type, notification_callback = nil, &block)
       return nil unless notification_type_valid?(notification_type)
+
+      if notification_callback && block_given?
+        @logger.log Logger::ERROR, 'Callback and block are mutually exclusive.'
+        return nil
+      end
+
+      notification_callback ||= block
 
       unless notification_callback
         @logger.log Logger::ERROR, 'Callback can not be empty.'
         return nil
       end
 
-      unless notification_callback.is_a? Method
+      unless notification_callback.respond_to? :call
         @logger.log Logger::ERROR, 'Invalid notification callback given.'
         return nil
       end
@@ -70,7 +78,7 @@ module Optimizely
     #
     # @param notification_id
     #
-    # @return [Boolean] The function returns true if found and removed, false otherwise
+    # @return [Boolean] true if found and removed, false otherwise
 
     def remove_notification_listener(notification_id)
       unless notification_id
