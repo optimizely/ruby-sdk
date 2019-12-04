@@ -107,14 +107,21 @@ module Optimizely
     private
 
     def run
+      @empty_count = 1
       loop do
-        flush_queue! if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
+        if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
+          flush_queue!
+          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+        end
 
         item = @event_queue.pop if @event_queue.length.positive?
 
         if item.nil?
-          sleep(0.05)
+          sleep(0.05 * @empty_count)
+          @empty_count++
           next
+        else
+          @empty_count = 1
         end
 
         if item == SHUTDOWN_SIGNAL
