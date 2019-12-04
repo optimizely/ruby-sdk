@@ -120,7 +120,7 @@ module Optimizely
         item = @event_queue.pop if @event_queue.length.positive? || @nil_count > MAX_NIL_COUNT
 
         if item.nil?
-          if @interval == 0
+          if @interval.zero?
             @interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp) / 1000.0
             @interval /= MAX_NIL_COUNT
           end
