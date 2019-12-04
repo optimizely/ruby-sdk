@@ -130,10 +130,9 @@ describe Optimizely::BatchEventProcessor do
 
   it 'should flush on mismatch revision' do
     @event_processor = Optimizely::BatchEventProcessor.new(
-      event_dispatcher: @event_dispatcher,
-      flush_interval: 10_000,
-      logger: spy_logger,
-      notification_center: @notification_center
+        event_dispatcher: @event_dispatcher,
+        logger: spy_logger,
+        notification_center: @notification_center
     )
 
     allow(project_config).to receive(:revision).and_return('1', '2')
@@ -143,10 +142,14 @@ describe Optimizely::BatchEventProcessor do
 
     expect(user_event1.event_context[:revision]).to eq('1')
     @event_processor.process(user_event1)
-    @event_processor.process(user_event2)
-    @event_processor.process(user_event2)
+    # Wait until other thread has processed the event.
+    while @event_processor.current_batch.length != 1; end
 
-    sleep 10
+    expect(user_event2.event_context[:revision]).to eq('2')
+    @event_processor.process(user_event2)
+    @event_processor.process(user_event2)
+    # Wait until other thread has processed the event.
+    while @event_processor.current_batch.length != 2; end
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Revisions mismatched: Flushing current batch.').once
@@ -154,10 +157,9 @@ describe Optimizely::BatchEventProcessor do
 
   it 'should flush on mismatch project id' do
     @event_processor = Optimizely::BatchEventProcessor.new(
-      event_dispatcher: @event_dispatcher,
-      flush_interval: 10_000,
-      logger: spy_logger,
-      notification_center: @notification_center
+        event_dispatcher: @event_dispatcher,
+        logger: spy_logger,
+        notification_center: @notification_center
     )
 
     allow(project_config).to receive(:project_id).and_return('X', 'Y')
@@ -167,15 +169,20 @@ describe Optimizely::BatchEventProcessor do
 
     expect(user_event1.event_context[:project_id]).to eq('X')
     @event_processor.process(user_event1)
-    @event_processor.process(user_event2)
-    @event_processor.process(user_event2)
+    # Wait until other thread has processed the event.
+    while @event_processor.current_batch.length != 1; end
 
-    sleep 10
+    expect(user_event2.event_context[:project_id]).to eq('Y')
+    @event_processor.process(user_event2)
+    @event_processor.process(user_event2)
+    # Wait until other thread has processed the event.
+    while @event_processor.current_batch.length != 2; end
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Project Ids mismatched: Flushing current batch.').once
+    expect(spy_logger).not_to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
   end
-
+  
   it 'should set default batch size when provided invalid' do
     event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: @event_dispatcher)
     expect(event_processor.batch_size).to eq(10)
@@ -288,10 +295,10 @@ describe Optimizely::BatchEventProcessor do
 
   it 'should flush pending events when stop is called' do
     @event_processor = Optimizely::BatchEventProcessor.new(
-      event_dispatcher: @event_dispatcher,
-      batch_size: 5,
-      flush_interval: 10_000,
-      logger: spy_logger
+        event_dispatcher: @event_dispatcher,
+        batch_size: 5,
+        flush_interval: 10_000,
+        logger: spy_logger
     )
 
     experiment = project_config.get_experiment_from_key('test_experiment')
@@ -307,16 +314,16 @@ describe Optimizely::BatchEventProcessor do
       @event_processor.process(user_event)
     end
 
+    # Wait until other thread has processed the event.
+    while @event_processor.current_batch.length != 4; end
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
 
     @event_processor.stop!
 
-    sleep 10
-
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Exiting processing loop. Attempting to flush pending events.')
     expect(spy_logger).not_to have_received(:log).with(Logger::DEBUG, 'Flushing on max batch size!')
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
-      Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
+        Optimizely::EventFactory.create_log_event(expected_batch, spy_logger)
     )
   end
 
