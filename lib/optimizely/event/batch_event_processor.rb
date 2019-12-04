@@ -119,7 +119,7 @@ module Optimizely
 
         if item.nil?
           sleep(@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp)
-          @nil_count++
+          @nil_count += 1
           next
         end
 
