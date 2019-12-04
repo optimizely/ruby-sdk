@@ -110,7 +110,7 @@ module Optimizely
     def run
       @nil_count = 0
       loop do
-        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline  || @nil_count > MAX_NIL_COUNT
+        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline || @nil_count > MAX_NIL_COUNT
           @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
           flush_queue!
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
