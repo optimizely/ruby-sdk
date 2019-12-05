@@ -108,7 +108,10 @@ module Optimizely
     private
 
     def run
+      # if we receive a number of item nils that reach MAX_NIL_COUNT,
+      # then we hang on the pop via setting use_pop to false
       @nil_count = 0
+      # hang on pop if true
       @use_pop = false
       loop do
         if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
@@ -121,10 +124,13 @@ module Optimizely
         item = @event_queue.pop if @event_queue.length.positive? || @use_pop
 
         if item.nil?
+          # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
+          # this avoids to much spinning of the loop.
           @nil_count += 1
           next
         end
 
+        # reset nil_count and use_pop if we have received an item.
         @nil_count = 0
         @use_pop = false
 
