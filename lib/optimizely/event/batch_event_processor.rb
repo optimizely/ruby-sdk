@@ -109,14 +109,16 @@ module Optimizely
 
     def run
       @nil_count = 0
+      @use_pop = false
       loop do
-        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline || @nil_count > MAX_NIL_COUNT
+        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
           @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
           flush_queue!
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+          @use_pop = true if @nil_count > MAX_NIL_COUNT
         end
 
-        item = @event_queue.pop if @event_queue.length.positive? || @nil_count > MAX_NIL_COUNT
+        item = @event_queue.pop if @event_queue.length.positive? || @use_pop
 
         if item.nil?
           sleep(0.5)
@@ -125,6 +127,7 @@ module Optimizely
         end
 
         @nil_count = 0
+        @use_pop = false
 
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
