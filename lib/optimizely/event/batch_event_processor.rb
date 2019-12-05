@@ -121,7 +121,11 @@ module Optimizely
           @use_pop = true if @nil_count > MAX_NIL_COUNT
         end
 
+        @logger.log(Logger::DEBUG, 'Getting item.')
+        @logger.log(Logger::DEBUG, ' use pop is equal to ' + @use_pop.to_s)
         item = @event_queue.pop if @event_queue.length.positive? || @use_pop
+        @logger.log(Logger::DEBUG, 'Should hang. ' + item.to_s) if @use_pop
+        @logger.log(Logger::DEBUG, 'Got item. ' + item.to_s)
 
         if item.nil?
           # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
