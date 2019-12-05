@@ -146,9 +146,9 @@ describe Optimizely::EventDispatcher do
 
     response = @customized_event_dispatcher.dispatch_event(event)
 
-    expect(response).to be_nil
-    expect(spy_logger).not_to have_received(:log)
-    expect(error_handler).not_to have_received(:handle_error)
+    expect(response).to have_received(:log)
+    expect(spy_logger).to have_received(:log)
+    expect(error_handler).to_not have_received(:handle_error)
   end
 
   it 'should do nothing on response with status code 600' do
@@ -157,8 +157,8 @@ describe Optimizely::EventDispatcher do
 
     response = @customized_event_dispatcher.dispatch_event(event)
 
-    expect(response).to be_nil
-    expect(spy_logger).not_to have_received(:log)
+    expect(response).to have_received(:log)
+    expect(spy_logger).to have_received(:log)
     expect(error_handler).not_to have_received(:handle_error)
   end
 end
