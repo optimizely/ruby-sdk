@@ -1,5 +1,12 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.3.2-RC
+December 4th, 2019
+
+### Bug Fixes:
+- BatchEventProcessor will hang on poll after flushing with no event if no event count is greater than 3.
+- EventDispatcher logs debug response and error responses from http post call.
+
 ## 3.3.1
 October 10th, 2019
 
