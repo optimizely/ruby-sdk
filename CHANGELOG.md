@@ -1,5 +1,15 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.3.2-RC
+December 4th, 2019
+
+### Bug Fixes:
+- BatchEventProcessor will hang on poll after flushing with no event if no event count is greater than 3 [#224](https://github.com/optimizely/ruby-sdk/pull/224).
+- EventDispatcher logs debug response and error responses from http post call i[#221](https://github.com/optimizely/ruby-sdk/pull/221).
+
+# New Features
+- NotificationCenter should accept any Callable [#219](https://github.com/optimizely/ruby-sdk/pull/219).
+
 ## 3.3.1
 October 10th, 2019
 
