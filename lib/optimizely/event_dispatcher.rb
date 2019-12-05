@@ -59,6 +59,8 @@ module Optimizely
       when 500...600
         @logger.log(Logger::ERROR, error_msg)
         @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
+      else
+        @logger.log(Logger::DEBUG, 'event successfully sent with response code ' + response.code.to_s)
       end
     rescue Timeout::Error => e
       @logger.log(Logger::ERROR, "Request Timed out. Error: #{e}")
