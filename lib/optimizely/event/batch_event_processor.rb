@@ -121,7 +121,6 @@ module Optimizely
         item = @event_queue.pop if @event_queue.length.positive? || @use_pop
 
         if item.nil?
-          sleep(0.5)
           @nil_count += 1
           next
         end
