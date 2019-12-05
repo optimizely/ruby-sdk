@@ -38,7 +38,7 @@ module Optimizely
 
     def initialize(
       event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher: Optimizely::EventDispatcher.new,
+      event_dispatcher: nil,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
       logger: NoOpLogger.new,
@@ -46,7 +46,7 @@ module Optimizely
     )
       @event_queue = event_queue
       @logger = logger
-      @event_dispatcher = event_dispatcher
+      @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger)
       @batch_size = if (batch_size.is_a? Integer) && positive_number?(batch_size)
                       batch_size
                     else
