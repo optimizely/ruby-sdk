@@ -71,7 +71,7 @@ module Optimizely
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
-      @event_dispatcher = event_dispatcher || EventDispatcher.new
+      @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       @user_profile_service = user_profile_service
 
       begin
@@ -748,7 +748,7 @@ module Optimizely
 
       return if Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
 
-      @event_dispatcher = EventDispatcher.new
+      @event_dispatcher = EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       raise InvalidInputError, 'event_dispatcher'
     end
 

@@ -18,6 +18,13 @@
 module Optimizely
   class Error < StandardError; end
 
+  class HTTPCallError < Error
+    # Raised when a 4xx or 5xx response code is recieved.
+    def initialize(msg = 'HTTP call resulted in a response with an error code.')
+      super
+    end
+  end
+
   class InvalidAudienceError < Error
     # Raised when an invalid audience is provided
 

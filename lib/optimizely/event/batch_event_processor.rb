@@ -31,13 +31,14 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
+    MAX_NIL_COUNT = 3
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
 
     def initialize(
       event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher: Optimizely::EventDispatcher.new,
+      event_dispatcher: nil,
       batch_size: DEFAULT_BATCH_SIZE,
       flush_interval: DEFAULT_BATCH_INTERVAL,
       logger: NoOpLogger.new,
@@ -45,7 +46,7 @@ module Optimizely
     )
       @event_queue = event_queue
       @logger = logger
-      @event_dispatcher = event_dispatcher
+      @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger)
       @batch_size = if (batch_size.is_a? Integer) && positive_number?(batch_size)
                       batch_size
                     else
@@ -107,15 +108,31 @@ module Optimizely
     private
 
     def run
+      # if we receive a number of item nils that reach MAX_NIL_COUNT,
+      # then we hang on the pop via setting use_pop to false
+      @nil_count = 0
+      # hang on pop if true
+      @use_pop = false
       loop do
-        flush_queue! if Helpers::DateTimeUtils.create_timestamp > @flushing_interval_deadline
+        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
+          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
+          flush_queue!
+          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+          @use_pop = true if @nil_count > MAX_NIL_COUNT
+        end
 
-        item = @event_queue.pop if @event_queue.length.positive?
+        item = @event_queue.pop if @event_queue.length.positive? || @use_pop
 
         if item.nil?
-          sleep(0.05)
+          # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
+          # this avoids to much spinning of the loop.
+          @nil_count += 1
           next
         end
+
+        # reset nil_count and use_pop if we have received an item.
+        @nil_count = 0
+        @use_pop = false
 
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
