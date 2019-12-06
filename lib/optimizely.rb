@@ -104,7 +104,6 @@ module Optimizely
                          else
                            ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
                          end
-      @logger.log(Logger::INFO, "------------>>> THIS IS LOCALLY")
     end
 
     # Buckets visitor and sends impression event to Optimizely.
