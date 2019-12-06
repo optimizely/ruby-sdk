@@ -31,18 +31,16 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
-    MAX_NIL_COUNT = 3
-
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
 
     def initialize(
-      event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
-      event_dispatcher: nil,
-      batch_size: DEFAULT_BATCH_SIZE,
-      flush_interval: DEFAULT_BATCH_INTERVAL,
-      logger: NoOpLogger.new,
-      notification_center: nil
+        event_queue: SizedQueue.new(DEFAULT_QUEUE_CAPACITY),
+            event_dispatcher: nil,
+            batch_size: DEFAULT_BATCH_SIZE,
+            flush_interval: DEFAULT_BATCH_INTERVAL,
+            logger: NoOpLogger.new,
+            notification_center: nil
     )
       @event_queue = event_queue
       @logger = logger
@@ -112,29 +110,26 @@ module Optimizely
         if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
           @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
           flush_queue!
-
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
         end
 
-        item = @event_queue.pop if @event_queue.length.positive?
+        if @event_queue.length.positive?
+          @logger.log(Logger::DEBUG, 'Getting item.')
+          item = @event_queue.pop
 
-        if item.nil?
-          sleep(@flush_interval / 1000)
-          next
+          if item == SHUTDOWN_SIGNAL
+            @logger.log(Logger::DEBUG, 'Received shutdown signal.')
+            break
+          end
+
+          if item == FLUSH_SIGNAL
+            @logger.log(Logger::DEBUG, 'Received flush signal.')
+            flush_queue!
+            next
+          end
+
+          add_to_batch(item) if item.is_a? Optimizely::UserEvent
         end
-
-        if item == SHUTDOWN_SIGNAL
-          @logger.log(Logger::DEBUG, 'Received shutdown signal.')
-          break
-        end
-
-        if item == FLUSH_SIGNAL
-          @logger.log(Logger::DEBUG, 'Received flush signal.')
-          flush_queue!
-          next
-        end
-
-        add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
@@ -142,8 +137,8 @@ module Optimizely
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
       @logger.log(
-        Logger::INFO,
-        'Exiting processing loop. Attempting to flush pending events.'
+          Logger::INFO,
+          'Exiting processing loop. Attempting to flush pending events.'
       )
       flush_queue!
     end
@@ -154,14 +149,14 @@ module Optimizely
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
       begin
         @logger.log(
-          Logger::INFO,
-          'Flushing Queue.'
+            Logger::INFO,
+            'Flushing Queue.'
         )
 
         @event_dispatcher.dispatch_event(log_event)
         @notification_center&.send_notifications(
-          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
-          log_event
+            NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+            log_event
         )
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
@@ -172,9 +167,7 @@ module Optimizely
     def add_to_batch(user_event)
       if should_split?(user_event)
         flush_queue!
-        @current_batch = []
       end
-
       # Reset the deadline if starting a new batch.
       @flushing_interval_deadline = (Helpers::DateTimeUtils.create_timestamp + @flush_interval) if @current_batch.empty?
 
