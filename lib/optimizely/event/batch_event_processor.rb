@@ -56,7 +56,7 @@ module Optimizely
                       DEFAULT_BATCH_SIZE
                     end
       @flush_interval = if positive_number?(flush_interval)
-                          flush_interval
+                          flush_interval/1000.0
                         else
                           @logger.log(Logger::DEBUG, "Setting to default flush_interval: #{DEFAULT_BATCH_INTERVAL} ms.")
                           DEFAULT_BATCH_INTERVAL
@@ -68,6 +68,7 @@ module Optimizely
         flush_queue!
       end
       @task.execute
+      @lock = Mutex.new
     end
 
     def start!
@@ -89,7 +90,6 @@ module Optimizely
 
       begin
         @event_queue.push(user_event, true)
-        @process_count += 1
         start! if @event_queue.length.positive? && (@event_queue.length % @batch_size).zero?
       rescue => e
         @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
@@ -112,32 +112,34 @@ module Optimizely
     private
 
     def run
-      while @event_queue.length.positive?
+      @lock.synchronize {
+        while @event_queue.length.positive?
 
-        @logger.log(Logger::DEBUG, 'Getting item.')
-        @logger.log(Logger::DEBUG, ' use pop is equal to ' + @use_pop.to_s)
-        item = @event_queue.pop
-        @logger.log(Logger::DEBUG, 'Should hang. ' + item.to_s) if @use_pop
-        @logger.log(Logger::DEBUG, 'Got item. ' + item.to_s)
+          @logger.log(Logger::DEBUG, 'Getting item.')
+          @logger.log(Logger::DEBUG, ' use pop is equal to ' + @use_pop.to_s)
+          item = @event_queue.pop
+          @logger.log(Logger::DEBUG, 'Should hang. ' + item.to_s) if @use_pop
+          @logger.log(Logger::DEBUG, 'Got item. ' + item.to_s)
 
-        if item.nil?
-          @logger.log(Logger::WARNING, 'Something went wrong. Got back nil item from event queue. ')
-          next
+          if item.nil?
+            @logger.log(Logger::WARNING, 'Something went wrong. Got back nil item from event queue. ')
+            next
+          end
+
+          if item == SHUTDOWN_SIGNAL
+            @logger.log(Logger::DEBUG, 'Received shutdown signal.')
+            break
+          end
+
+          if item == FLUSH_SIGNAL
+            @logger.log(Logger::DEBUG, 'Received flush signal.')
+            flush_queue!
+            next
+          end
+
+          add_to_batch(item) if item.is_a? Optimizely::UserEvent
         end
-
-        if item == SHUTDOWN_SIGNAL
-          @logger.log(Logger::DEBUG, 'Received shutdown signal.')
-          break
-        end
-
-        if item == FLUSH_SIGNAL
-          @logger.log(Logger::DEBUG, 'Received flush signal.')
-          flush_queue!
-          next
-        end
-
-        add_to_batch(item) if item.is_a? Optimizely::UserEvent
-      end
+      }
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
     rescue Exception => e
