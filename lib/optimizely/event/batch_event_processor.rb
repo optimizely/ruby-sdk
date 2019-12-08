@@ -62,7 +62,9 @@ module Optimizely
       @notification_center = notification_center
       @current_batch = []
       @started = false
-      start!
+      @task = Concurrent::TimerTask.new(execution_interval: @flush_interval, timeout_interval: DEFAULT_TIMEOUT_INTERVAL) do
+        flush_queue!
+      end
     end
 
     def start!
@@ -70,8 +72,7 @@ module Optimizely
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
-      @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
-      @logger.log(Logger::INFO, 'Starting scheduler.')
+      @logger.log(Logger::INFO, 'Starting event queue processing.')
       @thread = Thread.new { run }
       @started = true
     end
@@ -83,13 +84,10 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      if !@started || !@thread.alive?
-        @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
-        return
-      end
-
       begin
         @event_queue.push(user_event, true)
+        @process_count += 1
+        start! if @event_queue.length.positive? && (@event_queue.length % @batch_size).zero?
       rescue Exception
         @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
         return
@@ -103,40 +101,25 @@ module Optimizely
       @event_queue << SHUTDOWN_SIGNAL
       @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
+      @task.shutdown
+      flush_queue!
     end
 
     private
 
     def run
-      # if we receive a number of item nils that reach MAX_NIL_COUNT,
-      # then we hang on the pop via setting use_pop to false
-      @nil_count = 0
-      # hang on pop if true
-      @use_pop = false
-      loop do
-        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
-          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
-          flush_queue!
-          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
-          @use_pop = true if @nil_count > MAX_NIL_COUNT
-        end
+      while @event_queue.length.positive?
 
         @logger.log(Logger::DEBUG, 'Getting item.')
         @logger.log(Logger::DEBUG, ' use pop is equal to ' + @use_pop.to_s)
-        item = @event_queue.pop if @event_queue.length.positive? || @use_pop
+        item = @event_queue.pop
         @logger.log(Logger::DEBUG, 'Should hang. ' + item.to_s) if @use_pop
         @logger.log(Logger::DEBUG, 'Got item. ' + item.to_s)
 
         if item.nil?
-          # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
-          # this avoids to much spinning of the loop.
-          @nil_count += 1
+          @logger.log(Logger::WARNING, 'Something went wrong. Got back nil item from event queue. ')
           next
         end
-
-        # reset nil_count and use_pop if we have received an item.
-        @nil_count = 0
-        @use_pop = false
 
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
@@ -160,13 +143,13 @@ module Optimizely
         Logger::INFO,
         'Exiting processing loop. Attempting to flush pending events.'
       )
-      flush_queue!
     end
 
     def flush_queue!
       return if @current_batch.empty?
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
+      @current_batch = []
       begin
         @logger.log(
           Logger::INFO,
@@ -181,7 +164,6 @@ module Optimizely
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end
-      @current_batch = []
     end
 
     def add_to_batch(user_event)
@@ -189,9 +171,6 @@ module Optimizely
         flush_queue!
         @current_batch = []
       end
-
-      # Reset the deadline if starting a new batch.
-      @flushing_interval_deadline = (Helpers::DateTimeUtils.create_timestamp + @flush_interval) if @current_batch.empty?
 
       @logger.log(Logger::DEBUG, "Adding user event: #{user_event} to batch.")
       @current_batch << user_event
