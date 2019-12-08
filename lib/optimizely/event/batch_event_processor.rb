@@ -17,6 +17,8 @@
 #
 require_relative 'event_processor'
 require_relative '../helpers/validator'
+require 'concurrent'
+require "concurrent/atomics"
 module Optimizely
   class BatchEventProcessor < EventProcessor
     # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
@@ -25,10 +27,10 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :event_queue, :event_dispatcher, :current_batch, :started, :batch_size, :flush_interval
+    attr_reader :event_queue, :event_dispatcher, :current_batch, :started, :batch_size, :flush_interval, :task
 
     DEFAULT_BATCH_SIZE = 10
-    DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
+    DEFAULT_BATCH_INTERVAL = 30 # interval in seconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
     MAX_NIL_COUNT = 3
@@ -61,10 +63,11 @@ module Optimizely
                         end
       @notification_center = notification_center
       @current_batch = []
-      @started = false
+      @started = Concurrent::AtomicBoolean.new(false)
       @task = Concurrent::TimerTask.new(execution_interval: @flush_interval, timeout_interval: DEFAULT_TIMEOUT_INTERVAL) do
         flush_queue!
       end
+      @task.execute
     end
 
     def start!
@@ -143,6 +146,7 @@ module Optimizely
         Logger::INFO,
         'Exiting processing loop. Attempting to flush pending events.'
       )
+    @started = false
     end
 
     def flush_queue!
