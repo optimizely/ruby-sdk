@@ -91,8 +91,9 @@ module Optimizely
         @event_queue.push(user_event, true)
         @process_count += 1
         start! if @event_queue.length.positive? && (@event_queue.length % @batch_size).zero?
-      rescue Exception
+      rescue => e
         @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
+        @logger.log(Logger::WARN, e.message)
         return
       end
     end
