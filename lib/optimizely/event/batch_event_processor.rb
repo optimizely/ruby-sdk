@@ -107,36 +107,12 @@ module Optimizely
 
     private
 
-    def run
-      # if we receive a number of item nils that reach MAX_NIL_COUNT,
-      # then we hang on the pop via setting use_pop to false
-      @nil_count = 0
-      # hang on pop if true
-      @use_pop = false
-      loop do
-        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
-          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
-          flush_queue!
-          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
-          @use_pop = true if @nil_count > MAX_NIL_COUNT
-        end
-
-        item = @event_queue.pop if @event_queue.length.positive? || @use_pop
-
-        if item.nil?
-          # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
-          # this avoids to much spinning of the loop.
-          @nil_count += 1
-          next
-        end
-
-        # reset nil_count and use_pop if we have received an item.
-        @nil_count = 0
-        @use_pop = false
-
+    def process_events
+      while @event_queue.length.positive?
+        item = @event_queue.pop
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
-          break
+          return false
         end
 
         if item == FLUSH_SIGNAL
@@ -147,9 +123,29 @@ module Optimizely
 
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
+      return true
+    end
+
+    def run
+      loop do
+        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
+          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
+
+          break unless process_events
+
+          flush_queue!
+          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+        end
+
+        break unless process_events
+
+        interval = (Helpers::DateTimeUtils.create_timestamp - @flushing_interval_deadline)/1.0
+
+        sleep interval if interval > 0
+      end
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
-    rescue Exception => e
+    rescue => e
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
       @logger.log(
