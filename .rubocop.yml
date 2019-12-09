@@ -45,8 +45,5 @@ Style/RescueStandardError:
 Style/SignalException:
   Enabled: false
 
-Lint/RescueException:
-  Enabled: false
-
 Layout/EndOfLine:
   EnforcedStyle: lf
