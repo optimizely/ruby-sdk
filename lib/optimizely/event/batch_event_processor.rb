@@ -123,7 +123,7 @@ module Optimizely
 
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
-      return true
+      true
     end
 
     def run
@@ -139,9 +139,9 @@ module Optimizely
 
         break unless process_events
 
-        interval = (Helpers::DateTimeUtils.create_timestamp - @flushing_interval_deadline)/1.0
+        interval = (Helpers::DateTimeUtils.create_timestamp - @flushing_interval_deadline) / 1.0
 
-        sleep interval if interval > 0
+        sleep interval if interval.positive?
       end
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
