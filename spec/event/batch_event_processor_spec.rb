@@ -55,14 +55,14 @@ describe Optimizely::BatchEventProcessor do
 
     @event_processor = Optimizely::BatchEventProcessor.new(
       event_dispatcher: @event_dispatcher,
-      flush_interval: 100,
+      flush_interval: 1000,
       logger: spy_logger,
       notification_center: @notification_center
     )
 
     @event_processor.process(conversion_event)
     # flush interval is set to 100ms. Wait for 300ms and assert that event is dispatched.
-    sleep 1
+    sleep 1000
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     expect(@notification_center).to have_received(:send_notifications).with(

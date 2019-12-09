@@ -33,7 +33,6 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30 # interval in seconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
-    MAX_NIL_COUNT = 3
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -58,21 +57,24 @@ module Optimizely
       @flush_interval = if positive_number?(flush_interval)
                           flush_interval/1000.0
                         else
-                          @logger.log(Logger::DEBUG, "Setting to default flush_interval: #{DEFAULT_BATCH_INTERVAL} ms.")
+                          @logger.log(Logger::DEBUG, "Setting to default flush_interval: #{DEFAULT_BATCH_INTERVAL} seconds.")
                           DEFAULT_BATCH_INTERVAL
                         end
       @notification_center = notification_center
-      @current_batch = []
+      @current_batch = Concurrent::Array.new
       @started = Concurrent::AtomicBoolean.new(false)
-      @task = Concurrent::TimerTask.new(execution_interval: @flush_interval, timeout_interval: DEFAULT_TIMEOUT_INTERVAL) do
+      @task = Concurrent::TimerTask.new(execution_interval: @flush_interval, timeout_interval: 60) do
+        @logger.log(Logger::INFO, 'flushing on interval.')
+        run
         flush_queue!
+        @logger.log(Logger::INFO, 'After flush queue.')
       end
       @task.execute
       @lock = Mutex.new
     end
 
     def start!
-      if @started == true
+      if @started
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
@@ -90,7 +92,7 @@ module Optimizely
 
       begin
         @event_queue.push(user_event, true)
-        start! if @event_queue.length.positive? && (@event_queue.length % @batch_size).zero?
+        start! if (@event_queue.length % @batch_size).zero?
       rescue => e
         @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
         @logger.log(Logger::WARN, e.message)
@@ -99,11 +101,8 @@ module Optimizely
     end
 
     def stop!
-      return unless @started
-
       @logger.log(Logger::INFO, 'Stopping scheduler.')
       @event_queue << SHUTDOWN_SIGNAL
-      @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
       @task.shutdown
       flush_queue!
@@ -123,7 +122,7 @@ module Optimizely
 
           if item.nil?
             @logger.log(Logger::WARNING, 'Something went wrong. Got back nil item from event queue. ')
-            next
+            break
           end
 
           if item == SHUTDOWN_SIGNAL
@@ -139,6 +138,9 @@ module Optimizely
 
           add_to_batch(item) if item.is_a? Optimizely::UserEvent
         end
+        @logger.log(Logger::INFO, "stopping thread")
+        @started = false
+        @logger.log(Logger::INFO, @started.to_s)
       }
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
@@ -149,14 +151,13 @@ module Optimizely
         Logger::INFO,
         'Exiting processing loop. Attempting to flush pending events.'
       )
-    @started = false
     end
 
     def flush_queue!
       return if @current_batch.empty?
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
-      @current_batch = []
+      @current_batch = Concurrent::Array.new
       begin
         @logger.log(
           Logger::INFO,
@@ -176,7 +177,7 @@ module Optimizely
     def add_to_batch(user_event)
       if should_split?(user_event)
         flush_queue!
-        @current_batch = []
+        @current_batch = Concurrent::Array.new
       end
 
       @logger.log(Logger::DEBUG, "Adding user event: #{user_event} to batch.")
