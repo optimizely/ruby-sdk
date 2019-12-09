@@ -91,7 +91,7 @@ module Optimizely
       begin
         @event_queue.push(user_event, true)
       rescue => e
-        @logger.log(Logger::WARN, 'Payload not accepted by the queue. ' + e.message)
+        @logger.log(Logger::WARN, 'Payload not accepted by the queue: ' + e.message)
         return
       end
     end

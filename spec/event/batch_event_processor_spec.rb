@@ -344,7 +344,7 @@ describe Optimizely::BatchEventProcessor do
     # Wait until other thread has processed the event.
     while @event_processor.current_batch.length != 10; end
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
-    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Payload not accepted by the queue.').once
+    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Payload not accepted by the queue: queue full').once
   end
 
   it 'should not process and log when Executor is not running' do
