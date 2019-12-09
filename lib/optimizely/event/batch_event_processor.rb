@@ -72,7 +72,7 @@ module Optimizely
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
       @logger.log(Logger::INFO, 'Starting scheduler.')
-      @thread = Thread.new { run }
+      @thread = Thread.new { run_queue }
       @started = true
     end
 
@@ -107,7 +107,7 @@ module Optimizely
 
     private
 
-    def process_events
+    def process_queue
       while @event_queue.length.positive?
         item = @event_queue.pop
         if item == SHUTDOWN_SIGNAL
@@ -126,18 +126,18 @@ module Optimizely
       true
     end
 
-    def run
+    def run_queue
       loop do
         if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
           @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
 
-          break unless process_events
+          break unless process_queue
 
           flush_queue!
           @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
         end
 
-        break unless process_events
+        break unless process_queue
 
         interval = (Helpers::DateTimeUtils.create_timestamp - @flushing_interval_deadline) / 1.0
 
