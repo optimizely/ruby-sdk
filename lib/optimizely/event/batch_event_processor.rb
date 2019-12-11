@@ -31,7 +31,6 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
-    MAX_NIL_COUNT = 3
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -62,7 +61,7 @@ module Optimizely
       @notification_center = notification_center
       @current_batch = []
       @started = false
-      start!
+      @stopped = false
     end
 
     def start!
@@ -74,6 +73,7 @@ module Optimizely
       @logger.log(Logger::INFO, 'Starting scheduler.')
       @thread = Thread.new { run_queue }
       @started = true
+      @stopped = false
     end
 
     def flush
@@ -83,10 +83,7 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      unless @started
-        @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
-        return
-      end
+      start! unless @started || @stopped
 
       begin
         @event_queue.push(user_event, true)
@@ -103,6 +100,7 @@ module Optimizely
       @event_queue << SHUTDOWN_SIGNAL
       @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
+      @stopped = true
     end
 
     private
@@ -139,7 +137,10 @@ module Optimizely
 
         break unless process_queue
 
-        interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp) / 1000.0
+        interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp)
+
+        interval = interval / 5.0 if interval == @flush_interval
+        interval = interval * 0.001
 
         sleep interval if interval.positive?
       end
