@@ -83,7 +83,7 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      if !@started || !@thread.alive?
+      unless @started
         @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
         return
       end
@@ -139,7 +139,7 @@ module Optimizely
 
         break unless process_queue
 
-        interval = (Helpers::DateTimeUtils.create_timestamp - @flushing_interval_deadline) / 1.0
+        interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp) / 1000.0
 
         sleep interval if interval.positive?
       end
@@ -148,10 +148,7 @@ module Optimizely
     rescue => e
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
-      @logger.log(
-        Logger::INFO,
-        'Exiting processing loop. Attempting to flush pending events.'
-      )
+      @logger.log(Logger::INFO, 'Exiting processing loop. Attempting to flush pending events.')
       flush_queue!
     end
 
