@@ -30,7 +30,7 @@ module Optimizely
       log_event = Optimizely::EventFactory.create_log_event(user_event, @logger)
 
       begin
-        @event_dispatcher.dispatch_event(log_event)
+        Thread.new { @event_dispatcher.dispatch_event(log_event) }
         @notification_center&.send_notifications(
           NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
           log_event

@@ -27,11 +27,12 @@ require 'optimizely/logger'
 describe Optimizely::BatchEventProcessor do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
-  let(:spy_logger) { spy('logger') }
+  let(:spy_logger) { spy('logger')}
   let(:project_config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:event) { project_config.get_event_from_key('test_event') }
 
   before(:example) do
+    spy_logger = spy('logger')
     @event_queue = SizedQueue.new(100)
     @event_dispatcher = Optimizely::EventDispatcher.new
     allow(@event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -46,6 +47,8 @@ describe Optimizely::BatchEventProcessor do
   it 'should log waring when service is already started' do
     @event_processor = Optimizely::BatchEventProcessor.new(logger: spy_logger)
     @event_processor.start!
+    @event_processor.start!
+
     expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Service already started.').once
   end
 
@@ -355,6 +358,7 @@ describe Optimizely::BatchEventProcessor do
       logger: spy_logger
     )
 
+    @event_processor.start!
     @event_processor.stop!
 
     user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)

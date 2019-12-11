@@ -83,7 +83,14 @@ module Optimizely
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      start! unless @started || @stopped
+      # if the processor has been explicitly stopped. Don't accept tasks
+      if @stopped
+        @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
+        return
+      end
+
+      # start if the processor hasn't been started
+      start! unless @started
 
       begin
         @event_queue.push(user_event, true)
@@ -137,10 +144,14 @@ module Optimizely
 
         break unless process_queue
 
+        # what is the current interval to flush
         interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp)
 
-        interval = interval / 5.0 if interval == @flush_interval
-        interval = interval * 0.001
+        # lets sleep a quarter
+        interval /= 4.0
+
+        # convert to seconds from milliseconds
+        interval *= 0.001
 
         sleep interval if interval.positive?
       end
