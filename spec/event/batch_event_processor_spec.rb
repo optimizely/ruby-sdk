@@ -27,7 +27,7 @@ require 'optimizely/logger'
 describe Optimizely::BatchEventProcessor do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
-  let(:spy_logger) { spy('logger')}
+  let(:spy_logger) { spy('logger') }
   let(:project_config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:event) { project_config.get_event_from_key('test_event') }
 
