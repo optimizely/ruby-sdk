@@ -30,18 +30,15 @@ module Optimizely
       log_event = Optimizely::EventFactory.create_log_event(user_event, @logger)
 
       begin
-        Thread.new {
+        Thread.new do
           begin
             @event_dispatcher.dispatch_event(log_event)
-            @notification_center&.send_notifications(
-                NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
-                log_event
-            )
+
+            @notification_center&.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], log_event)
           rescue StandardError => e
             @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
           end
-
-        }
+        end
       rescue StandardError => e
         @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
       end

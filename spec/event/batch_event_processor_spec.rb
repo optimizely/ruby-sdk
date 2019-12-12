@@ -95,12 +95,9 @@ describe Optimizely::BatchEventProcessor do
     end
 
     # Wait until other thread has processed the event.
-    until @event_processor.event_queue.empty?;
-      sleep 0.1
-    end
-    until @event_processor.current_batch.empty?;
-      sleep 0.1
-    end
+    sleep 0.1 until @event_processor.event_queue.empty?
+
+    sleep 0.1 until @event_processor.current_batch.empty?
 
     expect(Optimizely::EventFactory).to have_received(:create_log_event).with(expected_batch, spy_logger).once
     expect(@event_dispatcher).to have_received(:dispatch_event).with(
@@ -127,12 +124,9 @@ describe Optimizely::BatchEventProcessor do
     @event_processor.flush
 
     # Wait until other thread has processed the event.
-    until @event_processor.event_queue.empty?;
-      sleep 0.1
-    end
-    until @event_processor.current_batch.empty?;
-      sleep 0.1
-    end
+    sleep 0.1 until @event_processor.event_queue.empty?
+
+    sleep 0.1 until @event_processor.current_batch.empty?
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).twice
     expect(@event_processor.event_queue.length).to eq(0)
@@ -154,17 +148,13 @@ describe Optimizely::BatchEventProcessor do
     expect(user_event1.event_context[:revision]).to eq('1')
     @event_processor.process(user_event1)
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 1;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 1
 
     expect(user_event2.event_context[:revision]).to eq('2')
     @event_processor.process(user_event2)
     @event_processor.process(user_event2)
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 2;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 2
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Revisions mismatched: Flushing current batch.').once
@@ -185,17 +175,13 @@ describe Optimizely::BatchEventProcessor do
     expect(user_event1.event_context[:project_id]).to eq('X')
     @event_processor.process(user_event1)
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 1;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 1
 
     expect(user_event2.event_context[:project_id]).to eq('Y')
     @event_processor.process(user_event2)
     @event_processor.process(user_event2)
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 2;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 2
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
     expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Project Ids mismatched: Flushing current batch.').once
@@ -271,14 +257,11 @@ describe Optimizely::BatchEventProcessor do
     @event_processor.process(conversion_event)
 
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 1;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 1
+
     @event_processor.flush
     # Wait until other thread has processed the event.
-    until @event_processor.current_batch.empty?;
-      sleep 0.1
-    end
+    sleep 0.1 until @event_processor.current_batch.empty?
 
     expect(@notification_center).to have_received(:send_notifications).with(
       Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
@@ -304,14 +287,11 @@ describe Optimizely::BatchEventProcessor do
 
     @event_processor.process(conversion_event)
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 1;
-      sleep 0.1
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 1
+
     @event_processor.flush
     # Wait until other thread has processed the event.
-    until @event_processor.current_batch.empty?;
-      sleep 0.1
-    end
+    sleep 0.1 until @event_processor.current_batch.empty?
 
     expect(@notification_center).not_to have_received(:send_notifications)
     expect(spy_logger).to have_received(:log).once.with(
@@ -342,9 +322,7 @@ describe Optimizely::BatchEventProcessor do
     end
 
     # Wait until other thread has processed the event.
-    while @event_processor.current_batch.length != 4;
-      sleep(0.1)
-    end
+    sleep 0.1 while @event_processor.current_batch.length != 4
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
 
     @event_processor.stop!
