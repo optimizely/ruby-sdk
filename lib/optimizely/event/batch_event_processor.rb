@@ -147,7 +147,7 @@ module Optimizely
         # what is the current interval to flush
         interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp)
 
-        interval /= 5.0
+        interval /= 10.0
 
         # convert to seconds from milliseconds
         interval *= 0.001
