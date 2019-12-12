@@ -82,9 +82,7 @@ module Optimizely
 
     def flush
       @event_queue << FLUSH_SIGNAL
-      @wait_mutex.synchronize {
-        @resource.signal
-      }
+      @wait_mutex.synchronize { @resource.signal }
     end
 
     def process(user_event)
@@ -101,9 +99,7 @@ module Optimizely
 
       begin
         @event_queue.push(user_event, true)
-        @wait_mutex.synchronize {
-          @resource.signal
-        }
+        @wait_mutex.synchronize { @resource.signal }
       rescue => e
         @logger.log(Logger::WARN, 'Payload not accepted by the queue: ' + e.message)
         return
@@ -115,9 +111,7 @@ module Optimizely
 
       @logger.log(Logger::INFO, 'Stopping scheduler.')
       @event_queue << SHUTDOWN_SIGNAL
-      @wait_mutex.synchronize {
-        @resource.signal
-      }
+      @wait_mutex.synchronize { @resource.signal }
       @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
       @stopped = true
@@ -159,11 +153,10 @@ module Optimizely
 
         # what is the current interval to flush in seconds
         interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp) * 0.001
-        if interval.positive?
-          @wait_mutex.synchronize {
-            @resource.wait(@wait_mutex, interval)
-          }
-        end
+
+        next unless interval.positive?
+
+        @wait_mutex.synchronize { @resource.wait(@wait_mutex, interval) }
       end
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
