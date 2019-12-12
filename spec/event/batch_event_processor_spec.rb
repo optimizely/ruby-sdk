@@ -344,7 +344,7 @@ describe Optimizely::BatchEventProcessor do
     )
 
     user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    11.times do
+    12.times do
       @event_processor.process(user_event)
     end
 
