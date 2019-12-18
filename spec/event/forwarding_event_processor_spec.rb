@@ -108,8 +108,6 @@ describe Optimizely::ForwardingEventProcessor do
 
       sleep 0.1
 
-      expect(notification_center).not_to have_received(:send_notifications)
-
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
         "Error dispatching event: #{log_event} Timeout::Error."
