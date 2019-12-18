@@ -34,7 +34,6 @@ module Optimizely
         Thread.new do
           begin
             @event_dispatcher.dispatch_event(log_event)
-
           rescue StandardError => e
             @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
           end
