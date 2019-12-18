@@ -742,9 +742,9 @@ describe 'Optimizely' do
 
         expect(notification_center).to receive(:send_notifications).ordered
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-          logger:spy_logger,
+          logger: spy_logger,
           url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json',
-          notification_center: notification_center,
+          notification_center: notification_center
         )
 
         project_instance = Optimizely::Project.new(
