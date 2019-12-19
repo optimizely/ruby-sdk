@@ -338,13 +338,13 @@ describe Optimizely::BatchEventProcessor do
     @event_processor = Optimizely::BatchEventProcessor.new(
       event_queue: SizedQueue.new(10),
       event_dispatcher: @event_dispatcher,
-      batch_size: 100,
+      batch_size: 1000,
       flush_interval: 10_000,
       logger: spy_logger
     )
 
     user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    80.times do
+    100.times do
       @event_processor.process(user_event)
     end
 
