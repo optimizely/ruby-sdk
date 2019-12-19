@@ -78,6 +78,8 @@ describe Optimizely::ForwardingEventProcessor do
 
       forwarding_event_processor.process(@conversion_event)
 
+      sleep 0.1
+
       expect(notification_center).to have_received(:send_notifications).with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
         Optimizely::Event.new(:post, log_url, @expected_conversion_params, post_headers)
@@ -104,7 +106,7 @@ describe Optimizely::ForwardingEventProcessor do
 
       forwarding_event_processor.process(@conversion_event)
 
-      expect(notification_center).not_to have_received(:send_notifications)
+      sleep 0.1
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
