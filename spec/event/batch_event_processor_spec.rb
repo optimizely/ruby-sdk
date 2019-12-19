@@ -344,12 +344,12 @@ describe Optimizely::BatchEventProcessor do
     )
 
     user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
-    11.times do
+    20.times do
       @event_processor.process(user_event)
     end
 
     expect(@event_dispatcher).not_to have_received(:dispatch_event)
-    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Payload not accepted by the queue: queue full').once
+    expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Payload not accepted by the queue: queue full').at_least(:once)
   end
 
   it 'should not process and log when Executor is not running' do
