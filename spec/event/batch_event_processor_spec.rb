@@ -337,7 +337,7 @@ describe Optimizely::BatchEventProcessor do
 
   it 'should log a warning when Queue gets full' do
     @event_processor = Optimizely::BatchEventProcessor.new(
-      event_queue: SizedQueue.new(10),
+      event_queue: SizedQueue.new(5),
       event_dispatcher: @event_dispatcher,
       batch_size: 1000,
       flush_interval: 10_000,
