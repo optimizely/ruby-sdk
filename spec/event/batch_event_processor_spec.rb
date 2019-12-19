@@ -73,7 +73,7 @@ describe Optimizely::BatchEventProcessor do
       log_event
     ).once
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Flushing Queue.').once
-    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').once
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').at_most(2).times
   end
 
   it 'should flush the current batch when max batch size met' do
