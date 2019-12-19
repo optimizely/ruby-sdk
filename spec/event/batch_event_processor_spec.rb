@@ -64,7 +64,7 @@ describe Optimizely::BatchEventProcessor do
     )
 
     @event_processor.process(conversion_event)
-    # flush interval is set to 100ms. Wait for 300ms and assert that event is dispatched.
+    # flush interval is set to 100ms. Wait for 200ms and assert that event is dispatched.
     sleep 0.2
 
     expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).once
@@ -73,6 +73,7 @@ describe Optimizely::BatchEventProcessor do
       log_event
     ).once
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Flushing Queue.').once
+    expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Deadline exceeded flushing current batch.').once
   end
 
   it 'should flush the current batch when max batch size met' do
