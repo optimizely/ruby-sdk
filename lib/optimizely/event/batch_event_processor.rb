@@ -31,7 +31,6 @@ module Optimizely
     DEFAULT_BATCH_INTERVAL = 30_000 # interval in milliseconds
     DEFAULT_QUEUE_CAPACITY = 1000
     DEFAULT_TIMEOUT_INTERVAL = 5 # interval in seconds
-    MAX_NIL_COUNT = 3
 
     FLUSH_SIGNAL = 'FLUSH_SIGNAL'
     SHUTDOWN_SIGNAL = 'SHUTDOWN_SIGNAL'
@@ -62,7 +61,7 @@ module Optimizely
       @notification_center = notification_center
       @current_batch = []
       @started = false
-      start!
+      @stopped = false
     end
 
     def start!
@@ -72,26 +71,37 @@ module Optimizely
       end
       @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
       @logger.log(Logger::INFO, 'Starting scheduler.')
-      @thread = Thread.new { run }
+      if @wait_mutex.nil?
+        @wait_mutex = Mutex.new
+        @resource = ConditionVariable.new
+      end
+      @thread = Thread.new { run_queue }
       @started = true
+      @stopped = false
     end
 
     def flush
       @event_queue << FLUSH_SIGNAL
+      @wait_mutex.synchronize { @resource.signal }
     end
 
     def process(user_event)
       @logger.log(Logger::DEBUG, "Received userEvent: #{user_event}")
 
-      if !@started || !@thread.alive?
+      # if the processor has been explicitly stopped. Don't accept tasks
+      if @stopped
         @logger.log(Logger::WARN, 'Executor shutdown, not accepting tasks.')
         return
       end
 
+      # start if the processor hasn't been started
+      start! unless @started
+
       begin
         @event_queue.push(user_event, true)
-      rescue Exception
-        @logger.log(Logger::WARN, 'Payload not accepted by the queue.')
+        @wait_mutex.synchronize { @resource.signal }
+      rescue => e
+        @logger.log(Logger::WARN, 'Payload not accepted by the queue: ' + e.message)
         return
       end
     end
@@ -101,42 +111,20 @@ module Optimizely
 
       @logger.log(Logger::INFO, 'Stopping scheduler.')
       @event_queue << SHUTDOWN_SIGNAL
+      @wait_mutex.synchronize { @resource.signal }
       @thread.join(DEFAULT_TIMEOUT_INTERVAL)
       @started = false
+      @stopped = true
     end
 
     private
 
-    def run
-      # if we receive a number of item nils that reach MAX_NIL_COUNT,
-      # then we hang on the pop via setting use_pop to false
-      @nil_count = 0
-      # hang on pop if true
-      @use_pop = false
-      loop do
-        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
-          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
-          flush_queue!
-          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
-          @use_pop = true if @nil_count > MAX_NIL_COUNT
-        end
-
-        item = @event_queue.pop if @event_queue.length.positive? || @use_pop
-
-        if item.nil?
-          # when nil count is greater than MAX_NIL_COUNT, we hang on the pop until there is an item available.
-          # this avoids to much spinning of the loop.
-          @nil_count += 1
-          next
-        end
-
-        # reset nil_count and use_pop if we have received an item.
-        @nil_count = 0
-        @use_pop = false
-
+    def process_queue
+      while @event_queue.length.positive?
+        item = @event_queue.pop
         if item == SHUTDOWN_SIGNAL
           @logger.log(Logger::DEBUG, 'Received shutdown signal.')
-          break
+          return false
         end
 
         if item == FLUSH_SIGNAL
@@ -147,15 +135,35 @@ module Optimizely
 
         add_to_batch(item) if item.is_a? Optimizely::UserEvent
       end
+      true
+    end
+
+    def run_queue
+      loop do
+        if Helpers::DateTimeUtils.create_timestamp >= @flushing_interval_deadline
+          @logger.log(Logger::DEBUG, 'Deadline exceeded flushing current batch.')
+
+          break unless process_queue
+
+          flush_queue!
+          @flushing_interval_deadline = Helpers::DateTimeUtils.create_timestamp + @flush_interval
+        end
+
+        break unless process_queue
+
+        # what is the current interval to flush in seconds
+        interval = (@flushing_interval_deadline - Helpers::DateTimeUtils.create_timestamp) * 0.001
+
+        next unless interval.positive?
+
+        @wait_mutex.synchronize { @resource.wait(@wait_mutex, interval) }
+      end
     rescue SignalException
       @logger.log(Logger::ERROR, 'Interrupted while processing buffer.')
-    rescue Exception => e
+    rescue => e
       @logger.log(Logger::ERROR, "Uncaught exception processing buffer. #{e.message}")
     ensure
-      @logger.log(
-        Logger::INFO,
-        'Exiting processing loop. Attempting to flush pending events.'
-      )
+      @logger.log(Logger::INFO, 'Exiting processing loop. Attempting to flush pending events.')
       flush_queue!
     end
 

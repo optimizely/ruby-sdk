@@ -46,7 +46,7 @@ Style/SignalException:
   Enabled: false
 
 Lint/RescueException:
-  Enabled: false
+  Enabled: true
 
 Layout/EndOfLine:
   EnforcedStyle: lf

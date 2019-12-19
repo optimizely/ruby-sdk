@@ -2853,6 +2853,8 @@ describe 'Optimizely' do
 
       expect(config_manager.stopped).to be false
       expect(event_processor.started).to be false
+      event_processor.start!
+      expect(event_processor.started).to be true
 
       project_instance.close
 
