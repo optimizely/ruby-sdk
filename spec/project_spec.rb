@@ -502,6 +502,7 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('variation_with_audience')
+      sleep 0.1
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
