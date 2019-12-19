@@ -30,7 +30,10 @@ jobs:
       language: ruby
       rvm: 2.4.1
       os: linux
+      before_install: skip
       install: gem install awesome_bot
+      before_script: skip
+      after_success: skip
       script:
         - find . -type f -name '*.md' -exec awesome_bot {} \;
       notifications:
