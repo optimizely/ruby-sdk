@@ -33,6 +33,7 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
+require_relative 'optimizely/optimizely_config'
 
 module Optimizely
   class Project
@@ -521,6 +522,52 @@ module Optimizely
       @stopped = true
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
+    end
+
+    def get_optimizely_config
+      # Get OptimizelyConfig object containing experiments and features data
+      # Returns Object
+      #
+      # OptimizelyConfig Object Schema
+      # {
+      #   'experimentsMap' => {
+      #     'my-fist-experiment' => {
+      #       'id' => '111111',
+      #       'key' => 'my-fist-experiment'
+      #       'variationsMap' => {
+      #         'variation_1' => {
+      #           'id' => '121212',
+      #           'key' => 'variation_1',
+      #           'variablesMap' => {
+      #             'age' => {
+      #               'id' => '222222',
+      #               'key' => 'age',
+      #               'type' => 'integer',
+      #               'value' => '0',
+      #             }
+      #           }
+      #         }
+      #       }
+      #     }
+      #   },
+      #   'featuresMap' => {
+      #     'awesome-feature' => {
+      #       'id' => '333333',
+      #       'key' => 'awesome-feature',
+      #       'experimentsMap' => Object,
+      #       'variablesMap' => Object,
+      #     }
+      #   },
+      #   'revision' => '13',
+      # }
+      #
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_optimizely_config').message)
+        return nil
+      end
+
+      optimizely_config = OptimizelyConfig.new(project_config)
+      optimizely_config.config
     end
 
     private
