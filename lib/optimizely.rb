@@ -566,8 +566,13 @@ module Optimizely
         return nil
       end
 
-      optimizely_config = OptimizelyConfig.new(project_config)
-      optimizely_config.config
+      # config_manager might not contain optimizely_config if its supplied by the consumer
+      # Generating a new OptimizelyConfig object in this case as a fallback
+      if @config_manager.respond_to?(:optimizely_config)
+        @config_manager.optimizely_config
+      else
+        OptimizelyConfig.new(project_config).config
+      end
     end
 
     private
