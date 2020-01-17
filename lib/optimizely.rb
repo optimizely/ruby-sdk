@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -566,8 +566,13 @@ module Optimizely
         return nil
       end
 
-      optimizely_config = OptimizelyConfig.new(project_config)
-      optimizely_config.config
+      # config_manager might not contain optimizely_config if its supplied by the consumer
+      # Generating a new OptimizelyConfig object in this case as a fallback
+      if @config_manager.respond_to?(:optimizely_config)
+        @config_manager.optimizely_config
+      else
+        OptimizelyConfig.new(project_config).config
+      end
     end
 
     private

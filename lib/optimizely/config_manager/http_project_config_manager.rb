@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ require_relative '../helpers/constants'
 require_relative '../logger'
 require_relative '../notification_center'
 require_relative '../project_config'
+require_relative '../optimizely_config'
 require_relative 'project_config_manager'
 require_relative 'async_scheduler'
 require 'httparty'
@@ -30,7 +31,7 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :stopped
+    attr_reader :stopped, :optimizely_config
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
@@ -73,6 +74,7 @@ module Optimizely
       @skip_json_validation = skip_json_validation
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
+      @optimizely_config = @config.nil? ? nil : OptimizelyConfig.new(@config).config
       @mutex = Mutex.new
       @resource = ConditionVariable.new
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
@@ -192,6 +194,7 @@ module Optimizely
       end
 
       @config = config
+      @optimizely_config = OptimizelyConfig.new(config).config
 
       @notification_center.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE])
 
