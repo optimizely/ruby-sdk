@@ -40,6 +40,7 @@ jobs:
         email: false
     - stage: 'Lint markdown files'
       language: node_js
+      node_js: 12
       os: linux
       before_install: skip
       install:
