@@ -27,9 +27,8 @@ stages:
 jobs:
   include:
     - stage: 'Lint markdown files'
-      language: ruby
-      rvm: 2.4.1
       os: linux
+      language: generic
       before_install: skip
       install: gem install awesome_bot
       before_script: skip
@@ -39,14 +38,13 @@ jobs:
       notifications:
         email: false
     - stage: 'Lint markdown files'
-      language: node_js
-      node_js: 12
       os: linux
+      language: generic
       before_install: skip
       install:
         - npm i -g markdown-spellcheck
       before_script:
-        - wget --quiet https://gist.githubusercontent.com/juancarlostong/dad02feeebc8763af35b4fdc717cf7a2/raw/29e085302a9418edbefba15d8f790fa76e0a89d5/.spelling
+        - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
       script:
         - mdspell -a -n -r --en-us '**/*.md'
       after_success: skip
