@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -421,6 +421,19 @@ describe Optimizely::HTTPProjectConfigManager do
 
       expect(@http_project_config_manager.instance_variable_get(:@blocking_timeout)).to eq(15)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "Blocking timeout '999999999999999999' has invalid range. Defaulting to 15 seconds.")
+    end
+  end
+
+  describe 'optimizely_config' do
+    it 'optimizely_config object updates correctly when new config is recieved' do
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile: config_body_JSON,
+        polling_interval: 0.1
+      )
+      expect(@http_project_config_manager.optimizely_config['revision']).to eq('42')
+      sleep 0.3
+      expect(@http_project_config_manager.optimizely_config['revision']).to eq('81')
     end
   end
 end

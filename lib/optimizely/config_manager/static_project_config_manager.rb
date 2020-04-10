@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 #
 
 require_relative '../config/datafile_project_config'
+require_relative '../optimizely_config'
 require_relative 'project_config_manager'
+
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
-    attr_reader :config
+    attr_reader :config, :optimizely_config
 
     def initialize(datafile, logger, error_handler, skip_json_validation)
       # Looks up and sets datafile and config based on response body.
@@ -38,6 +40,8 @@ module Optimizely
         error_handler,
         skip_json_validation
       )
+
+      @optimizely_config = @config.nil? ? nil : OptimizelyConfig.new(@config).config
     end
   end
 end
