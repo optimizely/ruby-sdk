@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
+require_relative 'optimizely/optimizely_config'
 
 module Optimizely
   class Project
@@ -70,7 +71,7 @@ module Optimizely
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
-      @event_dispatcher = event_dispatcher || EventDispatcher.new
+      @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       @user_profile_service = user_profile_service
 
       begin
@@ -523,6 +524,57 @@ module Optimizely
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
     end
 
+    def get_optimizely_config
+      # Get OptimizelyConfig object containing experiments and features data
+      # Returns Object
+      #
+      # OptimizelyConfig Object Schema
+      # {
+      #   'experimentsMap' => {
+      #     'my-fist-experiment' => {
+      #       'id' => '111111',
+      #       'key' => 'my-fist-experiment'
+      #       'variationsMap' => {
+      #         'variation_1' => {
+      #           'id' => '121212',
+      #           'key' => 'variation_1',
+      #           'variablesMap' => {
+      #             'age' => {
+      #               'id' => '222222',
+      #               'key' => 'age',
+      #               'type' => 'integer',
+      #               'value' => '0',
+      #             }
+      #           }
+      #         }
+      #       }
+      #     }
+      #   },
+      #   'featuresMap' => {
+      #     'awesome-feature' => {
+      #       'id' => '333333',
+      #       'key' => 'awesome-feature',
+      #       'experimentsMap' => Object,
+      #       'variablesMap' => Object,
+      #     }
+      #   },
+      #   'revision' => '13',
+      # }
+      #
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_optimizely_config').message)
+        return nil
+      end
+
+      # config_manager might not contain optimizely_config if its supplied by the consumer
+      # Generating a new OptimizelyConfig object in this case as a fallback
+      if @config_manager.respond_to?(:optimizely_config)
+        @config_manager.optimizely_config
+      else
+        OptimizelyConfig.new(project_config).config
+      end
+    end
+
     private
 
     def get_variation_with_config(experiment_key, user_id, attributes, config)
@@ -701,7 +753,7 @@ module Optimizely
 
       return if Helpers::Validator.event_dispatcher_valid?(@event_dispatcher)
 
-      @event_dispatcher = EventDispatcher.new
+      @event_dispatcher = EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       raise InvalidInputError, 'event_dispatcher'
     end
 

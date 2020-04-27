@@ -2814,6 +2814,8 @@ describe 'Optimizely' do
       project_instance = Optimizely::Project.new(nil, nil, nil, nil, true, nil, nil, config_manager, nil, event_processor)
 
       expect(config_manager.stopped).to be false
+      expect(event_processor.started).to be false
+      event_processor.start!
       expect(event_processor.started).to be true
 
       project_instance.close
