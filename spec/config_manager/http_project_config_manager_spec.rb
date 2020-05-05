@@ -24,7 +24,7 @@ require 'optimizely/helpers/validator'
 require 'optimizely/logger'
 describe Optimizely::HTTPProjectConfigManager do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
-  let(:error_handler) { Optimizely::NoOpErrorHandler.new }
+  let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
 
   before(:context) do
@@ -324,15 +324,29 @@ describe Optimizely::HTTPProjectConfigManager do
 
   describe '#get_datafile_url' do
     it 'should log an error when both sdk key and url are nil' do
-      expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidInputsError)
+      expect do
+        @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+          sdk_key: nil,
+          url: nil,
+          error_handler: error_handler,
+          logger: spy_logger
+        )
+      end.to raise_error(Optimizely::InvalidInputsError, 'Must provide at least one of sdk_key or url.')
 
-      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: nil,
-        url: nil,
-        error_handler: error_handler,
-        logger: spy_logger
-      )
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
+    end
+
+    it 'should log an error when invalid url_template is given' do
+      expect do
+        @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+          sdk_key: 'valid_sdk_key',
+          url_template: 'https://cdn.optimizely.com/datafiles/%d.json',
+          error_handler: error_handler,
+          logger: spy_logger
+        )
+      end.to raise_error(Optimizely::InvalidInputsError, 'Invalid url_template https://cdn.optimizely.com/datafiles/%d.json provided.')
+
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Invalid url_template https://cdn.optimizely.com/datafiles/%d.json provided.')
     end
   end
 

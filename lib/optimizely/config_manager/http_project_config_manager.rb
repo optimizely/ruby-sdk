@@ -284,8 +284,9 @@ module Optimizely
       #               SDK key to determine URL from which to fetch the datafile.
       # Returns String representing URL to fetch datafile from.
       if sdk_key.nil? && url.nil?
-        @logger.log(Logger::ERROR, 'Must provide at least one of sdk_key or url.')
-        @error_handler.handle_error(InvalidInputsError)
+        error_msg = 'Must provide at least one of sdk_key or url.'
+        @logger.log(Logger::ERROR, error_msg)
+        @error_handler.handle_error(InvalidInputsError.new(error_msg))
       end
 
       unless url
@@ -293,8 +294,9 @@ module Optimizely
         begin
           return (url_template % sdk_key)
         rescue
-          @logger.log(Logger::ERROR, "Invalid url_template #{url_template} provided.")
-          @error_handler.handle_error(InvalidInputsError)
+          error_msg = "Invalid url_template #{url_template} provided."
+          @logger.log(Logger::ERROR, error_msg)
+          @error_handler.handle_error(InvalidInputsError.new(error_msg))
         end
       end
 

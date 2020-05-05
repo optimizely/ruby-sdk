@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -159,8 +159,9 @@ module Optimizely
         config = new(datafile, logger, error_handler)
       rescue StandardError => e
         default_logger = SimpleLogger.new
-        error_msg = e.class == InvalidDatafileVersionError ? e.message : InvalidInputError.new('datafile').message
-        error_to_handle = e.class == InvalidDatafileVersionError ? InvalidDatafileVersionError : InvalidInputError
+        error_to_handle = e.class == InvalidDatafileVersionError ? e : InvalidInputError.new('datafile')
+        error_msg = error_to_handle.message
+
         default_logger.log(Logger::ERROR, error_msg)
         error_handler.handle_error error_to_handle
         return nil
