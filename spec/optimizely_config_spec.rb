@@ -47,7 +47,7 @@ describe Optimizely::OptimizelyConfig do
 
   it 'should return all feature flags' do
     features_map = optimizely_config['featuresMap']
-    expect(features_map.length).to eq(8)
+    expect(features_map.length).to eq(9)
     project_config.feature_flags.each do |feature_flag|
       expect(features_map[feature_flag['key']]).to include(
         'id' => feature_flag['id'],

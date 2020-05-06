@@ -31,12 +31,22 @@ describe Optimizely::DatafileProjectConfig do
     it 'should initialize properties correctly upon creating project' do
       project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
 
+      feature_flags_to_compare = config_body.fetch('featureFlags')
+      feature_flags_to_compare.each do |feature_flag|
+        feature_flag['variables'].each do |variable|
+          if variable['type'] == 'string' && variable['subType'] == 'json'
+            variable['type'] = 'json'
+            variable.delete('subType')
+          end
+        end
+      end
+
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
       expect(project_config.bot_filtering).to eq(config_body['botFiltering'])
       expect(project_config.events).to eq(config_body['events'])
-      expect(project_config.feature_flags).to eq(config_body['featureFlags'])
+      expect(project_config.feature_flags).to eq(feature_flags_to_compare)
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
@@ -475,7 +485,8 @@ describe Optimizely::DatafileProjectConfig do
         'string_single_variable_feature' => config_body['featureFlags'][4],
         'multi_variate_feature' => config_body['featureFlags'][5],
         'mutex_group_feature' => config_body['featureFlags'][6],
-        'empty_feature' => config_body['featureFlags'][7]
+        'empty_feature' => config_body['featureFlags'][7],
+        'json_single_variable_feature' => config_body['featureFlags'][8]
       }
 
       expected_feature_variable_key_map = {
@@ -510,6 +521,14 @@ describe Optimizely::DatafileProjectConfig do
             'key' => 'string_variable',
             'type' => 'string',
             'defaultValue' => 'wingardium leviosa'
+          }
+        },
+        'json_single_variable_feature' => {
+          'json_variable' => {
+            'id' => '1555588',
+            'key' => 'json_variable',
+            'type' => 'json',
+            'defaultValue' => '{ "val": "wingardium leviosa" }'
           }
         },
         'multi_variate_feature' => {
@@ -582,12 +601,20 @@ describe Optimizely::DatafileProjectConfig do
           '155558' => {
             'id' => '155558',
             'value' => 'cta_1'
+          },
+          '1555588' => {
+            'id' => '1555588',
+            'value' => '{"value": "cta_1"}'
           }
         },
         '122237' => {
           '155558' => {
             'id' => '155558',
             'value' => 'cta_2'
+          },
+          '1555588' => {
+            'id' => '1555588',
+            'value' => '{"value": "cta_2"}'
           }
         },
         '122239' => {

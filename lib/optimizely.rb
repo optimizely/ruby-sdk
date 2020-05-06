@@ -430,6 +430,32 @@ module Optimizely
       variable_value
     end
 
+    # Get the Json value of the specified variable in the feature flag in a Dict.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Dict] the Dict containing variable value.
+    # @return [nil] if the feature flag or variable are not found.
+
+    def get_feature_variable_json(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_json').message)
+        return nil
+      end
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['JSON'],
+        user_id,
+        attributes
+      )
+
+      variable_value
+    end
+
     # Get the Boolean value of the specified variable in the feature flag.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to

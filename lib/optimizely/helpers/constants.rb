@@ -304,7 +304,8 @@ module Optimizely
         'BOOLEAN' => 'boolean',
         'DOUBLE' => 'double',
         'INTEGER' => 'integer',
-        'STRING' => 'string'
+        'STRING' => 'string',
+        'JSON' => 'json'
       }.freeze
 
       INPUT_VARIABLES = {

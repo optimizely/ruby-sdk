@@ -48,6 +48,13 @@ module Optimizely
             logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
                                       "'#{variable_type}': #{e.message}.")
           end
+        when 'json'
+          begin
+            return_value = JSON.parse(value)
+          rescue => e
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
+                                      "'#{variable_type}': #{e.message}.")
+          end
         else
           # default case is string
           return_value = value

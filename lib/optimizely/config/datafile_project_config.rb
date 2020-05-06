@@ -82,6 +82,17 @@ module Optimizely
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
 
+      # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
+      # Converting it to a first-class json type while creating Project Config
+      @feature_flags.each do |feature_flag|
+        feature_flag['variables'].each do |variable|
+          if variable['type'] == 'string' && variable['subType'] == 'json'
+            variable['type'] = 'json'
+            variable.delete('subType')
+          end
+        end
+      end
+
       # Utility maps for quick lookup
       @attribute_key_map = generate_key_map(@attributes, 'key')
       @event_key_map = generate_key_map(@events, 'key')

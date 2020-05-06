@@ -218,6 +218,9 @@ module OptimizelySpec
         'variables' => [{
           'id' => '155558',
           'value' => 'cta_1'
+        }, {
+          'id' => '1555588',
+          'value' => '{"value": "cta_1"}'
         }]
       }, {
         'id' => '122237',
@@ -226,6 +229,9 @@ module OptimizelySpec
         'variables' => [{
           'id' => '155558',
           'value' => 'cta_2'
+        }, {
+          'id' => '1555588',
+          'value' => '{"value": "cta_2"}'
         }]
       }]
     }, {
@@ -558,6 +564,20 @@ module OptimizelySpec
       'rolloutId' => '',
       'experimentIds' => [],
       'variables' => []
+    }, {
+      'id' => '15555577',
+      'key' => 'json_single_variable_feature',
+      'rolloutId' => '166661',
+      'experimentIds' => [],
+      'variables' => [
+        {
+          'id' => '1555588',
+          'key' => 'json_variable',
+          'type' => 'string',
+          'subType' => 'json',
+          'defaultValue' => '{ "val": "wingardium leviosa" }'
+        }
+      ]
     }],
     'rollouts' => [{
       'id' => '166660',
