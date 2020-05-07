@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,21 +17,36 @@
 #
 require 'spec_helper'
 require 'optimizely/config_manager/async_scheduler'
+require 'optimizely/error_handler'
 require 'optimizely/logger'
 
 describe Optimizely::AsyncScheduler do
+  let(:error_handler) { Optimizely::RaiseErrorHandler.new }
+  let(:spy_logger) { spy('logger') }
+
   it 'should log error trace when callback fails to execute' do
+    allow(Thread).to receive(:new).and_yield
     def some_callback(_args); end
 
-    spy_logger = spy('logger')
+    scheduler = Optimizely::AsyncScheduler.new(method(:some_callback), 10, false, spy_logger, error_handler)
 
-    scheduler = Optimizely::AsyncScheduler.new(method(:some_callback), 10, false, spy_logger)
-    scheduler.start!
-
-    while scheduler.running; end
+    expect { scheduler.start! }.to raise_error(StandardError)
     expect(spy_logger).to have_received(:log).with(
       Logger::ERROR,
       'Something went wrong when executing passed callback. wrong number of arguments (given 0, expected 1)'
+    )
+  end
+
+  it 'should log error trace when new thread creation fails' do
+    allow(Thread).to receive(:new).and_raise
+    def some_callback(_args); end
+
+    scheduler = Optimizely::AsyncScheduler.new(method(:some_callback), 10, false, spy_logger, error_handler)
+
+    expect { scheduler.start! }.to raise_error(StandardError)
+    expect(spy_logger).to have_received(:log).with(
+      Logger::ERROR,
+      "Couldn't create a new thread for async scheduler. "
     )
   end
 end
