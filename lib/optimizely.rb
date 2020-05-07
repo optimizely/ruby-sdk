@@ -675,8 +675,6 @@ module Optimizely
       # Error message logged in DatafileProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
 
-      feature_enabled = false
-
       # If variable_type is nil, set it equal to variable['type']
       variable_type ||= variable['type']
       # Returns nil if type differs
@@ -684,42 +682,23 @@ module Optimizely
         @logger.log(Logger::WARN,
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
-      else
-        source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-        decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
-        variable_value = variable['defaultValue']
-        if decision
-          variation = decision['variation']
-          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-            source_info = {
-              experiment_key: decision.experiment['key'],
-              variation_key: variation['key']
-            }
-            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-          end
-          feature_enabled = variation['featureEnabled']
-          if feature_enabled == true
-            variation_variable_usages = config.variation_id_to_variable_usage_map[variation['id']]
-            variable_id = variable['id']
-            if variation_variable_usages&.key?(variable_id)
-              variable_value = variation_variable_usages[variable_id]['value']
-              @logger.log(Logger::INFO,
-                          "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
-            else
-              @logger.log(Logger::DEBUG,
-                          "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
-            end
-          else
-            @logger.log(Logger::DEBUG,
-                        "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
-          end
-        else
-          @logger.log(Logger::INFO,
-                      "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
-        end
       end
 
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      variation = decision ? decision['variation'] : nil
+      feature_enabled = variation ? variation['featureEnabled'] : false
+
+      variable_value = get_all_feature_variables_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
+
+      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+      if decision && decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        source_info = {
+          experiment_key: decision.experiment['key'],
+          variation_key: variation['key']
+        }
+        source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+      end
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -733,6 +712,32 @@ module Optimizely
         source_info: source_info || {}
       )
 
+      variable_value
+    end
+
+    def get_all_feature_variables_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+      config = project_config
+      variable_value = variable['defaultValue']
+      if variation
+        if feature_enabled == true
+          variation_variable_usages = config.variation_id_to_variable_usage_map[variation['id']]
+          variable_id = variable['id']
+          if variation_variable_usages&.key?(variable_id)
+            variable_value = variation_variable_usages[variable_id]['value']
+            @logger.log(Logger::INFO,
+                        "Got variable value '#{variable_value}' for variable '#{variable['key']}' of feature flag '#{feature_flag_key}'.")
+          else
+            @logger.log(Logger::DEBUG,
+                        "Variable '#{variable['key']}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+          end
+        else
+          @logger.log(Logger::DEBUG,
+                      "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
+        end
+      else
+        @logger.log(Logger::INFO,
+                    "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
+      end
       variable_value
     end
 
