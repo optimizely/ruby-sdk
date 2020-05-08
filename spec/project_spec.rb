@@ -2330,6 +2330,193 @@ describe 'Optimizely' do
     end
   end
 
+  describe '#get_all_feature_variables' do
+    user_id = 'test_user'
+    user_attributes = {}
+
+    it 'should return nil when called with invalid project config' do
+      logger = double('logger')
+      allow(logger).to receive(:log)
+      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      expect(invalid_project.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
+        .to eq(nil)
+      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_all_feature_variables'.")
+    end
+
+    it 'should return nil and log an error when Config Manager returns nil config' do
+      allow(project_instance.config_manager).to receive(:config).and_return(nil)
+      expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes)).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::ERROR,
+        "Optimizely instance is not valid. Failing 'get_all_feature_variables'."
+      )
+    end
+
+    describe 'when the feature flag is enabled for the user' do
+      describe 'and a variable usage instance is not found' do
+        it 'should return the default variable value' do
+          variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
+          decision_to_return = {
+            'experiment' => nil,
+            'variation' => variation_to_return
+          }
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+
+          expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
+            .to eq(
+              'json_variable' => {'val' => 'default json'},
+              'string_variable' => 'default string',
+              'boolean_variable' => false,
+              'double_variable' => 1.99,
+              'integer_variable' => 10
+            )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::DEBUG,
+                                                     "Variable 'json_variable' is not used in variation '177775'. Returning the default variable value '{ \"val\": \"default json\" }'."
+                                                   )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::DEBUG,
+                                                     "Variable 'string_variable' is not used in variation '177775'. Returning the default variable value 'default string'."
+                                                   )
+        end
+      end
+
+      describe 'and a variable usage instance is found' do
+        it 'should return the variable value for the variation for the user is bucketed into' do
+          experiment_to_return = project_config.experiment_key_map['test_experiment_with_feature_rollout']
+          variation_to_return = {
+            'id' => '12345678',
+            'featureEnabled' => true
+          }
+          variation_id_to_variable_usage_map = {
+            '12345678' => {
+              '155558891' => {
+                'value' => '{ "val": "feature enabled" }'
+              },
+              '155558892' => {
+                'value' => 'feature enabled'
+              },
+              '155558893' => {
+                'value' => 'true'
+              },
+              '155558894' => {
+                'value' => '14.99'
+              },
+              '155558895' => {
+                'value' => '99'
+              }
+            }
+          }
+
+          decision_to_return = {
+            'experiment' => experiment_to_return,
+            'variation' => variation_to_return
+          }
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          allow(project_config).to receive(:variation_id_to_variable_usage_map).and_return(variation_id_to_variable_usage_map)
+
+          expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
+            .to eq(
+              'json_variable' => {'val' => 'feature enabled'},
+              'string_variable' => 'feature enabled',
+              'boolean_variable' => true,
+              'double_variable' => 14.99,
+              'integer_variable' => 99
+            )
+
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value '{ \"val\": \"feature enabled\" }' for variable 'json_variable' of feature flag 'all_variables_feature'."
+                                                   )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value 'feature enabled' for variable 'string_variable' of feature flag 'all_variables_feature'."
+                                                   )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value 'true' for variable 'boolean_variable' of feature flag 'all_variables_feature'."
+                                                   )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value '14.99' for variable 'double_variable' of feature flag 'all_variables_feature'."
+                                                   )
+          expect(spy_logger).to have_received(:log).once
+                                                   .with(
+                                                     Logger::INFO,
+                                                     "Got variable value '99' for variable 'integer_variable' of feature flag 'all_variables_feature'."
+                                                   )
+        end
+      end
+    end
+
+    describe 'when the feature flag is not enabled for the user' do
+      it 'should return the default variable value' do
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+
+        expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
+          .to eq(
+            'json_variable' => {'val' => 'default json'},
+            'string_variable' => 'default string',
+            'boolean_variable' => false,
+            'double_variable' => 1.99,
+            'integer_variable' => 10
+          )
+
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'all_variables_feature'. Returning the default variable value '{ \"val\": \"default json\" }'."
+                                                 )
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'all_variables_feature'. Returning the default variable value 'default string'."
+                                                 )
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'all_variables_feature'. Returning the default variable value 'false'."
+                                                 )
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'all_variables_feature'. Returning the default variable value '1.99'."
+                                                 )
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "User 'test_user' was not bucketed into any variation for feature flag 'all_variables_feature'. Returning the default variable value '10'."
+                                                 )
+      end
+    end
+
+    describe 'when the specified feature flag is invalid' do
+      it 'should log an error message and return nil' do
+        expect(project_instance.get_all_feature_variables('totally_invalid_feature_key', user_id, user_attributes))
+          .to eq(nil)
+        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::ERROR,
+                                                   "Feature flag key 'totally_invalid_feature_key' is not in datafile."
+                                                 )
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(
+                                                   Logger::INFO,
+                                                   "No feature flag was found for key 'totally_invalid_feature_key'."
+                                                 )
+      end
+    end
+  end
+
   describe '#get_feature_variable' do
     user_id = 'test_user'
     user_attributes = {}

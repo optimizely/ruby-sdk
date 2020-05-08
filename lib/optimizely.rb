@@ -510,6 +510,64 @@ module Optimizely
       variable_value
     end
 
+    def get_all_feature_variables(feature_flag_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_all_feature_variables').message)
+        return nil
+      end
+
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          feature_flag_key: feature_flag_key,
+          user_id: user_id
+        },
+        @logger, Logger::ERROR
+      )
+
+      return nil unless user_inputs_valid?(attributes)
+
+      config = project_config
+
+      feature_flag = config.get_feature_flag_from_key(feature_flag_key)
+      unless feature_flag
+        @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
+        return nil
+      end
+
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      variation = decision ? decision['variation'] : nil
+      feature_enabled = variation ? variation['featureEnabled'] : false
+      all_variables = {}
+
+      feature_flag['variables'].each do |variable|
+        variable_value = get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+        variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
+        all_variables[variable['key']] = variable_value
+      end
+
+      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+      if decision && decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        source_info = {
+          experiment_key: decision.experiment['key'],
+          variation_key: variation['key']
+        }
+        source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+      end
+
+      #       @notification_center.send_notifications(
+      #         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+      #         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+      #         feature_key: feature_flag_key,
+      #         feature_enabled: feature_enabled,
+      #         source: source_string,
+      #         variable_key: variable_key,
+      #         variable_type: variable_type,
+      #         variable_value: variable_value,
+      #         source_info: source_info || {}
+      #       )
+      all_variables
+    end
+
     # Get the Integer value of the specified variable in the feature flag.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
@@ -688,7 +746,7 @@ module Optimizely
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
 
-      variable_value = get_all_feature_variables_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+      variable_value = get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
 
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
@@ -715,7 +773,7 @@ module Optimizely
       variable_value
     end
 
-    def get_all_feature_variables_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+    def get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
       config = project_config
       variable_value = variable['defaultValue']
       if variation

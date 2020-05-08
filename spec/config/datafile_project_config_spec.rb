@@ -486,7 +486,8 @@ describe Optimizely::DatafileProjectConfig do
         'multi_variate_feature' => config_body['featureFlags'][5],
         'mutex_group_feature' => config_body['featureFlags'][6],
         'empty_feature' => config_body['featureFlags'][7],
-        'json_single_variable_feature' => config_body['featureFlags'][8]
+        'json_single_variable_feature' => config_body['featureFlags'][8],
+        'all_variables_feature' => config_body['featureFlags'][9]
       }
 
       expected_feature_variable_key_map = {
@@ -553,7 +554,39 @@ describe Optimizely::DatafileProjectConfig do
             'defaultValue' => 'null'
           }
         },
-        'empty_feature' => {}
+        'empty_feature' => {},
+        'all_variables_feature' => {
+          'json_variable' => {
+            'id' => '155558891',
+            'key' => 'json_variable',
+            'type' => 'json',
+            'defaultValue' => '{ "val": "default json" }'
+          },
+          'string_variable' => {
+            'id' => '155558892',
+            'key' => 'string_variable',
+            'type' => 'string',
+            'defaultValue' => 'default string'
+          },
+          'boolean_variable' => {
+            'id' => '155558893',
+            'key' => 'boolean_variable',
+            'type' => 'boolean',
+            'defaultValue' => 'false'
+          },
+          'double_variable' => {
+            'id' => '155558894',
+            'key' => 'double_variable',
+            'type' => 'double',
+            'defaultValue' => '1.99'
+          },
+          'integer_variable' => {
+            'id' => '155558895',
+            'key' => 'integer_variable',
+            'type' => 'integer',
+            'defaultValue' => '10'
+          }
+        }
       }
 
       expected_variation_id_to_variable_usage_map = {
