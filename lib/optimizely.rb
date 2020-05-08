@@ -554,17 +554,16 @@ module Optimizely
         source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
       end
 
-      #       @notification_center.send_notifications(
-      #         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-      #         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
-      #         feature_key: feature_flag_key,
-      #         feature_enabled: feature_enabled,
-      #         source: source_string,
-      #         variable_key: variable_key,
-      #         variable_type: variable_type,
-      #         variable_value: variable_value,
-      #         source_info: source_info || {}
-      #       )
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        source: source_string,
+        variable_values: all_variables,
+        source_info: source_info || {}
+      )
+
       all_variables
     end
 

@@ -1874,6 +1874,15 @@ describe 'Optimizely' do
           source_info: {}
         ).ordered
 
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature', 'test_user', {'browser_type' => 'firefox'},
+          feature_enabled: false,
+          feature_key: 'all_variables_feature',
+          source: 'rollout',
+          source_info: {}
+        ).ordered
+
         expect(project_instance.get_enabled_features('test_user', 'browser_type' => 'firefox')).to eq(enabled_features)
       end
     end
@@ -2364,6 +2373,22 @@ describe 'Optimizely' do
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
+          expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'all-feature-variables', 'test_user', {},
+            feature_enabled: true,
+            feature_key: 'all_variables_feature',
+            source: 'rollout',
+            variable_values: {
+              'json_variable' => {'val' => 'default json'},
+              'string_variable' => 'default string',
+              'boolean_variable' => false,
+              'double_variable' => 1.99,
+              'integer_variable' => 10
+            },
+            source_info: {}
+          ).ordered
+
           expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
             .to eq(
               'json_variable' => {'val' => 'default json'},
@@ -2419,6 +2444,22 @@ describe 'Optimizely' do
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
           allow(project_config).to receive(:variation_id_to_variable_usage_map).and_return(variation_id_to_variable_usage_map)
 
+          expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'all-feature-variables', 'test_user', {},
+            feature_enabled: true,
+            feature_key: 'all_variables_feature',
+            source: 'rollout',
+            variable_values: {
+              'json_variable' => {'val' => 'feature enabled'},
+              'string_variable' => 'feature enabled',
+              'boolean_variable' => true,
+              'double_variable' => 14.99,
+              'integer_variable' => 99
+            },
+            source_info: {}
+          ).ordered
+
           expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
             .to eq(
               'json_variable' => {'val' => 'feature enabled'},
@@ -2460,6 +2501,22 @@ describe 'Optimizely' do
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'all-feature-variables', 'test_user', {},
+          feature_enabled: false,
+          feature_key: 'all_variables_feature',
+          source: 'rollout',
+          variable_values: {
+            'json_variable' => {'val' => 'default json'},
+            'string_variable' => 'default string',
+            'boolean_variable' => false,
+            'double_variable' => 1.99,
+            'integer_variable' => 10
+          },
+          source_info: {}
+        ).ordered
 
         expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
           .to eq(
