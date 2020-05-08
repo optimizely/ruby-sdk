@@ -550,8 +550,7 @@ module Optimizely
 
       feature_flag['variables'].each do |variable|
         variable_value = get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
-        variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
-        all_variables[variable['key']] = variable_value
+        all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
       end
 
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
