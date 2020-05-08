@@ -782,19 +782,19 @@ module Optimizely
     end
 
     def get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
-      # Helper method to get the non type-casted value for a variable attached to a 
-      # feature flag. Returns appropriate variable value depending on whether there 
-      # was a matching variation, feature was enabled or not or varible was part of the 
-      # available variation or not. Also logs the appropriate message explaining how it 
+      # Helper method to get the non type-casted value for a variable attached to a
+      # feature flag. Returns appropriate variable value depending on whether there
+      # was a matching variation, feature was enabled or not or varible was part of the
+      # available variation or not. Also logs the appropriate message explaining how it
       # evaluated the value of the variable.
       #
       # feature_flag_key - String key of feature flag the variable belongs to
       # feature_enabled - Boolean indicating if feature is enabled or not
       # variation - varition returned by decision service
-      # user_id - String user ID      
+      # user_id - String user ID
       #
       # Returns string value of the variable.
-            
+
       config = project_config
       variable_value = variable['defaultValue']
       if variation
