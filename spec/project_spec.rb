@@ -2387,7 +2387,7 @@ describe 'Optimizely' do
               'integer_variable' => 10
             },
             source_info: {}
-          ).ordered
+          )
 
           expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
             .to eq(
@@ -2458,7 +2458,7 @@ describe 'Optimizely' do
               'integer_variable' => 99
             },
             source_info: {}
-          ).ordered
+          )
 
           expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
             .to eq(
@@ -2516,7 +2516,7 @@ describe 'Optimizely' do
             'integer_variable' => 10
           },
           source_info: {}
-        ).ordered
+        )
 
         expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
           .to eq(
