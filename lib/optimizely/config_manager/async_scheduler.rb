@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ module Optimizely
   class AsyncScheduler
     attr_reader :running
 
-    def initialize(callback, interval, auto_update, logger = nil)
+    def initialize(callback, interval, auto_update, logger = nil, error_handler = nil)
       # Sets up AsyncScheduler to execute a callback periodically.
       #
       # callback - Main function to be executed periodically.
       # interval - How many seconds to wait between executions.
       # auto_update - boolean indicates to run infinitely or only once.
       # logger - Optional Provides a logger instance.
+      # error_handler - Optional Provides a handle_error method to handle exceptions.
 
       @callback = callback
       @interval = interval
@@ -33,6 +34,7 @@ module Optimizely
       @running = false
       @thread = nil
       @logger = logger || NoOpLogger.new
+      @error_handler = error_handler || NoOpErrorHandler.new
     end
 
     def start!
@@ -54,6 +56,7 @@ module Optimizely
           Logger::ERROR,
           "Couldn't create a new thread for async scheduler. #{e.message}"
         )
+        @error_handler.handle_error(e)
       end
     end
 
@@ -80,6 +83,7 @@ module Optimizely
             Logger::ERROR,
             "Something went wrong when executing passed callback. #{e.message}"
           )
+          @error_handler.handle_error(e)
           stop!
         end
         break unless @auto_update
