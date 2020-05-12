@@ -2094,6 +2094,18 @@ describe 'Optimizely' do
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
+          expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'feature-variable', 'test_user', {},
+            feature_enabled: true,
+            feature_key: 'json_single_variable_feature',
+            source: 'rollout',
+            variable_key: 'json_variable',
+            variable_type: 'json',
+            variable_value: {'val' => 'wingardium leviosa'},
+            source_info: {}
+          )
+
           expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
             .to eq('val' => 'wingardium leviosa')
           expect(spy_logger).to have_received(:log).once
@@ -2154,6 +2166,18 @@ describe 'Optimizely' do
           }
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
+          expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'feature-variable', 'test_user', {},
+            feature_enabled: true,
+            feature_key: 'json_single_variable_feature',
+            source: 'rollout',
+            variable_key: 'json_variable',
+            variable_type: 'json',
+            variable_value: {'value' => 'cta_1'},
+            source_info: {}
+          )
+
           expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
             .to eq('value' => 'cta_1')
 
@@ -2170,6 +2194,18 @@ describe 'Optimizely' do
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'feature-variable', 'test_user', {},
+          feature_enabled: false,
+          feature_key: 'json_single_variable_feature',
+          source: 'rollout',
+          variable_key: 'json_variable',
+          variable_type: 'json',
+          variable_value: {'val' => 'wingardium leviosa'},
+          source_info: {}
+        )
 
         expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
           .to eq('val' => 'wingardium leviosa')
