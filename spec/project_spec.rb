@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -716,8 +716,18 @@ describe 'Optimizely' do
     end
 
     describe '.Optimizely with config manager' do
+      before(:example) do
+        stub_request(:post, impression_log_url)
+        stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+          .with(
+            headers: {
+              'Content-Type' => 'application/json'
+            }
+          )
+          .to_return(status: 200, body: config_body_JSON, headers: {})
+      end
+
       it 'should update config, send update notification when url is provided' do
-        WebMock.allow_net_connect!
         notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
 
         expect(notification_center).to receive(:send_notifications).with(
@@ -728,23 +738,22 @@ describe 'Optimizely' do
 
         expect(notification_center).to receive(:send_notifications).ordered
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-          url: 'https://cdn.optimizely.com/datafiles/QBw9gFM8oTn7ogY9ANCC1z.json',
+          url: 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json',
           notification_center: notification_center
         )
 
         project_instance = Optimizely::Project.new(
-          config_body_JSON, nil, spy_logger, error_handler,
+          nil, nil, spy_logger, error_handler,
           false, nil, nil, http_project_config_manager, notification_center
         )
 
         until http_project_config_manager.ready?; end
 
         expect(http_project_config_manager.config).not_to eq(nil)
-        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+        expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       end
 
       it 'should update config, send update notification when sdk key is provided' do
-        WebMock.allow_net_connect!
         notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
 
         expect(notification_center).to receive(:send_notifications).with(
@@ -755,25 +764,34 @@ describe 'Optimizely' do
         expect(notification_center).to receive(:send_notifications).ordered
 
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-          sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+          sdk_key: 'valid_sdk_key',
           notification_center: notification_center
         )
 
         project_instance = Optimizely::Project.new(
-          config_body_JSON, nil, spy_logger, error_handler,
+          nil, nil, spy_logger, error_handler,
           false, nil, nil, http_project_config_manager, notification_center
         )
 
         until http_project_config_manager.ready?; end
 
         expect(http_project_config_manager.config).not_to eq(nil)
-        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+        expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       end
     end
 
     describe '.Optimizely with sdk key' do
+      before(:example) do
+        stub_request(:post, impression_log_url)
+        stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+          .with(
+            headers: {
+              'Content-Type' => 'application/json'
+            }
+          )
+          .to_return(status: 200, body: config_body_JSON, headers: {})
+      end
       it 'should update config, send update notification when sdk key is provided' do
-        WebMock.allow_net_connect!
         notification_center = Optimizely::NotificationCenter.new(spy_logger, error_handler)
 
         expect(notification_center).to receive(:send_notifications).with(
@@ -785,13 +803,13 @@ describe 'Optimizely' do
 
         project_instance = Optimizely::Project.new(
           nil, nil, spy_logger, error_handler,
-          false, nil, 'QBw9gFM8oTn7ogY9ANCC1z', nil, notification_center
+          false, nil, 'valid_sdk_key', nil, notification_center
         )
 
         until project_instance.config_manager.ready?; end
 
         expect(project_instance.is_valid).to be true
-        expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+        expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       end
     end
   end
@@ -2801,9 +2819,20 @@ describe 'Optimizely' do
   end
 
   describe '.close' do
+    before(:example) do
+      stub_request(:post, impression_log_url)
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+        .with(
+          headers: {
+            'Content-Type' => 'application/json'
+          }
+        )
+        .to_return(status: 200, body: config_body_JSON, headers: {})
+    end
+
     it 'should stop config manager and event processor when optimizely close is called' do
       config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z',
+        sdk_key: 'valid_sdk_key',
         start_by_default: true
       )
 
@@ -2827,7 +2856,7 @@ describe 'Optimizely' do
 
     it 'should stop invalid object' do
       http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+        sdk_key: 'valid_sdk_key'
       )
 
       project_instance = Optimizely::Project.new(
@@ -2840,9 +2869,8 @@ describe 'Optimizely' do
     end
 
     it 'shoud return optimizely as invalid for an API when close is called' do
-      WebMock.allow_net_connect!
       http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'QBw9gFM8oTn7ogY9ANCC1z'
+        sdk_key: 'valid_sdk_key'
       )
 
       project_instance = Optimizely::Project.new(
@@ -2852,13 +2880,13 @@ describe 'Optimizely' do
 
       until http_project_config_manager.ready?; end
 
-      expect(project_instance.activate('checkout_flow_experiment', 'test_user')).not_to eq(nil)
+      expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       expect(project_instance.is_valid).to be true
 
       project_instance.close
 
       expect(project_instance.is_valid).to be false
-      expect(project_instance.activate('checkout_flow_experiment', 'test_user')).to eq(nil)
+      expect(project_instance.activate('test_experiment', 'test_user')).to eq(nil)
     end
 
     it 'should not raise exception for static config manager' do
