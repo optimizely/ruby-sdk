@@ -2420,11 +2420,9 @@ describe 'Optimizely' do
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
         it 'should return the default variable value' do
+          Decision = Struct.new(:experiment, :variation, :source)
           variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
-          decision_to_return = {
-            'experiment' => nil,
-            'variation' => variation_to_return
-          }
+          decision_to_return = Decision.new({'key' => 'test-exp'}, variation_to_return, 'feature-test')
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
           expect(project_instance.notification_center).to receive(:send_notifications).once.with(
@@ -2432,7 +2430,7 @@ describe 'Optimizely' do
             'all-feature-variables', 'test_user', {},
             feature_enabled: true,
             feature_key: 'all_variables_feature',
-            source: 'rollout',
+            source: 'feature-test',
             variable_values: {
               'json_variable' => {'val' => 'default json'},
               'string_variable' => 'default string',
@@ -2440,7 +2438,10 @@ describe 'Optimizely' do
               'double_variable' => 1.99,
               'integer_variable' => 10
             },
-            source_info: {}
+            source_info: {
+              experiment_key: 'test-exp',
+              variation_key: '177775'
+            }
           )
 
           expect(project_instance.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
