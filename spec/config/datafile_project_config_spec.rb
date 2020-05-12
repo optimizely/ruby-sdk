@@ -32,14 +32,13 @@ describe Optimizely::DatafileProjectConfig do
       project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
 
       feature_flags_to_compare = config_body.fetch('featureFlags')
-      feature_flags_to_compare.each do |feature_flag|
-        feature_flag['variables'].each do |variable|
-          if variable['type'] == 'string' && variable['subType'] == 'json'
-            variable['type'] = 'json'
-            variable.delete('subType')
-          end
-        end
-      end
+      # modify json variable from datafile in the format expected by project config
+      variable_to_modify = feature_flags_to_compare[8]['variables'][0]
+      variable_to_modify['type'] = 'json'
+      variable_to_modify.delete('subType')
+      variable_to_modify = feature_flags_to_compare[9]['variables'][0]
+      variable_to_modify['type'] = 'json'
+      variable_to_modify.delete('subType')
 
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
