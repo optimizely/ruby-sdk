@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -218,6 +218,9 @@ module OptimizelySpec
         'variables' => [{
           'id' => '155558',
           'value' => 'cta_1'
+        }, {
+          'id' => '1555588',
+          'value' => '{"value": "cta_1"}'
         }]
       }, {
         'id' => '122237',
@@ -226,6 +229,9 @@ module OptimizelySpec
         'variables' => [{
           'id' => '155558',
           'value' => 'cta_2'
+        }, {
+          'id' => '1555588',
+          'value' => '{"value": "cta_2"}'
         }]
       }]
     }, {
@@ -558,6 +564,54 @@ module OptimizelySpec
       'rolloutId' => '',
       'experimentIds' => [],
       'variables' => []
+    }, {
+      'id' => '15555577',
+      'key' => 'json_single_variable_feature',
+      'rolloutId' => '166661',
+      'experimentIds' => [],
+      'variables' => [
+        {
+          'id' => '1555588',
+          'key' => 'json_variable',
+          'type' => 'string',
+          'subType' => 'json',
+          'defaultValue' => '{ "val": "wingardium leviosa" }'
+        }
+      ]
+    }, {
+      'id' => '155555777',
+      'key' => 'all_variables_feature',
+      'rolloutId' => '1666611',
+      'experimentIds' => [],
+      'variables' => [
+        {
+          'id' => '155558891',
+          'key' => 'json_variable',
+          'type' => 'string',
+          'subType' => 'json',
+          'defaultValue' => '{ "val": "default json" }'
+        }, {
+          'id' => '155558892',
+          'key' => 'string_variable',
+          'type' => 'string',
+          'defaultValue' => 'default string'
+        }, {
+          'id' => '155558893',
+          'key' => 'boolean_variable',
+          'type' => 'boolean',
+          'defaultValue' => 'false'
+        }, {
+          'id' => '155558894',
+          'key' => 'double_variable',
+          'type' => 'double',
+          'defaultValue' => '1.99'
+        }, {
+          'id' => '155558895',
+          'key' => 'integer_variable',
+          'type' => 'integer',
+          'defaultValue' => '10'
+        }
+      ]
     }],
     'rollouts' => [{
       'id' => '166660',

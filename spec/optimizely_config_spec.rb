@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ describe Optimizely::OptimizelyConfig do
 
   it 'should return all feature flags' do
     features_map = optimizely_config['featuresMap']
-    expect(features_map.length).to eq(8)
+    expect(features_map.length).to eq(10)
     project_config.feature_flags.each do |feature_flag|
       expect(features_map[feature_flag['key']]).to include(
         'id' => feature_flag['id'],

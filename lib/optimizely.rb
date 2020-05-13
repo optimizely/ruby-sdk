@@ -430,6 +430,32 @@ module Optimizely
       variable_value
     end
 
+    # Get the Json value of the specified variable in the feature flag in a Dict.
+    #
+    # @param feature_flag_key - String key of feature flag the variable belongs to
+    # @param variable_key - String key of variable for which we are getting the string value
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Dict] the Dict containing variable value.
+    # @return [nil] if the feature flag or variable are not found.
+
+    def get_feature_variable_json(feature_flag_key, variable_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_json').message)
+        return nil
+      end
+      variable_value = get_feature_variable_for_type(
+        feature_flag_key,
+        variable_key,
+        Optimizely::Helpers::Constants::VARIABLE_TYPES['JSON'],
+        user_id,
+        attributes
+      )
+
+      variable_value
+    end
+
     # Get the Boolean value of the specified variable in the feature flag.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
@@ -482,6 +508,71 @@ module Optimizely
       )
 
       variable_value
+    end
+
+    # Get values of all the variables in the feature flag and returns them in a Dict
+    #
+    # @param feature_flag_key - String key of feature flag
+    # @param user_id - String user ID
+    # @param attributes - Hash representing visitor attributes and values which need to be recorded.
+    #
+    # @return [Dict] the Dict containing all the varible values
+    # @return [nil] if the feature flag is not found.
+
+    def get_all_feature_variables(feature_flag_key, user_id, attributes = nil)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_all_feature_variables').message)
+        return nil
+      end
+
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          feature_flag_key: feature_flag_key,
+          user_id: user_id
+        },
+        @logger, Logger::ERROR
+      )
+
+      return nil unless user_inputs_valid?(attributes)
+
+      config = project_config
+
+      feature_flag = config.get_feature_flag_from_key(feature_flag_key)
+      unless feature_flag
+        @logger.log(Logger::INFO, "No feature flag was found for key '#{feature_flag_key}'.")
+        return nil
+      end
+
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      variation = decision ? decision['variation'] : nil
+      feature_enabled = variation ? variation['featureEnabled'] : false
+      all_variables = {}
+
+      feature_flag['variables'].each do |variable|
+        variable_value = get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+        all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
+      end
+
+      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+      if decision && decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        source_info = {
+          experiment_key: decision.experiment['key'],
+          variation_key: variation['key']
+        }
+        source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+      end
+
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, (attributes || {}),
+        feature_key: feature_flag_key,
+        feature_enabled: feature_enabled,
+        source: source_string,
+        variable_values: all_variables,
+        source_info: source_info || {}
+      )
+
+      all_variables
     end
 
     # Get the Integer value of the specified variable in the feature flag.
@@ -649,8 +740,6 @@ module Optimizely
       # Error message logged in DatafileProjectConfig- get_feature_flag_from_key
       return nil if variable.nil?
 
-      feature_enabled = false
-
       # If variable_type is nil, set it equal to variable['type']
       variable_type ||= variable['type']
       # Returns nil if type differs
@@ -658,42 +747,23 @@ module Optimizely
         @logger.log(Logger::WARN,
                     "Requested variable as type '#{variable_type}' but variable '#{variable_key}' is of type '#{variable['type']}'.")
         return nil
-      else
-        source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-        decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
-        variable_value = variable['defaultValue']
-        if decision
-          variation = decision['variation']
-          if decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-            source_info = {
-              experiment_key: decision.experiment['key'],
-              variation_key: variation['key']
-            }
-            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-          end
-          feature_enabled = variation['featureEnabled']
-          if feature_enabled == true
-            variation_variable_usages = config.variation_id_to_variable_usage_map[variation['id']]
-            variable_id = variable['id']
-            if variation_variable_usages&.key?(variable_id)
-              variable_value = variation_variable_usages[variable_id]['value']
-              @logger.log(Logger::INFO,
-                          "Got variable value '#{variable_value}' for variable '#{variable_key}' of feature flag '#{feature_flag_key}'.")
-            else
-              @logger.log(Logger::DEBUG,
-                          "Variable '#{variable_key}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
-            end
-          else
-            @logger.log(Logger::DEBUG,
-                        "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
-          end
-        else
-          @logger.log(Logger::INFO,
-                      "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
-        end
       end
 
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      variation = decision ? decision['variation'] : nil
+      feature_enabled = variation ? variation['featureEnabled'] : false
+
+      variable_value = get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
       variable_value = Helpers::VariableType.cast_value_to_type(variable_value, variable_type, @logger)
+
+      source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+      if decision && decision['source'] == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        source_info = {
+          experiment_key: decision.experiment['key'],
+          variation_key: variation['key']
+        }
+        source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+      end
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -707,6 +777,45 @@ module Optimizely
         source_info: source_info || {}
       )
 
+      variable_value
+    end
+
+    def get_feature_variable_for_variation(feature_flag_key, feature_enabled, variation, variable, user_id)
+      # Helper method to get the non type-casted value for a variable attached to a
+      # feature flag. Returns appropriate variable value depending on whether there
+      # was a matching variation, feature was enabled or not or varible was part of the
+      # available variation or not. Also logs the appropriate message explaining how it
+      # evaluated the value of the variable.
+      #
+      # feature_flag_key - String key of feature flag the variable belongs to
+      # feature_enabled - Boolean indicating if feature is enabled or not
+      # variation - varition returned by decision service
+      # user_id - String user ID
+      #
+      # Returns string value of the variable.
+
+      config = project_config
+      variable_value = variable['defaultValue']
+      if variation
+        if feature_enabled == true
+          variation_variable_usages = config.variation_id_to_variable_usage_map[variation['id']]
+          variable_id = variable['id']
+          if variation_variable_usages&.key?(variable_id)
+            variable_value = variation_variable_usages[variable_id]['value']
+            @logger.log(Logger::INFO,
+                        "Got variable value '#{variable_value}' for variable '#{variable['key']}' of feature flag '#{feature_flag_key}'.")
+          else
+            @logger.log(Logger::DEBUG,
+                        "Variable '#{variable['key']}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+          end
+        else
+          @logger.log(Logger::DEBUG,
+                      "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
+        end
+      else
+        @logger.log(Logger::INFO,
+                    "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
+      end
       variable_value
     end
 
