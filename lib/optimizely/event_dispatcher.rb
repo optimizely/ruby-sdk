@@ -17,7 +17,7 @@
 #
 require_relative 'exceptions'
 
-require 'httparty'
+require 'net/http'
 
 module Optimizely
   class NoOpEventDispatcher
@@ -39,19 +39,29 @@ module Optimizely
     #
     # @param event - Event object
     def dispatch_event(event)
+      uri = URI.parse(event.url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.read_timeout = REQUEST_TIMEOUT
+      http.use_ssl = true
+
       if event.http_verb == :get
-        response = HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
+        request = Net::HTTP::Get.new(uri.request_uri)
 
       elsif event.http_verb == :post
-        response = HTTParty.post(event.url,
-                                 body: event.params.to_json,
-                                 headers: event.headers,
-                                 timeout: REQUEST_TIMEOUT)
+        request = Net::HTTP::Post.new(uri.request_uri)
+        request.body = event.params.to_json
       end
+
+      # set headers
+      event.headers&.each do |key, val|
+        request[key] = val
+      end
+
+      response = http.request(request)
 
       error_msg = "Event failed to dispatch with response code: #{response.code}"
 
-      case response.code
+      case response.code.to_i
       when 400...500
         @logger.log(Logger::ERROR, error_msg)
         @error_handler.handle_error(HTTPCallError.new("HTTP Client Error: #{response.code}"))
