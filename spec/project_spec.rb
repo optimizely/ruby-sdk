@@ -130,9 +130,8 @@ describe 'Optimizely' do
     it 'should log and raise an error when provided a datafile of unsupported version' do
       config_body_invalid_json = JSON.parse(config_body_invalid_JSON)
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
-      expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidDatafileVersionError)
 
-      Optimizely::Project.new(config_body_invalid_JSON, nil, nil, Optimizely::RaiseErrorHandler.new, true)
+      expect { Optimizely::Project.new(config_body_invalid_JSON, nil, nil, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
     end
   end
 
