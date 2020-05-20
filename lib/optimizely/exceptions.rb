@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -78,14 +78,6 @@ module Optimizely
 
     def initialize(msg = 'Provided variation is not in datafile.')
       super
-    end
-  end
-
-  class InvalidDatafileError < Error
-    # Raised when a public method fails due to an invalid datafile
-
-    def initialize(aborted_method)
-      super("Provided datafile is in an invalid format. Aborting #{aborted_method}.")
     end
   end
 
