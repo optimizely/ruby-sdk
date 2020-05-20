@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017, Optimizely and contributors
+#    Copyright 2017, 2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -44,6 +44,13 @@ module Optimizely
         when 'integer'
           begin
             return_value = Integer(value)
+          rescue => e
+            logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
+                                      "'#{variable_type}': #{e.message}.")
+          end
+        when 'json'
+          begin
+            return_value = JSON.parse(value)
           rescue => e
             logger.log(Logger::ERROR, "Unable to cast variable value '#{value}' to type "\
                                       "'#{variable_type}': #{e.message}.")

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -31,12 +31,21 @@ describe Optimizely::DatafileProjectConfig do
     it 'should initialize properties correctly upon creating project' do
       project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
 
+      feature_flags_to_compare = config_body.fetch('featureFlags')
+      # modify json variable from datafile in the format expected by project config
+      variable_to_modify = feature_flags_to_compare[8]['variables'][0]
+      variable_to_modify['type'] = 'json'
+      variable_to_modify.delete('subType')
+      variable_to_modify = feature_flags_to_compare[9]['variables'][0]
+      variable_to_modify['type'] = 'json'
+      variable_to_modify.delete('subType')
+
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
       expect(project_config.bot_filtering).to eq(config_body['botFiltering'])
       expect(project_config.events).to eq(config_body['events'])
-      expect(project_config.feature_flags).to eq(config_body['featureFlags'])
+      expect(project_config.feature_flags).to eq(feature_flags_to_compare)
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
@@ -475,7 +484,9 @@ describe Optimizely::DatafileProjectConfig do
         'string_single_variable_feature' => config_body['featureFlags'][4],
         'multi_variate_feature' => config_body['featureFlags'][5],
         'mutex_group_feature' => config_body['featureFlags'][6],
-        'empty_feature' => config_body['featureFlags'][7]
+        'empty_feature' => config_body['featureFlags'][7],
+        'json_single_variable_feature' => config_body['featureFlags'][8],
+        'all_variables_feature' => config_body['featureFlags'][9]
       }
 
       expected_feature_variable_key_map = {
@@ -512,6 +523,14 @@ describe Optimizely::DatafileProjectConfig do
             'defaultValue' => 'wingardium leviosa'
           }
         },
+        'json_single_variable_feature' => {
+          'json_variable' => {
+            'id' => '1555588',
+            'key' => 'json_variable',
+            'type' => 'json',
+            'defaultValue' => '{ "val": "wingardium leviosa" }'
+          }
+        },
         'multi_variate_feature' => {
           'first_letter' => {
             'id' => '155560',
@@ -534,7 +553,39 @@ describe Optimizely::DatafileProjectConfig do
             'defaultValue' => 'null'
           }
         },
-        'empty_feature' => {}
+        'empty_feature' => {},
+        'all_variables_feature' => {
+          'json_variable' => {
+            'id' => '155558891',
+            'key' => 'json_variable',
+            'type' => 'json',
+            'defaultValue' => '{ "val": "default json" }'
+          },
+          'string_variable' => {
+            'id' => '155558892',
+            'key' => 'string_variable',
+            'type' => 'string',
+            'defaultValue' => 'default string'
+          },
+          'boolean_variable' => {
+            'id' => '155558893',
+            'key' => 'boolean_variable',
+            'type' => 'boolean',
+            'defaultValue' => 'false'
+          },
+          'double_variable' => {
+            'id' => '155558894',
+            'key' => 'double_variable',
+            'type' => 'double',
+            'defaultValue' => '1.99'
+          },
+          'integer_variable' => {
+            'id' => '155558895',
+            'key' => 'integer_variable',
+            'type' => 'integer',
+            'defaultValue' => '10'
+          }
+        }
       }
 
       expected_variation_id_to_variable_usage_map = {
@@ -582,12 +633,20 @@ describe Optimizely::DatafileProjectConfig do
           '155558' => {
             'id' => '155558',
             'value' => 'cta_1'
+          },
+          '1555588' => {
+            'id' => '1555588',
+            'value' => '{"value": "cta_1"}'
           }
         },
         '122237' => {
           '155558' => {
             'id' => '155558',
             'value' => 'cta_2'
+          },
+          '1555588' => {
+            'id' => '1555588',
+            'value' => '{"value": "cta_2"}'
           }
         },
         '122239' => {

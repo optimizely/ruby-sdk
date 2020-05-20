@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -304,7 +304,8 @@ module Optimizely
         'BOOLEAN' => 'boolean',
         'DOUBLE' => 'double',
         'INTEGER' => 'integer',
-        'STRING' => 'string'
+        'STRING' => 'string',
+        'JSON' => 'json'
       }.freeze
 
       INPUT_VARIABLES = {
@@ -357,7 +358,8 @@ module Optimizely
         'AB_TEST' => 'ab-test',
         'FEATURE' => 'feature',
         'FEATURE_TEST' => 'feature-test',
-        'FEATURE_VARIABLE' => 'feature-variable'
+        'FEATURE_VARIABLE' => 'feature-variable',
+        'ALL_FEATURE_VARIABLES' => 'all-feature-variables'
       }.freeze
 
       CONFIG_MANAGER = {
