@@ -19,6 +19,7 @@ require_relative '../config/datafile_project_config'
 require_relative '../error_handler'
 require_relative '../exceptions'
 require_relative '../helpers/constants'
+require_relative '../helpers/network_utils'
 require_relative '../logger'
 require_relative '../notification_center'
 require_relative '../project_config'
@@ -26,7 +27,6 @@ require_relative '../optimizely_config'
 require_relative 'project_config_manager'
 require_relative 'async_scheduler'
 
-require 'net/http'
 require 'json'
 
 module Optimizely
@@ -150,16 +150,13 @@ module Optimizely
         "Fetching datafile from #{@datafile_url}"
       )
       begin
-        uri = URI.parse(@datafile_url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.read_timeout = Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
-        http.use_ssl = true
+        headers = {}
+        headers['Content-Type'] = 'application/json'
+        headers['If-Modified-Since'] = @last_modified if @last_modified
 
-        request = Net::HTTP::Get.new(uri.request_uri)
-        request['Content-Type'] = 'application/json'
-        request['If-Modified-Since'] = @last_modified if @last_modified
-
-        response = http.request(request)
+        response = Helpers::NetworkUtils.make_request(
+          @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
+        )
       rescue StandardError => e
         @logger.log(
           Logger::ERROR,

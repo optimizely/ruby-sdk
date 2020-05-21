@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -47,6 +47,16 @@ describe Optimizely::EventDispatcher do
     @event_dispatcher.dispatch_event(event)
 
     expect(a_request(:post, @url)
+      .with(body: @params, headers: @post_headers)).to have_been_made.once
+  end
+
+  it 'should properly dispatch V2 (POST) events to http url' do
+    http_url = 'http://www.optimizely.com'
+    stub_request(:post, http_url)
+    event = Optimizely::Event.new(:post, http_url, @params, @post_headers)
+    @event_dispatcher.dispatch_event(event)
+
+    expect(a_request(:post, http_url)
       .with(body: @params, headers: @post_headers)).to have_been_made.once
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 #    limitations under the License.
 #
 require_relative 'exceptions'
-
-require 'net/http'
+require_relative 'helpers/network_utils'
 
 module Optimizely
   class NoOpEventDispatcher
@@ -39,25 +38,9 @@ module Optimizely
     #
     # @param event - Event object
     def dispatch_event(event)
-      uri = URI.parse(event.url)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.read_timeout = REQUEST_TIMEOUT
-      http.use_ssl = true
-
-      if event.http_verb == :get
-        request = Net::HTTP::Get.new(uri.request_uri)
-
-      elsif event.http_verb == :post
-        request = Net::HTTP::Post.new(uri.request_uri)
-        request.body = event.params.to_json
-      end
-
-      # set headers
-      event.headers&.each do |key, val|
-        request[key] = val
-      end
-
-      response = http.request(request)
+      response = Helpers::NetworkUtils.make_request(
+        event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT
+      )
 
       error_msg = "Event failed to dispatch with response code: #{response.code}"
 
