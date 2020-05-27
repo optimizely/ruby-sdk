@@ -16,7 +16,7 @@
 #    limitations under the License.
 #
 require_relative 'exceptions'
-require_relative 'helpers/network_utils'
+require_relative 'helpers/http_utils'
 
 module Optimizely
   class NoOpEventDispatcher
@@ -38,7 +38,7 @@ module Optimizely
     #
     # @param event - Event object
     def dispatch_event(event)
-      response = Helpers::NetworkUtils.make_request(
+      response = Helpers::HttpUtils.make_request(
         event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT
       )
 

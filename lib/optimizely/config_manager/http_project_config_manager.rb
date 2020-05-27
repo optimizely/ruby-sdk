@@ -19,7 +19,7 @@ require_relative '../config/datafile_project_config'
 require_relative '../error_handler'
 require_relative '../exceptions'
 require_relative '../helpers/constants'
-require_relative '../helpers/network_utils'
+require_relative '../helpers/http_utils'
 require_relative '../logger'
 require_relative '../notification_center'
 require_relative '../project_config'
@@ -154,7 +154,7 @@ module Optimizely
         headers['Content-Type'] = 'application/json'
         headers['If-Modified-Since'] = @last_modified if @last_modified
 
-        response = Helpers::NetworkUtils.make_request(
+        response = Helpers::HttpUtils.make_request(
           @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
         )
       rescue StandardError => e

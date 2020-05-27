@@ -20,7 +20,7 @@ require 'net/http'
 
 module Optimizely
   module Helpers
-    module NetworkUtils
+    module HttpUtils
       module_function
 
       def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil)
