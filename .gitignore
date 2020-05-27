@@ -11,3 +11,4 @@ Gemfile.lock
 /tmp/
 *.DS_Store
 .ruby-version
+vendor/bundle

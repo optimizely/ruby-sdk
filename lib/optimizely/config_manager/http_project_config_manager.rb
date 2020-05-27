@@ -19,14 +19,16 @@ require_relative '../config/datafile_project_config'
 require_relative '../error_handler'
 require_relative '../exceptions'
 require_relative '../helpers/constants'
+require_relative '../helpers/http_utils'
 require_relative '../logger'
 require_relative '../notification_center'
 require_relative '../project_config'
 require_relative '../optimizely_config'
 require_relative 'project_config_manager'
 require_relative 'async_scheduler'
-require 'httparty'
+
 require 'json'
+
 module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
@@ -148,16 +150,12 @@ module Optimizely
         "Fetching datafile from #{@datafile_url}"
       )
       begin
-        headers = {
-          'Content-Type' => 'application/json'
-        }
+        headers = {}
+        headers['Content-Type'] = 'application/json'
+        headers['If-Modified-Since'] = @last_modified if @last_modified
 
-        headers[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']] = @last_modified if @last_modified
-
-        response = HTTParty.get(
-          @datafile_url,
-          headers: headers,
-          timeout: Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
+        response = Helpers::HttpUtils.make_request(
+          @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
         )
       rescue StandardError => e
         @logger.log(

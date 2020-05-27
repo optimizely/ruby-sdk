@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 #    limitations under the License.
 #
 require_relative 'exceptions'
-
-require 'httparty'
+require_relative 'helpers/http_utils'
 
 module Optimizely
   class NoOpEventDispatcher
@@ -39,19 +38,13 @@ module Optimizely
     #
     # @param event - Event object
     def dispatch_event(event)
-      if event.http_verb == :get
-        response = HTTParty.get(event.url, headers: event.headers, query: event.params, timeout: REQUEST_TIMEOUT)
-
-      elsif event.http_verb == :post
-        response = HTTParty.post(event.url,
-                                 body: event.params.to_json,
-                                 headers: event.headers,
-                                 timeout: REQUEST_TIMEOUT)
-      end
+      response = Helpers::HttpUtils.make_request(
+        event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT
+      )
 
       error_msg = "Event failed to dispatch with response code: #{response.code}"
 
-      case response.code
+      case response.code.to_i
       when 400...500
         @logger.log(Logger::ERROR, error_msg)
         @error_handler.handle_error(HTTPCallError.new("HTTP Client Error: #{response.code}"))

@@ -69,6 +69,24 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
+    it 'should get project config when valid http url is given' do
+      WebMock.reset!
+      stub_request(:get, 'http://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+        .with(
+          headers: {
+            'Content-Type' => 'application/json'
+          }
+        )
+        .to_return(status: 200, body: VALID_SDK_KEY_CONFIG_JSON, headers: {})
+
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        url: 'http://cdn.optimizely.com/datafiles/valid_sdk_key.json'
+      )
+
+      until @http_project_config_manager.ready?; end
+      expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
+    end
+
     it 'should get project config when sdk_key is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'valid_sdk_key'
