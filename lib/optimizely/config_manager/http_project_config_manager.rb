@@ -64,11 +64,11 @@ module Optimizely
       error_handler: nil,
       skip_json_validation: false,
       notification_center: nil,
-      auth_datafile_token: nil
+      datafile_access_token: nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
-      @auth_token = auth_datafile_token
+      @access_token = datafile_access_token
       @datafile_url = get_datafile_url(sdk_key, url, url_template)
       @polling_interval = nil
       polling_interval(polling_interval)
@@ -155,7 +155,7 @@ module Optimizely
         headers = {}
         headers['Content-Type'] = 'application/json'
         headers['If-Modified-Since'] = @last_modified if @last_modified
-        headers['Authorization'] = "Bearer #{@auth_token}" unless @auth_token.nil?
+        headers['Authorization'] = "Bearer #{@access_token}" unless @access_token.nil?
 
         response = Helpers::HttpUtils.make_request(
           @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
@@ -291,7 +291,7 @@ module Optimizely
       end
 
       unless url
-        url_template ||= @auth_token.nil? ? Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE'] : Helpers::Constants::CONFIG_MANAGER['AUTHENTICATED_DATAFILE_URL_TEMPLATE']
+        url_template ||= @access_token.nil? ? Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE'] : Helpers::Constants::CONFIG_MANAGER['AUTHENTICATED_DATAFILE_URL_TEMPLATE']
         begin
           return (url_template % sdk_key)
         rescue

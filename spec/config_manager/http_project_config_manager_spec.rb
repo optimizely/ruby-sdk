@@ -16,12 +16,7 @@
 #    limitations under the License.
 #
 require 'spec_helper'
-require 'optimizely/config_manager/http_project_config_manager'
-require 'optimizely/error_handler'
-require 'optimizely/exceptions'
-require 'optimizely/helpers/constants'
-require 'optimizely/helpers/validator'
-require 'optimizely/logger'
+
 describe Optimizely::HTTPProjectConfigManager do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
@@ -466,6 +461,58 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(@http_project_config_manager.optimizely_config['revision']).to eq('42')
       sleep 0.3
       expect(@http_project_config_manager.optimizely_config['revision']).to eq('81')
+    end
+  end
+
+  describe 'datafile authentication' do
+    it 'should add authorization header when auth token is provided' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including("Authorization"=>"Bearer the-token"), anything)
+    end
+
+    it 'should add authorization header when auth token is provided' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including("Authorization"=>"Bearer the-token"), anything)
+    end
+
+    it 'should use authenticated datafile url when auth token is provided' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_return(VALID_SDK_KEY_CONFIG_JSON)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('https://www.optimizely-cdn.com/datafiles/auth/valid_sdk_key.json', any_args)
+    end
+
+    it 'should use public datafile url when auth token is not provided' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_return(VALID_SDK_KEY_CONFIG_JSON)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('https://cdn.optimizely.com/datafiles/valid_sdk_key.json', any_args)
+    end
+
+    it 'should prefer user provided template url over defaults' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_return(VALID_SDK_KEY_CONFIG_JSON)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+        url_template: 'http://awesomeurl'
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('http://awesomeurl', any_args)
     end
   end
 end
