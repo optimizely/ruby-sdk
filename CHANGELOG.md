@@ -1,5 +1,8 @@
 # Optimizely Ruby SDK Changelog
 
+## [Unreleased]
+- Added support for authenticated datafiles. `HTTPProjectConfigManager` now accepts `datafile_access_token` to be able to fetch authentication datafiles.
+
 ## 3.4.0
 January 23rd, 2020
 
