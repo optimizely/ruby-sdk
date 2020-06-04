@@ -475,16 +475,6 @@ describe Optimizely::HTTPProjectConfigManager do
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything)
     end
 
-    it 'should add authorization header when auth token is provided' do
-      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request)
-      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'valid_sdk_key',
-        datafile_access_token: 'the-token'
-      )
-      sleep 0.1
-      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything)
-    end
-
     it 'should use authenticated datafile url when auth token is provided' do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_return(VALID_SDK_KEY_CONFIG_JSON)
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
