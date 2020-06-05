@@ -51,6 +51,7 @@ module Optimizely
     # error_handler - Provides a handle_error method to handle exceptions.
     # skip_json_validation - Optional boolean param which allows skipping JSON schema
     #                       validation upon object invocation. By default JSON schema validation will be performed.
+    # datafile_access_token - access token used to fetch private datafiles
     def initialize(
       sdk_key: nil,
       url: nil,
