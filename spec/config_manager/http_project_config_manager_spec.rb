@@ -482,7 +482,7 @@ describe Optimizely::HTTPProjectConfigManager do
         datafile_access_token: 'the-token'
       )
       sleep 0.1
-      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('https://www.optimizely-cdn.com/datafiles/auth/valid_sdk_key.json', any_args)
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('https://config.optimizely.com/datafiles/auth/valid_sdk_key.json', any_args)
     end
 
     it 'should use public datafile url when auth token is not provided' do
