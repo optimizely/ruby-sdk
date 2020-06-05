@@ -112,7 +112,7 @@ Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `
 The blocking timeout period is used to specify a maximum time to wait for initial bootstrapping. Valid blocking timeout period is between 1 and 2592000 seconds. Default is 15 seconds.
 
 **datafile_access_token**
-An access token sent in an authorization header with the request to fetch private datafiles
+An access token sent in an authorization header with the request to fetch private datafiles.
 
 You may also provide your own logger, error handler, or notification center.
 
