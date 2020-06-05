@@ -364,7 +364,7 @@ module Optimizely
 
       CONFIG_MANAGER = {
         'DATAFILE_URL_TEMPLATE' => 'https://cdn.optimizely.com/datafiles/%s.json',
-        'AUTHENTICATED_DATAFILE_URL_TEMPLATE' => 'https://www.optimizely-cdn.com/datafiles/auth/%s.json',
+        'AUTHENTICATED_DATAFILE_URL_TEMPLATE' => 'https://config.optimizely.com/datafiles/auth/%s.json',
         # Default time in seconds to block the 'config' method call until 'config' instance has been initialized.
         'DEFAULT_BLOCKING_TIMEOUT' => 15,
         # Default config update interval of 5 minutes
