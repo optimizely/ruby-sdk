@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ module Optimizely
         result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
         result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
         logger.log(
-          Logger::INFO,
+          Logger::DEBUG,
           format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
         )
         result

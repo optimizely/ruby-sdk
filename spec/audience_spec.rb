@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -253,7 +253,7 @@ describe Optimizely::Audience do
     )
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::INFO,
+      Logger::DEBUG,
       "Audience '11154' evaluated to UNKNOWN."
     )
 
@@ -265,7 +265,7 @@ describe Optimizely::Audience do
     )
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::INFO,
+      Logger::DEBUG,
       "Audience '11155' evaluated to UNKNOWN."
     )
 
@@ -299,7 +299,7 @@ describe Optimizely::Audience do
     ).ordered # Order: 1
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::INFO,
+      Logger::DEBUG,
       "Audience '3468206647' evaluated to FALSE."
     ).ordered # Order: 2
 
@@ -311,7 +311,7 @@ describe Optimizely::Audience do
     ).ordered # Order: 3
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::INFO,
+      Logger::DEBUG,
       "Audience '3988293898' evaluated to UNKNOWN."
     ).ordered # Order: 4
 
@@ -323,7 +323,7 @@ describe Optimizely::Audience do
     ).ordered # Order: 5
 
     expect(spy_logger).to have_received(:log).once.with(
-      Logger::INFO,
+      Logger::DEBUG,
       "Audience '3468206646' evaluated to TRUE."
     ).ordered # Order: 6
 
