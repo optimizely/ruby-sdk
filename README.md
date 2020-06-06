@@ -87,7 +87,8 @@ The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL 
         logger: nil,
         error_handler: nil,
         skip_json_validation: false,
-        notification_center: notification_center
+        notification_center: notification_center,
+        datafile_access_token: nil
       )
 ~~~~~~   
 **Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
@@ -109,6 +110,9 @@ Boolean flag used to start the `AsyncScheduler` for datafile polling if set to `
 
 **blocking_timeout**
 The blocking timeout period is used to specify a maximum time to wait for initial bootstrapping. Valid blocking timeout period is between 1 and 2592000 seconds. Default is 15 seconds.
+
+**datafile_access_token**
+An access token sent in an authorization header with the request to fetch private datafiles.
 
 You may also provide your own logger, error handler, or notification center.
 

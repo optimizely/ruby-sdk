@@ -14,7 +14,7 @@ Lint/HandleExceptions:
 # Offense count: 8
 # Configuration parameters: CountKeywordArgs.
 Metrics/ParameterLists:
-  Max: 12
+  Max: 13
 
 # Offense count: 2
 Naming/AccessorMethodName:
