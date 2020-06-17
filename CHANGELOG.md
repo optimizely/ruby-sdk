@@ -7,8 +7,8 @@
 June 17th, 2020
 
 ### New Features:
-- Add support for JSON feature variables ([#251](https://github.com/optimizely/go-sdk/pull/251))
-- Add support for authenticated datafiles ([#255](https://github.com/optimizely/go-sdk/pull/255))
+- Add support for JSON feature variables ([#251](https://github.com/optimizely/ruby-sdk/pull/251))
+- Add support for authenticated datafiles ([#255](https://github.com/optimizely/ruby-sdk/pull/255))
 
 ### Bug Fixes:
 - Handle error with error handler in async scheduler[#248](https://github.com/optimizely/ruby-sdk/pull/248).
