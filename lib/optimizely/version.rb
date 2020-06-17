@@ -17,5 +17,5 @@
 #
 module Optimizely
   CLIENT_ENGINE = 'ruby-sdk'
-  VERSION = '3.4.0'
+  VERSION = '3.5.0-beta'
 end
