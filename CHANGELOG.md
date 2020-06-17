@@ -11,8 +11,8 @@ June 17th, 2020
 - Add support for authenticated datafiles ([#255](https://github.com/optimizely/ruby-sdk/pull/255))
 
 ### Bug Fixes:
-- Handle error with error handler in async scheduler[#248](https://github.com/optimizely/ruby-sdk/pull/248).
-- Change single audience result to debug [#254](https://github.com/optimizely/ruby-sdk/pull/254).
+- Handle error with error handler in async scheduler ([#248](https://github.com/optimizely/ruby-sdk/pull/248)).
+- Change single audience result to debug ([#254](https://github.com/optimizely/ruby-sdk/pull/254)).
 
 ## 3.4.0
 January 23rd, 2020
