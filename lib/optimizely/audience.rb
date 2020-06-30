@@ -24,7 +24,7 @@ module Optimizely
   module Audience
     module_function
 
-    def user_in_experiment?(config, experiment, attributes, logger)
+    def user_meets_audience_conditions?(config, experiment, attributes, logger)
       # Determine for given experiment if user satisfies the audiences for the experiment.
       #
       # config - Representation of the Optimizely project config.

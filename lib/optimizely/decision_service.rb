@@ -94,7 +94,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      unless Audience.user_in_experiment?(project_config, experiment, attributes, @logger)
+      unless Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
         @logger.log(
           Logger::INFO,
           "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -246,7 +246,7 @@ module Optimizely
         audience_name = audience['name']
 
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_in_experiment?(project_config, rollout_rule, attributes, @logger)
+        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger)
           @logger.log(
             Logger::DEBUG,
             "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
@@ -265,7 +265,7 @@ module Optimizely
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
       # Check that user meets audience conditions for last rule
-      unless Audience.user_in_experiment?(project_config, everyone_else_experiment, attributes, @logger)
+      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger)
         audience_id = everyone_else_experiment['audienceIds'][0]
         audience = project_config.get_audience_from_id(audience_id)
         audience_name = audience['name']
