@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require 'spec_helper'
 require 'optimizely/decision_service'
 require 'optimizely/error_handler'
 require 'optimizely/logger'

@@ -106,6 +106,16 @@ module Optimizely
       variation = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
       variation_id = variation ? variation['id'] : nil
 
+      if variation_id
+        variation_key = variation['key']
+        @logger.log(
+          Logger::INFO,
+          "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
+        )
+      else
+        @logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
+      end
+
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id)
       variation_id

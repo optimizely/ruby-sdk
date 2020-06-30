@@ -39,7 +39,7 @@ module Optimizely
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
       # project_config - Instance of ProjectConfig
-      # experiment - Experiment for which visitor is to be bucketed.
+      # experiment - Experiment or Rollout rule for which visitor is to be bucketed.
       # bucketing_id - String A customer-assigned value used to generate the bucketing key
       # user_id - String ID for user.
       #
@@ -47,6 +47,7 @@ module Optimizely
       return nil if experiment.nil?
 
       # check if experiment is in a group; if so, check if user is bucketed into specified experiment
+      # this will not affect evaluation of rollout rules.
       experiment_id = experiment['id']
       experiment_key = experiment['key']
       group_id = experiment['groupId']
@@ -82,11 +83,6 @@ module Optimizely
       variation_id = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
       if variation_id && variation_id != ''
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
-        variation_key = variation ? variation['key'] : nil
-        @logger.log(
-          Logger::INFO,
-          "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
-        )
         return variation
       end
 
@@ -98,7 +94,6 @@ module Optimizely
         )
       end
 
-      @logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
       nil
     end
 
