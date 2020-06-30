@@ -335,9 +335,11 @@ module Optimizely
 
       AUDIENCE_EVALUATION_LOGS = {
         'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated to %s.",
-        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to %s.",
+        'EXPERIMENT_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to %s.",
+        'ROLLOUT__RESULT_COMBINED' => "Audiences for rule '%s' collectively evaluated to %s.",
         'EVALUATING_AUDIENCE' => "Starting to evaluate audience '%s' with conditions: %s.",
-        'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for experiment '%s': %s.",
+        'EVALUATING_EXPERIMENT_COMBINED' => "Evaluating audiences for experiment '%s': %s.",
+        'EVALUATING_ROLLOUT_COMBINED' => "Evaluating audiences for rule '%s': %s.",
         'INFINITE_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated to UNKNOWN because the number value ' \
         "for user attribute '%s' is not in the range [-2^53, +2^53].",
         'MISSING_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated as UNKNOWN because no value ' \

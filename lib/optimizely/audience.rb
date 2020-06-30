@@ -36,10 +36,13 @@ module Optimizely
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
+      eval_audience_combined_log = Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_EXPERIMENT_COMBINED']
+      audience_result_combined_log = Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EXPERIMENT_RESULT_COMBINED']
+
       logger.log(
         Logger::DEBUG,
         format(
-          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCES_COMBINED'],
+          eval_audience_combined_log,
           experiment['key'],
           audience_conditions
         )
@@ -50,7 +53,7 @@ module Optimizely
         logger.log(
           Logger::INFO,
           format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+            audience_result_combined_log,
             experiment['key'],
             'TRUE'
           )
@@ -97,7 +100,7 @@ module Optimizely
       logger.log(
         Logger::INFO,
         format(
-          Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+          audience_result_combined_log,
           experiment['key'],
           eval_result.to_s.upcase
         )
