@@ -148,16 +148,18 @@ module Optimizely
     end
 
     def request_config
-      @logger.log(
-        Logger::DEBUG,
-        "Fetching datafile from #{@datafile_url}"
-      )
-      begin
-        headers = {}
-        headers['Content-Type'] = 'application/json'
-        headers['If-Modified-Since'] = @last_modified if @last_modified
-        headers['Authorization'] = "Bearer #{@access_token}" unless @access_token.nil?
+      @logger.log(Logger::DEBUG, "Fetching datafile from #{@datafile_url}")
+      headers = {}
+      headers['Content-Type'] = 'application/json'
+      headers['If-Modified-Since'] = @last_modified if @last_modified
+      headers['Authorization'] = "Bearer #{@access_token}" unless @access_token.nil?
 
+      # Cleaning headers before logging to avoid exposing authorization token
+      cleansed_headers = {}
+      headers.each { |key, value| cleansed_headers[key] = key == 'Authorization' ? '********' : value }
+      @logger.log(Logger::DEBUG, "Datafile request headers: #{cleansed_headers}")
+
+      begin
         response = Helpers::HttpUtils.make_request(
           @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
         )
@@ -169,6 +171,9 @@ module Optimizely
         return nil
       end
 
+      response_code = response.code.to_i
+      @logger.log(Logger::DEBUG, "Datafile response status code #{response_code}")
+
       # Leave datafile and config unchanged if it has not been modified.
       if response.code == '304'
         @logger.log(
@@ -178,9 +183,14 @@ module Optimizely
         return
       end
 
-      @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
-
-      config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation) if response.body
+      if response_code >= 200 && response_code < 400
+        @logger.log(Logger::DEBUG, "Successfully fetched datafile, generating Project config")
+        config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation)
+        @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
+        @logger.log(Logger::DEBUG, "Saved last modified header value from response: #{@last_modified}.")
+      else
+        @logger.log(Logger::DEBUG, "Datafile fetch failed, status: #{response.code}, message: #{response.message}")
+      end
 
       config
     end
