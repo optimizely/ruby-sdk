@@ -184,7 +184,7 @@ module Optimizely
       end
 
       if response_code >= 200 && response_code < 400
-        @logger.log(Logger::DEBUG, "Successfully fetched datafile, generating Project config")
+        @logger.log(Logger::DEBUG, 'Successfully fetched datafile, generating Project config')
         config = DatafileProjectConfig.create(response.body, @logger, @error_handler, @skip_json_validation)
         @last_modified = response[Helpers::Constants::HTTP_HEADERS['LAST_MODIFIED']]
         @logger.log(Logger::DEBUG, "Saved last modified header value from response: #{@last_modified}.")
