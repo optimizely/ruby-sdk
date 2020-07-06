@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2019, Optimizely and contributors
+#    Copyright 2017-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -69,6 +69,14 @@ describe Optimizely::DecisionService do
         .once.with(Logger::INFO, "User 'test_user' is in variation 'control' of experiment 'test_experiment'.")
       expect(decision_service).to have_received(:get_whitelisted_variation_id).once
       expect(decision_service.bucketer).to have_received(:bucket).once
+    end
+
+    it 'should return nil when user ID is not bucketed' do
+      allow(decision_service.bucketer).to receive(:bucket).and_return(nil)
+      expect(decision_service.get_variation(config, 'test_experiment', 'test_user')).to eq(nil)
+
+      expect(spy_logger).to have_received(:log)
+        .once.with(Logger::INFO, "User 'test_user' is in no variation.")
     end
 
     it 'should return correct variation ID if user ID is in whitelisted Variations and variation is valid' do
