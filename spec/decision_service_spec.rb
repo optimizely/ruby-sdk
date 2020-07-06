@@ -659,8 +659,6 @@ describe Optimizely::DecisionService do
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_decision)
 
           expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag['key']}'.")
         end
       end
 
@@ -671,8 +669,6 @@ describe Optimizely::DecisionService do
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(nil)
 
           expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(nil)
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'.")
         end
       end
     end

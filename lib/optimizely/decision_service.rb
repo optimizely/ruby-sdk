@@ -137,19 +137,8 @@ module Optimizely
 
       feature_flag_key = feature_flag['key']
       decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
-      if decision
-        @logger.log(
-          Logger::INFO,
-          "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag_key}'."
-        )
-        return decision
-      end
-      @logger.log(
-        Logger::INFO,
-        "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag_key}'."
-      )
-
-      nil
+      
+      decision
     end
 
     def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil)
