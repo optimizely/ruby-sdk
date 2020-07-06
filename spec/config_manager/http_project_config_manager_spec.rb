@@ -47,7 +47,7 @@ describe Optimizely::HTTPProjectConfigManager do
           'Content-Type' => 'application/json'
         }
       )
-      .to_return(status: [403, "Forbidden"], body: '', headers: {})
+      .to_return(status: [403, 'Forbidden'], body: '', headers: {})
   end
 
   after(:example) do
