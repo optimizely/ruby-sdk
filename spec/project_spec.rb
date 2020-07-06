@@ -1475,7 +1475,6 @@ describe 'Optimizely' do
       it 'should return false for feature rollout when typed audience mismatch' do
         expect(@project_typed_audience_instance.is_feature_enabled('feat', 'test_user', {})).to be false
 
-        expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "User 'test_user' is not bucketed into a rollout for feature flag 'feat'.")
         expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat' is not enabled for user 'test_user'.")
       end
 
@@ -1497,7 +1496,6 @@ describe 'Optimizely' do
         # and no audience in the other branch of the 'and' matches either
         expect(@project_typed_audience_instance.is_feature_enabled('feat2', 'test_user', 'house' => 'Lannister')).to be false
 
-        expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "User 'test_user' is not bucketed into a rollout for feature flag 'feat2'.")
         expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat2' is not enabled for user 'test_user'.")
       end
     end

@@ -31,6 +31,11 @@ module Optimizely
       # experiment - Experiment for which visitor is to be bucketed.
       # attributes - Hash representing user attributes which will be used in determining if
       #              the audience conditions are met.
+      # logger - Provides a logger instance.
+      # logging_hash - Optional string representing logs hash inside Helpers::Constants.
+      #                This defaults to 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'.
+      # logging_key - Optional string to be logged as an identifier of experiment under evaluation.
+      #               This defaults to experiment['key'].
       #
       # Returns boolean representing if user satisfies audience conditions for the audiences or not.
       logging_hash ||= 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'

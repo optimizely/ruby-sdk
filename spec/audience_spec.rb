@@ -332,4 +332,29 @@ describe Optimizely::Audience do
       "Audiences for experiment 'audience_combinations_experiment' collectively evaluated to TRUE."
     ).ordered # Order: 7
   end
+
+  it 'should log using logging_hash and logging_key when provided' do
+    logging_hash = 'ROLLOUT_AUDIENCE_EVALUATION_LOGS'
+    logging_key = 'some_key'
+
+    user_attributes = {
+      'lasers' => 45.5
+    }
+    experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
+    experiment['audienceIds'] = []
+    experiment['audienceConditions'] = ['or', %w[or 3468206647 3988293898 3468206646]]
+
+    Optimizely::Audience.user_meets_audience_conditions?(typed_audience_config, experiment, user_attributes, spy_logger, logging_hash, logging_key)
+
+    expect(spy_logger).to have_received(:log).once.with(
+      Logger::DEBUG,
+      "Evaluating audiences for rule 'some_key': "\
+       '["or", ["or", "3468206647", "3988293898", "3468206646"]].'
+    )
+
+    expect(spy_logger).to have_received(:log).once.with(
+      Logger::INFO,
+      "Audiences for rule 'some_key' collectively evaluated to TRUE."
+    )
+  end
 end

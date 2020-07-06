@@ -562,25 +562,19 @@ describe Optimizely::DecisionService do
         expect(decision_service.get_variation_for_feature_rollout(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
-        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
           .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
           .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
-        experiment = rollout['experiments'][0]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '1'.")
 
-        experiment = rollout['experiments'][1]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '2'.")
+
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' meets the audience conditions for targeting rule 'Everyone Else'.")
       end
 
       it 'should not bucket the user into the "Everyone Else" rule when audience mismatch' do
@@ -604,17 +598,11 @@ describe Optimizely::DecisionService do
           .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
-        experiment = rollout['experiments'][0]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '1'.")
 
-        experiment = rollout['experiments'][1]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).twice
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '2'.")
+
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule 'Everyone Else'.")
       end
     end
   end

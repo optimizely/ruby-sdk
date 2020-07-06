@@ -226,19 +226,22 @@ module Optimizely
       # Go through each experiment in order and try to get the variation for the user
       number_of_rules.times do |index|
         rollout_rule = rollout_rules[index]
-        audience_id = rollout_rule['audienceIds'][0]
-        audience = project_config.get_audience_from_id(audience_id)
-        audience_name = audience['name']
+        logging_key = index + 1
 
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', index + 1)
+        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
           @logger.log(
             Logger::DEBUG,
-            "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
+            "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
           )
           # move onto the next targeting rule
           next
         end
+
+        @logger.log(
+          Logger::DEBUG,
+          "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
+        )
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id)
@@ -249,17 +252,20 @@ module Optimizely
 
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
+      logging_key = 'Everyone Else'
       # Check that user meets audience conditions for last rule
-      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
-        audience_id = everyone_else_experiment['audienceIds'][0]
-        audience = project_config.get_audience_from_id(audience_id)
-        audience_name = audience['name']
+      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
         @logger.log(
           Logger::DEBUG,
-          "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
+          "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
         )
         return nil
       end
+
+      @logger.log(
+        Logger::DEBUG,
+        "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
+      )
       variation = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id)
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
