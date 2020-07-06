@@ -24,7 +24,7 @@ module Optimizely
   module Audience
     module_function
 
-    def user_meets_audience_conditions?(config, experiment, attributes, logger)
+    def user_meets_audience_conditions?(config, experiment, attributes, logger, logging_hash = nil, logging_key = nil)
       # Determine for given experiment if user satisfies the audiences for the experiment.
       #
       # config - Representation of the Optimizely project config.
@@ -33,17 +33,18 @@ module Optimizely
       #              the audience conditions are met.
       #
       # Returns boolean representing if user satisfies audience conditions for the audiences or not.
+      logging_hash ||= 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'
+      logging_key ||= experiment['key']
+
+      logs_hash = Object.const_get "Optimizely::Helpers::Constants::#{logging_hash}"
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
-
-      eval_audience_combined_log = Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_EXPERIMENT_COMBINED']
-      audience_result_combined_log = Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EXPERIMENT_RESULT_COMBINED']
 
       logger.log(
         Logger::DEBUG,
         format(
-          eval_audience_combined_log,
-          experiment['key'],
+          logs_hash['EVALUATING_AUDIENCES_COMBINED'],
+          logging_key,
           audience_conditions
         )
       )
@@ -53,8 +54,8 @@ module Optimizely
         logger.log(
           Logger::INFO,
           format(
-            audience_result_combined_log,
-            experiment['key'],
+            logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+            logging_key,
             'TRUE'
           )
         )
@@ -77,7 +78,7 @@ module Optimizely
         logger.log(
           Logger::DEBUG,
           format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['EVALUATING_AUDIENCE'],
+            logs_hash['EVALUATING_AUDIENCE'],
             audience_id,
             audience_conditions
           )
@@ -88,7 +89,7 @@ module Optimizely
         result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
         logger.log(
           Logger::DEBUG,
-          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
+          format(logs_hash['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
         )
         result
       end
@@ -100,8 +101,8 @@ module Optimizely
       logger.log(
         Logger::INFO,
         format(
-          audience_result_combined_log,
-          experiment['key'],
+          logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'],
+          logging_key,
           eval_result.to_s.upcase
         )
       )

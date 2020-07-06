@@ -516,9 +516,9 @@ describe Optimizely::DecisionService do
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                               .with(config, rollout['experiments'][0], user_attributes, spy_logger)
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
 
@@ -541,9 +541,9 @@ describe Optimizely::DecisionService do
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                               .with(config, rollout['experiments'][0], user_attributes, spy_logger)
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
       end
@@ -559,7 +559,7 @@ describe Optimizely::DecisionService do
         allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(false)
 
         allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
-          .with(config, everyone_else_experiment, user_attributes, spy_logger)
+          .with(config, everyone_else_experiment, user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
           .and_return(true)
         allow(decision_service.bucketer).to receive(:bucket)
           .with(config, everyone_else_experiment, user_id, user_id)
@@ -569,11 +569,11 @@ describe Optimizely::DecisionService do
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger)
+                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][2], user_attributes, spy_logger)
+          .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
         experiment = rollout['experiments'][0]
@@ -603,11 +603,11 @@ describe Optimizely::DecisionService do
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger)
+                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][2], user_attributes, spy_logger)
+          .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
         experiment = rollout['experiments'][0]
