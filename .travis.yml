@@ -17,7 +17,7 @@ script: "bundle exec rake spec"
 before_script: "rubocop"
 after_success: "coveralls"
 
-Integration tests need to run first to reset the PR build status to pending
+# Integration tests need to run first to reset the PR build status to pending
 stages:
   - 'Lint markdown files'
   - 'Integration tests'
