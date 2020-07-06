@@ -3,13 +3,11 @@ branch:
     - master
 language: ruby
 cache: bundler
-addons:
-  srcclr: true
 rvm:
-  - 2.3.7
-  - 2.4.4
-  - 2.5.1
-  - 2.6.0
+  # - 2.3.7
+  # - 2.4.4
+  # - 2.5.1
+  # - 2.6.0
 before_install:
 #  - gem update --system
   - gem install bundler
@@ -20,45 +18,55 @@ before_script: "rubocop"
 after_success: "coveralls"
 
 # Integration tests need to run first to reset the PR build status to pending
-stages:
-  - 'Lint markdown files'
-  - 'Integration tests'
-  - 'Test'
+# stages:
+#   - 'Lint markdown files'
+#   - 'Integration tests'
+#   - 'Test'
+#   - 'Source Clear'
 
-jobs:
-  include:
-    - stage: 'Lint markdown files'
-      os: linux
-      language: generic
-      before_install: skip
-      install: gem install awesome_bot
-      before_script: skip
-      after_success: skip
-      script:
-        - find . -type f -name '*.md' -exec awesome_bot {} \;
-      notifications:
-        email: false
-    - stage: 'Lint markdown files'
-      os: linux
-      language: generic
-      before_install: skip
-      install:
-        - npm i -g markdown-spellcheck
-      before_script:
-        - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
-      script:
-        - mdspell -a -n -r --en-us '**/*.md'
-      after_success: skip
+# jobs:
+#   include:
+#     - stage: 'Lint markdown files'
+#       os: linux
+#       language: generic
+#       before_install: skip
+#       install: gem install awesome_bot
+#       before_script: skip
+#       after_success: skip
+#       script:
+#         - find . -type f -name '*.md' -exec awesome_bot {} \;
+#       notifications:
+#         email: false
+#     - stage: 'Lint markdown files'
+#       os: linux
+#       language: generic
+#       before_install: skip
+#       install:
+#         - npm i -g markdown-spellcheck
+#       before_script:
+#         - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
+#       script:
+#         - mdspell -a -n -r --en-us '**/*.md'
+#       after_success: skip
  
-    - stage: 'Integration tests'
-      merge_mode: replace
-      env: SDK=ruby SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
-      cache: false
-      language: minimal
+#     - stage: 'Integration tests'
+#       merge_mode: replace
+#       env: SDK=ruby SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
+#       cache: false
+#       language: minimal
+#       before_install: skip
+#       install: skip
+#       before_script:
+#         - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
+#       script:
+#         - $HOME/travisci-tools/trigger-script-with-status-update.sh
+#       after_success: travis_terminate 0
+
+    - stage: 'Source Clear'
+      addons:
+        srcclr: true
       before_install: skip
       install: skip
-      before_script:
-        - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
-      script:
-        - $HOME/travisci-tools/trigger-script-with-status-update.sh
-      after_success: travis_terminate 0
+      before_script: skip
+      script: skip
+      after_success: skip
