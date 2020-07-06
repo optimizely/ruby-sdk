@@ -392,9 +392,6 @@ describe Optimizely::DecisionService do
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
           expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
-
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'test_experiment_multivariate' of feature 'multi_variate_feature'.")
         end
       end
     end
@@ -418,9 +415,6 @@ describe Optimizely::DecisionService do
         it 'should return the variation the user is bucketed into' do
           feature_flag = config.feature_flag_key_map['mutex_group_feature']
           expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
-
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'mutex_group_feature'.")
         end
       end
 

@@ -135,9 +135,8 @@ module Optimizely
       decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes)
       return decision unless decision.nil?
 
-      feature_flag_key = feature_flag['key']
       decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
-      
+
       decision
     end
 
@@ -177,10 +176,7 @@ module Optimizely
         next unless variation_id
 
         variation = project_config.variation_id_map[experiment_key][variation_id]
-        @logger.log(
-          Logger::INFO,
-          "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
-        )
+
         return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'])
       end
 
