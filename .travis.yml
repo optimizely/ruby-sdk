@@ -21,8 +21,8 @@ after_success: "coveralls"
 stages:
   - 'Lint markdown files'
   - 'Integration tests'
-  - 'Test'
   - 'Production tests'
+  - 'Test'
 
 jobs:
   include:
