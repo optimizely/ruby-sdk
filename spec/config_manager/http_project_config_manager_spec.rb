@@ -47,7 +47,7 @@ describe Optimizely::HTTPProjectConfigManager do
           'Content-Type' => 'application/json'
         }
       )
-      .to_return(status: 403, body: '', headers: {})
+      .to_return(status: [403, 'Forbidden'], body: '', headers: {})
   end
 
   after(:example) do
@@ -236,7 +236,7 @@ describe Optimizely::HTTPProjectConfigManager do
       sleep 0.3
 
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Fetching datafile from https://cdn.optimizely.com/datafiles/valid_sdk_key.json').once
-
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Datafile response status code 200').once
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Received new datafile and updated config. ' \
         'Old revision number: 42. New revision number: 81.').once
 
@@ -360,6 +360,17 @@ describe Optimizely::HTTPProjectConfigManager do
       end.to raise_error(Optimizely::InvalidInputsError, 'Invalid url_template https://cdn.optimizely.com/datafiles/%d.json provided.')
 
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Invalid url_template https://cdn.optimizely.com/datafiles/%d.json provided.')
+    end
+
+    it 'Should log failure message with status code when failed to fetch datafile' do
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        url: 'https://cdn.optimizely.com/datafiles/invalid_sdk_key.json',
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+        logger: spy_logger
+      )
+      sleep 0.1
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Datafile fetch failed, status: 403, message: Forbidden').once
     end
   end
 
@@ -503,6 +514,17 @@ describe Optimizely::HTTPProjectConfigManager do
       )
       sleep 0.1
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with('http://awesomeurl', any_args)
+    end
+
+    it 'should hide access token when printing logs' do
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+        logger: spy_logger
+      )
+      sleep 0.1
+      expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Datafile request headers: {"Content-Type"=>"application/json", "Authorization"=>"********"}').once
     end
   end
 end
