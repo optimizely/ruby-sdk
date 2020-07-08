@@ -16,7 +16,7 @@
 #
 #
 require 'spec_helper'
-#require 'optimizely/helpers/http_utils'
+# require 'optimizely/helpers/http_utils'
 require 'optimizely/config/proxy_config'
 
 describe Optimizely::Helpers::HttpUtils do

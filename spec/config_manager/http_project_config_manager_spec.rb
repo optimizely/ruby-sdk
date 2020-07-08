@@ -527,7 +527,6 @@ describe Optimizely::HTTPProjectConfigManager do
       )
       sleep 0.1
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything, proxy_config)
-
     end
 
     it 'should pass the proxy config that is passed in' do
@@ -541,7 +540,6 @@ describe Optimizely::HTTPProjectConfigManager do
       )
       sleep 0.1
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything, proxy_config)
-
     end
   end
 end

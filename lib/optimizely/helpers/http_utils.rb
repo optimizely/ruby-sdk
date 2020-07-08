@@ -43,16 +43,16 @@ module Optimizely
         end
 
         # do not try to make request with proxy unless we have at least a host
-        http_class = if proxy_config && proxy_config.host
-          Net::HTTP::Proxy(
-            proxy_config.host,
-            proxy_config.port,
-            proxy_config.username,
-            proxy_config.password
-          )
-        else
-          Net::HTTP
-        end
+        http_class = if proxy_config&.host
+                       Net::HTTP::Proxy(
+                         proxy_config.host,
+                         proxy_config.port,
+                         proxy_config.username,
+                         proxy_config.password
+                       )
+                     else
+                       Net::HTTP
+                     end
 
         http = http_class.new(uri.host, uri.port)
         http.read_timeout = read_timeout if read_timeout

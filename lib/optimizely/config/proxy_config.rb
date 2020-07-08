@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Optimizely
   class ProxyConfig
     attr_reader :host, :port, :username, :password
 
-    def initialize(host, port = nil,  username = nil, password = nil)
+    def initialize(host, port = nil, username = nil, password = nil)
       # host - DNS name or IP address of proxy
       # port - port to use to acess the proxy
       # username - username if authorization is required
