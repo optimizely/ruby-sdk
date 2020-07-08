@@ -43,7 +43,8 @@ jobs:
       install:
         - npm i -g markdown-spellcheck
       before_script:
-        - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
+        # todo: change branch to master once merged.
+        - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/oakbani/ignore-for-ruby/.spelling
       script:
         - mdspell -a -n -r --en-us '**/*.md'
       after_success: skip
