@@ -2954,7 +2954,7 @@ describe 'Optimizely' do
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
-        "Feature 'integer_single_variable_feature' for variation 'control' is not enabled. Returning the default variable value '7'."
+        "Feature 'integer_single_variable_feature' is not enabled for user 'test_user'. Returning the default variable value '7'."
       )
     end
 
@@ -3068,7 +3068,7 @@ describe 'Optimizely' do
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
-        "Feature 'boolean_single_variable_feature' for variation '177773' is not enabled. Returning the default variable value 'true'."
+        "Feature 'boolean_single_variable_feature' is not enabled for user 'test_user'. Returning the default variable value 'true'."
       )
     end
 

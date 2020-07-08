@@ -810,7 +810,7 @@ module Optimizely
           end
         else
           @logger.log(Logger::DEBUG,
-                      "Feature '#{feature_flag_key}' for variation '#{variation['key']}' is not enabled. Returning the default variable value '#{variable_value}'.")
+                      "Feature '#{feature_flag_key}' is not enabled for user '#{user_id}'. Returning the default variable value '#{variable_value}'.")
         end
       else
         @logger.log(Logger::INFO,
