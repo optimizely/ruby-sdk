@@ -1,5 +1,17 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.5.0
+July 8th, 2020
+
+### New Features:
+- Add support for JSON feature variables ([#251](https://github.com/optimizely/ruby-sdk/pull/251))
+- Add support for authenticated datafiles ([#255](https://github.com/optimizely/ruby-sdk/pull/255))
+- Added support for authenticated datafiles. `HTTPProjectConfigManager` now accepts `datafile_access_token` to be able to fetch authenticated datafiles.
+- Add support for proxy server for http config manager. ([#262](https://github.com/optimizely/ruby-sdk/pull/262))
+### Bug Fixes:
+- Handle error with error handler in async scheduler ([#248](https://github.com/optimizely/ruby-sdk/pull/248)).
+- Change single audience result to debug ([#254](https://github.com/optimizely/ruby-sdk/pull/254)).
+
 ## [Unreleased]
 - Added support for authenticated datafiles. `HTTPProjectConfigManager` now accepts `datafile_access_token` to be able to fetch authenticated datafiles.
 
