@@ -65,7 +65,8 @@ jobs:
 
     - <<: *integrationtest
       stage: 'Production tests'
+      # $TRAVIS_PULL_REQUEST_BRANCH is empty when build type is cron. travisci-tools script assumes master branch in this case.
       env:
         SDK=ruby
-        SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH # This is empty when build type is cron. travisci-tools script assumes master branch in this case.
+        SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
         FULLSTACK_TEST_REPO=ProdTesting
