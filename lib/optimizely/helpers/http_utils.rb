@@ -23,14 +23,10 @@ module Optimizely
     module HttpUtils
       module_function
 
-      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil)
+      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil)
         # makes http/https GET/POST request and returns response
-
+        #
         uri = URI.parse(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-
-        http.read_timeout = read_timeout if read_timeout
-        http.use_ssl = uri.scheme == 'https'
 
         if http_method == :get
           request = Net::HTTP::Get.new(uri.request_uri)
@@ -46,6 +42,21 @@ module Optimizely
           request[key] = val
         end
 
+        # do not try to make request with proxy unless we have at least a host
+        http_class = if proxy_config&.host
+                       Net::HTTP::Proxy(
+                         proxy_config.host,
+                         proxy_config.port,
+                         proxy_config.username,
+                         proxy_config.password
+                       )
+                     else
+                       Net::HTTP
+                     end
+
+        http = http_class.new(uri.host, uri.port)
+        http.read_timeout = read_timeout if read_timeout
+        http.use_ssl = uri.scheme == 'https'
         http.request(request)
       end
     end
