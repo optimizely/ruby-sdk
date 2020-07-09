@@ -29,9 +29,10 @@ module Optimizely
     # @api constants
     REQUEST_TIMEOUT = 10
 
-    def initialize(logger: nil, error_handler: nil)
+    def initialize(logger: nil, error_handler: nil, proxy_config: nil)
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
+      @proxy_config = proxy_config
     end
 
     # Dispatch the event being represented by the Event object.
@@ -39,7 +40,7 @@ module Optimizely
     # @param event - Event object
     def dispatch_event(event)
       response = Helpers::HttpUtils.make_request(
-        event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT
+        event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT, @proxy_config
       )
 
       error_msg = "Event failed to dispatch with response code: #{response.code}"

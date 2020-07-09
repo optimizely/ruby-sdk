@@ -22,6 +22,7 @@ require 'optimizely/exceptions'
 describe Optimizely::EventDispatcher do
   let(:error_handler) { spy(Optimizely::NoOpErrorHandler.new) }
   let(:spy_logger) { spy('logger') }
+  let(:proxy_config) { nil }
 
   before(:context) do
     @url = 'https://www.optimizely.com'
@@ -37,8 +38,26 @@ describe Optimizely::EventDispatcher do
   before(:example) do
     @event_dispatcher = Optimizely::EventDispatcher.new
     @customized_event_dispatcher = Optimizely::EventDispatcher.new(
-      logger: spy_logger, error_handler: error_handler
+      logger: spy_logger, error_handler: error_handler, proxy_config: proxy_config
     )
+  end
+
+  context 'passing in proxy config' do
+    let(:proxy_config) { double(:proxy_config) }
+
+    it 'should pass the proxy_config to the HttpUtils helper class' do
+      event = Optimizely::Event.new(:post, @url, @params, @post_headers)
+      expect(Optimizely::Helpers::HttpUtils).to receive(:make_request).with(
+        event.url,
+        event.http_verb,
+        event.params.to_json,
+        event.headers,
+        Optimizely::EventDispatcher::REQUEST_TIMEOUT,
+        proxy_config
+      )
+
+      @customized_event_dispatcher.dispatch_event(event)
+    end
   end
 
   it 'should properly dispatch V2 (POST) events' do

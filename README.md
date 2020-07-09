@@ -88,7 +88,8 @@ The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL 
         error_handler: nil,
         skip_json_validation: false,
         notification_center: notification_center,
-        datafile_access_token: nil
+        datafile_access_token: nil,
+        proxy_config: nil
       )
 ~~~~~~   
 **Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
