@@ -23,6 +23,7 @@ stages:
   - 'Integration tests'
   - 'Production tests'
   - 'Test'
+  - 'Source Clear'
 
 jobs:
   include:
@@ -44,6 +45,7 @@ jobs:
       install:
         - npm i -g markdown-spellcheck
       before_script:
+        # todo: change branch to master once merged.
         - wget --quiet https://raw.githubusercontent.com/optimizely/mdspell-config/master/.spelling
       script:
         - mdspell -a -n -r --en-us '**/*.md'
@@ -70,3 +72,13 @@ jobs:
         SDK=ruby
         SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
         FULLSTACK_TEST_REPO=ProdTesting
+
+    - stage: 'Source Clear'
+      if: type = cron
+      addons:
+        srcclr: true
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: skip
+      after_success: skip

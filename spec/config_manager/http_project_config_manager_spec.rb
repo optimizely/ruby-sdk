@@ -483,7 +483,7 @@ describe Optimizely::HTTPProjectConfigManager do
         datafile_access_token: 'the-token'
       )
       sleep 0.1
-      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything)
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything, anything)
     end
 
     it 'should use authenticated datafile url when auth token is provided' do
@@ -525,6 +525,19 @@ describe Optimizely::HTTPProjectConfigManager do
       )
       sleep 0.1
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG, 'Datafile request headers: {"Content-Type"=>"application/json", "Authorization"=>"********"}').once
+    end
+
+    it 'should pass the proxy config that is passed in' do
+      proxy_config = double(:proxy_config)
+
+      allow(Optimizely::Helpers::HttpUtils).to receive(:make_request)
+      @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
+        datafile_access_token: 'the-token',
+        proxy_config: proxy_config
+      )
+      sleep 0.1
+      expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, hash_including('Authorization' => 'Bearer the-token'), anything, proxy_config)
     end
   end
 end

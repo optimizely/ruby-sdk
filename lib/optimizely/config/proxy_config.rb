@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-#
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,7 +14,21 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+#
+
 module Optimizely
-  CLIENT_ENGINE = 'ruby-sdk'
-  VERSION = '3.5.0'
+  class ProxyConfig
+    attr_reader :host, :port, :username, :password
+
+    def initialize(host, port = nil, username = nil, password = nil)
+      # host - DNS name or IP address of proxy
+      # port - port to use to acess the proxy
+      # username - username if authorization is required
+      # password - password if authorization is required
+      @host = host
+      @port = port
+      @username = username
+      @password = password
+    end
+  end
 end
