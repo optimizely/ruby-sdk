@@ -25,10 +25,10 @@ module Optimizely
     module_function
 
     def user_meets_audience_conditions?(config, experiment, attributes, logger, logging_hash = nil, logging_key = nil)
-      # Determine for given experiment/rollout rule if user satisfies the audiences.
+      # Determine for given experiment/rollout rule if user satisfies the audience conditions.
       #
       # config - Representation of the Optimizely project config.
-      # experiment - Experiment/Rollout rule for which visitor is to be bucketed.
+      # experiment - Experiment/Rollout rule in which user is to be bucketed.
       # attributes - Hash representing user attributes which will be used in determining if
       #              the audience conditions are met.
       # logger - Provides a logger instance.

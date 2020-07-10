@@ -806,7 +806,8 @@ module Optimizely
                         "Got variable value '#{variable_value}' for variable '#{variable['key']}' of feature flag '#{feature_flag_key}'.")
           else
             @logger.log(Logger::DEBUG,
-                        "Variable '#{variable['key']}' is not used in variation '#{variation['key']}'. Returning the default variable value '#{variable_value}'.")
+                        "Variable value is not defined. Returning the default variable value '#{variable_value}' for variable '#{variable['key']}'.")
+
           end
         else
           @logger.log(Logger::DEBUG,
@@ -814,7 +815,7 @@ module Optimizely
         end
       else
         @logger.log(Logger::INFO,
-                    "User '#{user_id}' was not bucketed into any variation for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
+                    "User '#{user_id}' was not bucketed into experiment or rollout for feature flag '#{feature_flag_key}'. Returning the default variable value '#{variable_value}'.")
       end
       variable_value
     end
