@@ -52,6 +52,7 @@ module Optimizely
     # skip_json_validation - Optional boolean param which allows skipping JSON schema
     #                       validation upon object invocation. By default JSON schema validation will be performed.
     # datafile_access_token - access token used to fetch private datafiles
+    # proxy_config - Optional proxy config instancea to configure making web requests through a proxy server.
     def initialize(
       sdk_key: nil,
       url: nil,
@@ -65,7 +66,8 @@ module Optimizely
       error_handler: nil,
       skip_json_validation: false,
       notification_center: nil,
-      datafile_access_token: nil
+      datafile_access_token: nil,
+      proxy_config: nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -86,6 +88,7 @@ module Optimizely
       # Start async scheduler in the end to avoid race condition where scheduler executes
       # callback which makes use of variables not yet initialized by the main thread.
       @async_scheduler.start! if start_by_default == true
+      @proxy_config = proxy_config
       @stopped = false
     end
 
@@ -161,7 +164,7 @@ module Optimizely
 
       begin
         response = Helpers::HttpUtils.make_request(
-          @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT']
+          @datafile_url, :get, nil, headers, Helpers::Constants::CONFIG_MANAGER['REQUEST_TIMEOUT'], @proxy_config
         )
       rescue StandardError => e
         @logger.log(
