@@ -21,6 +21,7 @@ after_success: "coveralls"
 stages:
   - 'Lint markdown files'
   - 'Integration tests'
+  - 'Production tests'
   - 'Test'
   - 'Source Clear'
 
@@ -50,7 +51,8 @@ jobs:
         - mdspell -a -n -r --en-us '**/*.md'
       after_success: skip
  
-    - stage: 'Integration tests'
+    - &integrationtest
+      stage: 'Integration tests'
       merge_mode: replace
       env: SDK=ruby SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
       cache: false
@@ -62,6 +64,14 @@ jobs:
       script:
         - $HOME/travisci-tools/trigger-script-with-status-update.sh
       after_success: travis_terminate 0
+
+    - <<: *integrationtest
+      stage: 'Production tests'
+      # $TRAVIS_PULL_REQUEST_BRANCH is empty when build type is cron. travisci-tools script assumes master branch in this case.
+      env:
+        SDK=ruby
+        SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
+        FULLSTACK_TEST_REPO=ProdTesting
 
     - stage: 'Source Clear'
       if: type = cron
