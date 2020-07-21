@@ -335,9 +335,7 @@ module Optimizely
 
       AUDIENCE_EVALUATION_LOGS = {
         'AUDIENCE_EVALUATION_RESULT' => "Audience '%s' evaluated to %s.",
-        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to %s.",
         'EVALUATING_AUDIENCE' => "Starting to evaluate audience '%s' with conditions: %s.",
-        'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for experiment '%s': %s.",
         'INFINITE_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated to UNKNOWN because the number value ' \
         "for user attribute '%s' is not in the range [-2^53, +2^53].",
         'MISSING_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated as UNKNOWN because no value ' \
@@ -353,6 +351,16 @@ module Optimizely
         'UNKNOWN_MATCH_TYPE' => 'Audience condition %s uses an unknown match type. You may need ' \
         'to upgrade to a newer release of the Optimizely SDK.'
       }.freeze
+
+      EXPERIMENT_AUDIENCE_EVALUATION_LOGS = {
+        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for experiment '%s' collectively evaluated to %s.",
+        'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for experiment '%s': %s."
+      }.merge(AUDIENCE_EVALUATION_LOGS).freeze
+
+      ROLLOUT_AUDIENCE_EVALUATION_LOGS = {
+        'AUDIENCE_EVALUATION_RESULT_COMBINED' => "Audiences for rule '%s' collectively evaluated to %s.",
+        'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for rule '%s': %s."
+      }.merge(AUDIENCE_EVALUATION_LOGS).freeze
 
       DECISION_NOTIFICATION_TYPES = {
         'AB_TEST' => 'ab-test',

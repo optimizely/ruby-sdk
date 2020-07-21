@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2019, Optimizely and contributors
+#    Copyright 2017-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      unless Audience.user_in_experiment?(project_config, experiment, attributes, @logger)
+      unless Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
         @logger.log(
           Logger::INFO,
           "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -105,6 +105,16 @@ module Optimizely
       # Bucket normally
       variation = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
       variation_id = variation ? variation['id'] : nil
+
+      if variation_id
+        variation_key = variation['key']
+        @logger.log(
+          Logger::INFO,
+          "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
+        )
+      else
+        @logger.log(Logger::INFO, "User '#{user_id}' is in no variation.")
+      end
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id)
@@ -125,21 +135,9 @@ module Optimizely
       decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes)
       return decision unless decision.nil?
 
-      feature_flag_key = feature_flag['key']
       decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
-      if decision
-        @logger.log(
-          Logger::INFO,
-          "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag_key}'."
-        )
-        return decision
-      end
-      @logger.log(
-        Logger::INFO,
-        "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag_key}'."
-      )
 
-      nil
+      decision
     end
 
     def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil)
@@ -178,10 +176,7 @@ module Optimizely
         next unless variation_id
 
         variation = project_config.variation_id_map[experiment_key][variation_id]
-        @logger.log(
-          Logger::INFO,
-          "The user '#{user_id}' is bucketed into experiment '#{experiment_key}' of feature '#{feature_flag_key}'."
-        )
+
         return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'])
       end
 
@@ -231,19 +226,22 @@ module Optimizely
       # Go through each experiment in order and try to get the variation for the user
       number_of_rules.times do |index|
         rollout_rule = rollout_rules[index]
-        audience_id = rollout_rule['audienceIds'][0]
-        audience = project_config.get_audience_from_id(audience_id)
-        audience_name = audience['name']
+        logging_key = index + 1
 
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_in_experiment?(project_config, rollout_rule, attributes, @logger)
+        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
           @logger.log(
             Logger::DEBUG,
-            "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
+            "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
           )
           # move onto the next targeting rule
           next
         end
+
+        @logger.log(
+          Logger::DEBUG,
+          "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
+        )
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id)
@@ -254,17 +252,20 @@ module Optimizely
 
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
+      logging_key = 'Everyone Else'
       # Check that user meets audience conditions for last rule
-      unless Audience.user_in_experiment?(project_config, everyone_else_experiment, attributes, @logger)
-        audience_id = everyone_else_experiment['audienceIds'][0]
-        audience = project_config.get_audience_from_id(audience_id)
-        audience_name = audience['name']
+      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
         @logger.log(
           Logger::DEBUG,
-          "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'."
+          "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
         )
         return nil
       end
+
+      @logger.log(
+        Logger::DEBUG,
+        "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
+      )
       variation = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id)
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 

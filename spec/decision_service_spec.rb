@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2019, Optimizely and contributors
+#    Copyright 2017-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require 'spec_helper'
 require 'optimizely/decision_service'
 require 'optimizely/error_handler'
 require 'optimizely/logger'
@@ -33,7 +34,7 @@ describe Optimizely::DecisionService do
       # stub out bucketer and audience evaluator so we can make sure they are / aren't called
       allow(decision_service.bucketer).to receive(:bucket).and_call_original
       allow(decision_service).to receive(:get_whitelisted_variation_id).and_call_original
-      allow(Optimizely::Audience).to receive(:user_in_experiment?).and_call_original
+      allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_call_original
 
       # by default, spy user profile service should no-op. we override this behavior in specific tests
       allow(spy_user_profile_service).to receive(:lookup).and_return(nil)
@@ -45,7 +46,7 @@ describe Optimizely::DecisionService do
       # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       expect(decision_service.bucketer).not_to have_received(:bucket)
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should return the correct variation ID (using Bucketing ID attrbiute) for a given user for whom a variation has been forced' do
@@ -58,7 +59,7 @@ describe Optimizely::DecisionService do
       # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       expect(decision_service.bucketer).not_to have_received(:bucket)
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
@@ -68,6 +69,14 @@ describe Optimizely::DecisionService do
         .once.with(Logger::INFO, "User 'test_user' is in variation 'control' of experiment 'test_experiment'.")
       expect(decision_service).to have_received(:get_whitelisted_variation_id).once
       expect(decision_service.bucketer).to have_received(:bucket).once
+    end
+
+    it 'should return nil when user ID is not bucketed' do
+      allow(decision_service.bucketer).to receive(:bucket).and_return(nil)
+      expect(decision_service.get_variation(config, 'test_experiment', 'test_user')).to eq(nil)
+
+      expect(spy_logger).to have_received(:log)
+        .once.with(Logger::INFO, "User 'test_user' is in no variation.")
     end
 
     it 'should return correct variation ID if user ID is in whitelisted Variations and variation is valid' do
@@ -82,7 +91,7 @@ describe Optimizely::DecisionService do
       # whitelisted variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
       # whitelisted variations should short circuit audience evaluation
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should return correct variation ID (using Bucketing ID attrbiute) if user ID is in whitelisted Variations and variation is valid' do
@@ -101,7 +110,7 @@ describe Optimizely::DecisionService do
       # whitelisted variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
       # whitelisted variations should short circuit audience evaluation
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should return the correct variation ID for a user in a whitelisted variation (even when audience conditions do not match)' do
@@ -116,7 +125,7 @@ describe Optimizely::DecisionService do
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
       # forced variations should short circuit audience evaluation
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should return nil if the experiment key is invalid' do
@@ -146,7 +155,7 @@ describe Optimizely::DecisionService do
       # non-running experiments should short circuit whitelisting
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       # non-running experiments should short circuit audience evaluation
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
       # non-running experiments should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
     end
@@ -159,7 +168,7 @@ describe Optimizely::DecisionService do
       # forced variations should short circuit bucketing
       expect(decision_service.bucketer).not_to have_received(:bucket)
       # forced variations should short circuit audience evaluation
-      expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+      expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
     end
 
     it 'should bucket normally if user is whitelisted into a forced variation that is not in the datafile' do
@@ -241,7 +250,7 @@ describe Optimizely::DecisionService do
         # saved user profiles should short circuit bucketing
         expect(decision_service.bucketer).not_to have_received(:bucket)
         # saved user profiles should short circuit audience evaluation
-        expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
+        expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
         # the user profile should not be updated if bucketing did not take place
         expect(spy_user_profile_service).not_to have_received(:save)
       end
@@ -391,9 +400,6 @@ describe Optimizely::DecisionService do
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
           expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
-
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'test_experiment_multivariate' of feature 'multi_variate_feature'.")
         end
       end
     end
@@ -417,9 +423,6 @@ describe Optimizely::DecisionService do
         it 'should return the variation the user is bucketed into' do
           feature_flag = config.feature_flag_key_map['mutex_group_feature']
           expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
-
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "The user 'user_1' is bucketed into experiment 'group1_exp1' of feature 'mutex_group_feature'.")
         end
       end
 
@@ -488,7 +491,7 @@ describe Optimizely::DecisionService do
           rollout_experiment = config.rollout_id_map[feature_flag['rolloutId']]['experiments'][0]
           variation = rollout_experiment['variations'][0]
           expected_decision = Optimizely::DecisionService::Decision.new(rollout_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
-          allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+          allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(true)
           allow(decision_service.bucketer).to receive(:bucket)
             .with(config, rollout_experiment, user_id, user_id)
             .and_return(variation)
@@ -503,7 +506,7 @@ describe Optimizely::DecisionService do
             rollout = config.rollout_id_map[feature_flag['rolloutId']]
             everyone_else_experiment = rollout['experiments'][2]
 
-            allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+            allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(true)
             allow(decision_service.bucketer).to receive(:bucket)
               .with(config, rollout['experiments'][0], user_id, user_id)
               .and_return(nil)
@@ -514,10 +517,10 @@ describe Optimizely::DecisionService do
             expect(decision_service.get_variation_for_feature_rollout(config, feature_flag, user_id, user_attributes)).to eq(nil)
 
             # make sure we only checked the audience for the first rule
-            expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
-                                                                               .with(config, rollout['experiments'][0], user_attributes, spy_logger)
-            expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+            expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
+            expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
+              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
 
@@ -528,7 +531,7 @@ describe Optimizely::DecisionService do
             everyone_else_experiment = rollout['experiments'][2]
             variation = everyone_else_experiment['variations'][0]
             expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
-            allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(true)
+            allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(true)
             allow(decision_service.bucketer).to receive(:bucket)
               .with(config, rollout['experiments'][0], user_id, user_id)
               .and_return(nil)
@@ -539,10 +542,10 @@ describe Optimizely::DecisionService do
             expect(decision_service.get_variation_for_feature_rollout(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
             # make sure we only checked the audience for the first rule
-            expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
-                                                                               .with(config, rollout['experiments'][0], user_attributes, spy_logger)
-            expect(Optimizely::Audience).not_to have_received(:user_in_experiment?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger)
+            expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
+            expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
+              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
       end
@@ -555,10 +558,10 @@ describe Optimizely::DecisionService do
         everyone_else_experiment = rollout['experiments'][2]
         variation = everyone_else_experiment['variations'][0]
         expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
-        allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(false)
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(false)
 
-        allow(Optimizely::Audience).to receive(:user_in_experiment?)
-          .with(config, everyone_else_experiment, user_attributes, spy_logger)
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
+          .with(config, everyone_else_experiment, user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
           .and_return(true)
         allow(decision_service.bucketer).to receive(:bucket)
           .with(config, everyone_else_experiment, user_id, user_id)
@@ -567,25 +570,19 @@ describe Optimizely::DecisionService do
         expect(decision_service.get_variation_for_feature_rollout(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
-                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger)
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger)
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?)
-          .with(config, rollout['experiments'][2], user_attributes, spy_logger)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
-        experiment = rollout['experiments'][0]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '1'.")
 
-        experiment = rollout['experiments'][1]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '2'.")
+
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' meets the audience conditions for targeting rule 'Everyone Else'.")
       end
 
       it 'should not bucket the user into the "Everyone Else" rule when audience mismatch' do
@@ -593,7 +590,7 @@ describe Optimizely::DecisionService do
         rollout = config.rollout_id_map[feature_flag['rolloutId']]
         everyone_else_experiment = rollout['experiments'][2]
         everyone_else_experiment['audienceIds'] = ['11155']
-        allow(Optimizely::Audience).to receive(:user_in_experiment?).and_return(false)
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(false)
 
         expect(decision_service.bucketer).not_to receive(:bucket)
           .with(config, everyone_else_experiment, user_id, user_id)
@@ -601,25 +598,19 @@ describe Optimizely::DecisionService do
         expect(decision_service.get_variation_for_feature_rollout(config, feature_flag, user_id, user_attributes)).to eq(nil)
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?).once
-                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger)
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger)
-        expect(Optimizely::Audience).to have_received(:user_in_experiment?)
-          .with(config, rollout['experiments'][2], user_attributes, spy_logger)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
+                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 1)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
+        expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
-        experiment = rollout['experiments'][0]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '1'.")
 
-        experiment = rollout['experiments'][1]
-        audience_id = experiment['audienceIds'][0]
-        audience_name = config.get_audience_from_id(audience_id)['name']
-        expect(spy_logger).to have_received(:log).twice
-                                                 .with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions to be in rollout rule for audience '#{audience_name}'.")
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule '2'.")
+
+        expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the audience conditions for targeting rule 'Everyone Else'.")
       end
     end
   end
@@ -658,8 +649,6 @@ describe Optimizely::DecisionService do
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_decision)
 
           expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "User '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag['key']}'.")
         end
       end
 
@@ -670,8 +659,6 @@ describe Optimizely::DecisionService do
           allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(nil)
 
           expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(nil)
-          expect(spy_logger).to have_received(:log).once
-                                                   .with(Logger::INFO, "User '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'.")
         end
       end
     end
