@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require_relative 'exceptions'
 require_relative 'helpers/constants'
 require_relative 'helpers/validator'
+require_relative 'semantic_version'
 
 module Optimizely
   class CustomAttributeConditionEvaluator
@@ -28,13 +30,23 @@ module Optimizely
     GREATER_THAN_MATCH_TYPE = 'gt'
     LESS_THAN_MATCH_TYPE = 'lt'
     SUBSTRING_MATCH_TYPE = 'substring'
+    SEMVER_EQ = 'semver_eq'
+    SEMVER_GE = 'semver_ge'
+    SEMVER_GT = 'semver_gt'
+    SEMVER_LE = 'semver_le'
+    SEMVER_LT = 'semver_lt'
 
     EVALUATORS_BY_MATCH_TYPE = {
       EXACT_MATCH_TYPE => :exact_evaluator,
       EXISTS_MATCH_TYPE => :exists_evaluator,
       GREATER_THAN_MATCH_TYPE => :greater_than_evaluator,
       LESS_THAN_MATCH_TYPE => :less_than_evaluator,
-      SUBSTRING_MATCH_TYPE => :substring_evaluator
+      SUBSTRING_MATCH_TYPE => :substring_evaluator,
+      SEMVER_EQ => :semver_equal_evaluator,
+      SEMVER_GE => :semver_greater_than_or_equal_evaluator,
+      SEMVER_GT => :semver_greater_than_evaluator,
+      SEMVER_LE => :semver_less_than_or_equal_evaluator,
+      SEMVER_LT => :semver_less_than_evaluator
     }.freeze
 
     attr_reader :user_attributes
@@ -95,7 +107,35 @@ module Optimizely
         return nil
       end
 
-      send(EVALUATORS_BY_MATCH_TYPE[condition_match], leaf_condition)
+      begin
+        send(EVALUATORS_BY_MATCH_TYPE[condition_match], leaf_condition)
+      rescue InvalidAttributeType
+        condition_name = leaf_condition['name']
+        user_value = @user_attributes[condition_name]
+
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
+            leaf_condition,
+            user_value.class,
+            condition_name
+          )
+        )
+        return nil
+      rescue InvalidSemanticVersion
+        condition_name = leaf_condition['name']
+
+        @logger.log(
+          Logger::WARN,
+          format(
+            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['INVALID_SEMANTIC_VERSION'],
+            leaf_condition,
+            condition_name
+          )
+        )
+        return nil
+      end
     end
 
     def exact_evaluator(condition)
@@ -122,16 +162,7 @@ module Optimizely
 
       if !value_type_valid_for_exact_conditions?(user_provided_value) ||
          !Helpers::Validator.same_types?(condition_value, user_provided_value)
-        @logger.log(
-          Logger::WARN,
-          format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
-            condition,
-            user_provided_value.class,
-            condition['name']
-          )
-        )
-        return nil
+        raise InvalidAttributeType
       end
 
       if user_provided_value.is_a?(Numeric) && !Helpers::Validator.finite_number?(user_provided_value)
@@ -204,20 +235,44 @@ module Optimizely
         return nil
       end
 
-      unless user_provided_value.is_a?(String)
-        @logger.log(
-          Logger::WARN,
-          format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
-            condition,
-            user_provided_value.class,
-            condition['name']
-          )
-        )
-        return nil
-      end
+      raise InvalidAttributeType unless user_provided_value.is_a?(String)
 
       user_provided_value.include? condition_value
+    end
+
+    def semver_equal_evaluator(condition)
+      target_version = condition['value']
+      user_version = @user_attributes[condition['name']]
+
+      SemanticVersion.compare_user_version_with_target_version(target_version, user_version).zero?
+    end
+
+    def semver_greater_than_evaluator(condition)
+      target_version = condition['value']
+      user_version = @user_attributes[condition['name']]
+
+      SemanticVersion.compare_user_version_with_target_version(target_version, user_version).positive?
+    end
+
+    def semver_greater_than_or_equal_evaluator(condition)
+      target_version = condition['value']
+      user_version = @user_attributes[condition['name']]
+
+      SemanticVersion.compare_user_version_with_target_version(target_version, user_version) >= 0
+    end
+
+    def semver_less_than_evaluator(condition)
+      target_version = condition['value']
+      user_version = @user_attributes[condition['name']]
+
+      SemanticVersion.compare_user_version_with_target_version(target_version, user_version).negative?
+    end
+
+    def semver_less_than_or_equal_evaluator(condition)
+      target_version = condition['value']
+      user_version = @user_attributes[condition['name']]
+
+      SemanticVersion.compare_user_version_with_target_version(target_version, user_version) <= 0
     end
 
     private
@@ -234,18 +289,7 @@ module Optimizely
         return false
       end
 
-      unless user_value.is_a?(Numeric)
-        @logger.log(
-          Logger::WARN,
-          format(
-            Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNEXPECTED_TYPE'],
-            condition,
-            user_value.class,
-            condition['name']
-          )
-        )
-        return false
-      end
+      raise InvalidAttributeType unless user_value.is_a?(Numeric)
 
       unless Helpers::Validator.finite_number?(user_value)
         @logger.log(

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -551,6 +551,136 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         "Audience condition #{@lt_integer_conditions} has an unsupported condition value. You may need to upgrade "\
           'to a newer release of the Optimizely SDK.'
       )
+    end
+  end
+
+  describe 'semver_equal_evaluator' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_eq', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    ['2.0.0', '2.0'].each do |version|
+      it "should return true for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be true
+      end
+    end
+
+    ['2.9', '1.9'].each do |version|
+      it "should return false for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be false
+      end
+    end
+  end
+
+  describe 'semver_less_than_or_equal_evaluator ' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_le', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    ['2.0.0', '1.9'].each do |version|
+      it "should return true for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be true
+      end
+    end
+
+    ['2.5.1'].each do |version|
+      it "should return false for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be false
+      end
+    end
+  end
+
+  describe 'semver_greater_than_or_equal_evaluator ' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_ge', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    ['2.0.0', '2.9'].each do |version|
+      it "should return true for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be true
+      end
+    end
+
+    ['1.9'].each do |version|
+      it "should return false for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be false
+      end
+    end
+  end
+
+  describe 'semver_less_than_evaluator ' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_lt', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    ['1.9'].each do |version|
+      it "should return true for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be true
+      end
+    end
+
+    ['2.0.0', '2.5.1'].each do |version|
+      it "should return false for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be false
+      end
+    end
+  end
+
+  describe 'semver_greater_than_evaluator ' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_gt', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    ['2.9'].each do |version|
+      it "should return true for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be true
+      end
+    end
+
+    ['2.0.0', '1.9'].each do |version|
+      it "should return false for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be false
+      end
+    end
+  end
+
+  describe 'semver invalid type' do
+    before(:context) do
+      @semver_condition = {'match' => 'semver_eq', 'name' => 'version', 'type' => 'custom_attribute', 'value' => '2.0'}
+    end
+
+    # version not string
+    [true, 37].each do |version|
+      it "should return nil for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be nil
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition #{@semver_condition} evaluated as UNKNOWN because a value of type '#{version.class}' was passed for user attribute 'version'."
+        )
+      end
+    end
+
+    # invalid semantic version
+    ['3.7.2.2', '+'].each do |version|
+      it "should return nil for user version #{version}" do
+        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        expect(condition_evaluator.evaluate(@semver_condition)).to be nil
+        expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition #{@semver_condition} evaluated as UNKNOWN because an invalid semantic version was passed for user attribute 'version'."
+        )
+      end
     end
   end
 end

@@ -120,4 +120,20 @@ module Optimizely
       super("Optimizely instance is not valid. Failing '#{aborted_method}'.")
     end
   end
+
+  class InvalidAttributeType < Error
+    # Raised when an attribute is not provided in expected type.
+
+    def initialize(msg = 'Provided attribute value is not in the expected data type.')
+      super
+    end
+  end
+
+  class InvalidSemanticVersion < Error
+    # Raised when an invalid value is provided as semantic version.
+
+    def initialize(msg = 'Provided semantic version is invalid.')
+      super
+    end
+  end
 end
