@@ -98,5 +98,4 @@ describe Optimizely::OptimizelyConfig do
   it 'should return correct datafile string' do
     expect(project_config.datafile).to eq(optimizely_config['datafile'])
   end
-
 end
