@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ module Optimizely
       experiments_map_object = experiments_map
       features_map = get_features_map(experiments_map_object)
       {
+        'datafile' => @project_config.datafile,
         'experimentsMap' => experiments_map_object,
         'featuresMap' => features_map,
         'revision' => @project_config.revision

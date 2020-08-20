@@ -94,4 +94,9 @@ describe Optimizely::OptimizelyConfig do
   it 'should return correct config revision' do
     expect(project_config.revision).to eq(optimizely_config['revision'])
   end
+
+  it 'should return correct datafile string' do
+    expect(project_config.datafile).to eq(optimizely_config['datafile'])
+  end
+
 end
