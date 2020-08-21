@@ -442,6 +442,49 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
   end
 
+  describe 'greater than or equal match type' do
+    before(:context) do
+      @gt_integer_conditions = {'match' => 'ge', 'name' => 'input_value', 'type' => 'custom_attribute', 'value' => 10}
+      @gt_float_conditions = {'match' => 'ge', 'name' => 'input_value', 'type' => 'custom_attribute', 'value' => 10.0}
+    end
+
+    it 'should return true if the user-provided value is greater than the condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
+    end
+
+    it 'should return true if the user-provided value is equal to condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
+    end
+
+    it 'should return false if the user-provided value is less than the condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
+      expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
+    end
+  end
+
   describe 'less than match type' do
     before(:context) do
       @lt_integer_conditions = {'match' => 'lt', 'name' => 'input_value', 'type' => 'custom_attribute', 'value' => 10}
@@ -551,6 +594,49 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         "Audience condition #{@lt_integer_conditions} has an unsupported condition value. You may need to upgrade "\
           'to a newer release of the Optimizely SDK.'
       )
+    end
+  end
+
+  describe 'less than or equal match type' do
+    before(:context) do
+      @lt_integer_conditions = {'match' => 'le', 'name' => 'input_value', 'type' => 'custom_attribute', 'value' => 10}
+      @lt_float_conditions = {'match' => 'le', 'name' => 'input_value', 'type' => 'custom_attribute', 'value' => 10.0}
+    end
+
+    it 'should return false if the user-provided value is greater than the condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
+    end
+
+    it 'should return true if the user-provided value is equal to condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
+    end
+
+    it 'should return true if the user-provided value is less than the condition value' do
+      # user-provided integer value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
+
+      # user-provided float value
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
+      expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
     end
   end
 

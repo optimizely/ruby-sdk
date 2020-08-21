@@ -28,7 +28,9 @@ module Optimizely
     EXACT_MATCH_TYPE = 'exact'
     EXISTS_MATCH_TYPE = 'exists'
     GREATER_THAN_MATCH_TYPE = 'gt'
+    GREATER_EQUAL_MATCH_TYPE = 'ge'
     LESS_THAN_MATCH_TYPE = 'lt'
+    LESS_EQUAL_MATCH_TYPE = 'le'
     SUBSTRING_MATCH_TYPE = 'substring'
     SEMVER_EQ = 'semver_eq'
     SEMVER_GE = 'semver_ge'
@@ -40,7 +42,9 @@ module Optimizely
       EXACT_MATCH_TYPE => :exact_evaluator,
       EXISTS_MATCH_TYPE => :exists_evaluator,
       GREATER_THAN_MATCH_TYPE => :greater_than_evaluator,
+      GREATER_EQUAL_MATCH_TYPE => :greater_than_or_equal_evaluator,
       LESS_THAN_MATCH_TYPE => :less_than_evaluator,
+      LESS_EQUAL_MATCH_TYPE => :less_than_or_equal_evaluator,
       SUBSTRING_MATCH_TYPE => :substring_evaluator,
       SEMVER_EQ => :semver_equal_evaluator,
       SEMVER_GE => :semver_greater_than_or_equal_evaluator,
@@ -204,6 +208,20 @@ module Optimizely
       user_provided_value > condition_value
     end
 
+    def greater_than_or_equal_evaluator(condition)
+      # Evaluate the given greater than or equal match condition for the given user attributes.
+      # Returns boolean true if the user attribute value is greater than or equal to the condition value,
+      #                 false if the user attribute value is less than the condition value,
+      #                 nil if the condition value isn't a number or the user attribute value isn't a number.
+
+      condition_value = condition['value']
+      user_provided_value = @user_attributes[condition['name']]
+
+      return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
+
+      user_provided_value >= condition_value
+    end
+
     def less_than_evaluator(condition)
       # Evaluate the given less than match condition for the given user attributes.
       # Returns boolean true if the user attribute value is less than the condition value,
@@ -216,6 +234,20 @@ module Optimizely
       return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
 
       user_provided_value < condition_value
+    end
+
+    def less_than_or_equal_evaluator(condition)
+      # Evaluate the given less than or equal match condition for the given user attributes.
+      # Returns boolean true if the user attribute value is less than or equal to the condition value,
+      #                 false if the user attribute value is greater than the condition value,
+      #                 nil if the condition value isn't a number or the user attribute value isn't a number.
+
+      condition_value = condition['value']
+      user_provided_value = @user_attributes[condition['name']]
+
+      return nil unless valid_numeric_values?(user_provided_value, condition_value, condition)
+
+      user_provided_value <= condition_value
     end
 
     def substring_evaluator(condition)
