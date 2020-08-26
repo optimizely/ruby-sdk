@@ -24,6 +24,7 @@ module Optimizely
     RUNNING_EXPERIMENT_STATUS = ['Running'].freeze
     RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
+    attr_reader :datafile
     attr_reader :account_id
     attr_reader :attributes
     attr_reader :audiences
@@ -62,6 +63,7 @@ module Optimizely
 
       config = JSON.parse(datafile)
 
+      @datafile = datafile
       @error_handler = error_handler
       @logger = logger
       @version = config['version']
