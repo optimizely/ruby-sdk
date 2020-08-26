@@ -82,7 +82,10 @@ describe Optimizely::SemanticVersion do
     end
 
     # invalid semantic version
-    versions = ['-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2']
+    versions = [
+      '-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2', '3.x', ',', '+build-prerelease'
+    ]
+
     versions.each do |user_version|
       target_version = '2.1.0'
       it("should raise for target version: #{target_version} and user version: #{user_version}") do
