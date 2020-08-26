@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ module Optimizely
   class ProjectConfig
     # ProjectConfig is an interface capturing the experiment, variation and feature definitions.
     # The default implementation of ProjectConfig can be found in DatafileProjectConfig.
+
+    def datafile; end
 
     def account_id; end
 

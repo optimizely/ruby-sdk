@@ -40,6 +40,7 @@ describe Optimizely::DatafileProjectConfig do
       variable_to_modify['type'] = 'json'
       variable_to_modify.delete('subType')
 
+      expect(project_config.datafile).to eq(config_body_JSON)
       expect(project_config.account_id).to eq(config_body['accountId'])
       expect(project_config.attributes).to eq(config_body['attributes'])
       expect(project_config.audiences).to eq(config_body['audiences'])
