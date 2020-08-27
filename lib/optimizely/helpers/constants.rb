@@ -338,6 +338,8 @@ module Optimizely
         'EVALUATING_AUDIENCE' => "Starting to evaluate audience '%s' with conditions: %s.",
         'INFINITE_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated to UNKNOWN because the number value ' \
         "for user attribute '%s' is not in the range [-2^53, +2^53].",
+        'INVALID_SEMANTIC_VERSION' => 'Audience condition %s evaluated as UNKNOWN because an invalid semantic version ' \
+        "was passed for user attribute '%s'.",
         'MISSING_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated as UNKNOWN because no value ' \
         "was passed for user attribute '%s'.",
         'NULL_ATTRIBUTE_VALUE' => 'Audience condition %s evaluated to UNKNOWN because a nil value was passed ' \
