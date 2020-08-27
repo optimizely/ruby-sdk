@@ -273,6 +273,10 @@ module Optimizely
     end
 
     def semver_equal_evaluator(condition)
+      # Evaluate the given semantic version equal match target version for the user version.
+      # Returns boolean true if the user version is equal to the target version,
+      #                 false if the user version is not equal to the target version
+
       target_version = condition['value']
       user_version = @user_attributes[condition['name']]
 
@@ -280,6 +284,10 @@ module Optimizely
     end
 
     def semver_greater_than_evaluator(condition)
+      # Evaluate the given semantic version greater than match target version for the user version.
+      # Returns boolean true if the user version is greater than the target version,
+      #                 false if the user version is less than or equal to the target version
+
       target_version = condition['value']
       user_version = @user_attributes[condition['name']]
 
@@ -287,6 +295,10 @@ module Optimizely
     end
 
     def semver_greater_than_or_equal_evaluator(condition)
+      # Evaluate the given semantic version greater than or equal to match target version for the user version.
+      # Returns boolean true if the user version is greater than or equal to the target version,
+      #                 false if the user version is less than the target version
+
       target_version = condition['value']
       user_version = @user_attributes[condition['name']]
 
@@ -294,6 +306,10 @@ module Optimizely
     end
 
     def semver_less_than_evaluator(condition)
+      # Evaluate the given semantic version less than match target version for the user version.
+      # Returns boolean true if the user version is less than the target version,
+      #                 false if the user version is greater than or equal to the target version
+
       target_version = condition['value']
       user_version = @user_attributes[condition['name']]
 
@@ -301,6 +317,10 @@ module Optimizely
     end
 
     def semver_less_than_or_equal_evaluator(condition)
+      # Evaluate the given semantic version less than or equal to match target version for the user version.
+      # Returns boolean true if the user version is less than or equal to the target version,
+      #                 false if the user version is greater than the target version
+
       target_version = condition['value']
       user_version = @user_attributes[condition['name']]
 

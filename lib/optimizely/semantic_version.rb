@@ -27,10 +27,24 @@ module Optimizely
     module_function
 
     def pre_release?(target)
+      # Method to check if the given version contains "-"
+      #
+      # target - String representing semantic version
+      #
+      # Returns true if the given version does contain "-"
+      #         false if it doesn't
+
       target.include? SEMVER_PRE_RELEASE
     end
 
     def split_semantic_version(target)
+      # Method to split the given version.
+      #
+      # target - String representing semantic version
+      #
+      # Returns List The array of version split into smaller parts i.e major, minor, patch etc,
+      #         Exception if the given version is invalid.
+
       target_prefix = target
       target_suffix = ''
       target_parts = []
@@ -65,6 +79,15 @@ module Optimizely
     end
 
     def compare_user_version_with_target_version(target_version, user_version)
+      # Compares target and user versions
+      #
+      # target_version - String representing target version
+      # user_version - String representing user version
+
+      # Returns boolean 0 if user version is equal to target version,
+      #                 1 if user version is greater than target version,
+      #                -1 if user version is less than target version.
+
       raise InvalidAttributeType unless target_version.is_a? String
       raise InvalidAttributeType unless user_version.is_a? String
 
