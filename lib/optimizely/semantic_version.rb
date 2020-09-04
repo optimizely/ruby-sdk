@@ -27,14 +27,43 @@ module Optimizely
     module_function
 
     def pre_release?(target)
-      # Method to check if the given version contains "-"
+      # Method to check if the given version is a prerelease
       #
       # target - String representing semantic version
       #
-      # Returns true if the given version does contain "-"
+      # Returns true if the given version is a prerelease
       #         false if it doesn't
 
-      target.include? SEMVER_PRE_RELEASE
+      raise unless target.is_a? String
+
+      prerelease_index = target.index(SEMVER_PRE_RELEASE)
+      build_index = target.index(SEMVER_BUILD)
+
+      return false if prerelease_index.nil?
+      return true if build_index.nil?
+
+      # when both operators are present prerelease should precede the build operator
+      prerelease_index < build_index
+    end
+
+    def build?(target)
+      # Method to check if the given version is a build
+      #
+      # target - String representing semantic version
+      #
+      # Returns true if the given version is a build
+      #         false if it doesn't
+
+      raise unless target.is_a? String
+
+      prerelease_index = target.index(SEMVER_PRE_RELEASE)
+      build_index = target.index(SEMVER_BUILD)
+
+      return false if build_index.nil?
+      return true if prerelease_index.nil?
+
+      # when both operators are present build should precede the prerelease operator
+      build_index < prerelease_index
     end
 
     def split_semantic_version(target)
@@ -52,9 +81,9 @@ module Optimizely
       raise InvalidSemanticVersion if target.include? ' '
 
       if pre_release?(target)
-        target_parts = target.split(SEMVER_PRE_RELEASE)
-      elsif target.include? SEMVER_BUILD
-        target_parts = target.split(SEMVER_BUILD)
+        target_parts = target.split(SEMVER_PRE_RELEASE, 2)
+      elsif build? target
+        target_parts = target.split(SEMVER_BUILD, 2)
       end
 
       unless target_parts.empty?
@@ -91,6 +120,9 @@ module Optimizely
       raise InvalidAttributeType unless target_version.is_a? String
       raise InvalidAttributeType unless user_version.is_a? String
 
+      is_target_version_prerelease = pre_release?(target_version)
+      is_user_version_prerelease = pre_release?(user_version)
+
       target_version_parts = split_semantic_version(target_version)
       user_version_parts = split_semantic_version(user_version)
       user_version_parts_len = user_version_parts.length if user_version_parts
@@ -99,15 +131,23 @@ module Optimizely
       target_version_parts.each_with_index do |_item, idx|
         if user_version_parts_len <= idx
           # even if they are equal at this point. if the target is a prerelease
-          # then it must be greater than the pre release.
-          return 1 if pre_release?(target_version)
+          # then user version must be greater than the pre release.
+          return 1 if is_target_version_prerelease
 
           return -1
 
         elsif !Helpers::Validator.string_numeric? user_version_parts[idx]
           # compare strings
-          return -1 if user_version_parts[idx] < target_version_parts[idx]
-          return 1 if user_version_parts[idx] > target_version_parts[idx]
+          if user_version_parts[idx] < target_version_parts[idx]
+            return 1 if is_target_version_prerelease && !is_user_version_prerelease
+
+            return -1
+
+          elsif user_version_parts[idx] > target_version_parts[idx]
+            return -1 if is_user_version_prerelease && !is_target_version_prerelease
+
+            return 1
+          end
 
         else
           user_version_part = user_version_parts[idx].to_i
@@ -118,7 +158,7 @@ module Optimizely
         end
       end
 
-      return -1 if pre_release?(user_version) && !pre_release?(target_version)
+      return -1 if is_user_version_prerelease && !is_target_version_prerelease
 
       0
     end

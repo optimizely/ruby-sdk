@@ -29,7 +29,8 @@ describe Optimizely::SemanticVersion do
       ['2.1', '2.1.0'],
       ['2.1', '2.1.215'],
       ['2', '2.12'],
-      ['2', '2.785.13']
+      ['2', '2.785.13'],
+      ['3.7.0', '3.7.0+build']
     ]
 
     versions.each do |target_version, user_version|
@@ -49,7 +50,10 @@ describe Optimizely::SemanticVersion do
       ['2.9.0', '2.9.1'],
       ['2.1.2', '2.1.3-beta'],
       ['2.1.2-beta', '2.1.2-release'],
-      ['2.1.3-beta', '2.1.3']
+      ['2.1.3-beta', '2.1.3'],
+      ['2.1.3-beta+1', '2.1.3-beta+1.2.3'],
+      ['3.7.0-prerelease', '3.7.0+build'],
+      ['3.7.0-prerelease+build', '3.7.0-prerelease-prelrease+rc']
     ]
 
     versions.each do |target_version, user_version|
@@ -69,7 +73,9 @@ describe Optimizely::SemanticVersion do
       ['2.3.5', '2.3.1'],
       ['2.9.8', '2.9'],
       ['2.1.2-release', '2.1.2-beta'],
-      ['2.1.3', '2.1.3-beta']
+      ['2.1.3', '2.1.3-beta'],
+      ['2.1.3+build-1.2.3', '2.1.3+build-1'],
+      ['3.7.0', '3.7.0-prerelease']
     ]
 
     versions.each do |target_version, user_version|
@@ -83,7 +89,7 @@ describe Optimizely::SemanticVersion do
 
     # invalid semantic version
     versions = [
-      '-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2', '3.x', ',', '+build-prerelease'
+      '-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2', '3.x', ',', '+build-prerelease', '2..2'
     ]
 
     versions.each do |user_version|
