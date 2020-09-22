@@ -1,5 +1,12 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.6.0-beta
+September 22nd, 2020
+
+### New Features:
+- Added support for version targeted conditions (semver.org) [#267](https://github.com/optimizely/ruby-sdk/pull/267).
+- Added support for accessing the current config as a stringed datafile [#268](https://github.com/optimizely/ruby-sdk/pull/268). 
+
 ## 3.5.0
 July 9th, 2020
 
