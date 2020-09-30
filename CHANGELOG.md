@@ -7,6 +7,9 @@ September 30th, 2020
 - Add support for Semantic Versioning in Audience Evaluation ([#267](https://github.com/optimizely/ruby-sdk/pull/267)).
 - Add datafile accessor to config ([#268](https://github.com/optimizely/ruby-sdk/pull/268)).
 
+### Bug Fixes:
+- Modify log messages to be explicit when it's evaluating an experiment and when it's doing so for a rollout ([#259](https://github.com/optimizely/ruby-sdk/pull/259)).
+
 ## 3.5.0
 July 9th, 2020
 
@@ -15,6 +18,7 @@ July 9th, 2020
 - Add support for authenticated datafiles ([#255](https://github.com/optimizely/ruby-sdk/pull/255))
 - Added support for authenticated datafiles. `HTTPProjectConfigManager` now accepts `datafile_access_token` to be able to fetch authenticated datafiles.
 - Add support for proxy server for http config manager. ([#262](https://github.com/optimizely/ruby-sdk/pull/262))
+
 ### Bug Fixes:
 - Handle error with error handler in async scheduler ([#248](https://github.com/optimizely/ruby-sdk/pull/248)).
 - Change single audience result to debug ([#254](https://github.com/optimizely/ruby-sdk/pull/254)).
