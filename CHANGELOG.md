@@ -1,5 +1,12 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.6.0
+September 30th, 2020
+
+### New Features:
+- Add support for Semantic Versioning in Audience Evaluation ([#267](https://github.com/optimizely/ruby-sdk/pull/267)).
+- Add datafile accessor to config ([#268](https://github.com/optimizely/ruby-sdk/pull/268)).
+
 ## 3.5.0
 July 9th, 2020
 
