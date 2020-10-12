@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ require_relative 'event_factory'
 module Optimizely
   class UserEventFactory
     # UserEventFactory builds ImpressionEvent and ConversionEvent objects from a given user_event.
-    def self.create_impression_event(project_config, experiment, variation_id, user_id, user_attributes)
+    def self.create_impression_event(project_config, experiment, variation_id, metadata, user_id, user_attributes)
       # Create impression Event to be sent to the logging endpoint.
       #
       # project_config - Instance of ProjectConfig
@@ -42,13 +42,14 @@ module Optimizely
       ).as_json
 
       visitor_attributes = Optimizely::EventFactory.build_attribute_list(user_attributes, project_config)
-      experiment_layer_id = project_config.experiment_key_map[experiment['key']]['layerId']
+      experiment_layer_id = experiment['layerId']
       Optimizely::ImpressionEvent.new(
         event_context: event_context,
         user_id: user_id,
         experiment_layer_id: experiment_layer_id,
         experiment_id: experiment['id'],
         variation_id: variation_id,
+        metadata: metadata,
         visitor_attributes: visitor_attributes,
         bot_filtering: project_config.bot_filtering
       )

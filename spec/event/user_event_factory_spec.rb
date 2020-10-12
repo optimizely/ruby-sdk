@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -29,7 +29,19 @@ describe Optimizely::UserEventFactory do
   describe '.create_impression_event' do
     it 'should return Impression Event when called without attributes' do
       experiment = project_config.get_experiment_from_key('test_experiment')
-      impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', nil)
+      impression_event = Optimizely::UserEventFactory.create_impression_event(
+        project_config,
+        experiment,
+        '111128',
+        {
+          flag_key: '',
+          rule_key: 'test_experiment',
+          rule_type: 'experiment',
+          variation_key: 'control'
+        },
+        'test_user',
+        nil
+      )
       expect(impression_event.event_context[:account_id]).to eq(project_config.account_id)
       expect(impression_event.event_context[:project_id]).to eq(project_config.project_id)
       expect(impression_event.event_context[:revision]).to eq(project_config.revision)
@@ -51,6 +63,12 @@ describe Optimizely::UserEventFactory do
         project_config,
         experiment,
         '111128',
+        {
+          flag_key: '',
+          rule_key: 'test_experiment',
+          rule_type: 'experiment',
+          variation_key: 'control'
+        },
         'test_user',
         user_attributes
       )

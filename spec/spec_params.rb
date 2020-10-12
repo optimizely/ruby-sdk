@@ -25,6 +25,7 @@ module OptimizelySpec
     'botFiltering' => true,
     'revision' => '42',
     'version' => '2',
+    'sendFlagDecisions' => true,
     'events' => [{
       'key' => 'test_event',
       'experimentIds' => %w[111127 122230],
@@ -1123,7 +1124,8 @@ module OptimizelySpec
         'experimentIds' => %w[1323241598 1323241599]
       }
     ],
-    'revision' => '3'
+    'revision' => '3',
+    'sendFlagDecisions' => true
   }.freeze
 
   VALID_CONFIG_BODY_JSON = JSON.dump(VALID_CONFIG_BODY)
@@ -1131,4 +1133,7 @@ module OptimizelySpec
   INVALID_CONFIG_BODY = VALID_CONFIG_BODY.dup
   INVALID_CONFIG_BODY['version'] = '5'
   INVALID_CONFIG_BODY_JSON = JSON.dump(INVALID_CONFIG_BODY)
+
+  # SEND_FLAG_DECISIONS_DISABLED_CONFIG = VALID_CONFIG_BODY.dup
+  # SEND_FLAG_DECISIONS_DISABLED_CONFIG['sendFlagDecisions'] = false
 end

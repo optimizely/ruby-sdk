@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -50,7 +50,13 @@ describe Optimizely::EventFactory do
           decisions: [{
             campaign_id: '1',
             experiment_id: '111127',
-            variation_id: '111128'
+            variation_id: '111128',
+            metadata: {
+              flag_key: '',
+              rule_key: 'test_experiment',
+              rule_type: 'experiment',
+              variation_key: '111128'
+            }
           }],
           events: [{
             entity_id: '1',
@@ -96,7 +102,13 @@ describe Optimizely::EventFactory do
 
   it 'should create valid Event when create_impression_event is called without attributes' do
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', nil)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -112,7 +124,13 @@ describe Optimizely::EventFactory do
     )
 
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user',
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user',
                                                                             'browser_type' => 'firefox')
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
@@ -157,7 +175,13 @@ describe Optimizely::EventFactory do
       'double_key' => 5.5
     }
 
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', attributes)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -192,7 +216,13 @@ describe Optimizely::EventFactory do
       'double_key' => {}
     }
 
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', attributes)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -208,7 +238,13 @@ describe Optimizely::EventFactory do
     )
 
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user',
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user',
                                                                             'browser_type' => false)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
@@ -225,7 +261,13 @@ describe Optimizely::EventFactory do
     )
 
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', 'browser_type' => 0)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', 'browser_type' => 0)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -234,7 +276,13 @@ describe Optimizely::EventFactory do
 
   it 'should create a valid Event when create_impression_event is called with attributes is not in the datafile' do
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user',
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user',
                                                                             invalid_attribute: 'sorry_not_sorry')
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
@@ -463,7 +511,13 @@ describe Optimizely::EventFactory do
       '$opt_bucketing_id' => 'variation'
     }
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', user_attributes)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', user_attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -493,7 +547,13 @@ describe Optimizely::EventFactory do
     }
     experiment = project_config.get_experiment_from_key('test_experiment')
     expect(project_config.send(:bot_filtering)).to eq(true)
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', user_attributes)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', user_attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)
@@ -523,7 +583,15 @@ describe Optimizely::EventFactory do
     }
     experiment = project_config.get_experiment_from_key('test_experiment')
     allow(project_config).to receive(:bot_filtering).and_return(false)
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', user_attributes)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(
+      project_config, experiment, '111128', metadata, 'test_user', user_attributes
+    )
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
     expect(log_event.url).to eq(@expected_endpoint)

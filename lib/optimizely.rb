@@ -140,7 +140,10 @@ module Optimizely
 
       # Create and dispatch impression event
       experiment = config.get_experiment_from_key(experiment_key)
-      send_impression(config, experiment, variation_key, user_id, attributes)
+      send_impression(
+        config, experiment, variation_key, experiment_key, experiment_key,
+        Optimizely::DecisionService::DECISION_SOURCES['EXPERIMENT'], user_id, attributes
+      )
 
       variation_key
     end
@@ -316,12 +319,21 @@ module Optimizely
             experiment_key: decision.experiment['key'],
             variation_key: variation['key']
           }
-          # Send event if Decision came from an experiment.
-          send_impression(config, decision.experiment, variation['key'], user_id, attributes)
-        else
-          @logger.log(Logger::DEBUG,
-                      "The user '#{user_id}' is not being experimented on in feature '#{feature_flag_key}'.")
+          # Send event if Decision came from a feature test.
+          send_impression(
+            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, attributes
+          )
+        elsif decision.source == Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'] && config.send_flag_decisions
+          send_impression(
+            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, attributes
+          )
         end
+      end
+
+      if decision.nil? && config.send_flag_decisions
+        send_impression(
+          config, nil, '', feature_flag_key, '', '', user_id, attributes
+        )
       end
 
       @notification_center.send_notifications(
@@ -867,15 +879,42 @@ module Optimizely
       raise InvalidInputError, 'event_dispatcher'
     end
 
-    def send_impression(config, experiment, variation_key, user_id, attributes = nil)
+    def send_impression(config, experiment, variation_key, flag_key, rule_key, rule_type, user_id, attributes = nil)
+      if experiment.nil?
+        experiment = {
+          'id' => '',
+          'key' => '',
+          'layerId' => '',
+          'status' => '',
+          'variations' => [],
+          'trafficAllocation' => [],
+          'audienceIds' => [],
+          'audienceConditions' => [],
+          'forcedVariations' => {}
+        }
+      end
+
       experiment_key = experiment['key']
-      variation_id = config.get_variation_id_from_key(experiment_key, variation_key)
-      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, user_id, attributes)
+
+      variation_id = ''
+      variation_id = config.get_variation_id_from_key(experiment_key, variation_key) if experiment_key != ''
+
+      metadata = {
+        flag_key: flag_key,
+        rule_key: rule_key,
+        rule_type: rule_type,
+        variation_key: variation_key
+      }
+
+      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, attributes)
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
       @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
-      variation = config.get_variation_from_id(experiment_key, variation_id)
+
+      experiment = nil if experiment_key == ''
+      variation = nil
+      variation = config.get_variation_from_id(experiment_key, variation_id) unless experiment.nil?
       log_event = EventFactory.create_log_event(user_event, @logger)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],

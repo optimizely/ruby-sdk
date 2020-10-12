@@ -154,7 +154,13 @@ describe 'Optimizely' do
             decisions: [{
               campaign_id: '1',
               experiment_id: '111127',
-              variation_id: '111128'
+              variation_id: '111128',
+              metadata: {
+                flag_key: 'test_experiment',
+                rule_key: 'test_experiment',
+                rule_type: 'experiment',
+                variation_key: 'control'
+              }
             }],
             events: [{
               entity_id: '1',
@@ -221,6 +227,13 @@ describe 'Optimizely' do
         variation_id: '122228'
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
+
+      params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+        flag_key: 'test_experiment_with_audience',
+        rule_key: 'test_experiment_with_audience',
+        rule_type: 'experiment',
+        variation_key: 'control_with_audience'
+      }
 
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -289,6 +302,14 @@ describe 'Optimizely' do
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1630555627'
 
         variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
+
+        params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+          flag_key: 'typed_audience_experiment',
+          rule_key: 'typed_audience_experiment',
+          rule_type: 'experiment',
+          variation_key: variation_to_return['key']
+        }
+
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -316,6 +337,14 @@ describe 'Optimizely' do
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1630555627'
 
         variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
+
+        params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+          flag_key: 'typed_audience_experiment',
+          rule_key: 'typed_audience_experiment',
+          rule_type: 'experiment',
+          variation_key: variation_to_return['key']
+        }
+
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -365,6 +394,14 @@ describe 'Optimizely' do
         params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '1323241598'
 
         variation_to_return = @project_config.get_variation_from_id('audience_combinations_experiment', '1423767504')
+
+        params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+          flag_key: 'audience_combinations_experiment',
+          rule_key: 'audience_combinations_experiment',
+          rule_type: 'experiment',
+          variation_key: variation_to_return['key']
+        }
+
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -418,6 +455,13 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
+      params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+        flag_key: 'test_experiment_with_audience',
+        rule_key: 'test_experiment_with_audience',
+        rule_type: 'experiment',
+        variation_key: 'control_with_audience'
+      }
+
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -456,6 +500,13 @@ describe 'Optimizely' do
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
+      params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+        flag_key: 'test_experiment_with_audience',
+        rule_key: 'test_experiment_with_audience',
+        rule_type: 'experiment',
+        variation_key: 'control_with_audience'
+      }
+
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -490,6 +541,14 @@ describe 'Optimizely' do
 
       project_instance.decision_service.set_forced_variation(project_config, 'test_experiment_with_audience', 'test_user', 'variation_with_audience')
       variation_to_return = project_instance.decision_service.get_forced_variation(project_config, 'test_experiment', 'test_user')
+
+      params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+        flag_key: 'test_experiment_with_audience',
+        rule_key: 'test_experiment_with_audience',
+        rule_type: 'experiment',
+        variation_key: 'variation_with_audience'
+      }
+
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
 
@@ -654,6 +713,13 @@ describe 'Optimizely' do
         variation_id: '122229'
       }]
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
+
+      params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
+        flag_key: 'test_experiment_with_audience',
+        rule_key: 'test_experiment_with_audience',
+        rule_type: 'experiment',
+        variation_key: 'variation_with_audience'
+      }
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
@@ -1396,14 +1462,16 @@ describe 'Optimizely' do
       )
     end
 
-    it 'should return false when the user is not bucketed into any variation' do
+    it 'should return false and send an impression when the user is not bucketed into any variation' do
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
 
-    it 'should return true but not send an impression if the user is not bucketed into a feature experiment' do
+    it 'should return true and send an impression if the user is not bucketed into a feature experiment' do
       experiment_to_return = config_body['rollouts'][0]['experiments'][0]
       variation_to_return = experiment_to_return['variations'][0]
 
@@ -1412,11 +1480,13 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
+
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
 
     it 'should return false, if the user is bucketed into a feature rollout but the featureEnabled property is false' do
@@ -1427,11 +1497,13 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
       expect(variation_to_return['featureEnabled']).to be false
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is not enabled for user 'test_user'.")
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
 
     it 'should return true, if the user is bucketed into a feature rollout when featureEnabled property is true' do
@@ -1442,17 +1514,19 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
+      allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
       expect(variation_to_return['featureEnabled']).to be true
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'boolean_single_variable_feature'.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
+      expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
 
     describe '.typed audiences' do
       before(:example) do
         @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        stub_request(:post, impression_log_url)
       end
 
       it 'should return true for feature rollout when typed audience matched' do
@@ -1468,7 +1542,6 @@ describe 'Optimizely' do
                  'lasers' => -3
                )).to be true
 
-        expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'feat'.")
         expect(spy_logger).to have_received(:log).twice.with(Logger::INFO, "Feature 'feat' is enabled for user 'test_user'.")
       end
 
@@ -1487,7 +1560,6 @@ describe 'Optimizely' do
                  'feat2', 'test_user', user_attributes
                )).to be true
 
-        expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, "The user 'test_user' is not being experimented on in feature 'feat2'.")
         expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'feat2' is enabled for user 'test_user'.")
       end
 
@@ -1558,6 +1630,10 @@ describe 'Optimizely' do
     end
 
     describe '.decision listener' do
+      before(:example) do
+        stub_request(:post, impression_log_url)
+      end
+
       it 'should call decision listener when user is bucketed into a feature experiment with featureEnabled property is true' do
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         experiment_to_return = config_body['experiments'][3]
@@ -1633,6 +1709,8 @@ describe 'Optimizely' do
 
         # DECISION listener called when the user is in rollout with variation feature true.
         expect(variation_to_return['featureEnabled']).to be true
+
+        expect(project_instance.notification_center).to receive(:send_notifications).ordered
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'firefox'},
@@ -1663,8 +1741,9 @@ describe 'Optimizely' do
 
       it 'call decision listener when the user is not bucketed into any experiment or rollout' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        expect(project_instance.notification_center).to receive(:send_notifications).ordered
 
-        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+        expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'firefox'},
           feature_enabled: false,
@@ -1790,15 +1869,15 @@ describe 'Optimizely' do
           ),
           nil,
           nil,
-          Optimizely::DecisionService::Decision,
+          nil,
           nil
         )
 
-        expect(project_instance.notification_center).to receive(:send_notifications).twice.with(
+        expect(project_instance.notification_center).to receive(:send_notifications).exactly(10).times.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
         )
 
-        expect(project_instance.notification_center).to receive(:send_notifications).twice.with(
+        expect(project_instance.notification_center).to receive(:send_notifications).exactly(10).times.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE], any_args
         )
 
