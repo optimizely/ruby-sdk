@@ -156,7 +156,7 @@ describe 'Optimizely' do
               experiment_id: '111127',
               variation_id: '111128',
               metadata: {
-                flag_key: 'test_experiment',
+                flag_key: '',
                 rule_key: 'test_experiment',
                 rule_type: 'experiment',
                 variation_key: 'control'
@@ -229,7 +229,7 @@ describe 'Optimizely' do
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-        flag_key: 'test_experiment_with_audience',
+        flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
         variation_key: 'control_with_audience'
@@ -304,7 +304,7 @@ describe 'Optimizely' do
         variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
 
         params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-          flag_key: 'typed_audience_experiment',
+          flag_key: '',
           rule_key: 'typed_audience_experiment',
           rule_type: 'experiment',
           variation_key: variation_to_return['key']
@@ -339,7 +339,7 @@ describe 'Optimizely' do
         variation_to_return = @project_config.get_variation_from_id('typed_audience_experiment', '1423767503')
 
         params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-          flag_key: 'typed_audience_experiment',
+          flag_key: '',
           rule_key: 'typed_audience_experiment',
           rule_type: 'experiment',
           variation_key: variation_to_return['key']
@@ -396,7 +396,7 @@ describe 'Optimizely' do
         variation_to_return = @project_config.get_variation_from_id('audience_combinations_experiment', '1423767504')
 
         params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-          flag_key: 'audience_combinations_experiment',
+          flag_key: '',
           rule_key: 'audience_combinations_experiment',
           rule_type: 'experiment',
           variation_key: variation_to_return['key']
@@ -456,7 +456,7 @@ describe 'Optimizely' do
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-        flag_key: 'test_experiment_with_audience',
+        flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
         variation_key: 'control_with_audience'
@@ -501,7 +501,7 @@ describe 'Optimizely' do
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-        flag_key: 'test_experiment_with_audience',
+        flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
         variation_key: 'control_with_audience'
@@ -543,7 +543,7 @@ describe 'Optimizely' do
       variation_to_return = project_instance.decision_service.get_forced_variation(project_config, 'test_experiment', 'test_user')
 
       params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-        flag_key: 'test_experiment_with_audience',
+        flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
         variation_key: 'variation_with_audience'
@@ -715,7 +715,7 @@ describe 'Optimizely' do
       params[:visitors][0][:snapshots][0][:events][0][:entity_id] = '3'
 
       params[:visitors][0][:snapshots][0][:decisions][0][:metadata] = {
-        flag_key: 'test_experiment_with_audience',
+        flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
         variation_key: 'variation_with_audience'

@@ -141,7 +141,7 @@ module Optimizely
       # Create and dispatch impression event
       experiment = config.get_experiment_from_key(experiment_key)
       send_impression(
-        config, experiment, variation_key, experiment_key, experiment_key,
+        config, experiment, variation_key, '', experiment_key,
         Optimizely::DecisionService::DECISION_SOURCES['EXPERIMENT'], user_id, attributes
       )
 
@@ -332,7 +332,7 @@ module Optimizely
 
       if decision.nil? && config.send_flag_decisions
         send_impression(
-          config, nil, '', feature_flag_key, '', '', user_id, attributes
+          config, nil, '', feature_flag_key, '', source_string, user_id, attributes
         )
       end
 
