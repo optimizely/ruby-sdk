@@ -23,6 +23,7 @@ require 'optimizely/event_dispatcher'
 require 'optimizely/event/batch_event_processor'
 require 'optimizely/exceptions'
 require 'optimizely/helpers/validator'
+require 'optimizely/optimizely_user_context'
 require 'optimizely/version'
 
 describe 'Optimizely' do
@@ -132,6 +133,35 @@ describe 'Optimizely' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
 
       expect { Optimizely::Project.new(config_body_invalid_JSON, nil, nil, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
+    end
+  end
+
+  describe '#create_user_context' do
+    it 'should log and return nil when user ID is non string' do
+      expect(project_instance.create_user_context(nil)).to eq(nil)
+      expect(project_instance.create_user_context(5)).to eq(nil)
+      expect(project_instance.create_user_context(5.5)).to eq(nil)
+      expect(project_instance.create_user_context(true)).to eq(nil)
+      expect(project_instance.create_user_context({})).to eq(nil)
+      expect(project_instance.create_user_context([])).to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(6).times
+    end
+
+    it 'should return nil when attributes are invalid' do
+      expect(Optimizely::Helpers::Validator).to receive(:attributes_valid?).once.with('invalid')
+      expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.create_user_context(
+               'test_user',
+               'invalid'
+             )).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
+    end
+
+    it 'should return OptimizelyUserContext with valid user ID and attributes' do
+      expect(project_instance.create_user_context(
+               'test_user',
+               'browser' => 'chrome'
+             )).to be_instance_of(Optimizely::OptimizelyUserContext)
     end
   end
 

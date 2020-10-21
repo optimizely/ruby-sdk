@@ -34,6 +34,7 @@ require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
 require_relative 'optimizely/optimizely_config'
+require_relative 'optimizely/optimizely_user_context'
 
 module Optimizely
   class Project
@@ -105,6 +106,24 @@ module Optimizely
                          else
                            ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
                          end
+    end
+
+    def create_user_context(user_id, attributes = nil)
+      # We do not check for is_valid here as a user context can be created successfully
+      # even when the SDK is not fully configured.
+
+      # validate user_id
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          user_id: user_id
+        }, @logger, Logger::ERROR
+      )
+
+      # validate attributes
+      return nil unless user_inputs_valid?(attributes)
+
+      user_context = OptimizelyUserContext.new(self, user_id, attributes)
+      user_context
     end
 
     # Buckets visitor and sends impression event to Optimizely.
