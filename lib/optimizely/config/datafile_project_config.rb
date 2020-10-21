@@ -40,6 +40,7 @@ module Optimizely
     attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
+    attr_reader :send_flag_decisions
 
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
@@ -83,6 +84,7 @@ module Optimizely
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
       @rollouts = config.fetch('rollouts', [])
+      @send_flag_decisions = config.fetch('sendFlagDecisions', false)
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config

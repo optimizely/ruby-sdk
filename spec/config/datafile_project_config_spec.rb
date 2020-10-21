@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require 'json'
 require 'spec_helper'
 require 'optimizely/config/datafile_project_config'
 require 'optimizely/exceptions'
@@ -50,6 +51,7 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
+      expect(project_config.send_flag_decisions).to eq(config_body['sendFlagDecisions'])
 
       expected_attribute_key_map = {
         'browser_type' => config_body['attributes'][0],
@@ -768,6 +770,15 @@ describe Optimizely::DatafileProjectConfig do
       }
 
       expect(project_config.audience_id_map).to eq(expected_audience_id_map)
+    end
+
+    it 'should initialize send_flag_decisions to false when not in datafile' do
+      config_body_without_flag_decision = config_body.dup
+      config_body_without_flag_decision.delete('sendFlagDecisions')
+      config_body_json = JSON.dump(config_body_without_flag_decision)
+      project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
+
+      expect(project_config.send_flag_decisions).to eq(false)
     end
   end
 

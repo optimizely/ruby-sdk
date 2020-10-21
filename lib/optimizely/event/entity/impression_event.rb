@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ require_relative 'user_event'
 require 'optimizely/helpers/date_time_utils'
 module Optimizely
   class ImpressionEvent < UserEvent
-    attr_reader :user_id, :experiment_layer_id, :experiment_id, :variation_id,
+    attr_reader :user_id, :experiment_layer_id, :experiment_id, :variation_id, :metadata,
                 :visitor_attributes, :bot_filtering
 
     def initialize(
@@ -28,6 +28,7 @@ module Optimizely
       experiment_layer_id:,
       experiment_id:,
       variation_id:,
+      metadata:,
       visitor_attributes:,
       bot_filtering:
     )
@@ -38,6 +39,7 @@ module Optimizely
       @experiment_layer_id = experiment_layer_id
       @experiment_id = experiment_id
       @variation_id = variation_id
+      @metadata = metadata
       @visitor_attributes = visitor_attributes
       @bot_filtering = bot_filtering
     end

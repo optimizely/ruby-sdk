@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -101,10 +101,11 @@ module Optimizely
       private
 
       def create_impression_event_visitor(impression_event)
-        decision = Optimizely::Decision.new(
+        decision = Decision.new(
           campaign_id: impression_event.experiment_layer_id,
           experiment_id: impression_event.experiment_id,
-          variation_id: impression_event.variation_id
+          variation_id: impression_event.variation_id,
+          metadata: impression_event.metadata
         )
 
         snapshot_event = Optimizely::SnapshotEvent.new(
