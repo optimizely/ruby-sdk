@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -49,7 +49,13 @@ describe Optimizely::EventBatch do
           decisions: [{
             campaign_id: '7719770039',
             experiment_id: '111127',
-            variation_id: '111128'
+            variation_id: '111128',
+            metadata: {
+              flag_key: '',
+              rule_key: 'test_experiment',
+              rule_type: 'experiment',
+              variation_key: '111128'
+            }
           }],
           events: [{
             entity_id: '7719770039',
@@ -128,7 +134,13 @@ describe Optimizely::EventBatch do
       key: 'campaign_activated'
     )
 
-    decision = Optimizely::Decision.new(campaign_id: '7719770039', experiment_id: '111127', variation_id: '111128')
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    decision = Optimizely::Decision.new(campaign_id: '7719770039', experiment_id: '111127', variation_id: '111128', metadata: metadata)
     snapshot = Optimizely::Snapshot.new(events: [snapshot_event.as_json], decisions: [decision.as_json])
     visitor = Optimizely::Visitor.new(
       snapshots: [snapshot.as_json],

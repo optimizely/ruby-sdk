@@ -40,6 +40,7 @@ module Optimizely
     Decision = Struct.new(:experiment, :variation, :source)
 
     DECISION_SOURCES = {
+      'EXPERIMENT' => 'experiment',
       'FEATURE_TEST' => 'feature-test',
       'ROLLOUT' => 'rollout'
     }.freeze

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -310,7 +310,15 @@ describe Optimizely::BatchEventProcessor do
     )
 
     experiment = project_config.get_experiment_from_key('test_experiment')
-    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', 'test_user', nil)
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(
+      project_config, experiment, '111128', metadata, 'test_user', nil
+    )
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
 
     allow(Optimizely::EventFactory).to receive(:create_log_event).with(any_args).and_return(log_event)

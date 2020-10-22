@@ -46,6 +46,8 @@ module Optimizely
 
     def revision; end
 
+    def send_flag_decisions; end
+
     def rollouts; end
 
     def experiment_running?(experiment); end

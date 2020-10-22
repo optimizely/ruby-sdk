@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019-2020, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,19 +17,21 @@
 #
 module Optimizely
   class Decision
-    attr_reader :campaign_id, :experiment_id, :variation_id
+    attr_reader :campaign_id, :experiment_id, :variation_id, :metadata
 
-    def initialize(campaign_id:, experiment_id:, variation_id:)
+    def initialize(campaign_id:, experiment_id:, variation_id:, metadata:)
       @campaign_id = campaign_id
       @experiment_id = experiment_id
       @variation_id = variation_id
+      @metadata = metadata
     end
 
     def as_json
       {
         campaign_id: @campaign_id,
         experiment_id: @experiment_id,
-        variation_id: @variation_id
+        variation_id: @variation_id,
+        metadata: @metadata
       }
     end
   end
