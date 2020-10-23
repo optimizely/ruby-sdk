@@ -124,7 +124,7 @@ module Optimizely
       variation_id
     end
 
-    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = nil)
+    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [])
       # Get the variation the user is bucketed into for the given FeatureFlag.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -143,7 +143,7 @@ module Optimizely
       decision
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, _decide_options = nil)
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, _decide_options = [])
       # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # project_config - project_config - Instance of ProjectConfig
