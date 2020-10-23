@@ -241,7 +241,6 @@ module Optimizely
       )
     end
 
-
     # Buckets visitor and sends impression event to Optimizely.
     #
     # @param experiment_key - Experiment which needs to be activated.

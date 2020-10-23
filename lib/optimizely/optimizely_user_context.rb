@@ -35,7 +35,7 @@ module Optimizely
     end
 
     def decide(key, options = nil)
-      return @optimizely_client.decide(self, key, options)
+      @optimizely_client.decide(self, key, options)
     end
 
     def decide_for_keys(keys, options = nil)
