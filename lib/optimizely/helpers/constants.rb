@@ -369,6 +369,7 @@ module Optimizely
         'FEATURE' => 'feature',
         'FEATURE_TEST' => 'feature-test',
         'FEATURE_VARIABLE' => 'feature-variable',
+        'FLAG' => 'flag',
         'ALL_FEATURE_VARIABLES' => 'all-feature-variables'
       }.freeze
 

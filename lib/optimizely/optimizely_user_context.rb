@@ -20,6 +20,8 @@ module Optimizely
   class OptimizelyUserContext
     # Representation of an Optimizely User Context using which APIs are to be called.
 
+    attr_reader :user_id, :user_attributes
+
     def initialize(optimizely_client, user_id, user_attributes)
       @optimizely_client = optimizely_client
       @user_id = user_id
@@ -33,7 +35,7 @@ module Optimizely
     end
 
     def decide(key, options = nil)
-      # TODO: call decide API in Optimizely class.
+      return @optimizely_client.decide(self, key, options)
     end
 
     def decide_for_keys(keys, options = nil)

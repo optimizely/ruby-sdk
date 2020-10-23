@@ -52,7 +52,7 @@ module Optimizely
       @forced_variation_map = {}
     end
 
-    def get_variation(project_config, experiment_key, user_id, attributes = nil)
+    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [])
       # Determines variation into which user will be bucketed.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -83,15 +83,17 @@ module Optimizely
       whitelisted_variation_id = get_whitelisted_variation_id(project_config, experiment_key, user_id)
       return whitelisted_variation_id if whitelisted_variation_id
 
-      # Check for saved bucketing decisions
-      user_profile = get_user_profile(user_id)
-      saved_variation_id = get_saved_variation_id(project_config, experiment_id, user_profile)
-      if saved_variation_id
-        @logger.log(
-          Logger::INFO,
-          "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
-        )
-        return saved_variation_id
+      # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
+      unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
+        user_profile = get_user_profile(user_id)
+        saved_variation_id = get_saved_variation_id(project_config, experiment_id, user_profile)
+        if saved_variation_id
+          @logger.log(
+            Logger::INFO,
+            "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
+          )
+          return saved_variation_id
+        end
       end
 
       # Check audience conditions
@@ -118,11 +120,11 @@ module Optimizely
       end
 
       # Persist bucketing decision
-      save_user_profile(user_profile, experiment_id, variation_id)
+      save_user_profile(user_profile, experiment_id, variation_id) unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       variation_id
     end
 
-    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil)
+    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = nil)
       # Get the variation the user is bucketed into for the given FeatureFlag.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -133,7 +135,7 @@ module Optimizely
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
-      decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes)
+      decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options)
       return decision unless decision.nil?
 
       decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
@@ -141,7 +143,7 @@ module Optimizely
       decision
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil)
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, _decide_options = nil)
       # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # project_config - project_config - Instance of ProjectConfig

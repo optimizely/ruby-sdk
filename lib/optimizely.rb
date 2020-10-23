@@ -19,6 +19,9 @@ require_relative 'optimizely/audience'
 require_relative 'optimizely/config/datafile_project_config'
 require_relative 'optimizely/config_manager/http_project_config_manager'
 require_relative 'optimizely/config_manager/static_project_config_manager'
+require_relative 'optimizely/decide/optimizely_decide_option'
+require_relative 'optimizely/decide/optimizely_decision'
+require_relative 'optimizely/decide/optimizely_decision_message'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
@@ -68,12 +71,21 @@ module Optimizely
       sdk_key = nil,
       config_manager = nil,
       notification_center = nil,
-      event_processor = nil
+      event_processor = nil,
+      default_decide_options = []
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       @user_profile_service = user_profile_service
+      @default_decide_options = []
+
+      if default_decide_options.is_a? Array
+        @default_decide_options = default_decide_options.clone
+      else
+        @logger.log(Logger::DEBUG, 'Provided default decide options is not an array.')
+        @default_decide_options = []
+      end
 
       begin
         validate_instantiation_options
@@ -125,6 +137,110 @@ module Optimizely
       user_context = OptimizelyUserContext.new(self, user_id, attributes)
       user_context
     end
+
+    def decide(user_context, key, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      reasons = []
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('activate').message)
+        reasons.append(OptimizelyDecisionMessage::SDK_NOT_READY)
+        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key is a string
+      unless key.is_a?(String)
+        @logger.log(Logger::ERROR, 'Provided key is invalid')
+        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key maps to a feature flag
+      config = project_config
+      feature_flag = config.get_feature_flag_from_key(key)
+      unless feature_flag
+        @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
+        reasons.append(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # merge decide_options and default_decide_options
+      if decide_options.is_a? Array
+        decide_options += default_decide_options
+      else
+        @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
+        decide_options = @default_decide_options
+      end
+
+      # Create Optimizely Decision Result.
+      user_id = user_context.user_id
+      attributes = user_context.user_attributes
+      variation_key = nil
+      feature_enabled = false
+      rule_key = nil
+      flag_key = nil
+      all_variables = {}
+      decision_event_dispatched = false
+
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options)
+
+      # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
+      if decision.is_a?(Optimizely::DecisionService::Decision)
+        variation = decision['variation']
+        variation_key = variation['key']
+        feature_enabled = variation['featureEnabled']
+        flag_key = key
+        rule_key = decision.experiment['key']
+
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT
+            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+            send_impression(
+              config, decision.experiment, variation_key, flag_key, rule_key, source_string, user_id, attributes
+            )
+            decision_event_dispatched = true
+          end
+        end
+      end
+
+      # Generate all variables map if decide options doesn't include excludeVariables
+      if decision.is_a?(Optimizely::DecisionService::Decision)
+        unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
+
+          feature_flag['variables'].each do |variable|
+            variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
+            all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
+          end
+        end
+      end
+
+      # Send notification
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FLAG'],
+        user_id, (attributes || {}),
+        flag_key: flag_key,
+        enabled: feature_enabled,
+        variables: all_variables,
+        variation_key: variation_key,
+        rule_key: rule_key,
+        reasons: reasons,
+        decision_event_dispatched: decision_event_dispatched
+      )
+
+      Optimizely::Decide::OptimizelyDecision.new(
+        variation_key: variation_key,
+        enabled: feature_enabled,
+        variables: all_variables,
+        rule_key: rule_key,
+        flag_key: flag_key,
+        user_context: user_context,
+        reasons: reasons
+      )
+    end
+
 
     # Buckets visitor and sends impression event to Optimizely.
     #
