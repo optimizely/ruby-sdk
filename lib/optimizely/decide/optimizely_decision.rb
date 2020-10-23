@@ -28,8 +28,8 @@ module Optimizely
         reasons: nil
       )
         @variation_key = variation_key
-        @enabled = enabled || false,
-                   @variables = variables || {}
+        @enabled = enabled || false
+        @variables = variables || {}
         @rule_key = rule_key
         @flag_key = flag_key
         @user_context = user_context
