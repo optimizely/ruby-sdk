@@ -15,6 +15,8 @@
 #    limitations under the License.
 #
 
+require 'json'
+
 module Optimizely
   module Decide
     class OptimizelyDecision
@@ -34,6 +36,21 @@ module Optimizely
         @flag_key = flag_key
         @user_context = user_context
         @reasons = reasons || []
+      end
+
+      def as_json
+        {
+          variation_key: @variation_key,
+          enabled: @enabled,
+          variables: @variables,
+          rule_key: @rule_key,
+          flag_key: @flag_key,
+          user_context: @user_context.as_json
+        }
+      end
+
+      def to_json(*args)
+        as_json.to_json(*args)
       end
     end
   end

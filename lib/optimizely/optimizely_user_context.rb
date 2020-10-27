@@ -16,6 +16,8 @@
 #    limitations under the License.
 #
 
+require 'json'
+
 module Optimizely
   class OptimizelyUserContext
     # Representation of an Optimizely User Context using which APIs are to be called.
@@ -48,6 +50,17 @@ module Optimizely
 
     def track_event(event_key, event_tags = nil)
       @optimizely_client.track(event_key, @user_id, @user_attributes, event_tags)
+    end
+
+    def as_json
+      {
+        user_id: @user_id,
+        attributes: @user_attributes
+      }
+    end
+
+    def to_json(*args)
+      as_json.to_json(*args)
     end
   end
 end
