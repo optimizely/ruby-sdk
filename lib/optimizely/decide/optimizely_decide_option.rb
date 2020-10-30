@@ -18,11 +18,11 @@
 module Optimizely
   module Decide
     module OptimizelyDecideOption
-      DISABLE_DECISION_EVENT = 'disableDecisionEvent'
-      ENABLED_FLAGS_ONLY = 'enabledFlagsOnly'
-      IGNORE_USER_PROFILE_SERVICE = 'ignoreUserProfileService'
-      INCLUDE_REASONS = 'includeReasons'
-      EXCLUDE_VARIABLES = 'excludeVariables'
+      DISABLE_DECISION_EVENT = 'DISABLE_DECISION_EVENT'
+      ENABLED_FLAGS_ONLY = 'ENABLED_FLAGS_ONLY'
+      IGNORE_USER_PROFILE_SERVICE = 'IGNORE_USER_PROFILE_SERVICE'
+      INCLUDE_REASONS = 'INCLUDE_REASONS'
+      EXCLUDE_VARIABLES = 'EXCLUDE_VARIABLES'
     end
   end
 end

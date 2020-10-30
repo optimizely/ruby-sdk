@@ -45,7 +45,8 @@ module Optimizely
           variables: @variables,
           rule_key: @rule_key,
           flag_key: @flag_key,
-          user_context: @user_context.as_json
+          user_context: @user_context.as_json,
+          reasons: @reasons
         }
       end
 

@@ -41,6 +41,8 @@ require_relative 'optimizely/optimizely_user_context'
 
 module Optimizely
   class Project
+    include Optimizely::Decide
+
     attr_reader :notification_center
     # @api no-doc
     attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
@@ -148,27 +150,27 @@ module Optimizely
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('activate').message)
         reasons.append(OptimizelyDecisionMessage::SDK_NOT_READY)
-        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
       # validate that key is a string
       unless key.is_a?(String)
         @logger.log(Logger::ERROR, 'Provided key is invalid')
-        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
       # validate that key maps to a feature flag
       config = project_config
       feature_flag = config.get_feature_flag_from_key(key)
       unless feature_flag
-        @logger.log(Logger::ERROR, "No feature flag was found for key '#{feature_flag_key}'.")
+        @logger.log(Logger::ERROR, "No feature flag was found for key '#{key}'.")
         reasons.append(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
-        return OptimizelyDecision.new(key: key, user_context: user_context, reasons: reasons)
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
       # merge decide_options and default_decide_options
       if decide_options.is_a? Array
-        decide_options += default_decide_options
+        decide_options += @default_decide_options
       else
         @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
         decide_options = @default_decide_options
@@ -180,7 +182,7 @@ module Optimizely
       variation_key = nil
       feature_enabled = false
       rule_key = nil
-      flag_key = nil
+      flag_key = key
       all_variables = {}
       decision_event_dispatched = false
 
@@ -206,13 +208,10 @@ module Optimizely
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
-      if decision.is_a?(Optimizely::DecisionService::Decision)
-        unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
-
-          feature_flag['variables'].each do |variable|
-            variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
-            all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
-          end
+      unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
+        feature_flag['variables'].each do |variable|
+          variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
+          all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
         end
       end
 
@@ -230,7 +229,7 @@ module Optimizely
         decision_event_dispatched: decision_event_dispatched
       )
 
-      Optimizely::Decide::OptimizelyDecision.new(
+      OptimizelyDecision.new(
         variation_key: variation_key,
         enabled: feature_enabled,
         variables: all_variables,
@@ -239,6 +238,17 @@ module Optimizely
         user_context: user_context,
         reasons: reasons
       )
+    end
+
+    def decide_all(user_context, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      decisions = []
+      project_config.feature_flags.each do |feature_flag|
+        decisions.push(decide(user_context, feature_flag['key'], decide_options))
+      end
+      decisions
     end
 
     # Buckets visitor and sends impression event to Optimizely.
