@@ -244,9 +244,9 @@ module Optimizely
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
 
-      decisions = []
+      decisions = {}
       project_config.feature_flags.each do |feature_flag|
-        decisions.push(decide(user_context, feature_flag['key'], decide_options))
+        decisions[feature_flag['key']] = decide(user_context, feature_flag['key'], decide_options)
       end
       decisions
     end
