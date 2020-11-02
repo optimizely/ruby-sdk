@@ -372,7 +372,7 @@ describe Optimizely::DecisionService do
 
           # make sure the user is not bucketed into the feature experiment
           allow(decision_service).to receive(:get_variation)
-            .with(config, multivariate_experiment['key'], 'user_1', user_attributes)
+            .with(config, multivariate_experiment['key'], 'user_1', user_attributes, [])
             .and_return(nil)
         end
 
@@ -431,10 +431,10 @@ describe Optimizely::DecisionService do
           mutex_exp = config.experiment_key_map['group1_exp1']
           mutex_exp2 = config.experiment_key_map['group1_exp2']
           allow(decision_service).to receive(:get_variation)
-            .with(config, mutex_exp['key'], user_id, user_attributes)
+            .with(config, mutex_exp['key'], user_id, user_attributes, [])
             .and_return(nil)
           allow(decision_service).to receive(:get_variation)
-            .with(config, mutex_exp2['key'], user_id, user_attributes)
+            .with(config, mutex_exp2['key'], user_id, user_attributes, [])
             .and_return(nil)
         end
 
