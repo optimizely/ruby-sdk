@@ -41,9 +41,9 @@ module Optimizely
     end
 
     def decide_for_keys(keys, options = nil)
-      decisions = []
+      decisions = {}
       keys.each do |key|
-        decisions = decisions.push(@optimizely_client.decide(self, key, options))
+        decisions[key] = @optimizely_client.decide(self, key, options)
       end
       decisions
     end
