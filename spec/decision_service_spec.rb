@@ -337,6 +337,14 @@ describe Optimizely::DecisionService do
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, "Error while saving user profile for user ID 'test_user': uncaught throw :SaveError.")
       end
+
+      describe 'IGNORE_USER_PROFILE decide option', :decide do
+        it 'should ignore user profile service if this option is set' do
+        end
+
+        it 'should not ignore user profile service if this option is not set' do
+        end
+      end
     end
   end
 

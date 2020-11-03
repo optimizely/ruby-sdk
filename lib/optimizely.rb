@@ -148,7 +148,7 @@ module Optimizely
 
       # check if SDK is ready
       unless is_valid
-        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('activate').message)
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide').message)
         reasons.append(OptimizelyDecisionMessage::SDK_NOT_READY)
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end

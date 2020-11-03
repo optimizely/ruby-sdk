@@ -3485,4 +3485,42 @@ describe 'Optimizely' do
         .to eq(nil)
     end
   end
+
+  describe '#decide', :decide do
+    describe 'should return empty decision object with correct reason when sdk is not ready' do
+      it 'when sdk is not ready' do
+      end
+
+      it 'when flag key is invalid' do
+      end
+
+      it 'when flag key is not available' do
+      end
+    end
+
+    describe 'should return correct decision object' do
+      it 'when flag key is part of feature experiment' do
+      end
+
+      # add more tests here
+    end
+
+    describe 'decide options' do
+      describe 'DISABLE_DECISION_EVENT' do
+        it 'should send event when option is not set' do
+        end
+
+        it 'should not send event when option is set' do
+        end
+      end
+
+      describe 'EXCLUDE_VARIABLES' do
+        it 'should exclude variables if set' do
+        end
+
+        it 'should include variables if not set' do
+        end
+      end
+    end
+  end
 end
