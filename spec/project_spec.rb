@@ -136,7 +136,7 @@ describe 'Optimizely' do
     end
   end
 
-  describe '#create_user_context' do
+  describe '#create_user_context', :decide do
     it 'should log and return nil when user ID is non string' do
       expect(project_instance.create_user_context(nil)).to eq(nil)
       expect(project_instance.create_user_context(5)).to eq(nil)
