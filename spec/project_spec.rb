@@ -3489,17 +3489,21 @@ describe 'Optimizely' do
   describe '#decide', :decide do
     describe 'should return empty decision object with correct reason when sdk is not ready' do
       it 'when sdk is not ready' do
+        pending
       end
 
       it 'when flag key is invalid' do
+        pending
       end
 
       it 'when flag key is not available' do
+        pending
       end
     end
 
     describe 'should return correct decision object' do
       it 'when flag key is part of feature experiment' do
+        pending
       end
 
       # add more tests here
@@ -3508,17 +3512,21 @@ describe 'Optimizely' do
     describe 'decide options' do
       describe 'DISABLE_DECISION_EVENT' do
         it 'should send event when option is not set' do
+          pending
         end
 
         it 'should not send event when option is set' do
+          pending
         end
       end
 
       describe 'EXCLUDE_VARIABLES' do
         it 'should exclude variables if set' do
+          pending
         end
 
         it 'should include variables if not set' do
+          pending
         end
       end
     end

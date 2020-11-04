@@ -69,6 +69,7 @@ describe 'Optimizely', :decide do
     end
 
     it 'should not alter original attributes object when attrubute is modifed' do
+      pending
     end
   end
 end

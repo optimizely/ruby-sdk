@@ -340,9 +340,11 @@ describe Optimizely::DecisionService do
 
       describe 'IGNORE_USER_PROFILE decide option', :decide do
         it 'should ignore user profile service if this option is set' do
+          pending
         end
 
         it 'should not ignore user profile service if this option is not set' do
+          pending
         end
       end
     end
