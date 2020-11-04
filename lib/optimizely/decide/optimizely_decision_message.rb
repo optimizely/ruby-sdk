@@ -19,8 +19,8 @@ module Optimizely
   module Decide
     module OptimizelyDecisionMessage
       SDK_NOT_READY = 'Optimizely SDK not configured properly yet.'
-      FLAG_KEY_INVALID = 'No flag was found for key \"%s\"."'
-      VARIABLE_VALUE_INVALID = 'Variable value for key \"%s\" is invalid or wrong type.'
+      FLAG_KEY_INVALID = 'No flag was found for key "%s".'
+      VARIABLE_VALUE_INVALID = 'Variable value for key "%s" is invalid or wrong type.'
     end
   end
 end

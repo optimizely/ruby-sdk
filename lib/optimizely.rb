@@ -156,6 +156,7 @@ module Optimizely
       # validate that key is a string
       unless key.is_a?(String)
         @logger.log(Logger::ERROR, 'Provided key is invalid')
+        reasons.append(OptimizelyDecisionMessage::VARIABLE_VALUE_INVALID)
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 

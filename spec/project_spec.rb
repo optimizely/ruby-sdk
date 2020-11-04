@@ -3489,15 +3489,31 @@ describe 'Optimizely' do
   describe '#decide', :decide do
     describe 'should return empty decision object with correct reason when sdk is not ready' do
       it 'when sdk is not ready' do
-        pending
+        invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+        user_context = project_instance.create_user_context('user1')
+        decision = invalid_project.decide(user_context, 'dummy_flag')
+        expect(decision.as_json).to include(
+          flag_key: 'dummy_flag',
+          reasons: ['Optimizely SDK not configured properly yet.']
+        )
       end
 
       it 'when flag key is invalid' do
-        pending
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 123)
+        expect(decision.as_json).to include(
+          flag_key: 123,
+          reasons: ['Variable value for key "%s" is invalid or wrong type.']
+        )
       end
 
       it 'when flag key is not available' do
-        pending
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'not_found_key')
+        expect(decision.as_json).to include(
+          flag_key: 'not_found_key',
+          reasons: ['No flag was found for key "not_found_key".']
+        )
       end
     end
 
