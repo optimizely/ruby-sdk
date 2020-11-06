@@ -340,11 +340,41 @@ describe Optimizely::DecisionService do
 
       describe 'IGNORE_USER_PROFILE decide option', :decide do
         it 'should ignore user profile service if this option is set' do
-          pending
+          saved_user_profile = {
+            user_id: 'test_user',
+            experiment_bucket_map: {
+              '111127' => {
+                variation_id: '111129'
+              }
+            }
+          }
+          allow(spy_user_profile_service).to receive(:lookup)
+            .with('test_user').once.and_return(saved_user_profile)
+
+          expect(decision_service.get_variation(config, 'test_experiment', 'test_user', nil, [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])).to eq('111128')
+
+          expect(decision_service.bucketer).to have_received(:bucket)
+          expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
+          expect(spy_user_profile_service).not_to have_received(:save)
         end
 
         it 'should not ignore user profile service if this option is not set' do
-          pending
+          saved_user_profile = {
+            user_id: 'test_user',
+            experiment_bucket_map: {
+              '111127' => {
+                variation_id: '111129'
+              }
+            }
+          }
+          allow(spy_user_profile_service).to receive(:lookup)
+            .with('test_user').once.and_return(saved_user_profile)
+
+          expect(decision_service.get_variation(config, 'test_experiment', 'test_user')).to eq('111129')
+
+          expect(decision_service.bucketer).not_to have_received(:bucket)
+          expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
+          expect(spy_user_profile_service).not_to have_received(:save)
         end
       end
     end

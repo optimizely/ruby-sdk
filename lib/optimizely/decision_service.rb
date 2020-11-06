@@ -83,8 +83,9 @@ module Optimizely
       whitelisted_variation_id = get_whitelisted_variation_id(project_config, experiment_key, user_id)
       return whitelisted_variation_id if whitelisted_variation_id
 
+      should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
-      unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
+      unless should_ignore_user_profile_service
         user_profile = get_user_profile(user_id)
         saved_variation_id = get_saved_variation_id(project_config, experiment_id, user_profile)
         if saved_variation_id
@@ -120,7 +121,7 @@ module Optimizely
       end
 
       # Persist bucketing decision
-      save_user_profile(user_profile, experiment_id, variation_id) unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
+      save_user_profile(user_profile, experiment_id, variation_id) unless should_ignore_user_profile_service
       variation_id
     end
 
