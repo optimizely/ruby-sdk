@@ -136,7 +136,7 @@ describe 'Optimizely' do
     end
   end
 
-  describe '#create_user_context', :decide do
+  describe '#create_user_context' do
     it 'should log and return nil when user ID is non string' do
       expect(project_instance.create_user_context(nil)).to eq(nil)
       expect(project_instance.create_user_context(5)).to eq(nil)
@@ -3486,7 +3486,7 @@ describe 'Optimizely' do
     end
   end
 
-  describe '#decide', :decide do
+  describe '#decide' do
     describe 'should return empty decision object with correct reason when sdk is not ready' do
       it 'when sdk is not ready' do
         invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)

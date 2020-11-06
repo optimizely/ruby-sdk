@@ -27,7 +27,7 @@ module Optimizely
     def initialize(optimizely_client, user_id, user_attributes)
       @optimizely_client = optimizely_client
       @user_id = user_id
-      @user_attributes = user_attributes
+      @user_attributes = user_attributes.clone
 
       @user_attributes = {} if @user_attributes.nil?
     end

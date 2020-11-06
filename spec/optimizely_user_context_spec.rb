@@ -19,7 +19,7 @@ require 'spec_helper'
 require 'optimizely'
 require 'optimizely/optimizely_user_context'
 
-describe 'Optimizely', :decide do
+describe 'Optimizely' do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
@@ -68,8 +68,16 @@ describe 'Optimizely', :decide do
       expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(expected_attributes)
     end
 
-    it 'should not alter original attributes object when attrubute is modifed' do
-      pending
+    it 'should not alter original attributes object when attrubute is modified in the user context' do
+      user_id = 'test_user'
+      original_attributes = {'browser' => 'firefox'}
+      user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, original_attributes)
+      user_context_obj.set_attribute('id', 49)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(
+        'browser' => 'firefox',
+        'id' => 49
+      )
+      expect(original_attributes).to eq('browser' => 'firefox')
     end
   end
 end
