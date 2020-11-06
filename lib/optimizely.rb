@@ -149,14 +149,14 @@ module Optimizely
       # check if SDK is ready
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide').message)
-        reasons.append(OptimizelyDecisionMessage::SDK_NOT_READY)
+        reasons.push(OptimizelyDecisionMessage::SDK_NOT_READY)
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
       # validate that key is a string
       unless key.is_a?(String)
         @logger.log(Logger::ERROR, 'Provided key is invalid')
-        reasons.append(OptimizelyDecisionMessage::VARIABLE_VALUE_INVALID)
+        reasons.push(OptimizelyDecisionMessage::VARIABLE_VALUE_INVALID)
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
@@ -165,7 +165,7 @@ module Optimizely
       feature_flag = config.get_feature_flag_from_key(key)
       unless feature_flag
         @logger.log(Logger::ERROR, "No feature flag was found for key '#{key}'.")
-        reasons.append(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
