@@ -142,7 +142,7 @@ module Optimizely
       experiment = config.get_experiment_from_key(experiment_key)
       send_impression(
         config, experiment, variation_key, '', experiment_key,
-        Optimizely::DecisionService::DECISION_SOURCES['EXPERIMENT'], user_id, attributes
+        Optimizely::DecisionService::DECISION_SOURCES['EXPERIMENT'], user_id, true, attributes
       )
 
       variation_key
@@ -321,18 +321,18 @@ module Optimizely
           }
           # Send event if Decision came from a feature test.
           send_impression(
-            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, attributes
+            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, feature_enabled, attributes
           )
         elsif decision.source == Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'] && config.send_flag_decisions
           send_impression(
-            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, attributes
+            config, decision.experiment, variation['key'], feature_flag_key, decision.experiment['key'], source_string, user_id, feature_enabled, attributes
           )
         end
       end
 
       if decision.nil? && config.send_flag_decisions
         send_impression(
-          config, nil, '', feature_flag_key, '', source_string, user_id, attributes
+          config, nil, '', feature_flag_key, '', source_string, user_id, feature_enabled, attributes
         )
       end
 
@@ -879,7 +879,7 @@ module Optimizely
       raise InvalidInputError, 'event_dispatcher'
     end
 
-    def send_impression(config, experiment, variation_key, flag_key, rule_key, rule_type, user_id, attributes = nil)
+    def send_impression(config, experiment, variation_key, flag_key, rule_key, rule_type, user_id, enabled, attributes = nil)
       if experiment.nil?
         experiment = {
           'id' => '',
@@ -903,7 +903,8 @@ module Optimizely
         flag_key: flag_key,
         rule_key: rule_key,
         rule_type: rule_type,
-        variation_key: variation_key
+        variation_key: variation_key,
+        enabled: enabled
       }
 
       user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, attributes)
