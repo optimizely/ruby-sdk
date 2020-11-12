@@ -245,9 +245,22 @@ module Optimizely
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
 
-      decisions = {}
+      keys = []
       project_config.feature_flags.each do |feature_flag|
-        decisions[feature_flag['key']] = decide(user_context, feature_flag['key'], decide_options)
+        keys.push(feature_flag['key'])
+      end
+      decide_for_keys(user_context, keys, decide_options)
+    end
+
+    def decide_for_keys(user_context, keys, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      enabled_flags_only = !decide_options.nil? && (decide_options.include? Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+      decisions = {}
+      keys.each do |key|
+        decision = decide(user_context, key, decide_options)
+        decisions[key] = decision unless enabled_flags_only && !decision.as_json[:enabled]
       end
       decisions
     end

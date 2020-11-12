@@ -39,16 +39,11 @@ module Optimizely
     end
 
     def decide_for_keys(keys, options = nil)
-      decisions = {}
-      keys.each do |key|
-        decisions[key] = @optimizely_client.decide(self, key, options)
-      end
-      decisions
+      @optimizely_client.decide_for_keys(self, keys, options)
     end
 
     def decide_all(options = nil)
-      decisions = @optimizely_client.decide_all(self, options)
-      decisions
+      @optimizely_client.decide_all(self, options)
     end
 
     def track_event(event_key, event_tags = nil)
