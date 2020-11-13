@@ -3680,4 +3680,120 @@ describe 'Optimizely' do
       end
     end
   end
+
+  describe '#decide_all' do
+    it 'should get all the decisions' do
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_all(user_context)
+      expect(decisions.length).to eq(10)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true' do
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_all(user_context, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
+      expect(decisions.length).to eq(6)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+  end
+
+  describe '#decide_for_keys' do
+    it 'should get all the decisions for keys' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_for_keys(user_context, keys)
+      expect(decisions.length).to eq(4)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_for_keys(user_context, keys, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
+      expect(decisions.length).to eq(2)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+  end
 end
