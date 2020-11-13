@@ -197,15 +197,18 @@ module Optimizely
         flag_key = key
         rule_key = decision.experiment['key']
 
-        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-          unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT
-            source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
-            send_impression(
-              config, decision.experiment, variation_key, flag_key, rule_key, source_string, user_id, attributes
-            )
+        unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT
+          if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] ||
+             (decision.source == Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'] && config.send_flag_decisions)
+            send_impression(config, decision.experiment, variation_key, flag_key, rule_key, decision.source, user_id, attributes)
             decision_event_dispatched = true
           end
         end
+      end
+
+      if decision.nil? && config.send_flag_decisions
+        send_impression(config, nil, '', flag_key, '', Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'], user_id, attributes)
+        decision_event_dispatched = true
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
