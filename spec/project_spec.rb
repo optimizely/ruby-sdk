@@ -3492,28 +3492,22 @@ describe 'Optimizely' do
         invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
         user_context = project_instance.create_user_context('user1')
         decision = invalid_project.decide(user_context, 'dummy_flag')
-        expect(decision.as_json).to include(
-          flag_key: 'dummy_flag',
-          reasons: ['Optimizely SDK not configured properly yet.']
-        )
+        expect(decision.flag_key).to eq('dummy_flag')
+        expect(decision.reasons).to eq(['Optimizely SDK not configured properly yet.'])
       end
 
       it 'when flag key is invalid' do
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 123)
-        expect(decision.as_json).to include(
-          flag_key: 123,
-          reasons: ['Variable value for key "%s" is invalid or wrong type.']
-        )
+        expect(decision.flag_key).to eq(123)
+        expect(decision.reasons).to eq(['Variable value for key "%s" is invalid or wrong type.'])
       end
 
       it 'when flag key is not available' do
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'not_found_key')
-        expect(decision.as_json).to include(
-          flag_key: 'not_found_key',
-          reasons: ['No flag was found for key "not_found_key".']
-        )
+        expect(decision.flag_key).to eq('not_found_key')
+        expect(decision.reasons).to eq(['No flag was found for key "not_found_key".'])
       end
     end
 
@@ -3556,8 +3550,6 @@ describe 'Optimizely' do
           variation_key: 'Fred'
         )
       end
-
-      # add more tests here
     end
 
     describe 'decide options' do

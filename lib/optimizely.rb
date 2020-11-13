@@ -263,7 +263,7 @@ module Optimizely
       decisions = {}
       keys.each do |key|
         decision = decide(user_context, key, decide_options)
-        decisions[key] = decision unless enabled_flags_only && !decision.as_json[:enabled]
+        decisions[key] = decision unless enabled_flags_only && !decision.enabled
       end
       decisions
     end

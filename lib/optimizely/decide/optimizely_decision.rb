@@ -20,6 +20,8 @@ require 'json'
 module Optimizely
   module Decide
     class OptimizelyDecision
+      attr_reader :variation_key, :enabled, :variables, :rule_key, :flag_key, :user_context, :reasons
+
       def initialize(
         variation_key: nil,
         enabled: nil,
