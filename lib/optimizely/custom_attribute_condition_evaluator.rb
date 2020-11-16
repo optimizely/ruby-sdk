@@ -58,6 +58,18 @@ module Optimizely
     def initialize(user_attributes, logger)
       @user_attributes = user_attributes
       @logger = logger
+
+      # configure user_attributes to access with string or symbol
+      @user_attributes.default_proc = proc do |h, k|
+        case k
+        when String
+          sym = k.to_sym
+          h[sym] if h.key?(sym)
+        when Symbol
+          str = k.to_s
+          h[str] if h.key?(str)
+        end
+      end
     end
 
     def evaluate(leaf_condition)
@@ -79,7 +91,7 @@ module Optimizely
 
       condition_match = leaf_condition['match'] || EXACT_MATCH_TYPE
 
-      if !@user_attributes.key?(leaf_condition['name']) && condition_match != EXISTS_MATCH_TYPE
+      if !(@user_attributes.key?(leaf_condition['name']) || @user_attributes.key?(leaf_condition['name'].to_sym)) && condition_match != EXISTS_MATCH_TYPE
         @logger.log(
           Logger::DEBUG,
           format(

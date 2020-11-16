@@ -83,6 +83,68 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     )
   end
 
+  context 'with user attributes as symbol keys' do
+    it 'should return true when the attributes pass the audience conditions and no match type is provided' do
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({browser_type: 'safari'}, spy_logger)
+      expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be true
+    end
+
+    it 'should return false when the attributes pass the audience conditions and no match type is provided' do
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({browser_type: 'firefox'}, spy_logger)
+      expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be false
+    end
+
+    it 'should evaluate different typed attributes' do
+      user_attributes = {
+        browser_type: 'safari',
+        is_firefox: true,
+        num_users: 10,
+        pi_value: 3.14
+      }
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_attributes, spy_logger)
+  
+      expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be true
+      expect(condition_evaluator.evaluate('name' => 'is_firefox', 'type' => 'custom_attribute', 'value' => true)).to be true
+      expect(condition_evaluator.evaluate('name' => 'num_users', 'type' => 'custom_attribute', 'value' => 10)).to be true
+      expect(condition_evaluator.evaluate('name' => 'pi_value', 'type' => 'custom_attribute', 'value' => 3.14)).to be true
+    end
+
+    it 'should log and return nil when condition has an invalid type property' do
+      condition = {'match' => 'exact', 'name' => 'weird_condition', 'type' => 'weird', 'value' => 'hi'}
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({weird_condition: 'bye'}, spy_logger)
+      expect(condition_evaluator.evaluate(condition)).to eq(nil)
+      expect(spy_logger).to have_received(:log).exactly(1).times
+      expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
+      'the Optimizely SDK.'
+      )
+    end
+
+    it 'should log and return nil when condition has no type property' do
+      condition = {'match' => 'exact', 'name' => 'weird_condition', 'value' => 'hi'}
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({weird_condition: 'bye'}, spy_logger)
+      expect(condition_evaluator.evaluate(condition)).to eq(nil)
+      expect(spy_logger).to have_received(:log).exactly(1).times
+      expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
+      'the Optimizely SDK.'
+      )
+    end
+
+    it 'should log and return nil when condition has an invalid match property' do
+      condition = {'match' => 'invalid', 'name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'chrome'}
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({browser_type: 'chrome'}, spy_logger)
+      expect(condition_evaluator.evaluate(condition)).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(
+          Logger::WARN,
+          "Audience condition #{condition} uses an unknown match type. You may need to upgrade to a newer release " \
+      'of the Optimizely SDK.'
+      )
+    end
+  end
+
   describe 'exists match type' do
     before(:context) do
       @exists_conditions = {'match' => 'exists', 'name' => 'input_value', 'type' => 'custom_attribute'}
