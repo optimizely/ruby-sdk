@@ -99,7 +99,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         browser_type: 'safari',
         is_firefox: true,
         num_users: 10,
-        pi_value: 3.14
+        pi_value: 3.14,
+        test_value: false
       }
       condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_attributes, spy_logger)
   
@@ -107,6 +108,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       expect(condition_evaluator.evaluate('name' => 'is_firefox', 'type' => 'custom_attribute', 'value' => true)).to be true
       expect(condition_evaluator.evaluate('name' => 'num_users', 'type' => 'custom_attribute', 'value' => 10)).to be true
       expect(condition_evaluator.evaluate('name' => 'pi_value', 'type' => 'custom_attribute', 'value' => 3.14)).to be true
+      expect(condition_evaluator.evaluate('name' => 'test_value', 'type' => 'custom_attribute', 'value' => false)).to be true
     end
 
     it 'should log and return nil when condition has an invalid type property' do
