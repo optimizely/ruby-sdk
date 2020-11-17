@@ -248,6 +248,12 @@ module Optimizely
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
 
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide_all').message)
+        return {}
+      end
+
       keys = []
       project_config.feature_flags.each do |feature_flag|
         keys.push(feature_flag['key'])
@@ -258,6 +264,12 @@ module Optimizely
     def decide_for_keys(user_context, keys, decide_options = [])
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide_for_keys').message)
+        return {}
+      end
 
       enabled_flags_only = !decide_options.nil? && (decide_options.include? Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
       decisions = {}
