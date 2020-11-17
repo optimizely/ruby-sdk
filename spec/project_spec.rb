@@ -3559,6 +3559,148 @@ describe 'Optimizely' do
           variation_key: 'Fred'
         )
       end
+
+      it 'when user is bucketed into a rollout and send_flag_decisions is true' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred',
+            rule_key: 'test_experiment_multivariate',
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        )
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+      end
+
+      it 'when user is bucketed into a rollout and send_flag_decisions is false' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred',
+            rule_key: 'test_experiment_multivariate',
+            reasons: [],
+            decision_event_dispatched: false
+          )
+        allow(project_config).to receive(:send_flag_decisions).and_return(false)
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        )
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+      end
+
+      it 'when decision service returns nil and send_flag_decisions is false' do
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [],
+            decision_event_dispatched: false
+          )
+        allow(project_config).to receive(:send_flag_decisions).and_return(false)
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = nil
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+      end
+
+      it 'when decision service returns nil and send_flag_decisions is true' do
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = nil
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+      end
     end
 
     describe 'decide options' do
