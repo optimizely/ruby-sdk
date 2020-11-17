@@ -189,7 +189,8 @@ describe 'Optimizely' do
                 flag_key: '',
                 rule_key: 'test_experiment',
                 rule_type: 'experiment',
-                variation_key: 'control'
+                variation_key: 'control',
+                enabled: true
               }
             }],
             events: [{
@@ -262,7 +263,8 @@ describe 'Optimizely' do
         flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
-        variation_key: 'control_with_audience'
+        variation_key: 'control_with_audience',
+        enabled: true
       }
 
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
@@ -337,7 +339,8 @@ describe 'Optimizely' do
           flag_key: '',
           rule_key: 'typed_audience_experiment',
           rule_type: 'experiment',
-          variation_key: variation_to_return['key']
+          variation_key: variation_to_return['key'],
+          enabled: true
         }
 
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -372,7 +375,8 @@ describe 'Optimizely' do
           flag_key: '',
           rule_key: 'typed_audience_experiment',
           rule_type: 'experiment',
-          variation_key: variation_to_return['key']
+          variation_key: variation_to_return['key'],
+          enabled: true
         }
 
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -429,7 +433,8 @@ describe 'Optimizely' do
           flag_key: '',
           rule_key: 'audience_combinations_experiment',
           rule_type: 'experiment',
-          variation_key: variation_to_return['key']
+          variation_key: variation_to_return['key'],
+          enabled: true
         }
 
         allow(@project_typed_audience_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -489,7 +494,8 @@ describe 'Optimizely' do
         flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
-        variation_key: 'control_with_audience'
+        variation_key: 'control_with_audience',
+        enabled: true
       }
 
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
@@ -534,7 +540,8 @@ describe 'Optimizely' do
         flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
-        variation_key: 'control_with_audience'
+        variation_key: 'control_with_audience',
+        enabled: true
       }
 
       variation_to_return = project_config.get_variation_from_id('test_experiment_with_audience', '122228')
@@ -576,7 +583,8 @@ describe 'Optimizely' do
         flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
-        variation_key: 'variation_with_audience'
+        variation_key: 'variation_with_audience',
+        enabled: true
       }
 
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
@@ -748,7 +756,8 @@ describe 'Optimizely' do
         flag_key: '',
         rule_key: 'test_experiment_with_audience',
         rule_type: 'experiment',
-        variation_key: 'variation_with_audience'
+        variation_key: 'variation_with_audience',
+        enabled: true
       }
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
