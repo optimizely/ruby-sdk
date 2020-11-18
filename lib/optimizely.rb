@@ -156,7 +156,7 @@ module Optimizely
       # validate that key is a string
       unless key.is_a?(String)
         @logger.log(Logger::ERROR, 'Provided key is invalid')
-        reasons.push(OptimizelyDecisionMessage::VARIABLE_VALUE_INVALID)
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
         return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
       end
 
@@ -197,7 +197,7 @@ module Optimizely
         flag_key = key
         rule_key = decision.experiment['key']
 
-        unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT
+        unless decide_options.include? OptimizelyDecideOption::DISABLE_DECISION_EVENT
           if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] ||
              (decision.source == Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'] && config.send_flag_decisions)
             send_impression(config, decision.experiment, variation_key, flag_key, rule_key, decision.source, user_id, attributes)
@@ -212,7 +212,7 @@ module Optimizely
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
-      unless decide_options.include? Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
+      unless decide_options.include? OptimizelyDecideOption::EXCLUDE_VARIABLES
         feature_flag['variables'].each do |variable|
           variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
           all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
@@ -233,6 +233,7 @@ module Optimizely
         decision_event_dispatched: decision_event_dispatched
       )
 
+      reasons_to_include = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS ? reasons : []
       OptimizelyDecision.new(
         variation_key: variation_key,
         enabled: feature_enabled,
@@ -240,7 +241,7 @@ module Optimizely
         rule_key: rule_key,
         flag_key: flag_key,
         user_context: user_context,
-        reasons: reasons
+        reasons: reasons_to_include
       )
     end
 
@@ -271,7 +272,7 @@ module Optimizely
         return {}
       end
 
-      enabled_flags_only = !decide_options.nil? && (decide_options.include? Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+      enabled_flags_only = !decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
       decisions = {}
       keys.each do |key|
         decision = decide(user_context, key, decide_options)

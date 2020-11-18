@@ -3509,7 +3509,7 @@ describe 'Optimizely' do
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 123)
         expect(decision.flag_key).to eq(123)
-        expect(decision.reasons).to eq(['Variable value for key "%s" is invalid or wrong type.'])
+        expect(decision.reasons).to eq(['No flag was found for key "123".'])
       end
 
       it 'when flag key is not available' do
