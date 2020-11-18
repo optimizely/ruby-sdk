@@ -187,7 +187,7 @@ module Optimizely
       all_variables = {}
       decision_event_dispatched = false
 
-      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options)
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options, reasons)
 
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)

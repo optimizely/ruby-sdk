@@ -3795,11 +3795,11 @@ describe 'Optimizely' do
         user_context = project_instance.create_user_context('user1')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, []).once
+          .with(anything, anything, anything, anything, [], []).once
         project_instance.decide(user_context, 'multi_variate_feature')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]).once
+          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT], []).once
         project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
@@ -3810,7 +3810,7 @@ describe 'Optimizely' do
                   Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE,
                   Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
                   Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
-                ]).once
+                ], []).once
         project_instance
           .decide(user_context, 'multi_variate_feature', [
                     Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,

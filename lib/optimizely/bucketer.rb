@@ -35,7 +35,7 @@ module Optimizely
       @bucket_seed = HASH_SEED
     end
 
-    def bucket(project_config, experiment, bucketing_id, user_id)
+    def bucket(project_config, experiment, bucketing_id, user_id, decide_reasons = nil)
       # Determines ID of variation to be shown for a given experiment key and user ID.
       #
       # project_config - Instance of ProjectConfig
@@ -58,29 +58,29 @@ module Optimizely
           bucketed_experiment_id = find_bucket(bucketing_id, user_id, group_id, traffic_allocations)
           # return if the user is not bucketed into any experiment
           unless bucketed_experiment_id
-            @logger.log(Logger::INFO, "User '#{user_id}' is in no experiment.")
+            message = "User '#{user_id}' is in no experiment."
+            @logger.log(Logger::INFO, message)
+            decide_reasons&.push(message)
             return nil
           end
 
           # return if the user is bucketed into a different experiment than the one specified
           if bucketed_experiment_id != experiment_id
-            @logger.log(
-              Logger::INFO,
-              "User '#{user_id}' is not in experiment '#{experiment_key}' of group #{group_id}."
-            )
+            message = "User '#{user_id}' is not in experiment '#{experiment_key}' of group #{group_id}."
+            @logger.log(Logger::INFO, message)
+            decide_reasons&.push(message)
             return nil
           end
 
           # continue bucketing if the user is bucketed into the experiment specified
-          @logger.log(
-            Logger::INFO,
-            "User '#{user_id}' is in experiment '#{experiment_key}' of group #{group_id}."
-          )
+          message = "User '#{user_id}' is in experiment '#{experiment_key}' of group #{group_id}."
+          @logger.log(Logger::INFO, message)
+          decide_reasons&.push(message)
         end
       end
 
       traffic_allocations = experiment['trafficAllocation']
-      variation_id = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
+      variation_id = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations, decide_reasons)
       if variation_id && variation_id != ''
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
         return variation
@@ -88,16 +88,15 @@ module Optimizely
 
       # Handle the case when the traffic range is empty due to sticky bucketing
       if variation_id == ''
-        @logger.log(
-          Logger::DEBUG,
-          'Bucketed into an empty traffic range. Returning nil.'
-        )
+        message = 'Bucketed into an empty traffic range. Returning nil.'
+        @logger.log(Logger::DEBUG, message)
+        decide_reasons&.push(message)
       end
 
       nil
     end
 
-    def find_bucket(bucketing_id, user_id, parent_id, traffic_allocations)
+    def find_bucket(bucketing_id, user_id, parent_id, traffic_allocations, decide_reasons = nil)
       # Helper function to find the matching entity ID for a given bucketing value in a list of traffic allocations.
       #
       # bucketing_id - String A customer-assigned value user to generate bucketing key
@@ -108,8 +107,10 @@ module Optimizely
       # Returns entity ID corresponding to the provided bucket value or nil if no match is found.
       bucketing_key = format(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
       bucket_value = generate_bucket_value(bucketing_key)
-      @logger.log(Logger::DEBUG, "Assigned bucket #{bucket_value} to user '#{user_id}' "\
-                         "with bucketing ID: '#{bucketing_id}'.")
+
+      message = "Assigned bucket #{bucket_value} to user '#{user_id}' with bucketing ID: '#{bucketing_id}'."
+      @logger.log(Logger::DEBUG, message)
+      decide_reasons&.push(decide_reasons)
 
       traffic_allocations.each do |traffic_allocation|
         current_end_of_range = traffic_allocation['endOfRange']
