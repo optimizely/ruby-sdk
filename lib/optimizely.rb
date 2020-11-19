@@ -233,7 +233,7 @@ module Optimizely
         decision_event_dispatched: decision_event_dispatched
       )
 
-      reasons_to_include = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS ? reasons : []
+      should_include_reasons = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS
       OptimizelyDecision.new(
         variation_key: variation_key,
         enabled: feature_enabled,
@@ -241,7 +241,7 @@ module Optimizely
         rule_key: rule_key,
         flag_key: flag_key,
         user_context: user_context,
-        reasons: reasons_to_include
+        reasons: should_include_reasons ? reasons : []
       )
     end
 

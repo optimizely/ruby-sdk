@@ -110,7 +110,7 @@ module Optimizely
 
       message = "Assigned bucket #{bucket_value} to user '#{user_id}' with bucketing ID: '#{bucketing_id}'."
       @logger.log(Logger::DEBUG, message)
-      decide_reasons&.push(decide_reasons)
+      decide_reasons&.push(message)
 
       traffic_allocations.each do |traffic_allocation|
         current_end_of_range = traffic_allocation['endOfRange']
