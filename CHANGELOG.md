@@ -1,7 +1,7 @@
 # Optimizely Ruby SDK Changelog
 
 ## 3.7.0
-November 19th, 2020
+November 20th, 2020
 
 ### New Features:
 - Added support for upcoming application-controlled introduction of tracking for non-experiment Flag decisions. ([#272](https://github.com/optimizely/ruby-sdk/pull/272)).
