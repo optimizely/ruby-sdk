@@ -35,19 +35,19 @@ module Optimizely
     end
 
     def decide(key, options = nil)
-      @optimizely_client.decide(self, key, options)
+      @optimizely_client&.decide(self, key, options)
     end
 
     def decide_for_keys(keys, options = nil)
-      @optimizely_client.decide_for_keys(self, keys, options)
+      @optimizely_client&.decide_for_keys(self, keys, options)
     end
 
     def decide_all(options = nil)
-      @optimizely_client.decide_all(self, options)
+      @optimizely_client&.decide_all(self, options)
     end
 
     def track_event(event_key, event_tags = nil)
-      @optimizely_client.track(event_key, @user_id, @user_attributes, event_tags)
+      @optimizely_client&.track(event_key, @user_id, @user_attributes, event_tags)
     end
 
     def as_json
