@@ -121,7 +121,7 @@ module Optimizely
       decide_reasons&.push(message)
 
       # Persist bucketing decision
-      save_user_profile(user_profile, experiment_id, variation_id, decide_reasons) unless should_ignore_user_profile_service
+      save_user_profile(user_profile, experiment_id, variation_id) unless should_ignore_user_profile_service
       variation_id
     end
 
@@ -435,7 +435,7 @@ module Optimizely
       user_profile
     end
 
-    def save_user_profile(user_profile, experiment_id, variation_id, decide_reasons = nil)
+    def save_user_profile(user_profile, experiment_id, variation_id)
       # Save a given bucketing decision to a given user profile
       #
       # user_profile - Hash user profile
@@ -450,13 +450,9 @@ module Optimizely
           variation_id: variation_id
         }
         @user_profile_service.save(user_profile)
-        message = "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'."
-        @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
+        @logger.log(Logger::INFO, "Saved variation ID #{variation_id} of experiment ID #{experiment_id} for user '#{user_id}'.")
       rescue => e
-        message = "Error while saving user profile for user ID '#{user_id}': #{e}."
-        @logger.log(Logger::ERROR, message)
-        decide_reasons&.push(message)
+        @logger.log(Logger::ERROR, "Error while saving user profile for user ID '#{user_id}': #{e}.")
       end
     end
 
