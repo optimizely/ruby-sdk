@@ -193,10 +193,11 @@ module Optimizely
 
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
+        experiment = decision.experiment
+        rule_key = experiment['key']
         variation = decision['variation']
         variation_key = variation['key']
         feature_enabled = variation['featureEnabled']
-        rule_key = decision.experiment['key']
         decision_source = decision.source
       end
 
