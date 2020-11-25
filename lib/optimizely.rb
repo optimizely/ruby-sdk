@@ -186,6 +186,8 @@ module Optimizely
       flag_key = key
       all_variables = {}
       decision_event_dispatched = false
+      experiment = nil
+      decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
 
       decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options, reasons)
 
@@ -194,21 +196,15 @@ module Optimizely
         variation = decision['variation']
         variation_key = variation['key']
         feature_enabled = variation['featureEnabled']
-        flag_key = key
         rule_key = decision.experiment['key']
-
-        unless decide_options.include? OptimizelyDecideOption::DISABLE_DECISION_EVENT
-          if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] ||
-             (decision.source == Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'] && config.send_flag_decisions)
-            send_impression(config, decision.experiment, variation_key, flag_key, rule_key, feature_enabled, decision.source, user_id, attributes)
-            decision_event_dispatched = true
-          end
-        end
+        decision_source = decision.source
       end
 
-      if decision.nil? && config.send_flag_decisions
-        send_impression(config, nil, '', flag_key, '', feature_enabled, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'], user_id, attributes)
-        decision_event_dispatched = true
+      unless decide_options.include? OptimizelyDecideOption::DISABLE_DECISION_EVENT
+        if decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions
+          send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes)
+          decision_event_dispatched = true
+        end
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
