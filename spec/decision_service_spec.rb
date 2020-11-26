@@ -338,7 +338,7 @@ describe Optimizely::DecisionService do
                                                  .with(Logger::ERROR, "Error while saving user profile for user ID 'test_user': uncaught throw :SaveError.")
       end
 
-      describe 'IGNORE_USER_PROFILE decide option' do
+      describe 'IGNORE_USER_PROFILE_SERVICE decide option' do
         it 'should ignore user profile service if this option is set' do
           saved_user_profile = {
             user_id: 'test_user',
