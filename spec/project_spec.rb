@@ -3584,6 +3584,8 @@ describe 'Optimizely' do
       it 'when user is bucketed into a rollout and send_flag_decisions is true' do
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]
+        allow(Time).to receive(:now).and_return(time_now)
+        allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
         expect(project_instance.notification_center).to receive(:send_notifications)
           .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
         expect(project_instance.notification_center).to receive(:send_notifications)
@@ -3618,6 +3620,45 @@ describe 'Optimizely' do
           variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
           variation_key: 'Fred'
         )
+        expected_params = {
+          account_id: '12001',
+          project_id: '111001',
+          revision: '42',
+          client_name: 'ruby-sdk',
+          client_version: '3.7.0',
+          anonymize_ip: false,
+          enrich_decisions: true,
+          visitors: [{
+            snapshots: [{
+              events: [{
+                entity_id: '4',
+                uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                key: 'campaign_activated',
+                timestamp: (time_now.to_f * 1000).to_i
+              }],
+              decisions: [{
+                campaign_id: '4',
+                experiment_id: '122230',
+                variation_id: '122231',
+                metadata: {
+                  flag_key: 'multi_variate_feature',
+                  rule_key: 'test_experiment_multivariate',
+                  rule_type: 'rollout',
+                  variation_key: 'Fred',
+                  enabled: true
+                }
+              }]
+            }],
+            visitor_id: 'user1',
+            attributes: [{
+              entity_id: '$opt_bot_filtering',
+              key: '$opt_bot_filtering',
+              type: 'custom',
+              value: true
+            }]
+          }]
+        }
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       end
 
       it 'when user is bucketed into a rollout and send_flag_decisions is false' do
@@ -3656,6 +3697,7 @@ describe 'Optimizely' do
           variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
           variation_key: 'Fred'
         )
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).exactly(0).times
       end
 
       it 'when decision service returns nil and send_flag_decisions is false' do
@@ -3688,9 +3730,12 @@ describe 'Optimizely' do
           variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
           variation_key: nil
         )
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).exactly(0).times
       end
 
       it 'when decision service returns nil and send_flag_decisions is true' do
+        allow(Time).to receive(:now).and_return(time_now)
+        allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
         expect(project_instance.notification_center).to receive(:send_notifications)
           .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
         expect(project_instance.notification_center).to receive(:send_notifications)
@@ -3721,6 +3766,45 @@ describe 'Optimizely' do
           variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
           variation_key: nil
         )
+        expected_params = {
+          account_id: '12001',
+          project_id: '111001',
+          revision: '42',
+          client_name: 'ruby-sdk',
+          client_version: '3.7.0',
+          anonymize_ip: false,
+          enrich_decisions: true,
+          visitors: [{
+            snapshots: [{
+              events: [{
+                entity_id: '',
+                uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                key: 'campaign_activated',
+                timestamp: (time_now.to_f * 1000).to_i
+              }],
+              decisions: [{
+                campaign_id: '',
+                experiment_id: '',
+                variation_id: '',
+                metadata: {
+                  flag_key: 'multi_variate_feature',
+                  rule_key: '',
+                  rule_type: 'rollout',
+                  variation_key: '',
+                  enabled: false
+                }
+              }]
+            }],
+            visitor_id: 'user1',
+            attributes: [{
+              entity_id: '$opt_bot_filtering',
+              key: '$opt_bot_filtering',
+              type: 'custom',
+              value: true
+            }]
+          }]
+        }
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       end
     end
 
