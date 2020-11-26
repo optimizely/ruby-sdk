@@ -3887,6 +3887,80 @@ describe 'Optimizely' do
         end
       end
 
+      describe 'INCLUDE_REASONS' do
+        it 'should include reasons when the option is set' do
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(
+              Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+              'flag',
+              'user1',
+              {},
+              flag_key: 'multi_variate_feature',
+              enabled: false,
+              variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+              variation_key: nil,
+              rule_key: nil,
+              reasons: [
+                "User 'user1' is not in the forced variation map.",
+                "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+                "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+                "Feature flag 'multi_variate_feature' is not used in a rollout."
+              ],
+              decision_event_dispatched: true
+            )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            reasons: [
+              "User 'user1' is not in the forced variation map.",
+              "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+              "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+              "Feature flag 'multi_variate_feature' is not used in a rollout."
+            ],
+            rule_key: nil,
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil
+          )
+        end
+
+        it 'should not include reasons when the option is not set' do
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(
+              Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+              'flag',
+              'user1',
+              {},
+              flag_key: 'multi_variate_feature',
+              enabled: false,
+              variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+              variation_key: nil,
+              rule_key: nil,
+              reasons: [],
+              decision_event_dispatched: true
+            )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature')
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            reasons: [],
+            rule_key: nil,
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil
+          )
+        end
+      end
+
       it 'should pass on decide options to internal methods' do
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]

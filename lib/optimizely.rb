@@ -216,6 +216,8 @@ module Optimizely
         end
       end
 
+      should_include_reasons = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS
+
       # Send notification
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -226,11 +228,10 @@ module Optimizely
         variables: all_variables,
         variation_key: variation_key,
         rule_key: rule_key,
-        reasons: reasons,
+        reasons: should_include_reasons ? reasons : [],
         decision_event_dispatched: decision_event_dispatched
       )
 
-      should_include_reasons = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS
       OptimizelyDecision.new(
         variation_key: variation_key,
         enabled: feature_enabled,
