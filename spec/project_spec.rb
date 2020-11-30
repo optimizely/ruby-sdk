@@ -4004,6 +4004,13 @@ describe 'Optimizely' do
   end
 
   describe '#decide_all' do
+    it 'should get empty object when sdk is not ready' do
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      user_context = project_instance.create_user_context('user1')
+      decisions = invalid_project.decide_all(user_context)
+      expect(decisions).to eq({})
+    end
+
     it 'should get all the decisions' do
       stub_request(:post, impression_log_url)
       user_context = project_instance.create_user_context('user1')
@@ -4056,6 +4063,19 @@ describe 'Optimizely' do
   end
 
   describe '#decide_for_keys' do
+    it 'should get empty object when sdk is not ready' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      user_context = project_instance.create_user_context('user1')
+      decisions = invalid_project.decide_for_keys(user_context, keys)
+      expect(decisions).to eq({})
+    end
+
     it 'should get all the decisions for keys' do
       keys = %w[
         boolean_single_variable_feature
