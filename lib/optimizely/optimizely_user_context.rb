@@ -25,13 +25,14 @@ module Optimizely
     attr_reader :user_id, :user_attributes
 
     def initialize(optimizely_client, user_id, user_attributes)
+      @set_attr_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
     end
 
     def set_attribute(attribute_key, attribute_value)
-      @user_attributes[attribute_key] = attribute_value
+      @set_attr_mutex.synchronize { @user_attributes[attribute_key] = attribute_value }
     end
 
     def decide(key, options = nil)
