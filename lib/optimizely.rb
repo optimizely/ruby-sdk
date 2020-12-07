@@ -270,7 +270,8 @@ module Optimizely
         return {}
       end
 
-      enabled_flags_only = !decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+      enabled_flags_only = (!decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)) || (@default_decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+
       decisions = {}
       keys.each do |key|
         decision = decide(user_context, key, decide_options)

@@ -4137,6 +4137,41 @@ describe 'Optimizely' do
         variation_key: 'control'
       )
     end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true in default_decide_options' do
+      custom_project_instance = Optimizely::Project.new(
+        config_body_JSON, nil, spy_logger, error_handler,
+        false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY]
+      )
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = custom_project_instance.create_user_context('user1')
+      decisions = custom_project_instance.decide_for_keys(user_context, keys)
+      expect(decisions.length).to eq(2)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
   end
 
   describe 'default_decide_options' do
