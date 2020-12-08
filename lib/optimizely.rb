@@ -122,6 +122,16 @@ module Optimizely
                          end
     end
 
+    # Create a context of the user for which decision APIs will be called.
+    #
+    # A user context will be created successfully even when the SDK is not fully configured yet.
+    #
+    # @param user_id - The user ID to be used for bucketing.
+    # @param attributes - A Hash representing user attribute names and values.
+    #
+    # @return [OptimizelyUserContext] An OptimizelyUserContext associated with this OptimizelyClient.
+    # @return [nil] If user attributes are not in valid format.
+
     def create_user_context(user_id, attributes = nil)
       # We do not check for is_valid here as a user context can be created successfully
       # even when the SDK is not fully configured.
