@@ -42,7 +42,7 @@ module Optimizely
 
     # Returns a decision result (OptimizelyDecision) for a given flag key and a user context, which contains all data required to deliver the flag.
     #
-    # If the SDK finds an error, it’ll return a `decision` with nil for `variation_key`. The decision will include an error message in `reasons`
+    # If the SDK finds an error, it'll return a `decision` with nil for `variation_key`. The decision will include an error message in `reasons`
     #
     # @param key -A flag key for which a decision will be made
     # @param options - A list of options for decision making.
@@ -56,7 +56,7 @@ module Optimizely
     # Returns a hash of decision results (OptimizelyDecision) for multiple flag keys and a user context.
     #
     # If the SDK finds an error for a key, the response will include a decision for the key showing `reasons` for the error.
-    # The SDK will always return hash of decisions. When it can not process requests, it’ll return an empty hash after logging the errors.
+    # The SDK will always return hash of decisions. When it can not process requests, it'll return an empty hash after logging the errors.
     #
     # @param keys - A list of flag keys for which the decisions will be made.
     # @param options - A list of options for decision making.
