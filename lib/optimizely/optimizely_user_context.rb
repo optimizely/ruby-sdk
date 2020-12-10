@@ -22,13 +22,21 @@ module Optimizely
   class OptimizelyUserContext
     # Representation of an Optimizely User Context using which APIs are to be called.
 
-    attr_reader :user_id, :user_attributes
+    attr_reader :user_id
 
     def initialize(optimizely_client, user_id, user_attributes)
-      @set_attr_mutex = Mutex.new
+      @attr_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
+    end
+
+    def clone
+      OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
+    end
+
+    def user_attributes
+      @attr_mutex.synchronize { @user_attributes.clone }
     end
 
     # Set an attribute for a given key
@@ -37,7 +45,7 @@ module Optimizely
     # @param value - An attribute value
 
     def set_attribute(attribute_key, attribute_value)
-      @set_attr_mutex.synchronize { @user_attributes[attribute_key] = attribute_value }
+      @attr_mutex.synchronize { @user_attributes[attribute_key] = attribute_value }
     end
 
     # Returns a decision result (OptimizelyDecision) for a given flag key and a user context, which contains all data required to deliver the flag.
@@ -50,7 +58,7 @@ module Optimizely
     # @return [OptimizelyDecision] A decision result
 
     def decide(key, options = nil)
-      @optimizely_client&.decide(self, key, options)
+      @optimizely_client&.decide(clone, key, options)
     end
 
     # Returns a hash of decision results (OptimizelyDecision) for multiple flag keys and a user context.
@@ -64,7 +72,7 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_for_keys(keys, options = nil)
-      @optimizely_client&.decide_for_keys(self, keys, options)
+      @optimizely_client&.decide_for_keys(clone, keys, options)
     end
 
     # Returns a hash of decision results (OptimizelyDecision) for all active flag keys.
@@ -74,7 +82,7 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_all(options = nil)
-      @optimizely_client&.decide_all(self, options)
+      @optimizely_client&.decide_all(clone, options)
     end
 
     # Track an event
@@ -82,7 +90,7 @@ module Optimizely
     # @param event_key - Event key representing the event which needs to be recorded.
 
     def track_event(event_key, event_tags = nil)
-      @optimizely_client&.track(event_key, @user_id, @user_attributes, event_tags)
+      @optimizely_client&.track(event_key, @user_id, user_attributes, event_tags)
     end
 
     def as_json
