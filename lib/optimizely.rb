@@ -19,6 +19,9 @@ require_relative 'optimizely/audience'
 require_relative 'optimizely/config/datafile_project_config'
 require_relative 'optimizely/config_manager/http_project_config_manager'
 require_relative 'optimizely/config_manager/static_project_config_manager'
+require_relative 'optimizely/decide/optimizely_decide_option'
+require_relative 'optimizely/decide/optimizely_decision'
+require_relative 'optimizely/decide/optimizely_decision_message'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
@@ -34,9 +37,12 @@ require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
 require_relative 'optimizely/optimizely_config'
+require_relative 'optimizely/optimizely_user_context'
 
 module Optimizely
   class Project
+    include Optimizely::Decide
+
     attr_reader :notification_center
     # @api no-doc
     attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
@@ -67,12 +73,21 @@ module Optimizely
       sdk_key = nil,
       config_manager = nil,
       notification_center = nil,
-      event_processor = nil
+      event_processor = nil,
+      default_decide_options = []
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       @user_profile_service = user_profile_service
+      @default_decide_options = []
+
+      if default_decide_options.is_a? Array
+        @default_decide_options = default_decide_options.clone
+      else
+        @logger.log(Logger::DEBUG, 'Provided default decide options is not an array.')
+        @default_decide_options = []
+      end
 
       begin
         validate_instantiation_options
@@ -105,6 +120,174 @@ module Optimizely
                          else
                            ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
                          end
+    end
+
+    # Create a context of the user for which decision APIs will be called.
+    #
+    # A user context will be created successfully even when the SDK is not fully configured yet.
+    #
+    # @param user_id - The user ID to be used for bucketing.
+    # @param attributes - A Hash representing user attribute names and values.
+    #
+    # @return [OptimizelyUserContext] An OptimizelyUserContext associated with this OptimizelyClient.
+    # @return [nil] If user attributes are not in valid format.
+
+    def create_user_context(user_id, attributes = nil)
+      # We do not check for is_valid here as a user context can be created successfully
+      # even when the SDK is not fully configured.
+
+      # validate user_id
+      return nil unless Optimizely::Helpers::Validator.inputs_valid?(
+        {
+          user_id: user_id
+        }, @logger, Logger::ERROR
+      )
+
+      # validate attributes
+      return nil unless user_inputs_valid?(attributes)
+
+      user_context = OptimizelyUserContext.new(self, user_id, attributes)
+      user_context
+    end
+
+    def decide(user_context, key, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      reasons = []
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide').message)
+        reasons.push(OptimizelyDecisionMessage::SDK_NOT_READY)
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key is a string
+      unless key.is_a?(String)
+        @logger.log(Logger::ERROR, 'Provided key is invalid')
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key maps to a feature flag
+      config = project_config
+      feature_flag = config.get_feature_flag_from_key(key)
+      unless feature_flag
+        @logger.log(Logger::ERROR, "No feature flag was found for key '#{key}'.")
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # merge decide_options and default_decide_options
+      if decide_options.is_a? Array
+        decide_options += @default_decide_options
+      else
+        @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
+        decide_options = @default_decide_options
+      end
+
+      # Create Optimizely Decision Result.
+      user_id = user_context.user_id
+      attributes = user_context.user_attributes
+      variation_key = nil
+      feature_enabled = false
+      rule_key = nil
+      flag_key = key
+      all_variables = {}
+      decision_event_dispatched = false
+      experiment = nil
+      decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+
+      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options, reasons)
+
+      # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
+      if decision.is_a?(Optimizely::DecisionService::Decision)
+        experiment = decision.experiment
+        rule_key = experiment['key']
+        variation = decision['variation']
+        variation_key = variation['key']
+        feature_enabled = variation['featureEnabled']
+        decision_source = decision.source
+      end
+
+      unless decide_options.include? OptimizelyDecideOption::DISABLE_DECISION_EVENT
+        if decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions
+          send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes)
+          decision_event_dispatched = true
+        end
+      end
+
+      # Generate all variables map if decide options doesn't include excludeVariables
+      unless decide_options.include? OptimizelyDecideOption::EXCLUDE_VARIABLES
+        feature_flag['variables'].each do |variable|
+          variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
+          all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
+        end
+      end
+
+      should_include_reasons = decide_options.include? OptimizelyDecideOption::INCLUDE_REASONS
+
+      # Send notification
+      @notification_center.send_notifications(
+        NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FLAG'],
+        user_id, (attributes || {}),
+        flag_key: flag_key,
+        enabled: feature_enabled,
+        variables: all_variables,
+        variation_key: variation_key,
+        rule_key: rule_key,
+        reasons: should_include_reasons ? reasons : [],
+        decision_event_dispatched: decision_event_dispatched
+      )
+
+      OptimizelyDecision.new(
+        variation_key: variation_key,
+        enabled: feature_enabled,
+        variables: all_variables,
+        rule_key: rule_key,
+        flag_key: flag_key,
+        user_context: user_context,
+        reasons: should_include_reasons ? reasons : []
+      )
+    end
+
+    def decide_all(user_context, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide_all').message)
+        return {}
+      end
+
+      keys = []
+      project_config.feature_flags.each do |feature_flag|
+        keys.push(feature_flag['key'])
+      end
+      decide_for_keys(user_context, keys, decide_options)
+    end
+
+    def decide_for_keys(user_context, keys, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide_for_keys').message)
+        return {}
+      end
+
+      enabled_flags_only = (!decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)) || (@default_decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+
+      decisions = {}
+      keys.each do |key|
+        decision = decide(user_context, key, decide_options)
+        decisions[key] = decision unless enabled_flags_only && !decision.enabled
+      end
+      decisions
     end
 
     # Buckets visitor and sends impression event to Optimizely.

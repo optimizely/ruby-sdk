@@ -23,6 +23,7 @@ require 'optimizely/event_dispatcher'
 require 'optimizely/event/batch_event_processor'
 require 'optimizely/exceptions'
 require 'optimizely/helpers/validator'
+require 'optimizely/optimizely_user_context'
 require 'optimizely/version'
 
 describe 'Optimizely' do
@@ -132,6 +133,35 @@ describe 'Optimizely' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
 
       expect { Optimizely::Project.new(config_body_invalid_JSON, nil, nil, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
+    end
+  end
+
+  describe '#create_user_context' do
+    it 'should log and return nil when user ID is non string' do
+      expect(project_instance.create_user_context(nil)).to eq(nil)
+      expect(project_instance.create_user_context(5)).to eq(nil)
+      expect(project_instance.create_user_context(5.5)).to eq(nil)
+      expect(project_instance.create_user_context(true)).to eq(nil)
+      expect(project_instance.create_user_context({})).to eq(nil)
+      expect(project_instance.create_user_context([])).to eq(nil)
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'User ID is invalid').exactly(6).times
+    end
+
+    it 'should return nil when attributes are invalid' do
+      expect(Optimizely::Helpers::Validator).to receive(:attributes_valid?).once.with('invalid')
+      expect(error_handler).to receive(:handle_error).once.with(Optimizely::InvalidAttributeFormatError)
+      expect(project_instance.create_user_context(
+               'test_user',
+               'invalid'
+             )).to eq(nil)
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided attributes are in an invalid format.')
+    end
+
+    it 'should return OptimizelyUserContext with valid user ID and attributes' do
+      expect(project_instance.create_user_context(
+               'test_user',
+               'browser' => 'chrome'
+             )).to be_instance_of(Optimizely::OptimizelyUserContext)
     end
   end
 
@@ -3462,6 +3492,854 @@ describe 'Optimizely' do
         .to eq(nil)
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', 'test_user', nil))
         .to eq(nil)
+    end
+  end
+
+  describe '#decide' do
+    describe 'should return empty decision object with correct reason when sdk is not ready' do
+      it 'when sdk is not ready' do
+        invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+        user_context = project_instance.create_user_context('user1')
+        decision = invalid_project.decide(user_context, 'dummy_flag')
+        expect(decision.as_json).to eq(
+          enabled: false,
+          flag_key: 'dummy_flag',
+          reasons: ['Optimizely SDK not configured properly yet.'],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {},
+          variation_key: nil
+        )
+      end
+
+      it 'when flag key is invalid' do
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 123)
+        expect(decision.as_json).to eq(
+          enabled: false,
+          flag_key: 123,
+          reasons: ['No flag was found for key "123".'],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {},
+          variation_key: nil
+        )
+      end
+
+      it 'when flag key is not available' do
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'not_found_key')
+        expect(decision.as_json).to eq(
+          enabled: false,
+          flag_key: 'not_found_key',
+          reasons: ['No flag was found for key "not_found_key".'],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {},
+          variation_key: nil
+        )
+      end
+    end
+
+    describe 'should return correct decision object' do
+      it 'when user is bucketed into a feature experiment' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred',
+            rule_key: 'test_experiment_multivariate',
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+      end
+
+      it 'when user is bucketed into a rollout and send_flag_decisions is true' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        allow(Time).to receive(:now).and_return(time_now)
+        allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred',
+            rule_key: 'test_experiment_multivariate',
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        )
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+        expected_params = {
+          account_id: '12001',
+          project_id: '111001',
+          revision: '42',
+          client_name: 'ruby-sdk',
+          client_version: '3.7.0',
+          anonymize_ip: false,
+          enrich_decisions: true,
+          visitors: [{
+            snapshots: [{
+              events: [{
+                entity_id: '4',
+                uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                key: 'campaign_activated',
+                timestamp: (time_now.to_f * 1000).to_i
+              }],
+              decisions: [{
+                campaign_id: '4',
+                experiment_id: '122230',
+                variation_id: '122231',
+                metadata: {
+                  flag_key: 'multi_variate_feature',
+                  rule_key: 'test_experiment_multivariate',
+                  rule_type: 'rollout',
+                  variation_key: 'Fred',
+                  enabled: true
+                }
+              }]
+            }],
+            visitor_id: 'user1',
+            attributes: [{
+              entity_id: '$opt_bot_filtering',
+              key: '$opt_bot_filtering',
+              type: 'custom',
+              value: true
+            }]
+          }]
+        }
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
+      end
+
+      it 'when user is bucketed into a rollout and send_flag_decisions is false' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred',
+            rule_key: 'test_experiment_multivariate',
+            reasons: [],
+            decision_event_dispatched: false
+          )
+        allow(project_config).to receive(:send_flag_decisions).and_return(false)
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        )
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).exactly(0).times
+      end
+
+      it 'when decision service returns nil and send_flag_decisions is false' do
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [],
+            decision_event_dispatched: false
+          )
+        allow(project_config).to receive(:send_flag_decisions).and_return(false)
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = nil
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).exactly(0).times
+      end
+
+      it 'when decision service returns nil and send_flag_decisions is true' do
+        allow(Time).to receive(:now).and_return(time_now)
+        allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = nil
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+        decision = project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+        expected_params = {
+          account_id: '12001',
+          project_id: '111001',
+          revision: '42',
+          client_name: 'ruby-sdk',
+          client_version: '3.7.0',
+          anonymize_ip: false,
+          enrich_decisions: true,
+          visitors: [{
+            snapshots: [{
+              events: [{
+                entity_id: '',
+                uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                key: 'campaign_activated',
+                timestamp: (time_now.to_f * 1000).to_i
+              }],
+              decisions: [{
+                campaign_id: '',
+                experiment_id: '',
+                variation_id: '',
+                metadata: {
+                  flag_key: 'multi_variate_feature',
+                  rule_key: '',
+                  rule_type: 'rollout',
+                  variation_key: '',
+                  enabled: false
+                }
+              }]
+            }],
+            visitor_id: 'user1',
+            attributes: [{
+              entity_id: '$opt_bot_filtering',
+              key: '$opt_bot_filtering',
+              type: 'custom',
+              value: true
+            }]
+          }]
+        }
+        expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
+      end
+    end
+
+    describe 'decide options' do
+      describe 'DISABLE_DECISION_EVENT' do
+        it 'should send event when option is not set' do
+          experiment_to_return = config_body['experiments'][3]
+          variation_to_return = experiment_to_return['variations'][0]
+          expect(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          decision_to_return = Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            variation_to_return,
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          )
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          user_context = project_instance.create_user_context('user1')
+          project_instance.decide(user_context, 'multi_variate_feature')
+        end
+
+        it 'should not send event when option is set' do
+          experiment_to_return = config_body['experiments'][3]
+          variation_to_return = experiment_to_return['variations'][0]
+          expect(project_instance.event_dispatcher).not_to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          decision_to_return = Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            variation_to_return,
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          )
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          user_context = project_instance.create_user_context('user1')
+          project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
+        end
+      end
+
+      describe 'EXCLUDE_VARIABLES' do
+        it 'should exclude variables if set' do
+          experiment_to_return = config_body['experiments'][3]
+          variation_to_return = experiment_to_return['variations'][0]
+          decision_to_return = Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            variation_to_return,
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES])
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            reasons: [],
+            rule_key: 'test_experiment_multivariate',
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {},
+            variation_key: 'Fred'
+          )
+        end
+
+        it 'should include variables if not set' do
+          experiment_to_return = config_body['experiments'][3]
+          variation_to_return = experiment_to_return['variations'][0]
+          decision_to_return = Optimizely::DecisionService::Decision.new(
+            experiment_to_return,
+            variation_to_return,
+            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature')
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: true,
+            reasons: [],
+            rule_key: 'test_experiment_multivariate',
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+            variation_key: 'Fred'
+          )
+        end
+      end
+
+      describe 'INCLUDE_REASONS' do
+        it 'should include reasons when the option is set' do
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(
+              Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+              'flag',
+              'user1',
+              {},
+              flag_key: 'multi_variate_feature',
+              enabled: false,
+              variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+              variation_key: nil,
+              rule_key: nil,
+              reasons: [
+                "User 'user1' is not in the forced variation map.",
+                "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+                "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+                "Feature flag 'multi_variate_feature' is not used in a rollout."
+              ],
+              decision_event_dispatched: true
+            )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            reasons: [
+              "User 'user1' is not in the forced variation map.",
+              "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+              "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+              "Feature flag 'multi_variate_feature' is not used in a rollout."
+            ],
+            rule_key: nil,
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil
+          )
+        end
+
+        it 'should not include reasons when the option is not set' do
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(
+              Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+              'flag',
+              'user1',
+              {},
+              flag_key: 'multi_variate_feature',
+              enabled: false,
+              variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+              variation_key: nil,
+              rule_key: nil,
+              reasons: [],
+              decision_event_dispatched: true
+            )
+          allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+          user_context = project_instance.create_user_context('user1')
+          decision = project_instance.decide(user_context, 'multi_variate_feature')
+          expect(decision.as_json).to include(
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            reasons: [],
+            rule_key: nil,
+            user_context: {attributes: {}, user_id: 'user1'},
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil
+          )
+        end
+      end
+
+      it 'should pass on decide options to internal methods' do
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = project_instance.create_user_context('user1')
+
+        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+          .with(anything, anything, anything, anything, [], []).once
+        project_instance.decide(user_context, 'multi_variate_feature')
+
+        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT], []).once
+        project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
+
+        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+          .with(anything, anything, anything, anything, [
+                  Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,
+                  Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES,
+                  Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY,
+                  Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE,
+                  Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
+                  Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
+                ], []).once
+        project_instance
+          .decide(user_context, 'multi_variate_feature', [
+                    Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,
+                    Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES,
+                    Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY,
+                    Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE,
+                    Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
+                    Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
+                  ])
+      end
+    end
+  end
+
+  describe '#decide_all' do
+    it 'should get empty object when sdk is not ready' do
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      user_context = project_instance.create_user_context('user1')
+      decisions = invalid_project.decide_all(user_context)
+      expect(decisions).to eq({})
+    end
+
+    it 'should get all the decisions' do
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_all(user_context)
+      expect(decisions.length).to eq(10)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true' do
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_all(user_context, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
+      expect(decisions.length).to eq(6)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+  end
+
+  describe '#decide_for_keys' do
+    it 'should get empty object when sdk is not ready' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      user_context = project_instance.create_user_context('user1')
+      decisions = invalid_project.decide_for_keys(user_context, keys)
+      expect(decisions).to eq({})
+    end
+
+    it 'should get all the decisions for keys' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_for_keys(user_context, keys)
+      expect(decisions.length).to eq(4)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true' do
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = project_instance.create_user_context('user1')
+      decisions = project_instance.decide_for_keys(user_context, keys, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
+      expect(decisions.length).to eq(2)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+
+    it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true in default_decide_options' do
+      custom_project_instance = Optimizely::Project.new(
+        config_body_JSON, nil, spy_logger, error_handler,
+        false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY]
+      )
+      keys = %w[
+        boolean_single_variable_feature
+        integer_single_variable_feature
+        boolean_feature
+        empty_feature
+      ]
+      stub_request(:post, impression_log_url)
+      user_context = custom_project_instance.create_user_context('user1')
+      decisions = custom_project_instance.decide_for_keys(user_context, keys)
+      expect(decisions.length).to eq(2)
+      expect(decisions['boolean_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'boolean_single_variable_feature',
+        reasons: [],
+        rule_key: '177776',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'boolean_variable' => false},
+        variation_key: '177778'
+      )
+      expect(decisions['integer_single_variable_feature'].as_json).to eq(
+        enabled: true,
+        flag_key: 'integer_single_variable_feature',
+        reasons: [],
+        rule_key: 'test_experiment_integer_feature',
+        user_context: {attributes: {}, user_id: 'user1'},
+        variables: {'integer_variable' => 42},
+        variation_key: 'control'
+      )
+    end
+  end
+
+  describe 'default_decide_options' do
+    describe 'EXCLUDE_VARIABLES' do
+      it 'should include variables when the option is not set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = custom_project_instance.create_user_context('user1')
+        decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'F', 'rest_of_name' => 'red'},
+          variation_key: 'Fred'
+        )
+      end
+
+      it 'should exclude variables when the option is set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(
+          config_body_JSON, nil, spy_logger, error_handler,
+          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES]
+        )
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = custom_project_instance.create_user_context('user1')
+        decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: true,
+          reasons: [],
+          rule_key: 'test_experiment_multivariate',
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {},
+          variation_key: 'Fred'
+        )
+      end
+    end
+
+    describe 'INCLUDE_REASONS' do
+      it 'should include reasons when the option is set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(
+          config_body_JSON, nil, spy_logger, error_handler,
+          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS]
+        )
+        expect(custom_project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(custom_project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [
+              "User 'user1' is not in the forced variation map.",
+              "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+              "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+              "Feature flag 'multi_variate_feature' is not used in a rollout."
+            ],
+            decision_event_dispatched: true
+          )
+        allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        user_context = custom_project_instance.create_user_context('user1')
+        decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [
+            "User 'user1' is not in the forced variation map.",
+            "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
+            "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
+            "Feature flag 'multi_variate_feature' is not used in a rollout."
+          ],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+      end
+
+      it 'should not include reasons when the option is not set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        expect(custom_project_instance.notification_center).to receive(:send_notifications)
+          .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+        expect(custom_project_instance.notification_center).to receive(:send_notifications)
+          .once.with(
+            Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+            'flag',
+            'user1',
+            {},
+            flag_key: 'multi_variate_feature',
+            enabled: false,
+            variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+            variation_key: nil,
+            rule_key: nil,
+            reasons: [],
+            decision_event_dispatched: true
+          )
+        allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        user_context = custom_project_instance.create_user_context('user1')
+        decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
+        expect(decision.as_json).to include(
+          flag_key: 'multi_variate_feature',
+          enabled: false,
+          reasons: [],
+          rule_key: nil,
+          user_context: {attributes: {}, user_id: 'user1'},
+          variables: {'first_letter' => 'H', 'rest_of_name' => 'arry'},
+          variation_key: nil
+        )
+      end
+    end
+
+    describe 'DISABLE_DECISION_EVENT' do
+      it 'should send event when option is not set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = custom_project_instance.create_user_context('user1')
+        custom_project_instance.decide(user_context, 'multi_variate_feature')
+      end
+
+      it 'should not send event when option is set in default_decide_options' do
+        custom_project_instance = Optimizely::Project.new(
+          config_body_JSON, nil, spy_logger, error_handler,
+          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]
+        )
+        experiment_to_return = config_body['experiments'][3]
+        variation_to_return = experiment_to_return['variations'][0]
+        expect(custom_project_instance.event_dispatcher).not_to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        )
+        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        user_context = custom_project_instance.create_user_context('user1')
+        custom_project_instance.decide(user_context, 'multi_variate_feature')
+      end
     end
   end
 end
