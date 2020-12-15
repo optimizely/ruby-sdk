@@ -107,7 +107,8 @@ module Optimizely
       end
 
       # Bucket normally
-      variation = @bucketer.bucket(project_config, experiment, bucketing_id, user_id, decide_reasons)
+      variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
+      decide_reasons&.push(*bucket_reasons)
       variation_id = variation ? variation['id'] : nil
 
       message = ''
@@ -241,7 +242,8 @@ module Optimizely
         decide_reasons&.push(message)
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
-        variation = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id, decide_reasons)
+        variation, bucket_reasons = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id)
+        decide_reasons&.push(*bucket_reasons)
         return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
         break
@@ -262,7 +264,8 @@ module Optimizely
       @logger.log(Logger::DEBUG, message)
       decide_reasons&.push(message)
 
-      variation = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id, decide_reasons)
+      variation, bucket_reasons = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id)
+      decide_reasons&.push(*bucket_reasons)
       return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
 
       nil
