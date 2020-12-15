@@ -141,7 +141,8 @@ module Optimizely
       decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options, decide_reasons)
       return decision unless decision.nil?
 
-      decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes, decide_reasons)
+      decision, reasons_recieved = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
+      decide_reasons&.push(*reasons_recieved)
 
       decision
     end
@@ -191,7 +192,7 @@ module Optimizely
       nil
     end
 
-    def get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes = nil, decide_reasons = nil)
+    def get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes = nil)
       # Determine which variation the user is in for a given rollout.
       # Returns the variation of the first experiment the user qualifies for.
       #
@@ -201,26 +202,27 @@ module Optimizely
       # attributes - Hash representing user attributes
       #
       # Returns the Decision struct or nil if not bucketed into any of the targeting rules
+      decide_reasons = []
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
-      decide_reasons&.push(*bucketing_id_reasons)
+      decide_reasons.push(*bucketing_id_reasons)
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? || rollout_id.empty?
         feature_flag_key = feature_flag['key']
         message = "Feature flag '#{feature_flag_key}' is not used in a rollout."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       rollout = project_config.get_rollout_from_id(rollout_id)
       if rollout.nil?
         message = "Rollout with ID '#{rollout_id}' is not in the datafile '#{feature_flag['key']}'"
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
-      return nil if rollout['experiments'].empty?
+      return nil, decide_reasons if rollout['experiments'].empty?
 
       rollout_rules = rollout['experiments']
       number_of_rules = rollout_rules.length - 1
@@ -234,19 +236,19 @@ module Optimizely
         unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
           message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
           @logger.log(Logger::DEBUG, message)
-          decide_reasons&.push(message)
+          decide_reasons.push(message)
           # move onto the next targeting rule
           next
         end
 
         message = "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
+        decide_reasons.push(message)
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
         variation, bucket_reasons = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id)
-        decide_reasons&.push(*bucket_reasons)
-        return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
+        decide_reasons.push(*bucket_reasons)
+        return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']), decide_reasons unless variation.nil?
 
         break
       end
@@ -258,19 +260,19 @@ module Optimizely
       unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
         message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       message = "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
       @logger.log(Logger::DEBUG, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
       variation, bucket_reasons = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id)
-      decide_reasons&.push(*bucket_reasons)
-      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
+      decide_reasons.push(*bucket_reasons)
+      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']), decide_reasons unless variation.nil?
 
-      nil
+      [nil, decide_reasons]
     end
 
     def set_forced_variation(project_config, experiment_key, user_id, variation_key)
