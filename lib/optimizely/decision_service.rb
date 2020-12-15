@@ -64,7 +64,8 @@ module Optimizely
       #   (nil if experiment is inactive or user does not meet audience conditions)
 
       # By default, the bucketing ID should be the user ID
-      bucketing_id = get_bucketing_id(user_id, attributes, decide_reasons)
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      decide_reasons&.push(*bucketing_id_reasons)
       # Check to make sure experiment is active
       experiment = project_config.get_experiment_from_key(experiment_key)
       return nil if experiment.nil?
@@ -200,7 +201,8 @@ module Optimizely
       # attributes - Hash representing user attributes
       #
       # Returns the Decision struct or nil if not bucketed into any of the targeting rules
-      bucketing_id = get_bucketing_id(user_id, attributes, decide_reasons)
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      decide_reasons&.push(*bucketing_id_reasons)
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? || rollout_id.empty?
         feature_flag_key = feature_flag['key']
@@ -459,25 +461,24 @@ module Optimizely
       end
     end
 
-    def get_bucketing_id(user_id, attributes, decide_reasons = nil)
+    def get_bucketing_id(user_id, attributes)
       # Gets the Bucketing Id for Bucketing
       #
       # user_id - String user ID
       # attributes - Hash user attributes
       # Returns String representing bucketing ID if it is a String type in attributes else return user ID
 
-      return user_id unless attributes
+      return user_id, nil unless attributes
 
       bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
 
       if bucketing_id
-        return bucketing_id if bucketing_id.is_a?(String)
+        return bucketing_id, nil if bucketing_id.is_a?(String)
 
         message = 'Bucketing ID attribute is not a string. Defaulted to user ID.'
         @logger.log(Logger::WARN, message)
-        decide_reasons&.push(message)
       end
-      user_id
+      [user_id, message]
     end
   end
 end

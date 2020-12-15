@@ -695,7 +695,8 @@ describe Optimizely::DecisionService do
         'browser_type' => 'firefox',
         Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 5
       }
-      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('test_user')
+      bucketing_id, = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
+      expect(bucketing_id).to eq('test_user')
       expect(spy_logger).to have_received(:log).once.with(Logger::WARN, 'Bucketing ID attribute is not a string. Defaulted to user ID.')
     end
 
@@ -704,7 +705,8 @@ describe Optimizely::DecisionService do
         'browser_type' => 'firefox',
         Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => nil
       }
-      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('test_user')
+      bucketing_id, = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
+      expect(bucketing_id).to eq('test_user')
       expect(spy_logger).not_to have_received(:log)
     end
 
@@ -713,7 +715,8 @@ describe Optimizely::DecisionService do
         'browser_type' => 'firefox',
         Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => 'i_am_bucketing_id'
       }
-      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('i_am_bucketing_id')
+      bucketing_id, = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
+      expect(bucketing_id).to eq('i_am_bucketing_id')
       expect(spy_logger).not_to have_received(:log)
     end
 
@@ -722,7 +725,8 @@ describe Optimizely::DecisionService do
         'browser_type' => 'firefox',
         Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'] => ''
       }
-      expect(decision_service.send(:get_bucketing_id, 'test_user', user_attributes)).to eq('')
+      bucketing_id, = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
+      expect(bucketing_id).to eq('')
       expect(spy_logger).not_to have_received(:log)
     end
   end
