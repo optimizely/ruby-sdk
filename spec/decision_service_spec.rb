@@ -397,7 +397,8 @@ describe Optimizely::DecisionService do
     describe 'when the feature flag\'s experiment ids array is empty' do
       it 'should return nil and log a message' do
         feature_flag = config.feature_flag_key_map['empty_feature']
-        expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)).to eq(nil)
+        variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)
+        expect(variation_received).to eq(nil)
 
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::DEBUG, "The feature flag 'empty_feature' is not used in any experiments.")
@@ -409,7 +410,8 @@ describe Optimizely::DecisionService do
         feature_flag = config.feature_flag_key_map['boolean_feature'].dup
         # any string that is not an experiment id in the data file
         feature_flag['experimentIds'] = ['1333333337']
-        expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)).to eq(nil)
+        variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)
+        expect(variation_received).to eq(nil)
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::DEBUG, "Feature flag experiment with ID '1333333337' is not in the datafile.")
       end
@@ -428,7 +430,8 @@ describe Optimizely::DecisionService do
 
         it 'should return nil and log a message' do
           feature_flag = config.feature_flag_key_map['multi_variate_feature']
-          expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes, [], nil)).to eq(nil)
+          variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes, [])
+          expect(variation_received).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
                                                    .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.")
@@ -449,7 +452,8 @@ describe Optimizely::DecisionService do
             config.variation_id_map['test_experiment_multivariate']['122231'],
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
-          expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)).to eq(expected_decision)
+          variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, 'user_1', user_attributes)
+          expect(variation_received).to eq(expected_decision)
         end
       end
     end
@@ -472,7 +476,8 @@ describe Optimizely::DecisionService do
 
         it 'should return the variation the user is bucketed into' do
           feature_flag = config.feature_flag_key_map['mutex_group_feature']
-          expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
+          variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)
+          expect(variation_received).to eq(expected_decision)
         end
       end
 
@@ -490,7 +495,8 @@ describe Optimizely::DecisionService do
 
         it 'should return nil and log a message' do
           feature_flag = config.feature_flag_key_map['mutex_group_feature']
-          expect(decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)).to eq(nil)
+          variation_received, = decision_service.get_variation_for_feature_experiment(config, feature_flag, user_id, user_attributes)
+          expect(variation_received).to eq(nil)
 
           expect(spy_logger).to have_received(:log).once
                                                    .with(Logger::INFO, "The user 'user_1' is not bucketed into any of the experiments on the feature 'mutex_group_feature'.")

@@ -143,7 +143,8 @@ module Optimizely
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
 
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
-      decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options, decide_reasons)
+      decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options)
+      decide_reasons&.push(*reasons_received)
       return decision unless decision.nil?
 
       decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
@@ -152,7 +153,7 @@ module Optimizely
       decision
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, decide_options = [])
       # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -162,12 +163,13 @@ module Optimizely
       #
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
       # or nil if the user is not bucketed into any of the experiments on the feature
+      decide_reasons = []
       feature_flag_key = feature_flag['key']
       if feature_flag['experimentIds'].empty?
         message = "The feature flag '#{feature_flag_key}' is not used in any experiments."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Evaluate each experiment and return the first bucketed experiment variation
@@ -176,26 +178,26 @@ module Optimizely
         unless experiment
           message = "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
           @logger.log(Logger::DEBUG, message)
-          decide_reasons&.push(message)
-          return nil
+          decide_reasons.push(message)
+          return nil, decide_reasons
         end
 
         experiment_key = experiment['key']
         variation_id, reasons_received = get_variation(project_config, experiment_key, user_id, attributes, decide_options)
-        decide_reasons&.push(*reasons_received)
+        decide_reasons.push(*reasons_received)
 
         next unless variation_id
 
         variation = project_config.variation_id_map[experiment_key][variation_id]
 
-        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'])
+        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
       end
 
       message = "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
-      nil
+      [nil, decide_reasons]
     end
 
     def get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes = nil)
