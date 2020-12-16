@@ -214,7 +214,7 @@ describe 'Optimizely' do
       params = @expected_activate_params
 
       variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return([variation_to_return, nil])
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')

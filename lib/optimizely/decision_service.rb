@@ -52,7 +52,7 @@ module Optimizely
       @forced_variation_map = {}
     end
 
-    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [])
       # Determines variation into which user will be bucketed.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -63,43 +63,44 @@ module Optimizely
       # Returns variation ID where visitor will be bucketed
       #   (nil if experiment is inactive or user does not meet audience conditions)
 
+      decide_reasons = []
       # By default, the bucketing ID should be the user ID
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
-      decide_reasons&.push(*bucketing_id_reasons)
+      decide_reasons.push(*bucketing_id_reasons)
       # Check to make sure experiment is active
       experiment = project_config.get_experiment_from_key(experiment_key)
-      return nil if experiment.nil?
+      return nil, decide_reasons if experiment.nil?
 
       experiment_id = experiment['id']
       unless project_config.experiment_running?(experiment)
         message = "Experiment '#{experiment_key}' is not running."
         @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Check if a forced variation is set for the user
       forced_variation, reasons_received = get_forced_variation(project_config, experiment_key, user_id)
-      decide_reasons&.push(*reasons_received)
-      return forced_variation['id'] if forced_variation
+      decide_reasons.push(*reasons_received)
+      return forced_variation['id'], decide_reasons if forced_variation
 
       # Check if user is in a white-listed variation
       whitelisted_variation_id, reasons_received = get_whitelisted_variation_id(project_config, experiment_key, user_id)
-      decide_reasons&.push(*reasons_received)
-      return whitelisted_variation_id if whitelisted_variation_id
+      decide_reasons.push(*reasons_received)
+      return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
       unless should_ignore_user_profile_service
         user_profile, reasons_received = get_user_profile(user_id)
-        decide_reasons&.push(*reasons_received)
+        decide_reasons.push(*reasons_received)
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile)
-        decide_reasons&.push(*reasons_received)
+        decide_reasons.push(*reasons_received)
         if saved_variation_id
           message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
           @logger.log(Logger::INFO, message)
-          decide_reasons&.push(message)
-          return saved_variation_id
+          decide_reasons.push(message)
+          return saved_variation_id, decide_reasons
         end
       end
 
@@ -107,13 +108,13 @@ module Optimizely
       unless Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
         @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Bucket normally
       variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
-      decide_reasons&.push(*bucket_reasons)
+      decide_reasons.push(*bucket_reasons)
       variation_id = variation ? variation['id'] : nil
 
       message = ''
@@ -124,11 +125,11 @@ module Optimizely
         message = "User '#{user_id}' is in no variation."
       end
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id) unless should_ignore_user_profile_service
-      variation_id
+      [variation_id, decide_reasons]
     end
 
     def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
@@ -180,7 +181,8 @@ module Optimizely
         end
 
         experiment_key = experiment['key']
-        variation_id = get_variation(project_config, experiment_key, user_id, attributes, decide_options, decide_reasons)
+        variation_id, reasons_received = get_variation(project_config, experiment_key, user_id, attributes, decide_options)
+        decide_reasons&.push(*reasons_received)
 
         next unless variation_id
 

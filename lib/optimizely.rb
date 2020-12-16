@@ -878,7 +878,7 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes)
 
-      variation_id = @decision_service.get_variation(config, experiment_key, user_id, attributes)
+      variation_id, = @decision_service.get_variation(config, experiment_key, user_id, attributes)
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
       decision_notification_type = if config.feature_experiment?(experiment['id'])
