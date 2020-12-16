@@ -747,13 +747,15 @@ describe Optimizely::DecisionService do
 
     # User ID is not defined in the forced variation map
     it 'should log a message and return nil when user is not in forced variation map' do
-      expect(decision_service.get_forced_variation(config, valid_experiment[:key], user_id)).to eq(nil)
+      variation_received, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
+      expect(variation_received).to eq(nil)
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      "User '#{user_id}' is not in the forced variation map.")
     end
     # Experiment key does not exist in the datafile
     it 'should return nil when experiment key is not in datafile' do
-      expect(decision_service.get_forced_variation(config, invalid_experiment_key, user_id)).to eq(nil)
+      variation_received, = decision_service.get_forced_variation(config, invalid_experiment_key, user_id)
+      expect(variation_received).to eq(nil)
     end
   end
 
@@ -787,12 +789,12 @@ describe Optimizely::DecisionService do
     # Call set variation with different variations on one user/experiment to confirm that each set is expected.
     it 'should set and return expected variations when different variations are set and removed for one user/experiment' do
       expect(decision_service.set_forced_variation(config, valid_experiment[:key], user_id, valid_variation[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
+      variation, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
       expect(variation['id']).to eq(valid_variation[:id])
       expect(variation['key']).to eq(valid_variation[:key])
 
       expect(decision_service.set_forced_variation(config, valid_experiment[:key], user_id, valid_variation_2[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
+      variation, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
       expect(variation['id']).to eq(valid_variation_2[:id])
       expect(variation['key']).to eq(valid_variation_2[:key])
     end
@@ -800,12 +802,12 @@ describe Optimizely::DecisionService do
     # Set variation on multiple experiments for one user.
     it 'should set and return expected variations when variation is set for multiple experiments for one user' do
       expect(decision_service.set_forced_variation(config, valid_experiment[:key], user_id, valid_variation[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
+      variation, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
       expect(variation['id']).to eq(valid_variation[:id])
       expect(variation['key']).to eq(valid_variation[:key])
 
       expect(decision_service.set_forced_variation(config, valid_experiment_2[:key], user_id, valid_variation_for_exp_2[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment_2[:key], user_id)
+      variation, = decision_service.get_forced_variation(config, valid_experiment_2[:key], user_id)
       expect(variation['id']).to eq(valid_variation_for_exp_2[:id])
       expect(variation['key']).to eq(valid_variation_for_exp_2[:key])
     end
@@ -813,12 +815,12 @@ describe Optimizely::DecisionService do
     # Set variations for multiple users.
     it 'should set and return expected variations when variations are set for multiple users' do
       expect(decision_service.set_forced_variation(config, valid_experiment[:key], user_id, valid_variation[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
+      variation, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
       expect(variation['id']).to eq(valid_variation[:id])
       expect(variation['key']).to eq(valid_variation[:key])
 
       expect(decision_service.set_forced_variation(config, valid_experiment[:key], user_id_2, valid_variation[:key])).to eq(true)
-      variation = decision_service.get_forced_variation(config, valid_experiment[:key], user_id_2)
+      variation, = decision_service.get_forced_variation(config, valid_experiment[:key], user_id_2)
       expect(variation['id']).to eq(valid_variation[:id])
       expect(variation['key']).to eq(valid_variation[:key])
     end

@@ -405,7 +405,7 @@ module Optimizely
       config = project_config
 
       forced_variation_key = nil
-      forced_variation = @decision_service.get_forced_variation(config, experiment_key, user_id)
+      forced_variation, = @decision_service.get_forced_variation(config, experiment_key, user_id)
       forced_variation_key = forced_variation['key'] if forced_variation
 
       forced_variation_key

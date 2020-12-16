@@ -79,7 +79,8 @@ module Optimizely
       end
 
       # Check if a forced variation is set for the user
-      forced_variation = get_forced_variation(project_config, experiment_key, user_id, decide_reasons)
+      forced_variation, reasons_received = get_forced_variation(project_config, experiment_key, user_id)
+      decide_reasons&.push(*reasons_received)
       return forced_variation['id'] if forced_variation
 
       # Check if user is in a white-listed variation
@@ -141,8 +142,8 @@ module Optimizely
       decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options, decide_reasons)
       return decision unless decision.nil?
 
-      decision, reasons_recieved = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
-      decide_reasons&.push(*reasons_recieved)
+      decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
+      decide_reasons&.push(*reasons_received)
 
       decision
     end
@@ -313,7 +314,7 @@ module Optimizely
       true
     end
 
-    def get_forced_variation(project_config, experiment_key, user_id, decide_reasons = nil)
+    def get_forced_variation(project_config, experiment_key, user_id)
       # Gets the forced variation for the given user and experiment.
       #
       # project_config - Instance of ProjectConfig
@@ -322,11 +323,12 @@ module Optimizely
       #
       # Returns Variation The variation which the given user and experiment should be forced into
 
+      decide_reasons = []
       unless @forced_variation_map.key? user_id
         message = "User '#{user_id}' is not in the forced variation map."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       experiment_to_variation_map = @forced_variation_map[user_id]
@@ -334,13 +336,13 @@ module Optimizely
       experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
       # this case is logged in get_experiment_from_key
-      return nil if experiment_id.nil? || experiment_id.empty?
+      return nil, decide_reasons if experiment_id.nil? || experiment_id.empty?
 
       unless experiment_to_variation_map.key? experiment_id
         message = "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       variation_id = experiment_to_variation_map[experiment_id]
@@ -350,13 +352,13 @@ module Optimizely
 
       # check if the variation exists in the datafile
       # this case is logged in get_variation_from_id
-      return nil if variation_key.empty?
+      return nil, decide_reasons if variation_key.empty?
 
       message = "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map"
       @logger.log(Logger::DEBUG, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
-      variation
+      [variation, decide_reasons]
     end
 
     private
