@@ -132,7 +132,7 @@ module Optimizely
       [variation_id, decide_reasons]
     end
 
-    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [])
       # Get the variation the user is bucketed into for the given FeatureFlag.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -142,15 +142,17 @@ module Optimizely
       #
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
 
+      decide_reasons = []
+
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
       decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options)
-      decide_reasons&.push(*reasons_received)
-      return decision unless decision.nil?
+      decide_reasons.push(*reasons_received)
+      return decision, decide_reasons unless decision.nil?
 
       decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
-      decide_reasons&.push(*reasons_received)
+      decide_reasons.push(*reasons_received)
 
-      decision
+      [decision, decide_reasons]
     end
 
     def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, decide_options = [])

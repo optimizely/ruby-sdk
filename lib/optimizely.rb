@@ -199,7 +199,8 @@ module Optimizely
       experiment = nil
       decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
 
-      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options, reasons)
+      decision, reasons_received = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes, decide_options)
+      reasons.push(*reasons_received)
 
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
@@ -489,7 +490,7 @@ module Optimizely
         return false
       end
 
-      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
 
       feature_enabled = false
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
@@ -738,7 +739,7 @@ module Optimizely
         return nil
       end
 
-      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
       all_variables = {}
@@ -944,7 +945,7 @@ module Optimizely
         return nil
       end
 
-      decision = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
+      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
 

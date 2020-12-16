@@ -691,9 +691,10 @@ describe Optimizely::DecisionService do
           'experiment' => expected_experiment,
           'variation' => expected_variation
         }
-        allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(expected_decision)
+        allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return([expected_decision, nil])
 
-        expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
+        decision_received, = decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)
+        expect(decision_received).to eq(expected_decision)
       end
     end
 
@@ -708,20 +709,22 @@ describe Optimizely::DecisionService do
             variation,
             Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
           )
-          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
-          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(expected_decision)
+          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return([nil, nil])
+          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return([expected_decision, nil])
 
-          expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(expected_decision)
+          decision_received, = decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)
+          expect(decision_received).to eq(expected_decision)
         end
       end
 
       describe 'and the user is not bucketed into the feature rollout' do
         it 'should log a message and return nil' do
           feature_flag = config.feature_flag_key_map['string_single_variable_feature']
-          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return(nil)
-          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return(nil)
+          allow(decision_service).to receive(:get_variation_for_feature_experiment).and_return([nil, nil])
+          allow(decision_service).to receive(:get_variation_for_feature_rollout).and_return([nil, nil])
 
-          expect(decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)).to eq(nil)
+          decision_received, = decision_service.get_variation_for_feature(config, feature_flag, user_id, user_attributes)
+          expect(decision_received).to eq(nil)
         end
       end
     end
