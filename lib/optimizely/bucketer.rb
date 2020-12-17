@@ -58,7 +58,7 @@ module Optimizely
         if Helpers::Group.random_policy?(group)
           traffic_allocations = group.fetch('trafficAllocation')
           bucketed_experiment_id, find_bucket_reasons = find_bucket(bucketing_id, user_id, group_id, traffic_allocations)
-          decide_reasons.push(find_bucket_reasons)
+          decide_reasons.push(*find_bucket_reasons)
 
           # return if the user is not bucketed into any experiment
           unless bucketed_experiment_id
@@ -85,7 +85,7 @@ module Optimizely
 
       traffic_allocations = experiment['trafficAllocation']
       variation_id, find_bucket_reasons = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
-      decide_reasons.push(find_bucket_reasons)
+      decide_reasons.push(*find_bucket_reasons)
 
       if variation_id && variation_id != ''
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
