@@ -105,7 +105,9 @@ module Optimizely
       end
 
       # Check audience conditions
-      unless Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      decide_reasons.push(*reasons_received)
+      unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
@@ -242,8 +244,10 @@ module Optimizely
         rollout_rule = rollout_rules[index]
         logging_key = index + 1
 
+        user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+        decide_reasons.push(*reasons_received)
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+        unless user_meets_audience_conditions
           message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
           @logger.log(Logger::DEBUG, message)
           decide_reasons.push(message)
@@ -266,8 +270,11 @@ module Optimizely
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
       logging_key = 'Everyone Else'
+
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      decide_reasons.push(*reasons_received)
       # Check that user meets audience conditions for last rule
-      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)

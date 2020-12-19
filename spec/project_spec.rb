@@ -3904,6 +3904,10 @@ describe 'Optimizely' do
               rule_key: nil,
               reasons: [
                 "User 'user1' is not in the forced variation map.",
+                "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
+                "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+                "Audience '11154' evaluated to UNKNOWN.",
+                "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
                 "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
                 "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
                 "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -3918,6 +3922,10 @@ describe 'Optimizely' do
             enabled: false,
             reasons: [
               "User 'user1' is not in the forced variation map.",
+              "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
+              "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+              "Audience '11154' evaluated to UNKNOWN.",
+              "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
               "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -4249,6 +4257,10 @@ describe 'Optimizely' do
             rule_key: nil,
             reasons: [
               "User 'user1' is not in the forced variation map.",
+              "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
+              "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+              "Audience '11154' evaluated to UNKNOWN.",
+              "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
               "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -4263,6 +4275,10 @@ describe 'Optimizely' do
           enabled: false,
           reasons: [
             "User 'user1' is not in the forced variation map.",
+            "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
+            "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+            "Audience '11154' evaluated to UNKNOWN.",
+            "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
             "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
             "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
             "Feature flag 'multi_variate_feature' is not used in a rollout."

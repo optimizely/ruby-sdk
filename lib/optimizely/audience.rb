@@ -38,6 +38,7 @@ module Optimizely
       #               This defaults to experiment['key'].
       #
       # Returns boolean representing if user satisfies audience conditions for the audiences or not.
+      decide_reasons = []
       logging_hash ||= 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'
       logging_key ||= experiment['key']
 
@@ -45,26 +46,16 @@ module Optimizely
 
       audience_conditions = experiment['audienceConditions'] || experiment['audienceIds']
 
-      logger.log(
-        Logger::DEBUG,
-        format(
-          logs_hash['EVALUATING_AUDIENCES_COMBINED'],
-          logging_key,
-          audience_conditions
-        )
-      )
+      message = format(logs_hash['EVALUATING_AUDIENCES_COMBINED'], logging_key, audience_conditions)
+      logger.log(Logger::DEBUG, message)
+      decide_reasons.push(message)
 
       # Return true if there are no audiences
       if audience_conditions.empty?
-        logger.log(
-          Logger::INFO,
-          format(
-            logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'],
-            logging_key,
-            'TRUE'
-          )
-        )
-        return true
+        message = format(logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'], logging_key, 'TRUE')
+        logger.log(Logger::INFO)
+        decide_reasons.push(message)
+        return true, decide_reasons
       end
 
       attributes ||= {}
@@ -80,39 +71,28 @@ module Optimizely
         return nil unless audience
 
         audience_conditions = audience['conditions']
-        logger.log(
-          Logger::DEBUG,
-          format(
-            logs_hash['EVALUATING_AUDIENCE'],
-            audience_id,
-            audience_conditions
-          )
-        )
+        message = format(logs_hash['EVALUATING_AUDIENCE'], audience_id, audience_conditions)
+        logger.log(Logger::DEBUG, message)
+        decide_reasons.push(message)
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
         result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
         result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
-        logger.log(
-          Logger::DEBUG,
-          format(logs_hash['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
-        )
+        message = format(logs_hash['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
+        logger.log(Logger::DEBUG, message)
+        decide_reasons.push(message)
+
         result
       end
 
       eval_result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_audience)
-
       eval_result ||= false
 
-      logger.log(
-        Logger::INFO,
-        format(
-          logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'],
-          logging_key,
-          eval_result.to_s.upcase
-        )
-      )
+      message = format(logs_hash['AUDIENCE_EVALUATION_RESULT_COMBINED'], logging_key, eval_result.to_s.upcase)
+      logger.log(Logger::INFO, message)
+      decide_reasons.push(message)
 
-      eval_result
+      [eval_result, decide_reasons]
     end
   end
 end
