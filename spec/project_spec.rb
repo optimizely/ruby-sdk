@@ -3904,7 +3904,6 @@ describe 'Optimizely' do
               rule_key: nil,
               reasons: [
                 "User 'user1' is not in the forced variation map.",
-                "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
                 "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                 "Audience '11154' evaluated to UNKNOWN.",
                 "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -3922,7 +3921,6 @@ describe 'Optimizely' do
             enabled: false,
             reasons: [
               "User 'user1' is not in the forced variation map.",
-              "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -4257,7 +4255,6 @@ describe 'Optimizely' do
             rule_key: nil,
             reasons: [
               "User 'user1' is not in the forced variation map.",
-              "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -4275,7 +4272,6 @@ describe 'Optimizely' do
           enabled: false,
           reasons: [
             "User 'user1' is not in the forced variation map.",
-            "Evaluating audiences for experiment 'test_experiment_multivariate': [\"11154\"].",
             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
             "Audience '11154' evaluated to UNKNOWN.",
             "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",

@@ -48,7 +48,6 @@ module Optimizely
 
       message = format(logs_hash['EVALUATING_AUDIENCES_COMBINED'], logging_key, audience_conditions)
       logger.log(Logger::DEBUG, message)
-      decide_reasons.push(message)
 
       # Return true if there are no audiences
       if audience_conditions.empty?

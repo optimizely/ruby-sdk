@@ -72,7 +72,6 @@ describe Optimizely::DecisionService do
 
       expect(reasons).to eq([
                               "User 'test_user' is not in the forced variation map.",
-                              "Evaluating audiences for experiment 'test_experiment': [].",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                               "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -90,7 +89,6 @@ describe Optimizely::DecisionService do
       expect(variation_received).to eq(nil)
       expect(reasons).to eq([
                               "User 'test_user' is not in the forced variation map.",
-                              "Evaluating audiences for experiment 'test_experiment': [].",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "User 'test_user' is in no variation."
                             ])
@@ -189,7 +187,6 @@ describe Optimizely::DecisionService do
       expect(variation_received).to eq(nil)
       expect(reasons).to eq([
                               "User 'test_user' is not in the forced variation map.",
-                              "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\"].",
                               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                               "Audience '11154' evaluated to FALSE.",
                               "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE.",
@@ -241,7 +238,6 @@ describe Optimizely::DecisionService do
       expect(reasons).to eq([
                               "User 'forced_user_with_invalid_variation' is not in the forced variation map.",
                               "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile.",
-                              "Evaluating audiences for experiment 'test_experiment': [].",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "Assigned bucket 877 to user 'forced_user_with_invalid_variation' with bucketing ID: 'forced_user_with_invalid_variation'.",
                               "User 'forced_user_with_invalid_variation' is in variation 'control' of experiment 'test_experiment'."
@@ -273,7 +269,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -306,7 +301,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 8933 to user 'test_user' with bucketing ID: 'pid'.",
                                 "User 'test_user' is in variation 'variation' of experiment 'test_experiment'."
@@ -366,7 +360,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -408,7 +401,6 @@ describe Optimizely::DecisionService do
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
                                 "User '' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -437,7 +429,6 @@ describe Optimizely::DecisionService do
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
                                 "Error while looking up user profile for user ID 'test_user': uncaught throw :LookupError.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -456,7 +447,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "User 'test_user' is not in the forced variation map.",
-                                "Evaluating audiences for experiment 'test_experiment': [].",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -475,7 +465,6 @@ describe Optimizely::DecisionService do
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
                                   "User 'test_user' is not in the forced variation map.",
-                                  "Evaluating audiences for experiment 'test_experiment': [].",
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                   "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -495,7 +484,6 @@ describe Optimizely::DecisionService do
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
                                   "User 'test_user' is not in the forced variation map.",
-                                  "Evaluating audiences for experiment 'test_experiment': [].",
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                   "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."

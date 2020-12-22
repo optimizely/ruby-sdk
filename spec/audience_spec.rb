@@ -43,7 +43,7 @@ describe Optimizely::Audience do
 
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be true
-    expect(reasons).to  eq(["Evaluating audiences for experiment 'test_experiment': [].", "Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
+    expect(reasons).to  eq(["Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
 
     # Audience Ids is Empty and  Audience Conditions is nil
     experiment = config.experiment_key_map['test_experiment']
@@ -52,7 +52,7 @@ describe Optimizely::Audience do
 
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be true
-    expect(reasons).to eq(["Evaluating audiences for experiment 'test_experiment': [].", "Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
+    expect(reasons).to eq(["Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
   end
 
   it 'should pass conditions when audience conditions exist else audienceIds are passed' do
@@ -86,7 +86,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, {}, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\"].",
                             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                             "Audience '11154' evaluated to UNKNOWN.",
                             "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
@@ -96,7 +95,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, nil, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\"].",
                             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                             "Audience '11154' evaluated to UNKNOWN.",
                             "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
@@ -115,7 +113,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be true
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment': [].",
                             "Audiences for experiment 'test_experiment' collectively evaluated to TRUE."
                           ])
   end
@@ -132,7 +129,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\"].",
                             "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
                           ])
 
@@ -141,7 +137,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\"].",
                             "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
                           ])
   end
@@ -231,7 +226,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11110\"].",
                             "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
                           ])
 
@@ -257,7 +251,6 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_attributes, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-                            "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\", \"11155\"].",
                             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                             "Audience '11154' evaluated to UNKNOWN.",
                             "Starting to evaluate audience '11155' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"chrome\"}]]].",
