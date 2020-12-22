@@ -71,7 +71,6 @@ describe Optimizely::DecisionService do
       expect(variation_received).to eq('111128')
 
       expect(reasons).to eq([
-                              "User 'test_user' is not in the forced variation map.",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                               "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -88,7 +87,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
       expect(variation_received).to eq(nil)
       expect(reasons).to eq([
-                              "User 'test_user' is not in the forced variation map.",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "User 'test_user' is in no variation."
                             ])
@@ -101,7 +99,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'forced_user1')
       expect(variation_received).to eq('111128')
       expect(reasons).to eq([
-                              "User 'forced_user1' is not in the forced variation map.",
                               "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -110,7 +107,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'forced_user2')
       expect(variation_received).to eq('111129')
       expect(reasons).to eq([
-                              "User 'forced_user2' is not in the forced variation map.",
                               "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -131,7 +127,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'forced_user1', user_attributes)
       expect(variation_received).to eq('111128')
       expect(reasons).to eq([
-                              "User 'forced_user1' is not in the forced variation map.",
                               "User 'forced_user1' is whitelisted into variation 'control' of experiment 'test_experiment'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -140,7 +135,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'forced_user2', user_attributes)
       expect(variation_received).to eq('111129')
       expect(reasons).to eq([
-                              "User 'forced_user2' is not in the forced variation map.",
                               "User 'forced_user2' is whitelisted into variation 'variation' of experiment 'test_experiment'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -157,7 +151,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment_with_audience', 'forced_audience_user', user_attributes)
       expect(variation_received).to eq('122229')
       expect(reasons).to eq([
-                              "User 'forced_audience_user' is not in the forced variation map.",
                               "User 'forced_audience_user' is whitelisted into variation 'variation_with_audience' of experiment 'test_experiment_with_audience'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -186,7 +179,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment_with_audience', 'test_user', user_attributes)
       expect(variation_received).to eq(nil)
       expect(reasons).to eq([
-                              "User 'test_user' is not in the forced variation map.",
                               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                               "Audience '11154' evaluated to FALSE.",
                               "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE.",
@@ -220,7 +212,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'group1_exp2', 'forced_group_user1')
       expect(variation_received).to eq('130004')
       expect(reasons).to eq([
-                              "User 'forced_group_user1' is not in the forced variation map.",
                               "User 'forced_group_user1' is whitelisted into variation 'g1_e2_v2' of experiment 'group1_exp2'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -236,7 +227,6 @@ describe Optimizely::DecisionService do
       variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'forced_user_with_invalid_variation')
       expect(variation_received).to eq('111128')
       expect(reasons).to eq([
-                              "User 'forced_user_with_invalid_variation' is not in the forced variation map.",
                               "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile.",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                               "Assigned bucket 877 to user 'forced_user_with_invalid_variation' with bucketing ID: 'forced_user_with_invalid_variation'.",
@@ -268,7 +258,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -300,7 +289,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user', user_attributes)
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 8933 to user 'test_user' with bucketing ID: 'pid'.",
                                 "User 'test_user' is in variation 'variation' of experiment 'test_experiment'."
@@ -329,7 +317,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile."
                               ])
         expect(spy_logger).to have_received(:log).once
@@ -359,7 +346,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -399,7 +385,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "User '' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
@@ -427,7 +412,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Error while looking up user profile for user ID 'test_user': uncaught throw :LookupError.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
@@ -446,7 +430,6 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User 'test_user' is not in the forced variation map.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -464,7 +447,6 @@ describe Optimizely::DecisionService do
           variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user', nil, [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
-                                  "User 'test_user' is not in the forced variation map.",
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                   "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -483,7 +465,6 @@ describe Optimizely::DecisionService do
           variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
-                                  "User 'test_user' is not in the forced variation map.",
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                   "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
@@ -915,7 +896,7 @@ describe Optimizely::DecisionService do
     it 'should log a message and return nil when user is not in forced variation map' do
       variation_received, reasons = decision_service.get_forced_variation(config, valid_experiment[:key], user_id)
       expect(variation_received).to eq(nil)
-      expect(reasons).to eq(["User '#{user_id}' is not in the forced variation map."])
+      expect(reasons).to eq([])
       expect(spy_logger).to have_received(:log).with(Logger::DEBUG,
                                                      "User '#{user_id}' is not in the forced variation map.")
     end
@@ -923,7 +904,7 @@ describe Optimizely::DecisionService do
     it 'should return nil when experiment key is not in datafile' do
       variation_received, reasons = decision_service.get_forced_variation(config, invalid_experiment_key, user_id)
       expect(variation_received).to eq(nil)
-      expect(reasons).to eq(["User 'test_user' is not in the forced variation map."])
+      expect(reasons).to eq([])
     end
   end
 

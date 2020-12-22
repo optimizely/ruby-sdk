@@ -343,7 +343,6 @@ module Optimizely
       unless @forced_variation_map.key? user_id
         message = "User '#{user_id}' is not in the forced variation map."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons.push(message)
         return nil, decide_reasons
       end
 

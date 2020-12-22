@@ -3903,7 +3903,6 @@ describe 'Optimizely' do
               variation_key: nil,
               rule_key: nil,
               reasons: [
-                "User 'user1' is not in the forced variation map.",
                 "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                 "Audience '11154' evaluated to UNKNOWN.",
                 "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -3920,7 +3919,6 @@ describe 'Optimizely' do
             flag_key: 'multi_variate_feature',
             enabled: false,
             reasons: [
-              "User 'user1' is not in the forced variation map.",
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -4254,7 +4252,6 @@ describe 'Optimizely' do
             variation_key: nil,
             rule_key: nil,
             reasons: [
-              "User 'user1' is not in the forced variation map.",
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
@@ -4271,7 +4268,6 @@ describe 'Optimizely' do
           flag_key: 'multi_variate_feature',
           enabled: false,
           reasons: [
-            "User 'user1' is not in the forced variation map.",
             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
             "Audience '11154' evaluated to UNKNOWN.",
             "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
