@@ -380,7 +380,7 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, 'test_experiment', 'test_user')
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
-                                "User '' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
+                                "User 'test_user' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])

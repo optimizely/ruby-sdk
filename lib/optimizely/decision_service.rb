@@ -425,7 +425,7 @@ module Optimizely
       variation_id = decision[:variation_id]
       return variation_id, nil if project_config.variation_id_exists?(experiment_id, variation_id)
 
-      message = "User '#{user_profile['user_id']}' was previously bucketed into variation ID '#{variation_id}' for experiment '#{experiment_id}', but no matching variation was found. Re-bucketing user."
+      message = "User '#{user_profile[:user_id]}' was previously bucketed into variation ID '#{variation_id}' for experiment '#{experiment_id}', but no matching variation was found. Re-bucketing user."
       @logger.log(Logger::INFO, message)
 
       [nil, message]
