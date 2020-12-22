@@ -85,7 +85,6 @@ describe Optimizely::Bucketer do
     variation_received, reasons = bucketer.bucket(config, experiment, 'bucket_id_ignored', 'test_user')
     expect(variation_received).to be_nil
     expect(reasons).to eq([
-                            "Assigned bucket 3000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'.",
                             "User 'test_user' is not in experiment 'group1_exp2' of group 101."
                           ])
     expect(spy_logger).to have_received(:log)
@@ -112,7 +111,7 @@ describe Optimizely::Bucketer do
     expected_variation = config.get_variation_from_id('group2_exp1', '144443')
     variation_received, reasons = bucketer.bucket(config, experiment, 'bucket_id_ignored', 'test_user')
     expect(variation_received).to eq(expected_variation)
-    expect(reasons).to eq(["Assigned bucket 3000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'."])
+    expect(reasons).to eq([])
     expect(spy_logger).to have_received(:log).once
     expect(spy_logger).to have_received(:log)
       .with(Logger::DEBUG, "Assigned bucket 3000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'.")
@@ -123,7 +122,7 @@ describe Optimizely::Bucketer do
 
     experiment = config.get_experiment_from_key('group2_exp1')
     variation_received, reasons = bucketer.bucket(config, experiment, 'bucket_id_ignored', 'test_user')
-    expect(reasons).to eq(["Assigned bucket 50000 to user 'test_user' with bucketing ID: 'bucket_id_ignored'."])
+    expect(reasons).to eq([])
     expect(variation_received).to be_nil
     expect(spy_logger).to have_received(:log).once
     expect(spy_logger).to have_received(:log)
@@ -170,14 +169,14 @@ describe Optimizely::Bucketer do
       expected_variation = config.get_variation_from_id('test_experiment', '111128')
       variation_received, reasons = bucketer.bucket(config, experiment, 'test_user', 'test_user')
       expect(variation_received).to be(expected_variation)
-      expect(reasons).to eq(["Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'."])
+      expect(reasons).to eq([])
 
       # Bucketing with bucketing id - 'any_string789111127' produces bucket value btw 5000 to 10,000
       # thus buckets to variation
       expected_variation = config.get_variation_from_id('test_experiment', '111129')
       variation_received, reasons = bucketer.bucket(config, experiment, 'any_string789', 'test_user')
       expect(variation_received).to be(expected_variation)
-      expect(reasons).to eq(["Assigned bucket 9941 to user 'test_user' with bucketing ID: 'any_string789'."])
+      expect(reasons).to eq([])
     end
 
     # Bucketing with invalid experiment key and bucketing ID
@@ -196,14 +195,12 @@ describe Optimizely::Bucketer do
       variation_received, reasons = bucketer.bucket(config, experiment, 'test_user', 'test_user')
       expect(variation_received).to be(expected_variation)
       expect(reasons).to eq([
-                              "Assigned bucket 7543 to user 'test_user' with bucketing ID: 'test_user'.",
                               "User 'test_user' is not in experiment 'group1_exp1' of group 101."
                             ])
       expected_variation = config.get_variation_from_id('group1_exp1', '130002')
       variation_received, = bucketer.bucket(config, experiment, '123456789', 'test_user')
       expect(variation_received).to be(expected_variation)
       expect(reasons).to eq([
-                              "Assigned bucket 7543 to user 'test_user' with bucketing ID: 'test_user'.",
                               "User 'test_user' is not in experiment 'group1_exp1' of group 101."
                             ])
     end

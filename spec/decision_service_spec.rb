@@ -72,7 +72,6 @@ describe Optimizely::DecisionService do
 
       expect(reasons).to eq([
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                              "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                               "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                             ])
 
@@ -229,7 +228,6 @@ describe Optimizely::DecisionService do
       expect(reasons).to eq([
                               "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile.",
                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                              "Assigned bucket 877 to user 'forced_user_with_invalid_variation' with bucketing ID: 'forced_user_with_invalid_variation'.",
                               "User 'forced_user_with_invalid_variation' is in variation 'control' of experiment 'test_experiment'."
                             ])
       expect(spy_logger).to have_received(:log)
@@ -259,7 +257,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])
 
@@ -290,7 +287,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 8933 to user 'test_user' with bucketing ID: 'pid'.",
                                 "User 'test_user' is in variation 'variation' of experiment 'test_experiment'."
                               ])
 
@@ -347,7 +343,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])
 
@@ -387,7 +382,6 @@ describe Optimizely::DecisionService do
         expect(reasons).to eq([
                                 "User '' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])
 
@@ -414,7 +408,6 @@ describe Optimizely::DecisionService do
         expect(reasons).to eq([
                                 "Error while looking up user profile for user ID 'test_user': uncaught throw :LookupError.",
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])
 
@@ -431,7 +424,6 @@ describe Optimizely::DecisionService do
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                 "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                               ])
 
@@ -448,7 +440,6 @@ describe Optimizely::DecisionService do
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                  "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                                 ])
 
@@ -466,7 +457,6 @@ describe Optimizely::DecisionService do
           expect(variation_received).to eq('111128')
           expect(reasons).to eq([
                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                  "Assigned bucket 4577 to user 'test_user' with bucketing ID: 'test_user'.",
                                   "User 'test_user' is in variation 'control' of experiment 'test_experiment'."
                                 ])
 
