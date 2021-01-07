@@ -214,7 +214,7 @@ describe 'Optimizely' do
       params = @expected_activate_params
 
       variation_to_return = project_config.get_variation_from_id('test_experiment', '111128')
-      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
+      allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return([variation_to_return, nil])
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       allow(project_config).to receive(:get_audience_ids_for_experiment)
         .with('test_experiment')
@@ -3903,7 +3903,9 @@ describe 'Optimizely' do
               variation_key: nil,
               rule_key: nil,
               reasons: [
-                "User 'user1' is not in the forced variation map.",
+                "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+                "Audience '11154' evaluated to UNKNOWN.",
+                "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
                 "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
                 "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
                 "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -3917,7 +3919,9 @@ describe 'Optimizely' do
             flag_key: 'multi_variate_feature',
             enabled: false,
             reasons: [
-              "User 'user1' is not in the forced variation map.",
+              "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+              "Audience '11154' evaluated to UNKNOWN.",
+              "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
               "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -3974,11 +3978,11 @@ describe 'Optimizely' do
         user_context = project_instance.create_user_context('user1')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, [], []).once
+          .with(anything, anything, anything, anything, []).once
         project_instance.decide(user_context, 'multi_variate_feature')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT], []).once
+          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]).once
         project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
@@ -3989,7 +3993,7 @@ describe 'Optimizely' do
                   Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE,
                   Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
                   Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
-                ], []).once
+                ]).once
         project_instance
           .decide(user_context, 'multi_variate_feature', [
                     Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,
@@ -4248,7 +4252,9 @@ describe 'Optimizely' do
             variation_key: nil,
             rule_key: nil,
             reasons: [
-              "User 'user1' is not in the forced variation map.",
+              "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+              "Audience '11154' evaluated to UNKNOWN.",
+              "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
               "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
@@ -4262,7 +4268,9 @@ describe 'Optimizely' do
           flag_key: 'multi_variate_feature',
           enabled: false,
           reasons: [
-            "User 'user1' is not in the forced variation map.",
+            "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+            "Audience '11154' evaluated to UNKNOWN.",
+            "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
             "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
             "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
             "Feature flag 'multi_variate_feature' is not used in a rollout."

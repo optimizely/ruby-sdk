@@ -52,7 +52,7 @@ module Optimizely
       @forced_variation_map = {}
     end
 
-    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [])
       # Determines variation into which user will be bucketed.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -63,51 +63,60 @@ module Optimizely
       # Returns variation ID where visitor will be bucketed
       #   (nil if experiment is inactive or user does not meet audience conditions)
 
+      decide_reasons = []
       # By default, the bucketing ID should be the user ID
-      bucketing_id = get_bucketing_id(user_id, attributes, decide_reasons)
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      decide_reasons.push(*bucketing_id_reasons)
       # Check to make sure experiment is active
       experiment = project_config.get_experiment_from_key(experiment_key)
-      return nil if experiment.nil?
+      return nil, decide_reasons if experiment.nil?
 
       experiment_id = experiment['id']
       unless project_config.experiment_running?(experiment)
         message = "Experiment '#{experiment_key}' is not running."
         @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Check if a forced variation is set for the user
-      forced_variation = get_forced_variation(project_config, experiment_key, user_id, decide_reasons)
-      return forced_variation['id'] if forced_variation
+      forced_variation, reasons_received = get_forced_variation(project_config, experiment_key, user_id)
+      decide_reasons.push(*reasons_received)
+      return forced_variation['id'], decide_reasons if forced_variation
 
       # Check if user is in a white-listed variation
-      whitelisted_variation_id = get_whitelisted_variation_id(project_config, experiment_key, user_id, decide_reasons)
-      return whitelisted_variation_id if whitelisted_variation_id
+      whitelisted_variation_id, reasons_received = get_whitelisted_variation_id(project_config, experiment_key, user_id)
+      decide_reasons.push(*reasons_received)
+      return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
       unless should_ignore_user_profile_service
-        user_profile = get_user_profile(user_id, decide_reasons)
-        saved_variation_id = get_saved_variation_id(project_config, experiment_id, user_profile, decide_reasons)
+        user_profile, reasons_received = get_user_profile(user_id)
+        decide_reasons.push(*reasons_received)
+        saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile)
+        decide_reasons.push(*reasons_received)
         if saved_variation_id
           message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
           @logger.log(Logger::INFO, message)
-          decide_reasons&.push(message)
-          return saved_variation_id
+          decide_reasons.push(message)
+          return saved_variation_id, decide_reasons
         end
       end
 
       # Check audience conditions
-      unless Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      decide_reasons.push(*reasons_received)
+      unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
         @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Bucket normally
-      variation = @bucketer.bucket(project_config, experiment, bucketing_id, user_id, decide_reasons)
+      variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
+      decide_reasons.push(*bucket_reasons)
       variation_id = variation ? variation['id'] : nil
 
       message = ''
@@ -118,14 +127,14 @@ module Optimizely
         message = "User '#{user_id}' is in no variation."
       end
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
       # Persist bucketing decision
       save_user_profile(user_profile, experiment_id, variation_id) unless should_ignore_user_profile_service
-      variation_id
+      [variation_id, decide_reasons]
     end
 
-    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation_for_feature(project_config, feature_flag, user_id, attributes = nil, decide_options = [])
       # Get the variation the user is bucketed into for the given FeatureFlag.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -135,16 +144,20 @@ module Optimizely
       #
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
 
+      decide_reasons = []
+
       # check if the feature is being experiment on and whether the user is bucketed into the experiment
-      decision = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options, decide_reasons)
-      return decision unless decision.nil?
+      decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes, decide_options)
+      decide_reasons.push(*reasons_received)
+      return decision, decide_reasons unless decision.nil?
 
-      decision = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes, decide_reasons)
+      decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes)
+      decide_reasons.push(*reasons_received)
 
-      decision
+      [decision, decide_reasons]
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, decide_options = [], decide_reasons = nil)
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_id, attributes = nil, decide_options = [])
       # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -154,12 +167,13 @@ module Optimizely
       #
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
       # or nil if the user is not bucketed into any of the experiments on the feature
+      decide_reasons = []
       feature_flag_key = feature_flag['key']
       if feature_flag['experimentIds'].empty?
         message = "The feature flag '#{feature_flag_key}' is not used in any experiments."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       # Evaluate each experiment and return the first bucketed experiment variation
@@ -168,28 +182,29 @@ module Optimizely
         unless experiment
           message = "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
           @logger.log(Logger::DEBUG, message)
-          decide_reasons&.push(message)
-          return nil
+          decide_reasons.push(message)
+          return nil, decide_reasons
         end
 
         experiment_key = experiment['key']
-        variation_id = get_variation(project_config, experiment_key, user_id, attributes, decide_options, decide_reasons)
+        variation_id, reasons_received = get_variation(project_config, experiment_key, user_id, attributes, decide_options)
+        decide_reasons.push(*reasons_received)
 
         next unless variation_id
 
         variation = project_config.variation_id_map[experiment_key][variation_id]
 
-        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'])
+        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
       end
 
       message = "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
-      nil
+      [nil, decide_reasons]
     end
 
-    def get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes = nil, decide_reasons = nil)
+    def get_variation_for_feature_rollout(project_config, feature_flag, user_id, attributes = nil)
       # Determine which variation the user is in for a given rollout.
       # Returns the variation of the first experiment the user qualifies for.
       #
@@ -199,25 +214,27 @@ module Optimizely
       # attributes - Hash representing user attributes
       #
       # Returns the Decision struct or nil if not bucketed into any of the targeting rules
-      bucketing_id = get_bucketing_id(user_id, attributes, decide_reasons)
+      decide_reasons = []
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      decide_reasons.push(*bucketing_id_reasons)
       rollout_id = feature_flag['rolloutId']
       if rollout_id.nil? || rollout_id.empty?
         feature_flag_key = feature_flag['key']
         message = "Feature flag '#{feature_flag_key}' is not used in a rollout."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       rollout = project_config.get_rollout_from_id(rollout_id)
       if rollout.nil?
         message = "Rollout with ID '#{rollout_id}' is not in the datafile '#{feature_flag['key']}'"
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
-      return nil if rollout['experiments'].empty?
+      return nil, decide_reasons if rollout['experiments'].empty?
 
       rollout_rules = rollout['experiments']
       number_of_rules = rollout_rules.length - 1
@@ -227,22 +244,25 @@ module Optimizely
         rollout_rule = rollout_rules[index]
         logging_key = index + 1
 
+        user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+        decide_reasons.push(*reasons_received)
         # Check that user meets audience conditions for targeting rule
-        unless Audience.user_meets_audience_conditions?(project_config, rollout_rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+        unless user_meets_audience_conditions
           message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
           @logger.log(Logger::DEBUG, message)
-          decide_reasons&.push(message)
+          decide_reasons.push(message)
           # move onto the next targeting rule
           next
         end
 
         message = "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
+        decide_reasons.push(message)
 
         # Evaluate if user satisfies the traffic allocation for this rollout rule
-        variation = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id, decide_reasons)
-        return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
+        variation, bucket_reasons = @bucketer.bucket(project_config, rollout_rule, bucketing_id, user_id)
+        decide_reasons.push(*bucket_reasons)
+        return Decision.new(rollout_rule, variation, DECISION_SOURCES['ROLLOUT']), decide_reasons unless variation.nil?
 
         break
       end
@@ -250,22 +270,26 @@ module Optimizely
       # get last rule which is the everyone else rule
       everyone_else_experiment = rollout_rules[number_of_rules]
       logging_key = 'Everyone Else'
+
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      decide_reasons.push(*reasons_received)
       # Check that user meets audience conditions for last rule
-      unless Audience.user_meets_audience_conditions?(project_config, everyone_else_experiment, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the audience conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       message = "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
       @logger.log(Logger::DEBUG, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
-      variation = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id, decide_reasons)
-      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']) unless variation.nil?
+      variation, bucket_reasons = @bucketer.bucket(project_config, everyone_else_experiment, bucketing_id, user_id)
+      decide_reasons.push(*bucket_reasons)
+      return Decision.new(everyone_else_experiment, variation, DECISION_SOURCES['ROLLOUT']), decide_reasons unless variation.nil?
 
-      nil
+      [nil, decide_reasons]
     end
 
     def set_forced_variation(project_config, experiment_key, user_id, variation_key)
@@ -306,7 +330,7 @@ module Optimizely
       true
     end
 
-    def get_forced_variation(project_config, experiment_key, user_id, decide_reasons = nil)
+    def get_forced_variation(project_config, experiment_key, user_id)
       # Gets the forced variation for the given user and experiment.
       #
       # project_config - Instance of ProjectConfig
@@ -315,11 +339,11 @@ module Optimizely
       #
       # Returns Variation The variation which the given user and experiment should be forced into
 
+      decide_reasons = []
       unless @forced_variation_map.key? user_id
         message = "User '#{user_id}' is not in the forced variation map."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        return nil, decide_reasons
       end
 
       experiment_to_variation_map = @forced_variation_map[user_id]
@@ -327,13 +351,13 @@ module Optimizely
       experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
       # this case is logged in get_experiment_from_key
-      return nil if experiment_id.nil? || experiment_id.empty?
+      return nil, decide_reasons if experiment_id.nil? || experiment_id.empty?
 
       unless experiment_to_variation_map.key? experiment_id
         message = "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map."
         @logger.log(Logger::DEBUG, message)
-        decide_reasons&.push(message)
-        return nil
+        decide_reasons.push(message)
+        return nil, decide_reasons
       end
 
       variation_id = experiment_to_variation_map[experiment_id]
@@ -343,18 +367,18 @@ module Optimizely
 
       # check if the variation exists in the datafile
       # this case is logged in get_variation_from_id
-      return nil if variation_key.empty?
+      return nil, decide_reasons if variation_key.empty?
 
       message = "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map"
       @logger.log(Logger::DEBUG, message)
-      decide_reasons&.push(message)
+      decide_reasons.push(message)
 
-      variation
+      [variation, decide_reasons]
     end
 
     private
 
-    def get_whitelisted_variation_id(project_config, experiment_key, user_id, decide_reasons = nil)
+    def get_whitelisted_variation_id(project_config, experiment_key, user_id)
       # Determine if a user is whitelisted into a variation for the given experiment and return the ID of that variation
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -365,29 +389,27 @@ module Optimizely
 
       whitelisted_variations = project_config.get_whitelisted_variations(experiment_key)
 
-      return nil unless whitelisted_variations
+      return nil, nil unless whitelisted_variations
 
       whitelisted_variation_key = whitelisted_variations[user_id]
 
-      return nil unless whitelisted_variation_key
+      return nil, nil unless whitelisted_variation_key
 
       whitelisted_variation_id = project_config.get_variation_id_from_key(experiment_key, whitelisted_variation_key)
 
       unless whitelisted_variation_id
         message = "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}', which is not in the datafile."
         @logger.log(Logger::INFO, message)
-        decide_reasons&.push(message)
-        return nil
+        return nil, message
       end
 
       message = "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}' of experiment '#{experiment_key}'."
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
 
-      whitelisted_variation_id
+      [whitelisted_variation_id, message]
     end
 
-    def get_saved_variation_id(project_config, experiment_id, user_profile, decide_reasons = nil)
+    def get_saved_variation_id(project_config, experiment_id, user_profile)
       # Retrieve variation ID of stored bucketing decision for a given experiment from a given user profile
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -395,22 +417,21 @@ module Optimizely
       # user_profile - Hash user profile
       #
       # Returns string variation ID (nil if no decision is found)
-      return nil unless user_profile[:experiment_bucket_map]
+      return nil, nil unless user_profile[:experiment_bucket_map]
 
       decision = user_profile[:experiment_bucket_map][experiment_id]
-      return nil unless decision
+      return nil, nil unless decision
 
       variation_id = decision[:variation_id]
-      return variation_id if project_config.variation_id_exists?(experiment_id, variation_id)
+      return variation_id, nil if project_config.variation_id_exists?(experiment_id, variation_id)
 
-      message = "User '#{user_profile['user_id']}' was previously bucketed into variation ID '#{variation_id}' for experiment '#{experiment_id}', but no matching variation was found. Re-bucketing user."
+      message = "User '#{user_profile[:user_id]}' was previously bucketed into variation ID '#{variation_id}' for experiment '#{experiment_id}', but no matching variation was found. Re-bucketing user."
       @logger.log(Logger::INFO, message)
-      decide_reasons&.push(message)
 
-      nil
+      [nil, message]
     end
 
-    def get_user_profile(user_id, decide_reasons = nil)
+    def get_user_profile(user_id)
       # Determine if a user is forced into a variation for the given experiment and return the ID of that variation
       #
       # user_id - String ID for the user
@@ -422,17 +443,17 @@ module Optimizely
         experiment_bucket_map: {}
       }
 
-      return user_profile unless @user_profile_service
+      return user_profile, nil unless @user_profile_service
 
+      message = nil
       begin
         user_profile = @user_profile_service.lookup(user_id) || user_profile
       rescue => e
         message = "Error while looking up user profile for user ID '#{user_id}': #{e}."
         @logger.log(Logger::ERROR, message)
-        decide_reasons&.push(message)
       end
 
-      user_profile
+      [user_profile, message]
     end
 
     def save_user_profile(user_profile, experiment_id, variation_id)
@@ -456,25 +477,24 @@ module Optimizely
       end
     end
 
-    def get_bucketing_id(user_id, attributes, decide_reasons = nil)
+    def get_bucketing_id(user_id, attributes)
       # Gets the Bucketing Id for Bucketing
       #
       # user_id - String user ID
       # attributes - Hash user attributes
       # Returns String representing bucketing ID if it is a String type in attributes else return user ID
 
-      return user_id unless attributes
+      return user_id, nil unless attributes
 
       bucketing_id = attributes[Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID']]
 
       if bucketing_id
-        return bucketing_id if bucketing_id.is_a?(String)
+        return bucketing_id, nil if bucketing_id.is_a?(String)
 
         message = 'Bucketing ID attribute is not a string. Defaulted to user ID.'
         @logger.log(Logger::WARN, message)
-        decide_reasons&.push(message)
       end
-      user_id
+      [user_id, message]
     end
   end
 end
