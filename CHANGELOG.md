@@ -1,5 +1,19 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.8.0
+February 16th, 2021
+
+### New Features:
+- Introducing a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#274](https://github.com/optimizely/ruby-sdk/pull/274), [#279](https://github.com/optimizely/ruby-sdk/pull/279)). The new `OptimizelyUserContext` class is instantiated with `create_user_context` and exposes the following APIs to get `OptimizelyDecision`:
+
+    - set_attribute
+    - decide
+    - decide_all
+    - decide_for_keys
+    - track_event
+
+- For details, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/ruby-sdk.
+
 ## 3.7.0
 November 20th, 2020
 
