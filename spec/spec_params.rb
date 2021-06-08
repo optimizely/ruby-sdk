@@ -24,6 +24,8 @@ module OptimizelySpec
     'anonymizeIP' => false,
     'botFiltering' => true,
     'revision' => '42',
+    'sdkKey' => 'VALID',
+    'environmentKey' => 'VALID_ENVIRONMENT',
     'version' => '2',
     'sendFlagDecisions' => true,
     'events' => [{
@@ -1125,6 +1127,8 @@ module OptimizelySpec
       }
     ],
     'revision' => '3',
+    'sdkKey' => 'AUDIENCES',
+    'environmentKey' => 'AUDIENCES_ENVIRONMENT',
     'sendFlagDecisions' => true
   }.freeze
 

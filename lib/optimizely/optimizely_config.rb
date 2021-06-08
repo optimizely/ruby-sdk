@@ -26,6 +26,8 @@ module Optimizely
       features_map = get_features_map(experiments_map_object)
       {
         'datafile' => @project_config.datafile,
+        'sdkKey' => @project_config.sdk_key,
+        'environmentKey' => @project_config.environment_key,
         'experimentsMap' => experiments_map_object,
         'featuresMap' => features_map,
         'revision' => @project_config.revision

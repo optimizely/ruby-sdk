@@ -83,6 +83,8 @@ module Optimizely
       @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
+      @sdk_key = config,fetch('sdkKey', nil)
+      @environment_key = config.fetch('environmentKey', nil)
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
 
@@ -192,6 +194,26 @@ module Optimizely
       #
       # Returns true if experiment is running
       RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
+    end
+
+    def get_sdk_key()
+      # Retrives SDK Key of the project
+      #
+      # Returns SDK key or nil if not found
+      return @sdk_key if @sdk_key
+
+      @logger.log Logger::ERROR, "SDK key is not in datafile."
+      nil
+    end
+
+    def get_environment_key()
+      # Retrives environment Key of the project
+      #
+      # Returns environment key or nil if not found
+      return @environment_key if @environment_key
+
+      @logger.log Logger::ERROR, "Environment key is not in datafile."
+      nil
     end
 
     def get_experiment_from_key(experiment_key)

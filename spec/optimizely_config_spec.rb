@@ -95,6 +95,14 @@ describe Optimizely::OptimizelyConfig do
     expect(project_config.revision).to eq(optimizely_config['revision'])
   end
 
+  it 'should return correct sdk key' do
+    expect(project_config.sdk_key).to eq(optimizely_config['sdkKey'])
+  end
+
+  it 'should return correct environment key' do
+    expect(project_config.environment_key).to eq(optimizely_config['environmentKey'])
+  end
+
   it 'should return correct datafile string' do
     expect(project_config.datafile).to eq(optimizely_config['datafile'])
   end

@@ -46,6 +46,10 @@ module Optimizely
 
     def revision; end
 
+    def sdk_key(); end
+
+    def environment_key; end
+
     def send_flag_decisions; end
 
     def rollouts; end

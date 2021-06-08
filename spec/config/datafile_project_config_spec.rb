@@ -51,6 +51,8 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
+      expect(project_config.sdk_key).to eq(config_body['sdkKey'])
+      expect(project_config.environment_key).to eq(config_body['environmentKey'])
       expect(project_config.send_flag_decisions).to eq(config_body['sendFlagDecisions'])
 
       expected_attribute_key_map = {
@@ -791,6 +793,26 @@ describe Optimizely::DatafileProjectConfig do
         expect(config.get_experiment_from_key('invalid_key')).to eq(nil)
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment key 'invalid_key' is not in datafile.")
+      end
+    end
+
+    describe 'get_sdk_key' do
+      it 'should log a message when provided sdk key is not avialable' do
+        config_body_without_sdk_key = config_body.dup
+        config_body_without_sdk_key.delete('sdkKey')
+        expect(config.get_sdk_key()).to eq(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "SDK key is not in datafile.")
+      end
+    end
+
+    describe 'get_experiment_from_key' do
+      it 'should log a message when provided environment key is not available' do
+        config_body_without_sdk_key = config_body.dup
+        config_body_without_sdk_key.delete('environmentKey')
+        expect(config.get_experiment_from_key()).to eq(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Environment key is not in datafile.")
       end
     end
 
