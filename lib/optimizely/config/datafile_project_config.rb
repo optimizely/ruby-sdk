@@ -40,7 +40,6 @@ module Optimizely
     attr_reader :revision
     attr_reader :sdk_key
     attr_reader :environment_key
-    attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
     attr_reader :send_flag_decisions
