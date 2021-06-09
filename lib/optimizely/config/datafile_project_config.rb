@@ -38,6 +38,9 @@ module Optimizely
     attr_reader :anonymize_ip
     attr_reader :bot_filtering
     attr_reader :revision
+    attr_reader :sdk_key
+    attr_reader :environment_key
+    attr_reader :revision
     attr_reader :rollouts
     attr_reader :version
     attr_reader :send_flag_decisions
@@ -83,7 +86,7 @@ module Optimizely
       @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
-      @sdk_key = config,fetch('sdkKey', nil)
+      @sdk_key = config.fetch('sdkKey', nil)
       @environment_key = config.fetch('environmentKey', nil)
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)

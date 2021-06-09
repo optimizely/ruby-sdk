@@ -800,18 +800,24 @@ describe Optimizely::DatafileProjectConfig do
       it 'should log a message when provided sdk key is not avialable' do
         config_body_without_sdk_key = config_body.dup
         config_body_without_sdk_key.delete('sdkKey')
-        expect(config.get_sdk_key()).to eq(nil)
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+        config_body_json = JSON.dump(config_body_without_sdk_key)
+        logger = spy('logger')
+        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
+        expect(project_config.get_sdk_key()).to eq(nil)
+        expect(logger).to have_received(:log).with(Logger::ERROR,
                                                        "SDK key is not in datafile.")
       end
     end
 
     describe 'get_experiment_from_key' do
       it 'should log a message when provided environment key is not available' do
-        config_body_without_sdk_key = config_body.dup
-        config_body_without_sdk_key.delete('environmentKey')
-        expect(config.get_experiment_from_key()).to eq(nil)
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+        config_body_without_environment_key = config_body.dup
+        config_body_without_environment_key.delete('environmentKey')
+        config_body_json = JSON.dump(config_body_without_environment_key)
+        logger = spy('logger')
+        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
+        expect(project_config.get_environment_key()).to eq(nil)
+        expect(logger).to have_received(:log).with(Logger::ERROR,
                                                        "Environment key is not in datafile.")
       end
     end
