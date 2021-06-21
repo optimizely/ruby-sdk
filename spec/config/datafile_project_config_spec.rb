@@ -803,7 +803,7 @@ describe Optimizely::DatafileProjectConfig do
         config_body_json = JSON.dump(config_body_without_sdk_key)
         logger = spy('logger')
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
-        expect(project_config.get_sdk_key()).to eq(nil)
+        expect(project_config.get_sdk_key).to eq(nil)
       end
     end
 
@@ -814,7 +814,7 @@ describe Optimizely::DatafileProjectConfig do
         config_body_json = JSON.dump(config_body_without_environment_key)
         logger = spy('logger')
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
-        expect(project_config.get_environment_key()).to eq(nil)
+        expect(project_config.get_environment_key).to eq(nil)
       end
     end
 
