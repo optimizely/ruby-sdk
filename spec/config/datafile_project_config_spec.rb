@@ -807,7 +807,7 @@ describe Optimizely::DatafileProjectConfig do
       end
     end
 
-    describe 'get_experiment_from_key' do
+    describe 'get_environment_key' do
       it 'should log a message when provided environment key is not available' do
         config_body_without_environment_key = config_body.dup
         config_body_without_environment_key.delete('environmentKey')
