@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -804,8 +804,6 @@ describe Optimizely::DatafileProjectConfig do
         logger = spy('logger')
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
         expect(project_config.get_sdk_key()).to eq(nil)
-        expect(logger).to have_received(:log).with(Logger::ERROR,
-                                                       "SDK key is not in datafile.")
       end
     end
 
@@ -817,8 +815,6 @@ describe Optimizely::DatafileProjectConfig do
         logger = spy('logger')
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
         expect(project_config.get_environment_key()).to eq(nil)
-        expect(logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Environment key is not in datafile.")
       end
     end
 

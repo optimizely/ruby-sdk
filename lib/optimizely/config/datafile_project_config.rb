@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -196,41 +196,6 @@ module Optimizely
       #
       # Returns true if experiment is running
       RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
-    end
-
-    def get_sdk_key()
-      # Retrives SDK Key of the project
-      #
-      # Returns SDK key or nil if not found
-      return @sdk_key if @sdk_key
-
-      @logger.log Logger::ERROR, "SDK key is not in datafile."
-      nil
-    end
-
-    def get_environment_key()
-      # Retrives environment Key of the project
-      #
-      # Returns environment key or nil if not found
-      return @environment_key if @environment_key
-
-      @logger.log Logger::ERROR, "Environment key is not in datafile."
-      nil
-    end
-
-    def get_experiment_from_key(experiment_key)
-      # Retrieves experiment ID for a given key
-      #
-      # experiment_key - String key representing the experiment
-      #
-      # Returns Experiment or nil if not found
-
-      experiment = @experiment_key_map[experiment_key]
-      return experiment if experiment
-
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
-      @error_handler.handle_error InvalidExperimentError
-      nil
     end
 
     def get_experiment_key(experiment_id)
