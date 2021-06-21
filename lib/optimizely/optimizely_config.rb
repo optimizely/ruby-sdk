@@ -30,7 +30,7 @@ module Optimizely
         'featuresMap' => features_map,
         'revision' => @project_config.revision
       }
-      config['sdkKey'] =  @project_config.sdk_key if @project_config.sdk_key
+      config['sdkKey'] = @project_config.sdk_key if @project_config.sdk_key
       config['environmentKey'] = @project_config.environment_key if @project_config.environment_key
       config
     end
