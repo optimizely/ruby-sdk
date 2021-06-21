@@ -198,6 +198,21 @@ module Optimizely
       RUNNING_EXPERIMENT_STATUS.include?(experiment['status'])
     end
 
+    def get_experiment_from_key(experiment_key)
+      # Retrieves experiment ID for a given key
+      #
+      # experiment_key - String key representing the experiment
+      #
+      # Returns Experiment or nil if not found
+
+      experiment = @experiment_key_map[experiment_key]
+      return experiment if experiment
+
+      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
     def get_experiment_key(experiment_id)
       # Retrieves experiment key for a given ID.
       #
