@@ -796,28 +796,6 @@ describe Optimizely::DatafileProjectConfig do
       end
     end
 
-    describe 'get_sdk_key' do
-      it 'should log a message when provided sdk key is not avialable' do
-        config_body_without_sdk_key = config_body.dup
-        config_body_without_sdk_key.delete('sdkKey')
-        config_body_json = JSON.dump(config_body_without_sdk_key)
-        logger = spy('logger')
-        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
-        expect(project_config.get_sdk_key).to eq(nil)
-      end
-    end
-
-    describe 'get_environment_key' do
-      it 'should log a message when provided environment key is not available' do
-        config_body_without_environment_key = config_body.dup
-        config_body_without_environment_key.delete('environmentKey')
-        config_body_json = JSON.dump(config_body_without_environment_key)
-        logger = spy('logger')
-        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
-        expect(project_config.get_environment_key).to eq(nil)
-      end
-    end
-
     describe 'get_experiment_key' do
       it 'should log a message when provided experiment key is invalid' do
         config.get_experiment_key('invalid_id')
