@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -93,6 +93,14 @@ describe Optimizely::OptimizelyConfig do
 
   it 'should return correct config revision' do
     expect(project_config.revision).to eq(optimizely_config['revision'])
+  end
+
+  it 'should return correct sdk key' do
+    expect(project_config.sdk_key).to eq(optimizely_config['sdkKey'])
+  end
+
+  it 'should return correct environment key' do
+    expect(project_config.environment_key).to eq(optimizely_config['environmentKey'])
   end
 
   it 'should return correct datafile string' do

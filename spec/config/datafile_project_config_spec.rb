@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.groups).to eq(config_body['groups'])
       expect(project_config.project_id).to eq(config_body['projectId'])
       expect(project_config.revision).to eq(config_body['revision'])
+      expect(project_config.sdk_key).to eq(config_body['sdkKey'])
+      expect(project_config.environment_key).to eq(config_body['environmentKey'])
       expect(project_config.send_flag_decisions).to eq(config_body['sendFlagDecisions'])
 
       expected_attribute_key_map = {

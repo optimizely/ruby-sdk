@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ module OptimizelySpec
     'anonymizeIP' => false,
     'botFiltering' => true,
     'revision' => '42',
+    'sdkKey' => 'VALID',
+    'environmentKey' => 'VALID_ENVIRONMENT',
     'version' => '2',
     'sendFlagDecisions' => true,
     'events' => [{
@@ -1125,6 +1127,8 @@ module OptimizelySpec
       }
     ],
     'revision' => '3',
+    'sdkKey' => 'AUDIENCES',
+    'environmentKey' => 'AUDIENCES_ENVIRONMENT',
     'sendFlagDecisions' => true
   }.freeze
 
