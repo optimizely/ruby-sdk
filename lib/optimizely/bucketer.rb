@@ -88,7 +88,7 @@ module Optimizely
       decide_reasons.push(*find_bucket_reasons)
 
       if variation_id && variation_id != ''
-        variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
         return variation, decide_reasons
       end
 
