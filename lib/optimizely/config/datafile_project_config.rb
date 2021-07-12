@@ -150,7 +150,7 @@ module Optimizely
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
       @experiment_feature_map = {}
-      
+
       @feature_variable_key_map = {}
       @feature_flag_key_map.each do |key, feature_flag|
         @feature_variable_key_map[key] = generate_key_map(feature_flag['variables'], 'key')
