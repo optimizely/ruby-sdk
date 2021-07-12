@@ -736,7 +736,7 @@ describe Optimizely::DatafileProjectConfig do
         '177776' => config_body['rollouts'][0]['experiments'][2],
         '177774' => config_body['rollouts'][1]['experiments'][0],
         '177779' => config_body['rollouts'][1]['experiments'][1],
-        'rollout_exp_with_diff_id_and_key' => config_body['rollouts'][1]['experiments'][2]
+        '177780' => config_body['rollouts'][1]['experiments'][2]
       }
 
       expect(project_config.attribute_key_map).to eq(expected_attribute_key_map)
