@@ -149,8 +149,8 @@ module Optimizely
 
           @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
         end
-        @variation_id_map[exp.key] = generate_key_map(variations, 'id')
-        @variation_key_map[exp.key] = generate_key_map(variations, 'key')
+        @variation_id_map[exp['key']] = generate_key_map(variations, 'id')
+        @variation_key_map[exp['key']] = generate_key_map(variations, 'key')
         @variation_id_map_by_experiment_id[key] = generate_key_map(variations, 'id')
         @variation_key_map_by_experiment_id[key] = generate_key_map(variations, 'key')
       end
