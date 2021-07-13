@@ -730,7 +730,7 @@ describe Optimizely::DatafileProjectConfig do
         '166661' => config_body['rollouts'][1]
       }
 
-      expected_rollout_experiment_key_map = {
+      expected_rollout_experiment_id_map = {
         '177770' => config_body['rollouts'][0]['experiments'][0],
         '177772' => config_body['rollouts'][0]['experiments'][1],
         '177776' => config_body['rollouts'][0]['experiments'][2],
@@ -750,7 +750,7 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.variation_key_map).to eq(expected_variation_key_map)
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
-      expect(project_config.rollout_experiment_key_map).to eq(expected_rollout_experiment_key_map)
+      expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
     end
 
     it 'should initialize properties correctly upon creating project with typed audience dict' do
@@ -839,6 +839,54 @@ describe Optimizely::DatafileProjectConfig do
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
 
         expect(project_config.get_variation_from_id(experiment_key, variation_id)[feature_enabled]).to eq(false)
+      end
+    end
+
+    describe 'get_variation_from_id_by_experiment_id' do
+      it 'should log a message when provided experiment id is invalid' do
+        config.get_variation_from_id_by_experiment_id('invalid_id', 'some_variation')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment id 'invalid_id' is not in datafile.")
+      end
+      it 'should return nil when provided variation id is invalid' do
+        expect(config.get_variation_from_id_by_experiment_id('test_experiment', 'invalid_variation')).to eq(nil)
+      end
+
+      it 'should return variation having featureEnabled false when not provided in the datafile' do
+        config_body = OptimizelySpec::VALID_CONFIG_BODY
+        experiment_id = config_body['experiments'][1]['id']
+        variation_id = config_body['experiments'][1]['variations'][1]['id']
+
+        config_body['experiments'][1]['variations'][1][feature_enabled] = nil
+
+        config_body_json = JSON.dump(config_body)
+        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
+
+        expect(project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)[feature_enabled]).to eq(false)
+      end
+    end
+
+    describe 'get_variation_from_key_by_experiment_id' do
+      it 'should log a message when provided experiment id is invalid' do
+        config.get_variation_from_key_by_experiment_id('invalid_id', 'some_variation')
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Experiment id 'invalid_id' is not in datafile.")
+      end
+      it 'should return nil when provided variation id is invalid' do
+        expect(config.get_variation_from_key_by_experiment_id('test_experiment', 'invalid_variation')).to eq(nil)
+      end
+
+      it 'should return variation having featureEnabled false when not provided in the datafile' do
+        config_body = OptimizelySpec::VALID_CONFIG_BODY
+        experiment_id = config_body['experiments'][1]['id']
+        variation_key = config_body['experiments'][1]['variations'][1]['key']
+
+        config_body['experiments'][1]['variations'][1][feature_enabled] = nil
+
+        config_body_json = JSON.dump(config_body)
+        project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
+
+        expect(project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)[feature_enabled]).to eq(false)
       end
     end
 
