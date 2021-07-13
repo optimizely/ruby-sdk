@@ -849,7 +849,9 @@ describe Optimizely::DatafileProjectConfig do
                                                        "Experiment id 'invalid_id' is not in datafile.")
       end
       it 'should return nil when provided variation id is invalid' do
-        expect(config.get_variation_from_id_by_experiment_id('test_experiment', 'invalid_variation')).to eq(nil)
+        expect(config.get_variation_from_id_by_experiment_id('111127', 'invalid_variation')).to eq(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+          "Variation id 'invalid_variation' is not in datafile.")
       end
 
       it 'should return variation having featureEnabled false when not provided in the datafile' do
@@ -872,8 +874,10 @@ describe Optimizely::DatafileProjectConfig do
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment id 'invalid_id' is not in datafile.")
       end
-      it 'should return nil when provided variation id is invalid' do
-        expect(config.get_variation_from_key_by_experiment_id('test_experiment', 'invalid_variation')).to eq(nil)
+      it 'should return nil when provided variation key is invalid' do
+        expect(config.get_variation_from_key_by_experiment_id('111127', 'invalid_variation')).to eq(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+          "Variation key 'invalid_variation' is not in datafile.")
       end
 
       it 'should return variation having featureEnabled false when not provided in the datafile' do

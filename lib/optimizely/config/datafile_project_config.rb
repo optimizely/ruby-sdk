@@ -123,7 +123,7 @@ module Optimizely
       @variation_key_map_by_experiment_id = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
-      @experiment_key_map.each_value do |exp|
+      @experiment_id_map.each_value do |exp|
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
         variations.each do |variation|
