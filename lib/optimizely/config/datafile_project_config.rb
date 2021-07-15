@@ -113,7 +113,7 @@ module Optimizely
           @experiments.push(exp.merge('groupId' => key))
         end
       end
-      @experiment_key_map = generate_key_map(@experiments, 'key')
+      @experiment_key_map = {}
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
@@ -139,7 +139,8 @@ module Optimizely
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
-      @all_experiments.each do |key, exp|
+      @all_experiments.each do |id, exp|
+        @experiment_key_map[exp.key] = exp
         variations = exp.fetch('variations')
         variations.each do |variation|
           variation_id = variation['id']
@@ -151,8 +152,8 @@ module Optimizely
         end
         @variation_id_map[exp['key']] = generate_key_map(variations, 'id')
         @variation_key_map[exp['key']] = generate_key_map(variations, 'key')
-        @variation_id_map_by_experiment_id[key] = generate_key_map(variations, 'id')
-        @variation_key_map_by_experiment_id[key] = generate_key_map(variations, 'key')
+        @variation_id_map_by_experiment_id[id] = generate_key_map(variations, 'id')
+        @variation_key_map_by_experiment_id[id] = generate_key_map(variations, 'key')
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
       @experiment_feature_map = {}
