@@ -113,7 +113,7 @@ module Optimizely
           @experiments.push(exp.merge('groupId' => key))
         end
       end
-      @experiment_key_map = {}
+      @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
@@ -124,7 +124,6 @@ module Optimizely
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
       @experiment_id_map.each_value do |exp|
-        @experiment_key_map[exp.key] = exp
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
         variations.each do |variation|
