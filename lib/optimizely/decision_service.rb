@@ -52,11 +52,11 @@ module Optimizely
       @forced_variation_map = {}
     end
 
-    def get_variation(project_config, experiment_key, user_id, attributes = nil, decide_options = [])
+    def get_variation(project_config, experiment_id, user_id, attributes = nil, decide_options = [])
       # Determines variation into which user will be bucketed.
       #
       # project_config - project_config - Instance of ProjectConfig
-      # experiment_key - Experiment for which visitor variation needs to be determined
+      # experiment_id - Experiment for which visitor variation needs to be determined
       # user_id - String ID for user
       # attributes - Hash representing user attributes
       #
@@ -68,24 +68,23 @@ module Optimizely
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
       decide_reasons.push(*bucketing_id_reasons)
       # Check to make sure experiment is active
-      experiment = project_config.get_experiment_from_key(experiment_key)
+      experiment = project_config.get_experiment_from_id(experiment_id)
       return nil, decide_reasons if experiment.nil?
 
-      experiment_id = experiment['id']
       unless project_config.experiment_running?(experiment)
-        message = "Experiment '#{experiment_key}' is not running."
+        message = "Experiment '#{experiment_id}' is not running."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
         return nil, decide_reasons
       end
 
       # Check if a forced variation is set for the user
-      forced_variation, reasons_received = get_forced_variation(project_config, experiment_key, user_id)
+      forced_variation, reasons_received = get_forced_variation(project_config, experiment_id, user_id)
       decide_reasons.push(*reasons_received)
       return forced_variation['id'], decide_reasons if forced_variation
 
       # Check if user is in a white-listed variation
-      whitelisted_variation_id, reasons_received = get_whitelisted_variation_id(project_config, experiment_key, user_id)
+      whitelisted_variation_id, reasons_received = get_whitelisted_variation_id(project_config, experiment_id, user_id)
       decide_reasons.push(*reasons_received)
       return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
 
@@ -97,7 +96,7 @@ module Optimizely
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile)
         decide_reasons.push(*reasons_received)
         if saved_variation_id
-          message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
+          message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_id}' for user '#{user_id}' from user profile."
           @logger.log(Logger::INFO, message)
           decide_reasons.push(message)
           return saved_variation_id, decide_reasons
@@ -108,7 +107,7 @@ module Optimizely
       user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
       decide_reasons.push(*reasons_received)
       unless user_meets_audience_conditions
-        message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
+        message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_id}'."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
         return nil, decide_reasons
@@ -122,7 +121,7 @@ module Optimizely
       message = ''
       if variation_id
         variation_key = variation['key']
-        message = "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_key}'."
+        message = "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_id}'."
       else
         message = "User '#{user_id}' is in no variation."
       end
@@ -186,13 +185,13 @@ module Optimizely
           return nil, decide_reasons
         end
 
-        experiment_key = experiment['key']
-        variation_id, reasons_received = get_variation(project_config, experiment_key, user_id, attributes, decide_options)
+        experiment_id = experiment['id']
+        variation_id, reasons_received = get_variation(project_config, experiment_id, user_id, attributes, decide_options)
         decide_reasons.push(*reasons_received)
 
         next unless variation_id
 
-        variation = project_config.variation_id_map[experiment_key][variation_id]
+        variation = project_config.variation_id_map_by_experiment_id[experiment_id][variation_id]
 
         return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
       end
@@ -315,7 +314,7 @@ module Optimizely
         return true
       end
 
-      variation_id = project_config.get_variation_id_from_key(experiment_key, variation_key)
+      variation_id = project_config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
 
       #  check if the variation exists in the datafile
       unless variation_id
@@ -330,11 +329,11 @@ module Optimizely
       true
     end
 
-    def get_forced_variation(project_config, experiment_key, user_id)
+    def get_forced_variation(project_config, experiment_id, user_id)
       # Gets the forced variation for the given user and experiment.
       #
       # project_config - Instance of ProjectConfig
-      # experiment_key - String Key for experiment
+      # experiment_id - String id for experiment
       # user_id - String ID for user
       #
       # Returns Variation The variation which the given user and experiment should be forced into
@@ -347,14 +346,12 @@ module Optimizely
       end
 
       experiment_to_variation_map = @forced_variation_map[user_id]
-      experiment = project_config.get_experiment_from_key(experiment_key)
-      experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
       # this case is logged in get_experiment_from_key
       return nil, decide_reasons if experiment_id.nil? || experiment_id.empty?
 
       unless experiment_to_variation_map.key? experiment_id
-        message = "No experiment '#{experiment_key}' mapped to user '#{user_id}' in the forced variation map."
+        message = "No experiment '#{experiment_id}' mapped to user '#{user_id}' in the forced variation map."
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)
         return nil, decide_reasons
@@ -362,14 +359,14 @@ module Optimizely
 
       variation_id = experiment_to_variation_map[experiment_id]
       variation_key = ''
-      variation = project_config.get_variation_from_id(experiment_key, variation_id)
+      variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
       variation_key = variation['key'] if variation
 
       # check if the variation exists in the datafile
       # this case is logged in get_variation_from_id
       return nil, decide_reasons if variation_key.empty?
 
-      message = "Variation '#{variation_key}' is mapped to experiment '#{experiment_key}' and user '#{user_id}' in the forced variation map"
+      message = "Variation '#{variation_key}' is mapped to experiment '#{experiment_id}' and user '#{user_id}' in the forced variation map"
       @logger.log(Logger::DEBUG, message)
       decide_reasons.push(message)
 
@@ -378,7 +375,7 @@ module Optimizely
 
     private
 
-    def get_whitelisted_variation_id(project_config, experiment_key, user_id)
+    def get_whitelisted_variation_id(project_config, experiment_id, user_id)
       # Determine if a user is whitelisted into a variation for the given experiment and return the ID of that variation
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -387,7 +384,7 @@ module Optimizely
       #
       # Returns variation ID into which user_id is whitelisted (nil if no variation)
 
-      whitelisted_variations = project_config.get_whitelisted_variations(experiment_key)
+      whitelisted_variations = project_config.get_whitelisted_variations(experiment_id)
 
       return nil, nil unless whitelisted_variations
 
@@ -395,7 +392,7 @@ module Optimizely
 
       return nil, nil unless whitelisted_variation_key
 
-      whitelisted_variation_id = project_config.get_variation_id_from_key(experiment_key, whitelisted_variation_key)
+      whitelisted_variation_id = project_config.get_variation_id_from_key_by_experiment_id(experiment_id, whitelisted_variation_key)
 
       unless whitelisted_variation_id
         message = "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}', which is not in the datafile."
@@ -403,7 +400,7 @@ module Optimizely
         return nil, message
       end
 
-      message = "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}' of experiment '#{experiment_key}'."
+      message = "User '#{user_id}' is whitelisted into variation '#{whitelisted_variation_key}' of experiment '#{experiment_id}'."
       @logger.log(Logger::INFO, message)
 
       [whitelisted_variation_id, message]

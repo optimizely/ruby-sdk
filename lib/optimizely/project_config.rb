@@ -58,6 +58,8 @@ module Optimizely
 
     def get_experiment_from_key(experiment_key); end
 
+    def get_experiment_from_id(experiment_id); end
+
     def get_experiment_key(experiment_id); end
 
     def get_event_from_key(event_key); end
@@ -72,7 +74,7 @@ module Optimizely
 
     def get_variation_id_from_key(experiment_key, variation_key); end
 
-    def get_whitelisted_variations(experiment_key); end
+    def get_whitelisted_variations(experiment_id); end
 
     def get_attribute_id(attribute_key); end
 

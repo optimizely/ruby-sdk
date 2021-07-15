@@ -1078,10 +1078,10 @@ module Optimizely
         }
       end
 
-      experiment_key = experiment['key']
+      experiment_id = experiment['id']
 
       variation_id = ''
-      variation_id = config.get_variation_id_from_key(experiment_key, variation_key) if experiment_key != ''
+      variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) if experiment_id != ''
 
       metadata = {
         flag_key: flag_key,
@@ -1095,11 +1095,11 @@ module Optimizely
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
-      @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
+      @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_id}'.")
 
-      experiment = nil if experiment_key == ''
+      experiment = nil if experiment_id == ''
       variation = nil
-      variation = config.get_variation_from_id(experiment_key, variation_id) unless experiment.nil?
+      variation = config.get_variation_from_id_by_experiment_id(experiment_id, variation_id) unless experiment.nil?
       log_event = EventFactory.create_log_event(user_event, @logger)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
