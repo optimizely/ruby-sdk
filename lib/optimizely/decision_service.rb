@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2020, Optimizely and contributors
+#    Copyright 2017-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ module Optimizely
       end
 
       # Check if a forced variation is set for the user
-      forced_variation, reasons_received = get_forced_variation(project_config, experiment_id, user_id)
+      forced_variation, reasons_received = get_forced_variation(project_config, experiment['key'], user_id)
       decide_reasons.push(*reasons_received)
       return forced_variation['id'], decide_reasons if forced_variation
 
@@ -329,11 +329,11 @@ module Optimizely
       true
     end
 
-    def get_forced_variation(project_config, experiment_id, user_id)
+    def get_forced_variation(project_config, experiment_key, user_id)
       # Gets the forced variation for the given user and experiment.
       #
       # project_config - Instance of ProjectConfig
-      # experiment_id - String id for experiment
+      # experiment_key - String key for experiment
       # user_id - String ID for user
       #
       # Returns Variation The variation which the given user and experiment should be forced into
@@ -346,6 +346,9 @@ module Optimizely
       end
 
       experiment_to_variation_map = @forced_variation_map[user_id]
+      # to be corrected
+      experiment = project_config.get_experiment_from_key(experiment_key)
+      experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID
       # this case is logged in get_experiment_from_key
       return nil, decide_reasons if experiment_id.nil? || experiment_id.empty?
