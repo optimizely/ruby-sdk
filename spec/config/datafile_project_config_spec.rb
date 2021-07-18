@@ -889,8 +889,7 @@ describe Optimizely::DatafileProjectConfig do
 
         config_body_json = JSON.dump(config_body)
         project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
-
-        expect(project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)[feature_enabled]).to eq(false)
+        expect(project_config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)).to eq('100029')
       end
     end
 
