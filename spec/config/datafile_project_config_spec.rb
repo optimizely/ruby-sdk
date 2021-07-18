@@ -894,7 +894,6 @@ describe Optimizely::DatafileProjectConfig do
     end
 
     describe 'get_variation_id_from_key' do
-
       config_body = OptimizelySpec::VALID_CONFIG_BODY
       experiment_key = config_body['experiments'][1]['key']
       variation_key = config_body['experiments'][1]['variations'][1]['key']
