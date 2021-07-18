@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
+#    Copyright 2016-2017, 2019-2021 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ module Optimizely
       decide_reasons.push(*find_bucket_reasons)
 
       if variation_id && variation_id != ''
-        variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
         return variation, decide_reasons
       end
 
