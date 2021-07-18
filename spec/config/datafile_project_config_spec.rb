@@ -894,10 +894,24 @@ describe Optimizely::DatafileProjectConfig do
     end
 
     describe 'get_variation_id_from_key' do
+
+      config_body = OptimizelySpec::VALID_CONFIG_BODY
+      experiment_key = config_body['experiments'][1]['key']
+      variation_key = config_body['experiments'][1]['variations'][1]['key']
+      variation_id = config_body['experiments'][1]['variations'][1]['id']
+
       it 'should log a message when there is no variation key map for the experiment' do
         config.get_variation_id_from_key('invalid_key', 'invalid_variation')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
                                                        "Experiment key 'invalid_key' is not in datafile.")
+      end
+      it 'should log a message when there is invalid variation key for the experiment' do
+        expect(config.get_variation_id_from_key(experiment_key, 'invalid_variation')).to eq(nil)
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR,
+                                                       "Variation key 'invalid_variation' is not in datafile.")
+      end
+      it 'should return variation id for variation key and the experiment key' do
+        expect(config.get_variation_id_from_key(experiment_key, variation_key)).to eq(variation_id)
       end
     end
 
