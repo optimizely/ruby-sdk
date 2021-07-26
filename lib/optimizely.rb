@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -877,12 +877,14 @@ module Optimizely
       experiment = config.get_experiment_from_key(experiment_key)
       return nil if experiment.nil?
 
+      experiment_id = experiment['id']
+
       return nil unless user_inputs_valid?(attributes)
 
-      variation_id, = @decision_service.get_variation(config, experiment_key, user_id, attributes)
+      variation_id, = @decision_service.get_variation(config, experiment_id, user_id, attributes)
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
-      decision_notification_type = if config.feature_experiment?(experiment['id'])
+      decision_notification_type = if config.feature_experiment?(experiment_id)
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_TEST']
                                    else
                                      Helpers::Constants::DECISION_NOTIFICATION_TYPES['AB_TEST']
@@ -1078,10 +1080,11 @@ module Optimizely
         }
       end
 
+      experiment_id = experiment['id']
       experiment_key = experiment['key']
 
       variation_id = ''
-      variation_id = config.get_variation_id_from_key(experiment_key, variation_key) if experiment_key != ''
+      variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) if experiment_id != ''
 
       metadata = {
         flag_key: flag_key,
@@ -1097,9 +1100,9 @@ module Optimizely
 
       @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
 
-      experiment = nil if experiment_key == ''
+      experiment = nil if experiment_id == ''
       variation = nil
-      variation = config.get_variation_from_id(experiment_key, variation_id) unless experiment.nil?
+      variation = config.get_variation_from_id_by_experiment_id(experiment_id, variation_id) unless experiment.nil?
       log_event = EventFactory.create_log_event(user_event, @logger)
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],

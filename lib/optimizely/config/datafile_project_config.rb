@@ -52,10 +52,12 @@ module Optimizely
     attr_reader :feature_variable_key_map
     attr_reader :group_id_map
     attr_reader :rollout_id_map
-    attr_reader :rollout_experiment_key_map
+    attr_reader :rollout_experiment_id_map
     attr_reader :variation_id_map
     attr_reader :variation_id_to_variable_usage_map
     attr_reader :variation_key_map
+    attr_reader :variation_id_map_by_experiment_id
+    attr_reader :variation_key_map_by_experiment_id
 
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
@@ -113,9 +115,11 @@ module Optimizely
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
+      @variation_id_map_by_experiment_id = {}
+      @variation_key_map_by_experiment_id = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
-      @experiment_key_map.each_value do |exp|
+      @experiment_id_map.each_value do |exp|
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
         variations.each do |variation|
@@ -125,13 +129,13 @@ module Optimizely
       end
       @rollout_id_map = generate_key_map(@rollouts, 'id')
       # split out the experiment key map for rollouts
-      @rollout_experiment_key_map = {}
+      @rollout_experiment_id_map = {}
       @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
-        @rollout_experiment_key_map = @rollout_experiment_key_map.merge(generate_key_map(exps, 'key'))
+        @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end
-      @all_experiments = @experiment_key_map.merge(@rollout_experiment_key_map)
-      @all_experiments.each do |key, exp|
+      @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
+      @all_experiments.each do |id, exp|
         variations = exp.fetch('variations')
         variations.each do |variation|
           variation_id = variation['id']
@@ -141,8 +145,10 @@ module Optimizely
 
           @variation_id_to_variable_usage_map[variation_id] = generate_key_map(variation_variables, 'id')
         end
-        @variation_id_map[key] = generate_key_map(variations, 'id')
-        @variation_key_map[key] = generate_key_map(variations, 'key')
+        @variation_id_map[exp['key']] = generate_key_map(variations, 'id')
+        @variation_key_map[exp['key']] = generate_key_map(variations, 'key')
+        @variation_id_map_by_experiment_id[id] = generate_key_map(variations, 'id')
+        @variation_key_map_by_experiment_id[id] = generate_key_map(variations, 'key')
       end
       @feature_flag_key_map = generate_key_map(@feature_flags, 'key')
       @experiment_feature_map = {}
@@ -205,6 +211,21 @@ module Optimizely
       return experiment if experiment
 
       @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
+    def get_experiment_from_id(experiment_id)
+      # Retrieves experiment ID for a given key
+      #
+      # experiment_id - String id representing the experiment
+      #
+      # Returns Experiment or nil if not found
+
+      experiment = @experiment_id_map[experiment_id]
+      return experiment if experiment
+
+      @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
       nil
     end
@@ -277,6 +298,52 @@ module Optimizely
       nil
     end
 
+    def get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+      # Get variation given experiment ID and variation ID
+      #
+      # experiment_id - ID representing parent experiment of variation
+      # variation_id - ID of the variation
+      #
+      # Returns the variation or nil if not found
+
+      variation_id_map_by_experiment_id = @variation_id_map_by_experiment_id[experiment_id]
+      if variation_id_map_by_experiment_id
+        variation = variation_id_map_by_experiment_id[variation_id]
+        return variation if variation
+
+        @logger.log Logger::ERROR, "Variation id '#{variation_id}' is not in datafile."
+        @error_handler.handle_error InvalidVariationError
+        return nil
+      end
+
+      @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
+    def get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
+      # Get variation given experiment ID and variation key
+      #
+      # experiment_id - ID representing parent experiment of variation
+      # variation_key - Key of the variation
+      #
+      # Returns the variation or nil if not found
+
+      variation_key_map = @variation_key_map_by_experiment_id[experiment_id]
+      if variation_key_map
+        variation = variation_key_map[variation_key]
+        return variation['id'] if variation
+
+        @logger.log Logger::ERROR, "Variation key '#{variation_key}' is not in datafile."
+        @error_handler.handle_error InvalidVariationError
+        return nil
+      end
+
+      @logger.log Logger::ERROR, "Experiment id '#{experiment_id}' is not in datafile."
+      @error_handler.handle_error InvalidExperimentError
+      nil
+    end
+
     def get_variation_id_from_key(experiment_key, variation_key)
       # Get variation ID given experiment key and variation key
       #
@@ -300,17 +367,17 @@ module Optimizely
       nil
     end
 
-    def get_whitelisted_variations(experiment_key)
-      # Retrieves whitelisted variations for a given experiment Key
+    def get_whitelisted_variations(experiment_id)
+      # Retrieves whitelisted variations for a given experiment id
       #
-      # experiment_key - String Key representing the experiment
+      # experiment_id - String id representing the experiment
       #
       # Returns whitelisted variations for the experiment or nil
 
-      experiment = @experiment_key_map[experiment_key]
+      experiment = @experiment_id_map[experiment_id]
       return experiment['forcedVariations'] if experiment
 
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_key}' is not in datafile."
+      @logger.log Logger::ERROR, "Experiment ID '#{experiment_id}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
     end
 
