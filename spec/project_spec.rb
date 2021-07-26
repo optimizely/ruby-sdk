@@ -717,7 +717,7 @@ describe 'Optimizely' do
 
       project_instance.activate('test_experiment', 'test_user')
 
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment '111127'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment'.")
     end
 
     it 'should log when an exception has occurred during dispatching the impression event' do
@@ -1647,7 +1647,7 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment '122230'.")
+      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment_multivariate'.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
 
@@ -3906,7 +3906,7 @@ describe 'Optimizely' do
                 "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                 "Audience '11154' evaluated to UNKNOWN.",
                 "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
-                "User 'user1' does not meet the conditions to be in experiment '122230'.",
+                "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
                 "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
                 "Feature flag 'multi_variate_feature' is not used in a rollout."
               ],
@@ -3922,7 +3922,7 @@ describe 'Optimizely' do
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
-              "User 'user1' does not meet the conditions to be in experiment '122230'.",
+              "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
             ],
@@ -4255,7 +4255,7 @@ describe 'Optimizely' do
               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
               "Audience '11154' evaluated to UNKNOWN.",
               "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
-              "User 'user1' does not meet the conditions to be in experiment '122230'.",
+              "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
             ],
@@ -4271,7 +4271,7 @@ describe 'Optimizely' do
             "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
             "Audience '11154' evaluated to UNKNOWN.",
             "Audiences for experiment 'test_experiment_multivariate' collectively evaluated to FALSE.",
-            "User 'user1' does not meet the conditions to be in experiment '122230'.",
+            "User 'user1' does not meet the conditions to be in experiment 'test_experiment_multivariate'.",
             "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
             "Feature flag 'multi_variate_feature' is not used in a rollout."
           ],

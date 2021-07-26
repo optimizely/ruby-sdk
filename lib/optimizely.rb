@@ -1081,6 +1081,7 @@ module Optimizely
       end
 
       experiment_id = experiment['id']
+      experiment_key = experiment['key']
 
       variation_id = ''
       variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) if experiment_id != ''
@@ -1097,7 +1098,7 @@ module Optimizely
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
-      @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_id}'.")
+      @logger.log(Logger::INFO, "Activating user '#{user_id}' in experiment '#{experiment_key}'.")
 
       experiment = nil if experiment_id == ''
       variation = nil

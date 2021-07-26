@@ -181,10 +181,10 @@ describe Optimizely::DecisionService do
                               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
                               "Audience '11154' evaluated to FALSE.",
                               "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE.",
-                              "User 'test_user' does not meet the conditions to be in experiment '122227'."
+                              "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'."
                             ])
       expect(spy_logger).to have_received(:log)
-        .once.with(Logger::INFO, "User 'test_user' does not meet the conditions to be in experiment '122227'.")
+        .once.with(Logger::INFO, "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
 
       # should have checked forced variations
       expect(decision_service).to have_received(:get_whitelisted_variation_id).once
@@ -195,9 +195,9 @@ describe Optimizely::DecisionService do
     it 'should return nil if the given experiment is not running' do
       variation_received, reasons = decision_service.get_variation(config, '100027', 'test_user')
       expect(variation_received).to eq(nil)
-      expect(reasons).to eq(["Experiment '100027' is not running."])
+      expect(reasons).to eq(["Experiment 'test_experiment_not_started' is not running."])
       expect(spy_logger).to have_received(:log)
-        .once.with(Logger::INFO, "Experiment '100027' is not running.")
+        .once.with(Logger::INFO, "Experiment 'test_experiment_not_started' is not running.")
 
       # non-running experiments should short circuit whitelisting
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
@@ -313,10 +313,10 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation(config, '111127', 'test_user')
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
-                                "Returning previously activated variation ID 111129 of experiment '111127' for user 'test_user' from user profile."
+                                "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile."
                               ])
         expect(spy_logger).to have_received(:log).once
-                                                 .with(Logger::INFO, "Returning previously activated variation ID 111129 of experiment '111127' for user 'test_user' from user profile.")
+                                                 .with(Logger::INFO, "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile.")
 
         # saved user profiles should short circuit bucketing
         expect(decision_service.bucketer).not_to have_received(:bucket)

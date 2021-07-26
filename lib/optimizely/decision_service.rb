@@ -71,8 +71,9 @@ module Optimizely
       experiment = project_config.get_experiment_from_id(experiment_id)
       return nil, decide_reasons if experiment.nil?
 
+      experiment_key = experiment['key']
       unless project_config.experiment_running?(experiment)
-        message = "Experiment '#{experiment_id}' is not running."
+        message = "Experiment '#{experiment_key}' is not running."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
         return nil, decide_reasons
@@ -96,7 +97,7 @@ module Optimizely
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile)
         decide_reasons.push(*reasons_received)
         if saved_variation_id
-          message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_id}' for user '#{user_id}' from user profile."
+          message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
           @logger.log(Logger::INFO, message)
           decide_reasons.push(message)
           return saved_variation_id, decide_reasons
@@ -107,7 +108,7 @@ module Optimizely
       user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
       decide_reasons.push(*reasons_received)
       unless user_meets_audience_conditions
-        message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_id}'."
+        message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
         return nil, decide_reasons
@@ -191,7 +192,7 @@ module Optimizely
 
         next unless variation_id
 
-        variation = project_config.variation_id_map_by_experiment_id[experiment_id][variation_id]
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
 
         return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
       end
@@ -346,7 +347,6 @@ module Optimizely
       end
 
       experiment_to_variation_map = @forced_variation_map[user_id]
-      # to be corrected
       experiment = project_config.get_experiment_from_key(experiment_key)
       experiment_id = experiment['id'] if experiment
       # check for nil and empty string experiment ID

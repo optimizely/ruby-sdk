@@ -918,7 +918,7 @@ describe Optimizely::DatafileProjectConfig do
       it 'should log a message when there is no experiment key map for the experiment' do
         config.get_whitelisted_variations('invalid_key')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment key 'invalid_key' is not in datafile.")
+                                                       "Experiment ID 'invalid_key' is not in datafile.")
       end
     end
 

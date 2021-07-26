@@ -333,9 +333,9 @@ module Optimizely
       #
       # Returns the variation or nil if not found
 
-      variation_key_map_by_experiment_id = @variation_key_map_by_experiment_id[experiment_id]
-      if variation_key_map_by_experiment_id
-        variation = variation_key_map_by_experiment_id[variation_key]
+      variation_key_map = @variation_key_map_by_experiment_id[experiment_id]
+      if variation_key_map
+        variation = variation_key_map[variation_key]
         return variation['id'] if variation
 
         @logger.log Logger::ERROR, "Variation key '#{variation_key}' is not in datafile."
@@ -372,16 +372,16 @@ module Optimizely
     end
 
     def get_whitelisted_variations(experiment_id)
-      # Retrieves whitelisted variations for a given experiment Key
+      # Retrieves whitelisted variations for a given experiment id
       #
-      # experiment_key - String Key representing the experiment
+      # experiment_id - String id representing the experiment
       #
       # Returns whitelisted variations for the experiment or nil
 
       experiment = @experiment_id_map[experiment_id]
       return experiment['forcedVariations'] if experiment
 
-      @logger.log Logger::ERROR, "Experiment key '#{experiment_id}' is not in datafile."
+      @logger.log Logger::ERROR, "Experiment ID '#{experiment_id}' is not in datafile."
       @error_handler.handle_error InvalidExperimentError
     end
 
