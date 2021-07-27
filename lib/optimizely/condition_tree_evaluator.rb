@@ -28,6 +28,8 @@ module Optimizely
       NOT_CONDITION => :not_evaluator
     }.freeze
 
+    OPERATORS = [AND_CONDITION, OR_CONDITION, NOT_CONDITION].freeze
+
     module_function
 
     def evaluate(conditions, leaf_evaluator)
