@@ -31,7 +31,7 @@ module Optimizely
         optly_audience['name'] = type_audience['name']
         optly_audience['conditions'] = type_audience['conditions']
 
-        optly_typed_audiences.append(optly_audience)
+        optly_typed_audiences.push(optly_audience)
         id_lookup_dict[type_audience['id']] = type_audience['id']
 
         @project_config.audiences.each do |old_audience|
@@ -42,7 +42,7 @@ module Optimizely
           optly_audience['name'] = old_audience['name']
           optly_audience['conditions'] = old_audience['conditions']
 
-          optly_typed_audiences.append(optly_audience)
+          optly_typed_audiences.push(optly_audience)
         end
       end
       @audiences = optly_typed_audiences
@@ -68,34 +68,42 @@ module Optimizely
   private
 
     def experiments_map
-      feature_variables_map = @project_config.feature_flags.reduce({}) do |result_map, feature|
-        result_map.update(feature['id'] => feature['variables'])
-      end
+      feature_variables_map = feature_variable_map
       audiences_map = {}
       @audiences.each do |optly_audience|
-        audiences_map[optly_audience.id] = optly_audience.name
+        audiences_map[optly_audience['id']] = optly_audience['name']
       end
       @project_config.experiments.reduce({}) do |experiments_map, experiment|
         experiments_map.update(
           experiment['key'] => {
             'id' => experiment['id'],
             'key' => experiment['key'],
-            'variationsMap' => experiment['variations'].reduce({}) do |variations_map, variation|
-              variation_object = {
-                'id' => variation['id'],
-                'key' => variation['key'],
-                'variablesMap' => get_merged_variables_map(variation, experiment['id'], feature_variables_map)
-              }
-              variation_object['featureEnabled'] = variation['featureEnabled'] if @project_config.feature_experiment?(experiment['id'])
-              variations_map.update(variation['key'] => variation_object)
-            end,
+            'variationsMap' => get_variation_map(experiment, feature_variables_map),
             'audiences' => replace_ids_with_names(exp.fetch('audienceConditions', []), audiences_map) || ''
           }
         )
       end
     end
 
-  # Merges feature key and type from feature variables to variation variables.
+    def feature_variable_map
+      @project_config.feature_flags.reduce({}) do |result_map, feature|
+        result_map.update(feature['id'] => feature['variables'])
+      end
+    end
+
+    def get_variation_map(experiment, feature_variables_map)
+      experiment['variations'].reduce({}) do |variations_map, variation|
+        variation_object = {
+          'id' => variation['id'],
+          'key' => variation['key'],
+          'variablesMap' => get_merged_variables_map(variation, experiment['id'], feature_variables_map)
+        }
+        variation_object['featureEnabled'] = variation['featureEnabled'] if @project_config.feature_experiment?(experiment['id'])
+        variations_map.update(variation['key'] => variation_object)
+      end
+    end
+
+    # Merges feature key and type from feature variables to variation variables.
     def get_merged_variables_map(variation, experiment_id, feature_variables_map)
       feature_ids = @project_config.experiment_feature_map[experiment_id]
       return {} unless feature_ids
@@ -129,6 +137,7 @@ module Optimizely
 
     def get_features_map(all_experiments_map)
       @project_config.feature_flags.reduce({}) do |features_map, feature|
+        delivery_rules = get_delivery_rules(@rollouts, feature.fetch('rolloutId'))
         features_map.update(
           feature['key'] => {
             'id' => feature['id'],
@@ -146,7 +155,12 @@ module Optimizely
                   'value' => variable['defaultValue']
                 }
               )
-            end
+            end,
+            'experimentRules' => feature['experimentIds'].reduce([]) do |experiments_map, experiment_id|
+              experiment_key = @project_config.experiment_id_map[experiment_id]['key']
+              experiments_map.push(all_experiments_map[experiment_key])
+            end,
+            'deliveryRules' => delivery_rules
           }
         )
       end
@@ -159,7 +173,7 @@ module Optimizely
         optly_attribute['id'] = attribute['id']
         optly_attribute['key'] = attribute['key']
 
-        attributes_list.append(optly_attribute)
+        attributes_list.push(optly_attribute)
       end
       attributes_list
     end
@@ -172,13 +186,13 @@ module Optimizely
         optly_event['key'] = event['key']
         optly_event['experimentIds'] = event['experimentIds']
 
-        events_list.append(optly_event)
+        events_list.push(optly_event)
       end
       events_list
     end
 
     def lookup_name_from_id(audience_id, audiences_map)
-      name = name = audiences_map[audience_id] || audience_id
+      name = audiences_map[audience_id] || audience_id
       name
     end
 
@@ -235,5 +249,29 @@ module Optimizely
         ''
       end
     end
-end
+
+    def get_delivery_rules(rollouts, rollout_id)
+      delivery_rules = []
+      audiences_map = {}
+
+      rollout = rollouts.select { |rollout| rollout['id'] == rollout_id }
+      if rollout.any?
+        rollout = rollout[0]
+        @audiences.each do |optly_audience|
+          audiences_map[optly_audience['id']] = optly_audience['name']
+        end
+      end
+      experiments = rollout.fetch('experiment_map', [])
+      experiments.each do |experiment|
+        optly_exp = {
+          'id' => experiment['id'],
+          'key' => experiment['key'],
+          'variationsMap' => get_variation_map(experiment, feature_variable_map),
+          'audiences' => replace_ids_with_names(exp.fetch('audienceConditions', []), audiences_map) || ''
+        }
+        delivery_rules.push(optly_exp)
+      end
+      delivery_rules
+    end
+  end
 end
