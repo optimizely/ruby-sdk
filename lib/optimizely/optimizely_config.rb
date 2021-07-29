@@ -65,7 +65,7 @@ module Optimizely
       config
     end
 
-  private
+    private
 
     def experiments_map
       feature_variables_map = feature_variable_map
@@ -200,41 +200,36 @@ module Optimizely
       operand = 'OR'
       conditions_str = ''
       length = conditions.length()
-      if length.zero
-        return ''
-      end
-      if length == 1 && !OPERATORS.include?(conditions[0])
-        return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"'
-      end
+      return '' if length.zero
+      return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"' if length == 1 && !OPERATORS.include?(conditions[0])
+
       if length == 2 && OPERATORS.include?(conditions[0]) && is_array(conditions[1]) && !OPERATORS.include?(conditions[1])
-        if conditions[0] != 'not'
-          return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"'
-        else
-          return conditions[0].upcase + ' "' + lookup_name_from_id(conditions[1], audiences_map) + '"'
-        end
+
+        return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"' if conditions[0] != 'not'
+
+        return conditions[0].upcase + ' "' + lookup_name_from_id(conditions[1], audiences_map) + '"'
+
       end
       if length > 1
         (0..length - 1).each do |n|
           if OPERATORS.include?(conditions[n])
             operand = conditions[n].upcase
+          elsif is_array(conditions[n])
+            conditions_str += if n + 1 < length
+                                '(' + stringify_conditions(conditions[n], audiences_map) + ') '
+                              else
+                                operand + ' (' + stringify_conditions(conditions[n], audiences_map) + ')'
+                              end
           else
-            if is_array(conditions[n])
-              conditions_str += if n + 1 < length
-                                  '(' + stringify_conditions(conditions[n], audiences_map) + ') '
+            audience_name = lookup_name_from_id(conditions[n], audiences_map)
+            if audience_name.nil?
+              conditions_str += if n + 1 < length - 1
+                                  '"' + audience_name + '" ' + operand + ' '
+                                elsif n + 1 == length
+                                  operand + ' "' + audience_name + '"'
                                 else
-                                  operand + ' (' + self.stringify_conditions(conditions[n], audiences_map) + ')'
+                                  '"' + audience_name + '" '
                                 end
-            else
-              audience_name = lookup_name_from_id(conditions[n], audiences_map)
-              if audience_name.nil?
-                conditions_str += if n + 1 < length - 1
-                                    '"' + audience_name + '" ' + operand + ' '
-                                  elsif n + 1 == length
-                                    operand + ' "' + audience_name + '"'
-                                  else
-                                    '"' + audience_name + '" '
-                                  end
-              end
             end
           end
         end
@@ -254,7 +249,7 @@ module Optimizely
       delivery_rules = []
       audiences_map = {}
 
-      rollout = rollouts.select { |rollout| rollout['id'] == rollout_id }
+      rollout = rollouts.select { |selected_rollout| selected_rollout['id'] == rollout_id }
       if rollout.any?
         rollout = rollout[0]
         @audiences.each do |optly_audience|
