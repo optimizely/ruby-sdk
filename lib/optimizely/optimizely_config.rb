@@ -79,7 +79,7 @@ module Optimizely
             'id' => experiment['id'],
             'key' => experiment['key'],
             'variationsMap' => get_variation_map(experiment, feature_variables_map),
-            'audiences' => replace_ids_with_names(exp.fetch('audienceConditions', []), audiences_map) || ''
+            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_map) || ''
           }
         )
       end
