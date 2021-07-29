@@ -137,7 +137,7 @@ module Optimizely
 
     def get_features_map(all_experiments_map)
       @project_config.feature_flags.reduce({}) do |features_map, feature|
-        delivery_rules = get_delivery_rules(@rollouts, feature.fetch('rolloutId'))
+        delivery_rules = get_delivery_rules(@rollouts, feature['rolloutId'])
         features_map.update(
           feature['key'] => {
             'id' => feature['id'],
@@ -200,10 +200,10 @@ module Optimizely
       operand = 'OR'
       conditions_str = ''
       length = conditions.length()
-      return '' if length.zero
+      return '' if length.zero?
       return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"' if length == 1 && !OPERATORS.include?(conditions[0])
 
-      if length == 2 && OPERATORS.include?(conditions[0]) && is_array(conditions[1]) && !OPERATORS.include?(conditions[1])
+      if length == 2 && OPERATORS.include?(conditions[0]) && conditions[1].is_a?(Array) && !OPERATORS.include?(conditions[1])
 
         return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"' if conditions[0] != 'not'
 
@@ -214,7 +214,7 @@ module Optimizely
         (0..length - 1).each do |n|
           if OPERATORS.include?(conditions[n])
             operand = conditions[n].upcase
-          elsif is_array(conditions[n])
+          elsif conditions[n].is_a?(Array)
             conditions_str += if n + 1 < length
                                 '(' + stringify_conditions(conditions[n], audiences_map) + ') '
                               else
@@ -255,16 +255,17 @@ module Optimizely
         @audiences.each do |optly_audience|
           audiences_map[optly_audience['id']] = optly_audience['name']
         end
-      end
-      experiments = rollout.fetch('experiment_map', [])
-      experiments.each do |experiment|
-        optly_exp = {
-          'id' => experiment['id'],
-          'key' => experiment['key'],
-          'variationsMap' => get_variation_map(experiment, feature_variable_map),
-          'audiences' => replace_ids_with_names(exp.fetch('audienceConditions', []), audiences_map) || ''
-        }
-        delivery_rules.push(optly_exp)
+        experiments = rollout['experiments']
+        experiments.each do |experiment|
+          optly_exp = {
+            'id' => experiment['id'],
+            'key' => experiment['key'],
+            'variationsMap' => get_variation_map(experiment, feature_variable_map),
+            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_map) || ''
+          }
+          delivery_rules.push(optly_exp)
+        end
+
       end
       delivery_rules
     end
