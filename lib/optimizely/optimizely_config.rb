@@ -238,7 +238,7 @@ module Optimizely
     end
 
     def replace_ids_with_names(conditions, audiences_map)
-      if !conditions.nil?
+      if conditions.empty?
         stringify_conditions(conditions, audiences_map)
       else
         ''
