@@ -1,10 +1,10 @@
 # Optimizely Ruby SDK Changelog
 
 ## 3.8.1
-July 29th, 2021
+August 2nd, 2021
 
 ### Bug Fixes:
-- Duplicate experiment key issue with multiple feature flags. While trying to get variation from the variationKeyMap, it was unable to find because the latest experimentKey was overriding the previous one. [#282](https://github.com/optimizely/ruby-sdk/pull/282)
+- Fixed duplicate experiment key issue with multiple feature flags. While trying to get variation from the variationKeyMap, it was unable to find because the latest experimentKey was overriding the previous one. [#282](https://github.com/optimizely/ruby-sdk/pull/282)
 
 ## 3.8.0
 February 16th, 2021
