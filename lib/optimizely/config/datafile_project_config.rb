@@ -87,8 +87,8 @@ module Optimizely
       @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
-      @sdk_key = config.fetch('sdkKey', nil)
-      @environment_key = config.fetch('environmentKey', nil)
+      @sdk_key = config.fetch('sdkKey', '')
+      @environment_key = config.fetch('environmentKey', '')
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
 

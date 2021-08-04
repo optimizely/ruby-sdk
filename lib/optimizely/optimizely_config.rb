@@ -16,6 +16,7 @@
 #
 
 module Optimizely
+  require 'json'
   class OptimizelyConfig
     include Optimizely::ConditionTreeEvaluator
     def initialize(project_config)
@@ -24,41 +25,41 @@ module Optimizely
       @audiences = []
       type_audiences = @project_config.typed_audiences
       optly_typed_audiences = []
-      id_lookup_dict = {}
-      type_audiences.each do |type_audience|
-        optly_audience = {}
-        optly_audience['id'] = type_audience['id']
-        optly_audience['name'] = type_audience['name']
-        optly_audience['conditions'] = type_audience['conditions']
 
-        optly_typed_audiences.push(optly_audience)
-        id_lookup_dict[type_audience['id']] = type_audience['id']
+      @project_config.audiences.each do |old_audience|
+        next unless old_audience['id'] != '$opt_dummy_audience'
 
-        @project_config.audiences.each do |old_audience|
-          next unless id_lookup_dict.key?(old_audience['id']) && (old_audience['id'] != '$opt_dummy_audience')
-
-          optly_audience = {}
-          optly_audience['id'] = old_audience['id']
-          optly_audience['name'] = old_audience['name']
-          optly_audience['conditions'] = old_audience['conditions']
-
-          optly_typed_audiences.push(optly_audience)
-        end
+        optly_typed_audiences.push(
+          'id' => old_audience['id'],
+          'name' => old_audience['name'],
+          'conditions' => old_audience['conditions']
+        )
       end
+
+      type_audiences.each do |type_audience|
+        optly_typed_audiences.push(
+          'id' => type_audience['id'],
+          'name' => type_audience['name'],
+          'conditions' => type_audience['conditions'].to_json
+        )
+      end
+
       @audiences = optly_typed_audiences
     end
 
     def config
       experiments_map_object = experiments_map
-      features_map = get_features_map(experiments_map_object)
+      features_map = get_features_map(experiments_id_map)
       config = {
+        'sdk_key' => @project_config.sdk_key,
         'datafile' => @project_config.datafile,
         'experimentsMap' => experiments_map_object,
         'featuresMap' => features_map,
         'revision' => @project_config.revision,
         'attributes' => get_attributes_list(@project_config.attributes),
         'audiences' => @audiences,
-        'events' => get_events_list(@project_config.events)
+        'events' => get_events_list(@project_config.events),
+        'environment_key' => @project_config.environment_key
       }
       config['sdkKey'] = @project_config.sdk_key if @project_config.sdk_key
       config['environmentKey'] = @project_config.environment_key if @project_config.environment_key
@@ -67,22 +68,37 @@ module Optimizely
 
     private
 
-    def experiments_map
+    def experiments_id_map
       feature_variables_map = feature_variable_map
-      audiences_map = {}
+      audiences_id_map = audiences_map
       @audiences.each do |optly_audience|
         audiences_map[optly_audience['id']] = optly_audience['name']
       end
       @project_config.experiments.reduce({}) do |experiments_map, experiment|
+        feature_id = @project_config.experiment_feature_map.fetch(experiment['id'], []).first
         experiments_map.update(
-          experiment['key'] => {
+          experiment['id'] => {
             'id' => experiment['id'],
             'key' => experiment['key'],
-            'variationsMap' => get_variation_map(experiment, feature_variables_map),
-            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_map) || ''
+            'variationsMap' => get_variation_map(feature_id, experiment, feature_variables_map),
+            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_id_map) || ''
           }
         )
       end
+    end
+
+    def audiences_map
+      @audiences.reduce({}) do |audiences_map, optly_audience|
+        audiences_map.update(optly_audience['id'] => optly_audience['name'])
+      end
+    end
+
+    def experiments_map
+      experiments_key_map = {}
+      experiments_id_map.each do |_, experiment|
+        experiments_key_map[experiment['key']] = experiment
+      end
+      experiments_key_map
     end
 
     def feature_variable_map
@@ -91,12 +107,12 @@ module Optimizely
       end
     end
 
-    def get_variation_map(experiment, feature_variables_map)
+    def get_variation_map(feature_id, experiment, feature_variables_map)
       experiment['variations'].reduce({}) do |variations_map, variation|
         variation_object = {
           'id' => variation['id'],
           'key' => variation['key'],
-          'variablesMap' => get_merged_variables_map(variation, experiment['id'], feature_variables_map)
+          'variablesMap' => get_merged_variables_map(variation, feature_id, feature_variables_map)
         }
         variation_object['featureEnabled'] = variation['featureEnabled'] if @project_config.feature_experiment?(experiment['id'])
         variations_map.update(variation['key'] => variation_object)
@@ -104,11 +120,10 @@ module Optimizely
     end
 
     # Merges feature key and type from feature variables to variation variables.
-    def get_merged_variables_map(variation, experiment_id, feature_variables_map)
-      feature_ids = @project_config.experiment_feature_map[experiment_id]
-      return {} unless feature_ids
+    def get_merged_variables_map(variation, feature_id, feature_variables_map)
+      return {} unless feature_id
 
-      experiment_feature_variables = feature_variables_map[feature_ids[0]]
+      experiment_feature_variables = feature_variables_map[feature_id]
       # temporary variation variables map to get values to merge.
       temp_variables_id_map = {}
       if variation['variables']
@@ -137,14 +152,14 @@ module Optimizely
 
     def get_features_map(all_experiments_map)
       @project_config.feature_flags.reduce({}) do |features_map, feature|
-        delivery_rules = get_delivery_rules(@rollouts, feature['rolloutId'])
+        delivery_rules = get_delivery_rules(@rollouts, feature['rolloutId'], feature['id'])
         features_map.update(
           feature['key'] => {
             'id' => feature['id'],
             'key' => feature['key'],
             'experimentsMap' => feature['experimentIds'].reduce({}) do |experiments_map, experiment_id|
               experiment_key = @project_config.experiment_id_map[experiment_id]['key']
-              experiments_map.update(experiment_key => all_experiments_map[experiment_key])
+              experiments_map.update(experiment_key => experiments_id_map[experiment_id])
             end,
             'variablesMap' => feature['variables'].reduce({}) do |variables, variable|
               variables.update(
@@ -157,8 +172,7 @@ module Optimizely
               )
             end,
             'experimentRules' => feature['experimentIds'].reduce([]) do |experiments_map, experiment_id|
-              experiment_key = @project_config.experiment_id_map[experiment_id]['key']
-              experiments_map.push(all_experiments_map[experiment_key])
+              experiments_map.push(all_experiments_map[experiment_id])
             end,
             'deliveryRules' => delivery_rules
           }
@@ -203,8 +217,7 @@ module Optimizely
       return '' if length.zero?
       return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"' if length == 1 && !OPERATORS.include?(conditions[0])
 
-      if length == 2 && OPERATORS.include?(conditions[0]) && conditions[1].is_a?(Array) && !OPERATORS.include?(conditions[1])
-
+      if length == 2 && OPERATORS.include?(conditions[0]) && !conditions[1].is_a?(Array) && !OPERATORS.include?(conditions[1])
         return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"' if conditions[0] != 'not'
 
         return conditions[0].upcase + ' "' + lookup_name_from_id(conditions[1], audiences_map) + '"'
@@ -222,7 +235,7 @@ module Optimizely
                               end
           else
             audience_name = lookup_name_from_id(conditions[n], audiences_map)
-            if audience_name.nil?
+            unless audience_name.nil?
               conditions_str += if n + 1 < length - 1
                                   '"' + audience_name + '" ' + operand + ' '
                                 elsif n + 1 == length
@@ -238,30 +251,27 @@ module Optimizely
     end
 
     def replace_ids_with_names(conditions, audiences_map)
-      if conditions.empty?
+      if !conditions.empty?
         stringify_conditions(conditions, audiences_map)
       else
         ''
       end
     end
 
-    def get_delivery_rules(rollouts, rollout_id)
+    def get_delivery_rules(rollouts, rollout_id, feature_id)
       delivery_rules = []
-      audiences_map = {}
-
+      audiences_id_map = audiences_map
+      feature_variables_map = feature_variable_map
       rollout = rollouts.select { |selected_rollout| selected_rollout['id'] == rollout_id }
       if rollout.any?
         rollout = rollout[0]
-        @audiences.each do |optly_audience|
-          audiences_map[optly_audience['id']] = optly_audience['name']
-        end
         experiments = rollout['experiments']
         experiments.each do |experiment|
           optly_exp = {
             'id' => experiment['id'],
             'key' => experiment['key'],
-            'variationsMap' => get_variation_map(experiment, feature_variable_map),
-            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_map) || ''
+            'variationsMap' => get_variation_map(feature_id, experiment, feature_variables_map),
+            'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_id_map) || ''
           }
           delivery_rules.push(optly_exp)
         end
