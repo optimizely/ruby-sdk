@@ -71,9 +71,6 @@ module Optimizely
     def experiments_id_map
       feature_variables_map = feature_variable_map
       audiences_id_map = audiences_map
-      @audiences.each do |optly_audience|
-        audiences_map[optly_audience['id']] = optly_audience['name']
-      end
       @project_config.experiments.reduce({}) do |experiments_map, experiment|
         feature_id = @project_config.experiment_feature_map.fetch(experiment['id'], []).first
         experiments_map.update(
@@ -123,7 +120,7 @@ module Optimizely
     def get_merged_variables_map(variation, feature_id, feature_variables_map)
       return {} unless feature_id
 
-      experiment_feature_variables = feature_variables_map[feature_id]
+      feature_variables = feature_variables_map[feature_id]
       # temporary variation variables map to get values to merge.
       temp_variables_id_map = {}
       if variation['variables']
@@ -136,7 +133,7 @@ module Optimizely
           )
         end
       end
-      experiment_feature_variables.reduce({}) do |variables_map, feature_variable|
+      feature_variables.reduce({}) do |variables_map, feature_variable|
         variation_variable = temp_variables_id_map[feature_variable['id']]
         variable_value = variation['featureEnabled'] && variation_variable ? variation_variable['value'] : feature_variable['defaultValue']
         variables_map.update(
@@ -181,28 +178,22 @@ module Optimizely
     end
 
     def get_attributes_list(attributes)
-      attributes_list = []
-      attributes.each do |attribute|
-        optly_attribute = {}
-        optly_attribute['id'] = attribute['id']
-        optly_attribute['key'] = attribute['key']
-
-        attributes_list.push(optly_attribute)
+      attributes.reduce([]) do |attributes_list, attribute|
+        attributes_list.push(
+          'id' => attribute['id'],
+          'key' => attribute['key']
+        )
       end
-      attributes_list
     end
 
     def get_events_list(events)
-      events_list = []
-      events.each do |event|
-        optly_event = {}
-        optly_event['id'] = event['id']
-        optly_event['key'] = event['key']
-        optly_event['experimentIds'] = event['experimentIds']
-
-        events_list.push(optly_event)
+      events.reduce([]) do |events_list, event|
+        events_list.push(
+          'id' => event['id'],
+          'key' => event['key'],
+          'experimentIds' => event['experimentIds']
+        )
       end
-      events_list
     end
 
     def lookup_name_from_id(audience_id, audiences_map)
