@@ -25,22 +25,24 @@ module Optimizely
       @audiences = []
       type_audiences = @project_config.typed_audiences
       optly_typed_audiences = []
-
-      @project_config.audiences.each do |old_audience|
-        next unless old_audience['id'] != '$opt_dummy_audience'
-
-        optly_typed_audiences.push(
-          'id' => old_audience['id'],
-          'name' => old_audience['name'],
-          'conditions' => old_audience['conditions']
-        )
-      end
+      id_lookup_dict = {}
 
       type_audiences.each do |type_audience|
         optly_typed_audiences.push(
           'id' => type_audience['id'],
           'name' => type_audience['name'],
           'conditions' => type_audience['conditions'].to_json
+        )
+        id_lookup_dict[type_audience['id']] = type_audience['id']
+      end
+
+      @project_config.audiences.each do |old_audience|
+        next unless !id_lookup_dict.key?(old_audience['id']) && (old_audience['id'] != '$opt_dummy_audience')
+
+        optly_typed_audiences.push(
+          'id' => old_audience['id'],
+          'name' => old_audience['name'],
+          'conditions' => old_audience['conditions']
         )
       end
 
