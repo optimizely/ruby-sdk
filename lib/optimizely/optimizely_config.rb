@@ -51,7 +51,7 @@ module Optimizely
       experiments_map_object = experiments_map
       features_map = get_features_map(experiments_id_map)
       config = {
-        'sdk_key' => @project_config.sdk_key,
+        'sdkKey' => @project_config.sdk_key,
         'datafile' => @project_config.datafile,
         'experimentsMap' => experiments_map_object,
         'featuresMap' => features_map,
@@ -59,10 +59,8 @@ module Optimizely
         'attributes' => get_attributes_list(@project_config.attributes),
         'audiences' => @audiences,
         'events' => get_events_list(@project_config.events),
-        'environment_key' => @project_config.environment_key
+        'environmentKey' => @project_config.environment_key
       }
-      config['sdkKey'] = @project_config.sdk_key if @project_config.sdk_key
-      config['environmentKey'] = @project_config.environment_key if @project_config.environment_key
       config
     end
 
