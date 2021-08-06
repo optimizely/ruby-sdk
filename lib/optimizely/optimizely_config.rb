@@ -23,30 +23,26 @@ module Optimizely
       @project_config = project_config
       @rollouts = @project_config.rollouts
       @audiences = []
-      type_audiences = @project_config.typed_audiences
-      optly_typed_audiences = []
-      id_lookup_dict = {}
+      audience_id_lookup_dict = {}
 
-      type_audiences.each do |type_audience|
-        optly_typed_audiences.push(
-          'id' => type_audience['id'],
-          'name' => type_audience['name'],
-          'conditions' => type_audience['conditions'].to_json
+      @project_config.typed_audiences.each do |typed_audience|
+        @audiences.push(
+          'id' => typed_audience['id'],
+          'name' => typed_audience['name'],
+          'conditions' => typed_audience['conditions'].to_json
         )
-        id_lookup_dict[type_audience['id']] = type_audience['id']
+        audience_id_lookup_dict[typed_audience['id']] = typed_audience['id']
       end
 
       @project_config.audiences.each do |old_audience|
-        next unless !id_lookup_dict.key?(old_audience['id']) && (old_audience['id'] != '$opt_dummy_audience')
+        next unless !audience_id_lookup_dict.key?(old_audience['id']) && (old_audience['id'] != '$opt_dummy_audience')
 
-        optly_typed_audiences.push(
+        @audiences.push(
           'id' => old_audience['id'],
           'name' => old_audience['name'],
           'conditions' => old_audience['conditions']
         )
       end
-
-      @audiences = optly_typed_audiences
     end
 
     def config
@@ -91,11 +87,9 @@ module Optimizely
     end
 
     def experiments_map
-      experiments_key_map = {}
-      experiments_id_map.each do |_, experiment|
-        experiments_key_map[experiment['key']] = experiment
+      experiments_id_map.values.reduce({}) do |experiments_key_map, experiment|
+        experiments_key_map.update(experiment['key'] => experiment)
       end
-      experiments_key_map
     end
 
     def feature_variable_map
@@ -178,27 +172,26 @@ module Optimizely
     end
 
     def get_attributes_list(attributes)
-      attributes.reduce([]) do |attributes_list, attribute|
-        attributes_list.push(
+      attributes.map do |attribute|
+        {
           'id' => attribute['id'],
           'key' => attribute['key']
-        )
+        }
       end
     end
 
     def get_events_list(events)
-      events.reduce([]) do |events_list, event|
-        events_list.push(
+      events.map do |event|
+        {
           'id' => event['id'],
           'key' => event['key'],
           'experimentIds' => event['experimentIds']
-        )
+        }
       end
     end
 
     def lookup_name_from_id(audience_id, audiences_map)
-      name = audiences_map[audience_id] || audience_id
-      name
+      audiences_map[audience_id] || audience_id
     end
 
     def stringify_conditions(conditions, audiences_map)
@@ -208,6 +201,7 @@ module Optimizely
       return '' if length.zero?
       return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"' if length == 1 && !OPERATORS.include?(conditions[0])
 
+      # Edge cases for lengths 0, 1 or 2
       if length == 2 && OPERATORS.include?(conditions[0]) && !conditions[1].is_a?(Array) && !OPERATORS.include?(conditions[1])
         return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"' if conditions[0] != 'not'
 
@@ -216,17 +210,23 @@ module Optimizely
       end
       if length > 1
         (0..length - 1).each do |n|
+          # Operand is handled here and made Upper Case
           if OPERATORS.include?(conditions[n])
             operand = conditions[n].upcase
+          # Check if element is a list or not
           elsif conditions[n].is_a?(Array)
+            # Check if at the end or not to determine where to add the operand
+            # Recursive call to call stringify on embedded list
             conditions_str += if n + 1 < length
                                 '(' + stringify_conditions(conditions[n], audiences_map) + ') '
                               else
                                 operand + ' (' + stringify_conditions(conditions[n], audiences_map) + ')'
                               end
+          # If the item is not a list, we process as an audience ID and retrieve the name
           else
             audience_name = lookup_name_from_id(conditions[n], audiences_map)
             unless audience_name.nil?
+              # Below handles all cases for one ID or greater
               conditions_str += if n + 1 < length - 1
                                   '"' + audience_name + '" ' + operand + ' '
                                 elsif n + 1 == length
@@ -242,33 +242,26 @@ module Optimizely
     end
 
     def replace_ids_with_names(conditions, audiences_map)
-      if !conditions.empty?
-        stringify_conditions(conditions, audiences_map)
-      else
-        ''
-      end
+      !conditions.empty? ? stringify_conditions(conditions, audiences_map) : ''
     end
 
     def get_delivery_rules(rollouts, rollout_id, feature_id)
-      delivery_rules = []
       audiences_id_map = audiences_map
       feature_variables_map = feature_variable_map
       rollout = rollouts.select { |selected_rollout| selected_rollout['id'] == rollout_id }
       if rollout.any?
         rollout = rollout[0]
         experiments = rollout['experiments']
-        experiments.each do |experiment|
-          optly_exp = {
+        return experiments.map do |experiment|
+          {
             'id' => experiment['id'],
             'key' => experiment['key'],
             'variationsMap' => get_variation_map(feature_id, experiment, feature_variables_map),
             'audiences' => replace_ids_with_names(experiment.fetch('audienceConditions', []), audiences_id_map) || ''
           }
-          delivery_rules.push(optly_exp)
         end
-
       end
-      delivery_rules
+      []
     end
   end
 end

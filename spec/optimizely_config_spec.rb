@@ -722,6 +722,48 @@ describe Optimizely::OptimizelyConfig do
     end
   end
 
+  it 'should serialize audiences and replace ids with names' do
+    audience_conditions =
+      [
+        %w[or 3468206642 3988293898],
+        %w[or 3468206642 3988293898 3468206646],
+        %w[not 3468206642],
+        %w[or 3468206642],
+        %w[and 3468206642],
+        ['3468206642'],
+        %w[3468206642 3988293898],
+        ['and', %w[or 3468206642 3988293898], '3468206646'],
+        ['and', ['or', '3468206642', %w[and 3988293898 3468206646]], ['and', '3988293899', %w[or 3468206647 3468206643]]],
+        %w[and and],
+        ['not', %w[and 3468206642 3988293898]],
+        [],
+        %w[or 3468206642 999999999]
+      ]
+
+    expected_audience_outputs = [
+      '"exactString" OR "substringString"',
+      '"exactString" OR "substringString" OR "exactNumber"',
+      'NOT "exactString"',
+      '"exactString"',
+      '"exactString"',
+      '"exactString"',
+      '"exactString" OR "substringString"',
+      '("exactString" OR "substringString") AND "exactNumber"',
+      '("exactString" OR ("substringString" AND "exactNumber")) AND ("exists" AND ("gtNumber" OR "exactBoolean"))',
+      '',
+      'NOT ("exactString" AND "substringString")',
+      '',
+      '"exactString" OR "999999999"'
+    ]
+    optimizely_config = Optimizely::OptimizelyConfig.new(project_instance_typed_audiences.send(:project_config))
+    audiences_map = optimizely_config.send(:audiences_map)
+    audience_conditions.each_with_index do |audience_condition, index|
+      result = optimizely_config.send(:replace_ids_with_names, audience_condition, audiences_map)
+      expect(result).to eq(expected_audience_outputs[index])
+    end
+
+  end
+
   it 'should return correct config revision' do
     expect(project_config.revision).to eq(optimizely_config['revision'])
   end
