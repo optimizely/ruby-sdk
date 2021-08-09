@@ -482,6 +482,16 @@ module Optimizely
       @experiment_feature_map.key?(experiment_id)
     end
 
+    def rollout_experiment?(experiment_id)
+      # Determines if given experiment is a rollout test.
+      #
+      # experiment_id - String experiment ID
+      #
+      # Returns true if experiment belongs to  any rollout,
+      #              false otherwise.
+      @rollout_experiment_id_map.key?(experiment_id)
+    end
+
     private
 
     def generate_key_map(array, key)
