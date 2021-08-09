@@ -103,9 +103,10 @@ module Optimizely
         variation_object = {
           'id' => variation['id'],
           'key' => variation['key'],
+          'featureEnabled' => variation['featureEnabled'],
           'variablesMap' => get_merged_variables_map(variation, feature_id, feature_variables_map)
         }
-        variation_object['featureEnabled'] = variation['featureEnabled'] if @project_config.feature_experiment?(experiment['id']) || @project_config.rollout_experiment?(experiment['id'])
+#         variation_object['featureEnabled'] = variation['featureEnabled'] if @project_config.feature_experiment?(experiment['id']) || @project_config.rollout_experiment?(experiment['id'])
         variations_map.update(variation['key'] => variation_object)
       end
     end
