@@ -1425,7 +1425,8 @@ module OptimizelySpec
         'variables' => [],
         'id' => '2027',
         'key' => 'flag_1'
-      }],
+      }
+    ],
     'experiments' => [],
     'audiences' => [
       {

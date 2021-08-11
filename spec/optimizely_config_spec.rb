@@ -761,7 +761,6 @@ describe Optimizely::OptimizelyConfig do
       result = optimizely_config.send(:replace_ids_with_names, audience_condition, audiences_map)
       expect(result).to eq(expected_audience_outputs[index])
     end
-
   end
 
   it 'should return correct config revision' do
