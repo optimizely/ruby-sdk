@@ -34,13 +34,13 @@ module Optimizely
         audience_id_lookup_dict[typed_audience['id']] = typed_audience['id']
       end
 
-      @project_config.audiences.each do |old_audience|
-        next unless !audience_id_lookup_dict.key?(old_audience['id']) && (old_audience['id'] != '$opt_dummy_audience')
+      @project_config.audiences.each do |audience|
+        next unless !audience_id_lookup_dict.key?(audience['id']) && (audience['id'] != '$opt_dummy_audience')
 
         @audiences.push(
-          'id' => old_audience['id'],
-          'name' => old_audience['name'],
-          'conditions' => old_audience['conditions']
+          'id' => audience['id'],
+          'name' => audience['name'],
+          'conditions' => audience['conditions']
         )
       end
     end
@@ -51,6 +51,10 @@ module Optimizely
       config = {
         'sdkKey' => @project_config.sdk_key,
         'datafile' => @project_config.datafile,
+        # This experimentsMap is for experiments of legacy projects only
+        # For flag projects, experiment keys are not guaranteed to be unique
+        # across multiple flags, so this map may not include all experiments
+        # when keys conflict. Use experimentRules and deliveryRules instead.
         'experimentsMap' => experiments_map_object,
         'featuresMap' => features_map,
         'revision' => @project_config.revision,
