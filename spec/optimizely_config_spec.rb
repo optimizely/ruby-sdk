@@ -386,36 +386,39 @@ describe Optimizely::OptimizelyConfig do
           'audiences' => '', 'id' => '177770', 'key' => '177770',
           'variationsMap' => {
             '177771' => {
-              'id' => '177771', 'key' => '177771', 'variablesMap' => {
-                'boolean_variable' => {
-                  'id' => '155556', 'key' => 'boolean_variable',
-                  'type' => 'boolean', 'value' => 'true'
+              'featureEnabled' => true, 'id' => '177771', 'key' =>
+                '177771', 'variablesMap' => {
+                  'boolean_variable' => {
+                    'id' => '155556', 'key' => 'boolean_variable',
+                    'type' => 'boolean', 'value' => 'true'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177772', 'key' => '177772',
           'variationsMap' => {
             '177773' => {
-              'id' => '177773', 'key' => '177773', 'variablesMap' => {
-                'boolean_variable' => {
-                  'id' => '155556', 'key' => 'boolean_variable',
-                  'type' => 'boolean', 'value' => 'true'
+              'featureEnabled' => false, 'id' => '177773', 'key' =>
+                '177773', 'variablesMap' => {
+                  'boolean_variable' => {
+                    'id' => '155556', 'key' => 'boolean_variable',
+                    'type' => 'boolean', 'value' => 'true'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177776', 'key' => '177776',
           'variationsMap' => {
             '177778' => {
-              'id' => '177778', 'key' => '177778', 'variablesMap' => {
-                'boolean_variable' => {
-                  'id' => '155556', 'key' => 'boolean_variable',
-                  'type' => 'boolean', 'value' => 'false'
+              'featureEnabled' => true, 'id' => '177778', 'key' =>
+                '177778', 'variablesMap' => {
+                  'boolean_variable' => {
+                    'id' => '155556', 'key' => 'boolean_variable',
+                    'type' => 'boolean', 'value' => 'false'
+                  }
                 }
-              }
             }
           }
         }], 'experimentRules' => []
@@ -476,33 +479,35 @@ describe Optimizely::OptimizelyConfig do
           'audiences' => '', 'id' => '177774', 'key' => '177774',
           'variationsMap' => {
             '177775' => {
-              'id' => '177775', 'key' => '177775', 'variablesMap' => {
-                'json_variable' => {
-                  'id' => '1555588', 'key' => 'json_variable', 'type' =>
-                    'json', 'value' =>
-                    '{ "val": "wingardium leviosa" }'
+              'featureEnabled' => true, 'id' => '177775', 'key' =>
+                '177775', 'variablesMap' => {
+                  'json_variable' => {
+                    'id' => '1555588', 'key' => 'json_variable', 'type' =>
+                      'json', 'value' =>
+                      '{ "val": "wingardium leviosa" }'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177779', 'key' => '177779',
           'variationsMap' => {
             '177780' => {
-              'id' => '177780', 'key' => '177780', 'variablesMap' => {
-                'json_variable' => {
-                  'id' => '1555588', 'key' => 'json_variable', 'type' =>
-                    'json', 'value' =>
-                    '{ "val": "wingardium leviosa" }'
+              'featureEnabled' => true, 'id' => '177780', 'key' =>
+                '177780', 'variablesMap' => {
+                  'json_variable' => {
+                    'id' => '1555588', 'key' => 'json_variable', 'type' =>
+                      'json', 'value' =>
+                      '{ "val": "wingardium leviosa" }'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177780', 'key' =>
             'rollout_exp_with_diff_id_and_key', 'variationsMap' => {
               'rollout_var_with_diff_id_and_key' => {
-                'id' => '177781', 'key' =>
+                'featureEnabled' => true, 'id' => '177781', 'key' =>
                   'rollout_var_with_diff_id_and_key', 'variablesMap' => {
                     'json_variable' => {
                       'id' => '1555588', 'key' => 'json_variable', 'type' =>
@@ -620,31 +625,33 @@ describe Optimizely::OptimizelyConfig do
           'audiences' => '', 'id' => '177774', 'key' => '177774',
           'variationsMap' => {
             '177775' => {
-              'id' => '177775', 'key' => '177775', 'variablesMap' => {
-                'string_variable' => {
-                  'id' => '155558', 'key' => 'string_variable',
-                  'type' => 'string', 'value' => 'wingardium leviosa'
+              'featureEnabled' => true, 'id' => '177775', 'key' =>
+                '177775', 'variablesMap' => {
+                  'string_variable' => {
+                    'id' => '155558', 'key' => 'string_variable',
+                    'type' => 'string', 'value' => 'wingardium leviosa'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177779', 'key' => '177779',
           'variationsMap' => {
             '177780' => {
-              'id' => '177780', 'key' => '177780', 'variablesMap' => {
-                'string_variable' => {
-                  'id' => '155558', 'key' => 'string_variable',
-                  'type' => 'string', 'value' => 'wingardium leviosa'
+              'featureEnabled' => true, 'id' => '177780', 'key' =>
+                '177780', 'variablesMap' => {
+                  'string_variable' => {
+                    'id' => '155558', 'key' => 'string_variable',
+                    'type' => 'string', 'value' => 'wingardium leviosa'
+                  }
                 }
-              }
             }
           }
         }, {
           'audiences' => '', 'id' => '177780', 'key' =>
             'rollout_exp_with_diff_id_and_key', 'variationsMap' => {
               'rollout_var_with_diff_id_and_key' => {
-                'id' => '177781', 'key' =>
+                'featureEnabled' => true, 'id' => '177781', 'key' =>
                   'rollout_var_with_diff_id_and_key', 'variablesMap' => {
                     'string_variable' => {
                       'id' => '155558', 'key' => 'string_variable',
