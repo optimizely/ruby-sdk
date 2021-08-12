@@ -87,8 +87,8 @@ module Optimizely
       @anonymize_ip = config.key?('anonymizeIP') ? config['anonymizeIP'] : false
       @bot_filtering = config['botFiltering']
       @revision = config['revision']
-      @sdk_key = config.fetch('sdkKey', nil)
-      @environment_key = config.fetch('environmentKey', nil)
+      @sdk_key = config.fetch('sdkKey', '')
+      @environment_key = config.fetch('environmentKey', '')
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
 
@@ -480,6 +480,16 @@ module Optimizely
       # Returns true if experiment belongs to  any feature,
       #              false otherwise.
       @experiment_feature_map.key?(experiment_id)
+    end
+
+    def rollout_experiment?(experiment_id)
+      # Determines if given experiment is a rollout test.
+      #
+      # experiment_id - String experiment ID
+      #
+      # Returns true if experiment belongs to  any rollout,
+      #              false otherwise.
+      @rollout_experiment_id_map.key?(experiment_id)
     end
 
     private

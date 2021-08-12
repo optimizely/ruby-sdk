@@ -1061,4 +1061,16 @@ describe Optimizely::DatafileProjectConfig do
       expect(config.feature_experiment?(experiment['id'])).to eq(false)
     end
   end
+
+  describe '#rollout_experiment' do
+    let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
+
+    it 'should return true if the experiment is a rollout test' do
+      expect(config.rollout_experiment?('177770')).to eq(true)
+    end
+
+    it 'should return false if the experiment is not a rollout test' do
+      expect(config.rollout_experiment?('177771')).to eq(false)
+    end
+  end
 end
