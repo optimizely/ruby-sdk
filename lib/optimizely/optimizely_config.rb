@@ -51,7 +51,7 @@ module Optimizely
       config = {
         'sdkKey' => @project_config.sdk_key,
         'datafile' => @project_config.datafile,
-        # This experimentsMap is for experiments of legacy projects only
+        # This experimentsMap is for experiments of legacy projects only.
         # For flag projects, experiment keys are not guaranteed to be unique
         # across multiple flags, so this map may not include all experiments
         # when keys conflict. Use experimentRules and deliveryRules instead.
@@ -152,6 +152,10 @@ module Optimizely
           feature['key'] => {
             'id' => feature['id'],
             'key' => feature['key'],
+            # This experimentsMap is for experiments of legacy projects only.
+            # For flag projects, experiment keys are not guaranteed to be unique
+            # across multiple flags, so this map may not include all experiments
+            # when keys conflict. Use experimentRules and deliveryRules instead.
             'experimentsMap' => feature['experimentIds'].reduce({}) do |experiments_map, experiment_id|
               experiment_key = @project_config.experiment_id_map[experiment_id]['key']
               experiments_map.update(experiment_key => experiments_id_map[experiment_id])
