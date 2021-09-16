@@ -1,5 +1,19 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.9.0
+September 16, 2021
+
+### New Features:
+- Add new public properties to OptimizelyConfig. ([#285](https://github.com/optimizely/ruby-sdk/pull/285))
+	- SDKKey
+ 	- EnvironmentKey
+	- Attributes
+	- Audiences
+	- Events
+	- ExperimentRules and DeliveryRules to OptimizelyFeature
+	- Audiences to OptimizelyExperiment
+- For details, refer to our documentation page: [https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyconfig-ruby](https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyconfig-ruby).
+
 ## 3.8.1
 August 2nd, 2021
 
