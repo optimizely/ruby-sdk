@@ -4,7 +4,7 @@
 September 16, 2021
 
 ### New Features:
-- Add new public properties to OptimizelyConfig. ([#285](https://github.com/optimizely/ruby-sdk/pull/285))
+- Add new public properties to `OptimizelyConfig`. ([#285](https://github.com/optimizely/ruby-sdk/pull/285))
 	- sdkKey
  	- environmentKey
 	- attributes
@@ -14,7 +14,7 @@ September 16, 2021
 	- audiences to `OptimizelyExperiment`
 - For details, refer to our documentation page: [https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyconfig-ruby](https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyconfig-ruby).
 
-### Deprecated
+### Deprecated:
 - `OptimizelyFeature.experimentsMap` of `OptimizelyConfig` is deprecated as of this release. Please use `OptimizelyFeature.experimentRules` and `OptimizelyFeature.deliveryRules`. ([#285](https://github.com/optimizely/ruby-sdk/pull/285))
 
 ## 3.8.1
