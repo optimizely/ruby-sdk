@@ -25,14 +25,21 @@ module Optimizely
     attr_reader :user_id
 
     def initialize(optimizely_client, user_id, user_attributes)
+      ForcedDecision = Struct.new(:flag_key, :rule_key, :variation_key)
       @attr_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
+      @forced_decisions = []
     end
 
     def clone
-      OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
+      user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
+      if (@forced_decisions.count > 1)
+        user_context.forced_decisions = @optimizely_client.forced_decisions
+      end
+
+      user_context
     end
 
     def user_attributes
@@ -83,6 +90,71 @@ module Optimizely
 
     def decide_all(options = nil)
       @optimizely_client&.decide_all(clone, options)
+    end
+
+    def set_forced_decision(flag_key, rule_key = nil, variation_key)
+      if (@optimizely_client.config.nil?)
+        return false
+      end
+
+      index = forced_decisions.find_index(forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
+
+      if (index)
+        forced_decisions[index].variation_key = variation_key
+      else
+        forced_decisions.push(ForcedDecision.new(flag_key, rule_key, variation_key))
+      end
+    
+      return true
+    end
+
+    def find_forced_decision(flag_key, rule_key = nil)
+      if forced_decisions.empty?
+        return nil
+      end
+
+      forced_decision = forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
+      if (forced_decision)
+        return forced_decision.variation_key
+      end
+
+      return ""
+    end
+
+    def get_forced_decision(flag_key, rule_key = nil)
+      if (@optimizely_client.config.nil?)
+        return false
+      end
+
+      return find_forced_decision(flag_key, rule_key)
+    end
+
+    def remove_forced_decision(flag_key, rule_key = nil)
+      if (@optimizely_client.config.nil?)
+        return false
+      end
+
+      index = forced_decisions.find_index(forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
+      if (index)
+        forced_decision.delete_at(index)
+        return true
+      end
+    end
+
+    def remove_all_forced_decision()
+      if (@optimizely_client.config.nil?)
+        return false
+      end
+
+      forced_decision.clear
+      return true
+    end
+
+    def find_validated_forced_decision(flag_key, rule_key, options)
+      variation_key = find_forced_decision(flag_key, rule_key)
+
+      if (variable_key == "")
+      end
     end
 
     # Track an event
