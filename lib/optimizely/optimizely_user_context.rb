@@ -25,7 +25,7 @@ module Optimizely
     attr_reader :user_id
 
     def initialize(optimizely_client, user_id, user_attributes)
-      ForcedDecision = Struct.new(:flag_key, :rule_key, :variation_key)
+      @ForcedDecision = Struct.new(:flag_key, :rule_key, :variation_key)
       @attr_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
@@ -97,23 +97,23 @@ module Optimizely
         return false
       end
 
-      index = forced_decisions.find_index(forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
+      index = @forced_decisions.find_index(@forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
 
       if (index)
-        forced_decisions[index].variation_key = variation_key
+        @forced_decisions[index].variation_key = variation_key
       else
-        forced_decisions.push(ForcedDecision.new(flag_key, rule_key, variation_key))
+        @forced_decisions.push(ForcedDecision.new(flag_key, rule_key, variation_key))
       end
     
       return true
     end
 
     def find_forced_decision(flag_key, rule_key = nil)
-      if forced_decisions.empty?
+      if @forced_decisions.empty?
         return nil
       end
 
-      forced_decision = forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
+      @forced_decision = @forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
       if (forced_decision)
         return forced_decision.variation_key
       end
@@ -134,7 +134,7 @@ module Optimizely
         return false
       end
 
-      index = forced_decisions.find_index(forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
+      index = @forced_decisions.find_index(@forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
       if (index)
         forced_decision.delete_at(index)
         return true
@@ -150,11 +150,24 @@ module Optimizely
       return true
     end
 
-    def find_validated_forced_decision(flag_key, rule_key, options)
+    def find_validated_forced_decision(flag_key, rule_key, options=nil)
       variation_key = find_forced_decision(flag_key, rule_key)
-
-      if (variable_key == "")
+      reasons = []
+      if (variation_key)
+        variation = optimizely_client.get_flag_variation_by_key(flag_key, rule_key)
+        if (variation)
+          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag ({flag_key})"
+          reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{@user_id}) in the forced decision map."
+          reasons.push(reason)
+          return variation, reasons
+        else
+          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
+          reason = "Invalid variation is mapped to #{target} and user (#{user_id}) in the forced decision map."
+          reasons.push(reason)
+        end
       end
+
+      return nil, reasons
     end
 
     # Track an event

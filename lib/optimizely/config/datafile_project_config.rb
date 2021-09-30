@@ -60,12 +60,12 @@ module Optimizely
     attr_reader :variation_key_map
     attr_reader :variation_id_map_by_experiment_id
     attr_reader :variation_key_map_by_experiment_id
+    attr_reader :flag_variation_map
 
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
       #
       # datafile - JSON string representing the project
-
       config = JSON.parse(datafile)
 
       @datafile = datafile
@@ -123,6 +123,8 @@ module Optimizely
       @variation_key_map_by_experiment_id = {}
       @variation_id_to_variable_usage_map = {}
       @variation_id_to_experiment_map = {}
+      @flag_variation_map = {}
+
       @experiment_id_map.each_value do |exp|
         # Excludes experiments from rollouts
         variations = exp.fetch('variations')
@@ -138,6 +140,19 @@ module Optimizely
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end
+
+      @feature_flags.each do |flag|
+        variations = []
+        get_rules_for_flag(flag).each do |rule|
+          rule['variations'].each do |rule_variation|
+            if variations.select{ |variation| variation['id'] == rule_variation['id'] }
+              variations.push(rule_variation)
+            end
+          end
+        end
+        @flag_variation_map[flag] = variations
+      end
+
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
       @all_experiments.each do |id, exp|
         variations = exp.fetch('variations')
@@ -163,6 +178,19 @@ module Optimizely
           @experiment_feature_map[experiment_id] = [feature_flag['id']]
         end
       end
+    end
+
+    def get_rules_for_flag(feature_flag)
+      rules = feature_flag['experimentIds'].map{ |exp_id| @experiment_id_map[exp_id] }
+      rollout = feature_flag['rolloutId'].empty? ? nil : @rollout_id_map[feature_flag['rolloutId']]
+
+      if (rollout)
+        rollout_experiments = rollout.fetch('experiments')
+        rollout_experiments.each do |exp|
+          rules.push(exp)
+        end
+      end
+      rules
     end
 
     def self.create(datafile, logger, error_handler, skip_json_validation)
