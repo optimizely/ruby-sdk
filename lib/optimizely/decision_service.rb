@@ -167,10 +167,8 @@ module Optimizely
       # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
       # or nil if the user is not bucketed into any of the experiments on the feature
       decide_reasons = []
-
       user_id = user_context.user_id
       attributes = user_context.user_attributes
-
       feature_flag_key = feature_flag['key']
       if feature_flag['experimentIds'].empty?
         message = "The feature flag '#{feature_flag_key}' is not used in any experiments."

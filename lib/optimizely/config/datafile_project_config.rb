@@ -66,6 +66,7 @@ module Optimizely
       # ProjectConfig init method to fetch and set project config data
       #
       # datafile - JSON string representing the project
+
       config = JSON.parse(datafile)
 
       @datafile = datafile
