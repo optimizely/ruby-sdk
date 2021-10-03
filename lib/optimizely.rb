@@ -469,6 +469,7 @@ module Optimizely
 
     # Determine whether a feature is enabled.
     # Sends an impression event if the user is bucketed into an experiment using the feature.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String unique key of the feature.
     # @param user_id - String ID of the user.
@@ -479,6 +480,8 @@ module Optimizely
     # @return [False] if the feature is not found.
 
     def is_feature_enabled(feature_flag_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'is_feature_enabled' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('is_feature_enabled').message)
         return false
@@ -554,12 +557,15 @@ module Optimizely
     end
 
     # Gets keys of all feature flags which are enabled for the user.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param user_id -  ID for user.
     # @param attributes - Dict representing user attributes.
     # @return [feature flag keys] A List of feature flag keys that are enabled for the user.
 
     def get_enabled_features(user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_enabled_features' is deprecated. Use 'decide' methods instead."
+
       enabled_features = []
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_enabled_features').message)
@@ -587,6 +593,7 @@ module Optimizely
     end
 
     # Get the value of the specified variable in the feature flag.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the value
@@ -597,6 +604,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable').message)
         return nil
@@ -613,6 +622,7 @@ module Optimizely
     end
 
     # Get the String value of the specified variable in the feature flag.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the string value
@@ -623,6 +633,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_string(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable_string' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_string').message)
         return nil
@@ -639,6 +651,7 @@ module Optimizely
     end
 
     # Get the Json value of the specified variable in the feature flag in a Dict.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the string value
@@ -649,6 +662,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_json(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable_json' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_json').message)
         return nil
@@ -665,6 +680,7 @@ module Optimizely
     end
 
     # Get the Boolean value of the specified variable in the feature flag.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the string value
@@ -675,6 +691,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_boolean(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable_boolean' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_boolean').message)
         return nil
@@ -692,6 +710,7 @@ module Optimizely
     end
 
     # Get the Double value of the specified variable in the feature flag.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the string value
@@ -702,6 +721,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_double(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable_double' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_double').message)
         return nil
@@ -719,6 +740,7 @@ module Optimizely
     end
 
     # Get values of all the variables in the feature flag and returns them in a Dict
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag
     # @param user_id - String user ID
@@ -728,6 +750,8 @@ module Optimizely
     # @return [nil] if the feature flag is not found.
 
     def get_all_feature_variables(feature_flag_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_all_feature_variables' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_all_feature_variables').message)
         return nil
@@ -785,6 +809,7 @@ module Optimizely
     end
 
     # Get the Integer value of the specified variable in the feature flag.
+    # @deprecated Use {#decide} methods of 'OptimizelyUserContext' instead.
     #
     # @param feature_flag_key - String key of feature flag the variable belongs to
     # @param variable_key - String key of variable for which we are getting the string value
@@ -795,6 +820,8 @@ module Optimizely
     # @return [nil] if the feature flag or variable are not found.
 
     def get_feature_variable_integer(feature_flag_key, variable_key, user_id, attributes = nil)
+      @logger.log Logger::WARN, "'get_feature_variable_integer' is deprecated. Use 'decide' methods instead."
+
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_integer').message)
         return nil
