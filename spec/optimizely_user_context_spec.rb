@@ -179,7 +179,6 @@ describe 'Optimizely' do
       expect(decision.user_context.forced_decisions).to eq([user_context_obj.ForcedDecision.new(feature_key, '3332020515', '3324490633')])
 
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
-      puts decision.reasons
       expect(decision.reasons).to eq([
         "Starting to evaluate audience '13389141123' with conditions: [\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \"gender\", \"type\": \"custom_attribute\", \"value\": \"f\"}]]].",
         "Audience '13389141123' evaluated to UNKNOWN.",
@@ -202,7 +201,6 @@ describe 'Optimizely' do
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
       expect(decision.variation_key).to eq('18257766532')
       expect(decision.rule_key).to eq('18322080788')
-      puts decision.reasons
       expect(decision.reasons).to include("Invalid variation is mapped to flag (feature_1) and user (tester) in the forced decision map.")
 
       #experiment-rule-to-decision
@@ -220,9 +218,6 @@ describe 'Optimizely' do
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
       expect(decision.variation_key).to eq('18257766532')
       expect(decision.rule_key).to eq('18322080788')
-      puts decision.reasons
-
-      puts decision.reasons
       expect(decision.reasons).to include("Starting to evaluate audience '13389141123' with conditions: [\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \"gender\", \"type\": \"custom_attribute\", \"value\": \"f\"}]]].")
     end
 
