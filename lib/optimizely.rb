@@ -212,7 +212,7 @@ module Optimizely
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
         experiment = decision.experiment
-        rule_key = experiment['key']
+        rule_key = experiment ? experiment['key'] : nil
         variation = decision['variation']
         variation_key = variation['key']
         feature_enabled = variation['featureEnabled']
@@ -293,20 +293,13 @@ module Optimizely
       decisions = {}
       keys.each do |key|
         decision = decide(user_context, key, decide_options)
-        puts "key:" + key + " enabled: " + decision.enabled.to_s
         decisions[key] = decision unless enabled_flags_only && !decision.enabled
       end
       decisions
     end
 
     def get_flag_variation_by_key(flag_key, variation_key)
-      config = project_config
-      variations = config.flag_variation_map[flag_key]
-      if (variations)
-        return variations.select{ |variation| variation['key'] == variation_key}.first
-      end
-
-      nil
+      return project_config.get_variation_from_flag(flag_key, variation_key)
     end
 
     # Buckets visitor and sends impression event to Optimizely.

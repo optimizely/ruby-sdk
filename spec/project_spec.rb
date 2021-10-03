@@ -4044,7 +4044,7 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url)
       user_context = project_instance.create_user_context('user1')
       decisions = project_instance.decide_all(user_context, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
-      puts decisions.keys
+
       expect(decisions.length).to eq(6)
       expect(decisions['boolean_single_variable_feature'].as_json).to eq(
         enabled: true,

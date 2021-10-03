@@ -219,8 +219,8 @@ module Optimizely
       decide_reasons = []
 
       rollout_id = feature_flag['rolloutId']
+      feature_flag_key = feature_flag['key']
       if rollout_id.nil? || rollout_id.empty?
-        feature_flag_key = feature_flag['key']
         message = "Feature flag '#{feature_flag_key}' is not used in a rollout."
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)
@@ -240,7 +240,7 @@ module Optimizely
       index = 0
       rollout_rules = rollout['experiments']
       while (index < rollout_rules.length)
-        variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag, rollout_rules, index, user_context, options)
+        variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context, options)
         decide_reasons.push(*reasons_received)
         if (variation)
           rule = rollout_rules[index]
@@ -283,9 +283,10 @@ module Optimizely
 
       user_id = user.user_id
       attributes = user.user_attributes
-      bucketing_id = get_bucketing_id(user_id, attributes)
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      reasons.push(*bucketing_id_reasons)
 
-      everyone_else = rule_index == rules.length - 1
+      everyone_else = (rule_index == rules.length - 1)
 
       logging_key = everyone_else ? "Everyone Else": (rule_index + 1).to_s
 

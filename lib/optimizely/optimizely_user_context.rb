@@ -23,6 +23,8 @@ module Optimizely
     # Representation of an Optimizely User Context using which APIs are to be called.
 
     attr_reader :user_id
+    attr_reader :forced_decisions
+    attr_reader :ForcedDecision
 
     def initialize(optimizely_client, user_id, user_attributes)
       @ForcedDecision = Struct.new(:flag_key, :rule_key, :variation_key)
@@ -35,10 +37,9 @@ module Optimizely
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
-      if (@forced_decisions.count > 1)
-        user_context.forced_decisions = @optimizely_client.forced_decisions
+      if (!@forced_decisions.empty?)
+        user_context.instance_variable_set('@forced_decisions', @forced_decisions.map(&:clone))
       end
-
       user_context
     end
 
@@ -93,7 +94,7 @@ module Optimizely
     end
 
     def set_forced_decision(flag_key, rule_key = nil, variation_key)
-      if (@optimizely_client.config.nil?)
+      if (@optimizely_client&.get_optimizely_config.nil?)
         return false
       end
 
@@ -102,9 +103,8 @@ module Optimizely
       if (index)
         @forced_decisions[index].variation_key = variation_key
       else
-        @forced_decisions.push(ForcedDecision.new(flag_key, rule_key, variation_key))
+        @forced_decisions.push(@ForcedDecision.new(flag_key, rule_key, variation_key))
       end
-    
       return true
     end
 
@@ -112,41 +112,42 @@ module Optimizely
       if @forced_decisions.empty?
         return nil
       end
-
-      @forced_decision = @forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
+      forced_decision = @forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
       if (forced_decision)
         return forced_decision.variation_key
       end
 
-      return ""
+      return nil
     end
 
     def get_forced_decision(flag_key, rule_key = nil)
-      if (@optimizely_client.config.nil?)
-        return false
+      if (@optimizely_client&.get_optimizely_config.nil?)
+        return nil
       end
 
       return find_forced_decision(flag_key, rule_key)
     end
 
     def remove_forced_decision(flag_key, rule_key = nil)
-      if (@optimizely_client.config.nil?)
+      if (@optimizely_client&.get_optimizely_config.nil?)
         return false
       end
 
       index = @forced_decisions.find_index(@forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
       if (index)
-        forced_decision.delete_at(index)
+        @forced_decisions.delete_at(index)
         return true
       end
+
+      false
     end
 
     def remove_all_forced_decision()
-      if (@optimizely_client.config.nil?)
+      if (@optimizely_client&.get_optimizely_config.nil?)
         return false
       end
 
-      forced_decision.clear
+      @forced_decisions.clear
       return true
     end
 
@@ -154,15 +155,15 @@ module Optimizely
       variation_key = find_forced_decision(flag_key, rule_key)
       reasons = []
       if (variation_key)
-        variation = optimizely_client.get_flag_variation_by_key(flag_key, rule_key)
+        variation = @optimizely_client.get_flag_variation_by_key(flag_key, variation_key)
         if (variation)
-          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag ({flag_key})"
+          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
           reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{@user_id}) in the forced decision map."
           reasons.push(reason)
           return variation, reasons
         else
           target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
-          reason = "Invalid variation is mapped to #{target} and user (#{user_id}) in the forced decision map."
+          reason = "Invalid variation is mapped to #{target} and user (#{@user_id}) in the forced decision map."
           reasons.push(reason)
         end
       end

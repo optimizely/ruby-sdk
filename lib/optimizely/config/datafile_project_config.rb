@@ -150,7 +150,7 @@ module Optimizely
             end
           end
         end
-        @flag_variation_map[flag] = variations
+        @flag_variation_map[flag['key']] = variations
       end
 
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
@@ -304,6 +304,15 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Audience '#{audience_id}' is not in datafile."
       @error_handler.handle_error InvalidAudienceError
+      nil
+    end
+
+    def get_variation_from_flag(flag_key, variation_key)
+      variations = @flag_variation_map[flag_key]
+      if (variations)
+        return variations.select{ |variation| variation['key'] == variation_key}.first
+      end
+
       nil
     end
 
