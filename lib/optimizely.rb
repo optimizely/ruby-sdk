@@ -199,16 +199,16 @@ module Optimizely
       experiment = nil
       decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
 
-      variation, reasons_received = user_context.find_validated_forced_decision(key, nil, decide_options)
+      variation, reasons_received = user_context.find_validated_forced_decision(key, nil)
       reasons.push(*reasons_received)
 
-      if (variation)
+      if variation
         decision = Optimizely::DecisionService::Decision.new(nil, variation, Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'])
       else
         decision, reasons_received = @decision_service.get_variation_for_feature(config, feature_flag, user_context, decide_options)
         reasons.push(*reasons_received)
       end
-      
+
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
         experiment = decision.experiment
@@ -299,7 +299,7 @@ module Optimizely
     end
 
     def get_flag_variation_by_key(flag_key, variation_key)
-      return project_config.get_variation_from_flag(flag_key, variation_key)
+      project_config.get_variation_from_flag(flag_key, variation_key)
     end
 
     # Buckets visitor and sends impression event to Optimizely.

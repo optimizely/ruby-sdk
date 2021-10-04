@@ -26,20 +26,18 @@ module Optimizely
     attr_reader :forced_decisions
     attr_reader :ForcedDecision
 
+    ForcedDecision = Struct.new(:flag_key, :rule_key)
     def initialize(optimizely_client, user_id, user_attributes)
-      @ForcedDecision = Struct.new(:flag_key, :rule_key, :variation_key)
       @attr_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
-      @forced_decisions = []
+      @forced_decisions = {}
     end
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
-      if (!@forced_decisions.empty?)
-        user_context.instance_variable_set('@forced_decisions', @forced_decisions.map(&:clone))
-      end
+      user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty?
       user_context
     end
 
@@ -93,82 +91,93 @@ module Optimizely
       @optimizely_client&.decide_all(clone, options)
     end
 
+    # Sets the forced decision (variation key) for a given flag and an optional rule.
+    #
+    # @param flag_key - A flag key.
+    # @param rule_key - An experiment or delivery rule key (optional).
+    # @param variation_key - A variation key.
+    #
+    # @return - true if the forced decision has been set successfully.
+
     def set_forced_decision(flag_key, rule_key = nil, variation_key)
-      if (@optimizely_client&.get_optimizely_config.nil?)
-        return false
-      end
+      return false if @optimizely_client&.get_optimizely_config.nil?
 
-      index = @forced_decisions.find_index(@forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
+      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
+      @forced_decisions[forced_decision_key] = variation_key
 
-      if (index)
-        @forced_decisions[index].variation_key = variation_key
-      else
-        @forced_decisions.push(@ForcedDecision.new(flag_key, rule_key, variation_key))
-      end
-      return true
+      true
     end
 
     def find_forced_decision(flag_key, rule_key = nil)
-      if @forced_decisions.empty?
-        return nil
-      end
-      forced_decision = @forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first
-      if (forced_decision)
-        return forced_decision.variation_key
-      end
+      return nil if @forced_decisions.empty?
 
-      return nil
+      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
+      variation_key = @forced_decisions[forced_decision_key]
+      return variation_key if variation_key
+
+      nil
     end
+
+    # Returns the forced decision for a given flag and an optional rule.
+    #
+    # @param flag_key - A flag key.
+    # @param rule_key - An experiment or delivery rule key (optional).
+    #
+    # @return - A variation key or nil if forced decisions are not set for the parameters.
 
     def get_forced_decision(flag_key, rule_key = nil)
-      if (@optimizely_client&.get_optimizely_config.nil?)
-        return nil
-      end
+      return nil if @optimizely_client&.get_optimizely_config.nil?
 
-      return find_forced_decision(flag_key, rule_key)
+      find_forced_decision(flag_key, rule_key)
     end
 
-    def remove_forced_decision(flag_key, rule_key = nil)
-      if (@optimizely_client&.get_optimizely_config.nil?)
-        return false
-      end
+    # Removes the forced decision for a given flag and an optional rule.
+    #
+    # @param flag_key - A flag key.
+    # @param rule_key - An experiment or delivery rule key (optional).
+    #
+    # @return - true if the forced decision has been removed successfully.
 
-      index = @forced_decisions.find_index(@forced_decisions.collect {|forced_decision| forced_decision if forced_decision[:flag_key] == flag_key && forced_decision[:rule_key] == rule_key }.compact.first)
-      if (index)
-        @forced_decisions.delete_at(index)
+    def remove_forced_decision(flag_key, rule_key = nil)
+      return false if @optimizely_client&.get_optimizely_config.nil?
+
+      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
+      if @forced_decisions.key?(forced_decision_key)
+        @forced_decisions.delete(forced_decision_key)
         return true
       end
 
       false
     end
 
-    def remove_all_forced_decision()
-      if (@optimizely_client&.get_optimizely_config.nil?)
-        return false
-      end
+    # Removes all forced decisions bound to this user context.
+    #
+    # @return - true if forced decisions have been removed successfully.
+
+    def remove_all_forced_decision
+      return false if @optimizely_client&.get_optimizely_config.nil?
 
       @forced_decisions.clear
-      return true
+      true
     end
 
-    def find_validated_forced_decision(flag_key, rule_key, options=nil)
+    def find_validated_forced_decision(flag_key, rule_key)
       variation_key = find_forced_decision(flag_key, rule_key)
       reasons = []
-      if (variation_key)
+      target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
+      if variation_key
         variation = @optimizely_client.get_flag_variation_by_key(flag_key, variation_key)
-        if (variation)
-          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
+        if variation
           reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{@user_id}) in the forced decision map."
           reasons.push(reason)
           return variation, reasons
         else
-          target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
           reason = "Invalid variation is mapped to #{target} and user (#{@user_id}) in the forced decision map."
           reasons.push(reason)
         end
       end
 
-      return nil, reasons
+      [nil, reasons]
     end
 
     # Track an event

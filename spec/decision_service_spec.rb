@@ -109,7 +109,7 @@ describe Optimizely::DecisionService do
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'.")
 
-        user_context = project_instance.create_user_context('forced_user2')
+      user_context = project_instance.create_user_context('forced_user2')
       variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
       expect(variation_received).to eq('111129')
       expect(reasons).to eq([
@@ -139,7 +139,7 @@ describe Optimizely::DecisionService do
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'.")
 
-        user_context = project_instance.create_user_context('forced_user2', user_attributes)
+      user_context = project_instance.create_user_context('forced_user2', user_attributes)
       variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
       expect(variation_received).to eq('111129')
       expect(reasons).to eq([
@@ -327,7 +327,7 @@ describe Optimizely::DecisionService do
         expect(spy_user_profile_service).to receive(:lookup)
           .with('test_user').once.and_return(saved_user_profile)
 
-          user_context = project_instance.create_user_context('test_user')
+        user_context = project_instance.create_user_context('test_user')
         variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
         expect(variation_received).to eq('111129')
         expect(reasons).to eq([
@@ -357,7 +357,7 @@ describe Optimizely::DecisionService do
         expect(spy_user_profile_service).to receive(:lookup)
           .once.with('test_user').and_return(saved_user_profile)
 
-          user_context = project_instance.create_user_context('test_user')
+        user_context = project_instance.create_user_context('test_user')
         variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
         expect(variation_received).to eq('111128')
         expect(reasons).to eq([
@@ -494,8 +494,8 @@ describe Optimizely::DecisionService do
   end
 
   describe '#get_variation_for_feature_experiment' do
-    config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_JSON, nil, nil, nil)
+    config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
     user_context = project_instance.create_user_context('user_1', {})
 
     describe 'when the feature flag\'s experiment ids array is empty' do
@@ -552,7 +552,6 @@ describe Optimizely::DecisionService do
         end
 
         it 'should return the variation' do
-          user_attributes = {}
           feature_flag = config.feature_flag_key_map['multi_variate_feature']
           expected_decision = Optimizely::DecisionService::Decision.new(
             config.experiment_key_map['test_experiment_multivariate'],
@@ -617,8 +616,8 @@ describe Optimizely::DecisionService do
   end
 
   describe '#get_variation_for_feature_rollout' do
-    config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_JSON, nil, nil, nil)
+    config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
     user_context = project_instance.create_user_context('user_1', {})
     user_id = 'user_1'
     user_attributes = {}
@@ -672,8 +671,8 @@ describe Optimizely::DecisionService do
             .and_return(variation)
           variation_received, reasons = decision_service.get_variation_for_feature_rollout(config, feature_flag, user_context)
           expect(variation_received).to eq(expected_decision)
-          expect(reasons).to eq(["User 'user_1' meets the audience conditions for targeting rule '1'.", 
-            "User 'user_1' is in the traffic group of targeting rule '1'."])
+          expect(reasons).to eq(["User 'user_1' meets the audience conditions for targeting rule '1'.",
+                                 "User 'user_1' is in the traffic group of targeting rule '1'."])
         end
       end
 
@@ -702,7 +701,7 @@ describe Optimizely::DecisionService do
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', "1")
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
               .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
@@ -725,15 +724,16 @@ describe Optimizely::DecisionService do
 
             variation_received, reasons = decision_service.get_variation_for_feature_rollout(config, feature_flag, user_context)
             expect(variation_received).to eq(expected_decision)
-            expect(reasons).to eq(["User 'user_1' meets the audience conditions for targeting rule '1'.",
-              "User 'user_1' is not in the traffic group for targeting rule '1'.",
-              "User 'user_1' meets the audience conditions for targeting rule 'Everyone Else'.",
-              "User 'user_1' is in the traffic group of targeting rule 'Everyone Else'."
-              ])
+            expect(reasons).to eq([
+                                    "User 'user_1' meets the audience conditions for targeting rule '1'.",
+                                    "User 'user_1' is not in the traffic group for targeting rule '1'.",
+                                    "User 'user_1' meets the audience conditions for targeting rule 'Everyone Else'.",
+                                    "User 'user_1' is in the traffic group of targeting rule 'Everyone Else'."
+                                  ])
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', "1")
+                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
               .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
@@ -745,7 +745,6 @@ describe Optimizely::DecisionService do
       it 'should try to bucket the user into the "Everyone Else" rule' do
         feature_flag = config.feature_flag_key_map['boolean_single_variable_feature']
         rollout = config.rollout_id_map[feature_flag['rolloutId']]
-        rules = rollout['experiments']
         everyone_else_experiment = rollout['experiments'][2]
         variation = everyone_else_experiment['variations'][0]
         expected_decision = Optimizely::DecisionService::Decision.new(everyone_else_experiment, variation, Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT'])
@@ -760,11 +759,12 @@ describe Optimizely::DecisionService do
 
         variation_received, reasons = decision_service.get_variation_for_feature_rollout(config, feature_flag, user_context)
         expect(variation_received).to eq(expected_decision)
-        expect(reasons).to eq(["User 'user_1' does not meet the conditions for targeting rule '1'.",
-          "User 'user_1' does not meet the conditions for targeting rule '2'.",
-          "User 'user_1' meets the audience conditions for targeting rule 'Everyone Else'.",
-          "User 'user_1' is in the traffic group of targeting rule 'Everyone Else'."
-          ])
+        expect(reasons).to eq([
+                                "User 'user_1' does not meet the conditions for targeting rule '1'.",
+                                "User 'user_1' does not meet the conditions for targeting rule '2'.",
+                                "User 'user_1' meets the audience conditions for targeting rule 'Everyone Else'.",
+                                "User 'user_1' is in the traffic group of targeting rule 'Everyone Else'."
+                              ])
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).exactly(3).times
@@ -790,16 +790,16 @@ describe Optimizely::DecisionService do
         variation_received, reasons = decision_service.get_variation_for_feature_rollout(config, feature_flag, user_context)
         expect(variation_received).to eq(nil)
         expect(reasons).to eq([
-          "User 'user_1' does not meet the conditions for targeting rule '1'.",
-          "User 'user_1' does not meet the conditions for targeting rule '2'.",
-          "User 'user_1' does not meet the conditions for targeting rule 'Everyone Else'."
-        ])
+                                "User 'user_1' does not meet the conditions for targeting rule '1'.",
+                                "User 'user_1' does not meet the conditions for targeting rule '2'.",
+                                "User 'user_1' does not meet the conditions for targeting rule 'Everyone Else'."
+                              ])
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', "1")
+                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', "2")
+          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '2')
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
           .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
@@ -814,10 +814,9 @@ describe Optimizely::DecisionService do
   end
 
   describe '#get_variation_for_feature' do
-    config_body_JSON = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_JSON, nil, nil, nil)
+    config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
+    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
     user_context = project_instance.create_user_context('user_1', {})
-    user_id = 'user_1'
 
     describe 'when the user is bucketed into the feature experiment' do
       it 'should return the bucketed experiment and variation' do

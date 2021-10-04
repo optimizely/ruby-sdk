@@ -1376,7 +1376,7 @@ describe 'Optimizely' do
           experiment_key: 'test_experiment', variation_key: 'control'
         )
 
-        project_instance.get_variation('test_experiment', 'test_user', {'browser_type' => 'firefox'})
+        project_instance.get_variation('test_experiment', 'test_user', 'browser_type' => 'firefox')
       end
 
       it 'should call decision listener when user not in experiment' do

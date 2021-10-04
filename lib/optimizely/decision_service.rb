@@ -151,7 +151,7 @@ module Optimizely
       decide_reasons.push(*reasons_received)
       return decision, decide_reasons unless decision.nil?
 
-      decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_context, decide_options)
+      decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
       decide_reasons.push(*reasons_received)
 
       [decision, decide_reasons]
@@ -168,7 +168,6 @@ module Optimizely
       # or nil if the user is not bucketed into any of the experiments on the feature
       decide_reasons = []
       user_id = user_context.user_id
-      attributes = user_context.user_attributes
       feature_flag_key = feature_flag['key']
       if feature_flag['experimentIds'].empty?
         message = "The feature flag '#{feature_flag_key}' is not used in any experiments."
@@ -205,7 +204,7 @@ module Optimizely
       [nil, decide_reasons]
     end
 
-    def get_variation_for_feature_rollout(project_config, feature_flag, user_context, options = [])
+    def get_variation_for_feature_rollout(project_config, feature_flag, user_context)
       # Determine which variation the user is in for a given rollout.
       # Returns the variation of the first experiment the user qualifies for.
       #
@@ -237,10 +236,10 @@ module Optimizely
 
       index = 0
       rollout_rules = rollout['experiments']
-      while (index < rollout_rules.length)
-        variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context, options)
+      while index < rollout_rules.length
+        variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context)
         decide_reasons.push(*reasons_received)
-        if (variation)
+        if variation
           rule = rollout_rules[index]
           feature_decision = Decision.new(rule, variation, DECISION_SOURCES['ROLLOUT'])
           return [feature_decision, decide_reasons]
@@ -249,35 +248,49 @@ module Optimizely
         index = skip_to_everyone_else ? (rollout_rules.length - 1) : (index + 1)
       end
 
-      return [nil, decide_reasons]
+      [nil, decide_reasons]
     end
 
-    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, options)
+    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, options = [])
+      # Determine which variation the user is in for a given rollout.
+      # Returns the variation from experiment rules.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # flag_key - The feature flag the user wants to access
+      # rule - An experiment rule key
+      # user - Optimizely user context instance
+      #
+      # Returns variation_id and reasons
       reasons = []
 
-      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'], options = [])
+      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'])
       reasons.push(*forced_reasons)
 
-      if (variation)
-        return [variation['id'], reasons]
-      end
+      return [variation['id'], reasons] if variation
 
       variation_id, response_reasons = get_variation(project_config, rule['id'], user, options)
       reasons.push(*response_reasons)
 
-      return [variation_id, reasons]
+      [variation_id, reasons]
     end
 
-    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user, options)
+    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user)
+      # Determine which variation the user is in for a given rollout.
+      # Returns the variation from delivery rules.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # flag_key - The feature flag the user wants to access
+      # rule - An experiment rule key
+      # user - Optimizely user context instance
+      #
+      # Returns variation, boolean to skip for eveyone else rule and reasons
       reasons = []
-      skip_to_everyone_else = false 
+      skip_to_everyone_else = false
       rule = rules[rule_index]
-      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'], options)
+      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'])
       reasons.push(*forced_reasons)
 
-      if (variation)
-        return [variation, skip_to_everyone_else, reasons]
-      end
+      return [variation, skip_to_everyone_else, reasons] if variation
 
       user_id = user.user_id
       attributes = user.user_attributes
@@ -286,7 +299,7 @@ module Optimizely
 
       everyone_else = (rule_index == rules.length - 1)
 
-      logging_key = everyone_else ? "Everyone Else": (rule_index + 1).to_s
+      logging_key = everyone_else ? 'Everyone Else' : (rule_index + 1).to_s
 
       user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
       reasons.push(*reasons_received)
@@ -304,17 +317,17 @@ module Optimizely
 
       reasons.push(*bucket_reasons)
 
-      if (bucket_variation)
+      if bucket_variation
         message = "User '#{user_id}' is in the traffic group of targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
         reasons.push(message)
-      elsif (!everyone_else)
+      elsif !everyone_else
         message = "User '#{user_id}' is not in the traffic group for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
         reasons.push(message)
         skip_to_everyone_else = true
       end
-      return [bucket_variation, skip_to_everyone_else, reasons]
+      [bucket_variation, skip_to_everyone_else, reasons]
     end
 
     def set_forced_variation(project_config, experiment_key, user_id, variation_key)

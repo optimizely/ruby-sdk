@@ -146,9 +146,7 @@ module Optimizely
         variations = []
         get_rules_for_flag(flag).each do |rule|
           rule['variations'].each do |rule_variation|
-            if variations.select{ |variation| variation['id'] == rule_variation['id'] }
-              variations.push(rule_variation)
-            end
+            variations.push(rule_variation) if variations.select { |variation| variation['id'] == rule_variation['id'] }
           end
         end
         @flag_variation_map[flag['key']] = variations
@@ -182,10 +180,15 @@ module Optimizely
     end
 
     def get_rules_for_flag(feature_flag)
-      rules = feature_flag['experimentIds'].map{ |exp_id| @experiment_id_map[exp_id] }
+      # Retrieves rules for a given feature flag
+      #
+      # feature_flag - String key representing the feature_flag
+      #
+      # Returns rules in feature flag
+      rules = feature_flag['experimentIds'].map { |exp_id| @experiment_id_map[exp_id] }
       rollout = feature_flag['rolloutId'].empty? ? nil : @rollout_id_map[feature_flag['rolloutId']]
 
-      if (rollout)
+      if rollout
         rollout_experiments = rollout.fetch('experiments')
         rollout_experiments.each do |exp|
           rules.push(exp)
@@ -310,9 +313,7 @@ module Optimizely
 
     def get_variation_from_flag(flag_key, variation_key)
       variations = @flag_variation_map[flag_key]
-      if (variations)
-        return variations.select{ |variation| variation['key'] == variation_key}.first
-      end
+      return variations.select { |variation| variation['key'] == variation_key }.first if variations
 
       nil
     end
