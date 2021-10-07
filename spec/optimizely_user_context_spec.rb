@@ -187,7 +187,7 @@ describe 'Optimizely' do
                                      ])
     end
 
-    it 'should return proper invalid result for invalid variation in forced decision' do
+    it 'should return proper valid result for invalid variation in forced decision' do
       user_id = 'tester'
       feature_key = 'feature_1'
       original_attributes = {}
