@@ -90,7 +90,7 @@ describe 'Optimizely' do
       original_attributes = {}
       invalid_project_instance = Optimizely::Project.new('Invalid datafile', nil, spy_logger, error_handler)
       user_context_obj = Optimizely::OptimizelyUserContext.new(invalid_project_instance, user_id, original_attributes)
-      status = user_context_obj.set_forced_decision('feature_1', '3324490562')
+      status = user_context_obj.set_forced_decision('feature_1', nil, '3324490562')
       expect(status).to be false
       status = user_context_obj.get_forced_decision('feature_1')
       expect(status).to be_nil
@@ -104,7 +104,7 @@ describe 'Optimizely' do
       user_id = 'test_user'
       original_attributes = {}
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, original_attributes)
-      status = user_context_obj.set_forced_decision('feature_1', '3324490562')
+      status = user_context_obj.set_forced_decision('feature_1', nil, '3324490562')
       expect(status).to be true
       status = user_context_obj.get_forced_decision('feature_1')
       expect(status).to eq('3324490562')
@@ -120,7 +120,7 @@ describe 'Optimizely' do
       original_attributes = {}
       stub_request(:post, impression_log_url)
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, '3324490562')
+      user_context_obj.set_forced_decision(feature_key, nil, '3324490562')
       decision = user_context_obj.decide(feature_key)
       expect(decision.variation_key).to eq('3324490562')
       expect(decision.rule_key).to be_nil
@@ -195,7 +195,7 @@ describe 'Optimizely' do
 
       # flag-to-decision
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, 'invalid')
+      user_context_obj.set_forced_decision(feature_key, nil, 'invalid')
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
       expect(decision.variation_key).to eq('18257766532')
       expect(decision.rule_key).to eq('18322080788')
@@ -224,7 +224,7 @@ describe 'Optimizely' do
       original_attributes = {}
       stub_request(:post, impression_log_url)
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, '3324490562')
+      user_context_obj.set_forced_decision(feature_key, nil, '3324490562')
       user_context_obj.set_forced_decision(feature_key, 'exp_with_audience', 'b')
       decision = user_context_obj.decide(feature_key)
       expect(decision.variation_key).to eq('3324490562')
@@ -237,10 +237,10 @@ describe 'Optimizely' do
       original_attributes = {}
       stub_request(:post, impression_log_url)
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, 'fv1')
+      user_context_obj.set_forced_decision(feature_key, nil, 'fv1')
       expect(user_context_obj.get_forced_decision(feature_key)).to eq('fv1')
 
-      user_context_obj.set_forced_decision(feature_key, 'fv2')
+      user_context_obj.set_forced_decision(feature_key, nil, 'fv2')
       expect(user_context_obj.get_forced_decision(feature_key)).to eq('fv2')
 
       user_context_obj.set_forced_decision(feature_key, 'r', 'ev1')
@@ -258,7 +258,7 @@ describe 'Optimizely' do
       original_attributes = {}
       stub_request(:post, impression_log_url)
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, 'fv1')
+      user_context_obj.set_forced_decision(feature_key, nil, 'fv1')
       user_context_obj.set_forced_decision(feature_key, 'r', 'ev1')
 
       expect(user_context_obj.get_forced_decision(feature_key)).to eq('fv1')
@@ -284,7 +284,7 @@ describe 'Optimizely' do
       original_attributes = {}
       stub_request(:post, impression_log_url)
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
-      user_context_obj.set_forced_decision(feature_key, 'fv1')
+      user_context_obj.set_forced_decision(feature_key, nil, 'fv1')
       user_context_obj.set_forced_decision(feature_key, 'r', 'ev1')
 
       expect(user_context_obj.get_forced_decision(feature_key)).to eq('fv1')
@@ -310,7 +310,7 @@ describe 'Optimizely' do
       expect(user_clone_1.forced_decisions).to be_empty
 
       # with forced decisions
-      user_context_obj.set_forced_decision('a', 'b')
+      user_context_obj.set_forced_decision('a', nil, 'b')
       user_context_obj.set_forced_decision('a', 'c', 'd')
 
       user_clone_2 = user_context_obj.clone

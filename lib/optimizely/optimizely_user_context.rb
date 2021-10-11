@@ -99,7 +99,7 @@ module Optimizely
     #
     # @return - true if the forced decision has been set successfully.
 
-    def set_forced_decision(flag_key, rule_key = nil, variation_key)
+    def set_forced_decision(flag_key, rule_key, variation_key)
       return false if @optimizely_client&.get_optimizely_config.nil?
       return false if flag_key.empty? || flag_key.nil?
 
