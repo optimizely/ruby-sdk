@@ -114,7 +114,7 @@ module Optimizely
 
       forced_decision_key = ForcedDecision.new(flag_key, rule_key)
       variation_key = @forced_decisions[forced_decision_key]
-      return variation_key if variation_key && !variation_key.empty?
+      return variation_key if variation_key
 
       nil
     end
