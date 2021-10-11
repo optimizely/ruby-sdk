@@ -2118,7 +2118,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('cta_1')
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2134,7 +2134,7 @@ describe 'Optimizely' do
 
         expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
           .to eq('wingardium leviosa')
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::INFO,
@@ -2147,7 +2147,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable_string('totally_invalid_feature_key', 'string_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).exactly(3).times
+        expect(spy_logger).to have_received(:log).exactly(2).times
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2165,7 +2165,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'invalid_string_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2296,7 +2296,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
             .to eq('value' => 'cta_1')
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2324,7 +2324,7 @@ describe 'Optimizely' do
 
         expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
           .to eq('val' => 'wingardium leviosa')
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::INFO,
@@ -2337,7 +2337,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable_json('totally_invalid_feature_key', 'json_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).exactly(3).times
+        expect(spy_logger).to have_received(:log).twice
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2355,7 +2355,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable_json('json_single_variable_feature', 'invalid_json_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2403,7 +2403,7 @@ describe 'Optimizely' do
       expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(true)
 
-      expect(spy_logger).to have_received(:log).twice
+      expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
                                                .with(
                                                  Logger::INFO,
@@ -2451,7 +2451,7 @@ describe 'Optimizely' do
       expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(42.42)
 
-      expect(spy_logger).to have_received(:log).twice
+      expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
                                                .with(
                                                  Logger::INFO,
@@ -2499,7 +2499,7 @@ describe 'Optimizely' do
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(42)
 
-      expect(spy_logger).to have_received(:log).twice
+      expect(spy_logger).to have_received(:log).once
       expect(spy_logger).to have_received(:log).once
                                                .with(
                                                  Logger::INFO,
@@ -2729,7 +2729,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_all_feature_variables('totally_invalid_feature_key', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).exactly(3).times
+        expect(spy_logger).to have_received(:log).twice
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2801,7 +2801,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('cta_1')
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2822,7 +2822,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
             .to eq(true)
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2844,7 +2844,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable('double_single_variable_feature', 'double_variable', user_id, user_attributes))
             .to eq(42.42)
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2866,7 +2866,7 @@ describe 'Optimizely' do
           expect(project_instance.get_feature_variable('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
             .to eq(42)
 
-          expect(spy_logger).to have_received(:log).twice
+          expect(spy_logger).to have_received(:log).once
           expect(spy_logger).to have_received(:log).once
                                                    .with(
                                                      Logger::INFO,
@@ -2882,7 +2882,7 @@ describe 'Optimizely' do
 
         expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
           .to eq('wingardium leviosa')
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::INFO,
@@ -2895,7 +2895,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable('totally_invalid_feature_key', 'string_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).exactly(3).times
+        expect(spy_logger).to have_received(:log).twice
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -2913,7 +2913,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable('string_single_variable_feature', 'invalid_string_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).once
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,

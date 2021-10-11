@@ -1098,8 +1098,12 @@ module Optimizely
       experiment_id = experiment['id']
       experiment_key = experiment['key']
 
-      variation_id = ''
-      variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) if experiment_id != ''
+      if experiment_id != ''
+        variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
+      else
+        varaition = get_flag_variation_by_key(flag_key, variation_key)
+        variation_id = varaition ? varaition['id'] : ''
+      end
 
       metadata = {
         flag_key: flag_key,
