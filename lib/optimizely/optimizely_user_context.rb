@@ -29,6 +29,7 @@ module Optimizely
     ForcedDecision = Struct.new(:flag_key, :rule_key)
     def initialize(optimizely_client, user_id, user_attributes)
       @attr_mutex = Mutex.new
+      @forced_decision_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
@@ -37,7 +38,7 @@ module Optimizely
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
-      user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty?
+      @forced_decision_mutex.synchronize { user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty? }
       user_context
     end
 
@@ -104,7 +105,7 @@ module Optimizely
       return false if flag_key.empty? || flag_key.nil?
 
       forced_decision_key = ForcedDecision.new(flag_key, rule_key)
-      @forced_decisions[forced_decision_key] = variation_key
+      @forced_decision_mutex.synchronize { @forced_decisions[forced_decision_key] = variation_key }
 
       true
     end
@@ -112,11 +113,10 @@ module Optimizely
     def find_forced_decision(flag_key, rule_key = nil)
       return nil if @forced_decisions.empty?
 
+      variation_key = nil
       forced_decision_key = ForcedDecision.new(flag_key, rule_key)
-      variation_key = @forced_decisions[forced_decision_key]
-      return variation_key if variation_key
-
-      nil
+      @forced_decision_mutex.synchronize { variation_key = @forced_decisions[forced_decision_key] }
+      variation_key
     end
 
     # Returns the forced decision for a given flag and an optional rule.
@@ -143,12 +143,14 @@ module Optimizely
       return false if @optimizely_client&.get_optimizely_config.nil?
 
       forced_decision_key = ForcedDecision.new(flag_key, rule_key)
-      if @forced_decisions.key?(forced_decision_key)
-        @forced_decisions.delete(forced_decision_key)
-        return true
+      deleted = false
+      @forced_decision_mutex.synchronize do
+        if @forced_decisions.key?(forced_decision_key)
+          @forced_decisions.delete(forced_decision_key)
+          deleted = true
+        end
       end
-
-      false
+      deleted
     end
 
     # Removes all forced decisions bound to this user context.
@@ -158,7 +160,7 @@ module Optimizely
     def remove_all_forced_decision
       return false if @optimizely_client&.get_optimizely_config.nil?
 
-      @forced_decisions.clear
+      @forced_decision_mutex.synchronize { @forced_decisions.clear }
       true
     end
 

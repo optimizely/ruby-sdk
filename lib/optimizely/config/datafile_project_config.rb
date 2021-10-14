@@ -142,16 +142,7 @@ module Optimizely
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
       end
 
-      @feature_flags.each do |flag|
-        variations = []
-        get_rules_for_flag(flag).each do |rule|
-          rule['variations'].each do |rule_variation|
-            variations.push(rule_variation) if variations.select { |variation| variation['id'] == rule_variation['id'] }
-          end
-        end
-        @flag_variation_map[flag['key']] = variations
-      end
-
+      @flag_variation_map = generate_feature_variation_map(@feature_flags)
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
       @all_experiments.each do |id, exp|
         variations = exp.fetch('variations')
@@ -532,6 +523,20 @@ module Optimizely
     end
 
     private
+
+    def generate_feature_variation_map(feature_flags)
+      flag_variation_map = {}
+      feature_flags.each do |flag|
+        variations = []
+        get_rules_for_flag(flag).each do |rule|
+          rule['variations'].each do |rule_variation|
+            variations.push(rule_variation) if variations.select { |variation| variation['id'] == rule_variation['id'] }.empty?
+          end
+        end
+        flag_variation_map[flag['key']] = variations
+      end
+      flag_variation_map
+    end
 
     def generate_key_map(array, key)
       # Helper method to generate map from key to hash in array of hashes

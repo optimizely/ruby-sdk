@@ -115,13 +115,83 @@ describe 'Optimizely' do
     end
 
     it 'should set forced decision in decide' do
+      impression_log_url = 'https://logx.optimizely.com/v1/events'
+      time_now = Time.now
+      post_headers = {'Content-Type' => 'application/json'}
+      allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+      allow(forced_decision_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       user_id = 'tester'
       feature_key = 'feature_1'
-      original_attributes = {}
+      expected_params = {
+        account_id: '10367498574',
+        project_id: '10431130345',
+        revision: '241',
+        client_name: 'ruby-sdk',
+        client_version: '3.9.0',
+        anonymize_ip: true,
+        enrich_decisions: true,
+        visitors: [{
+          snapshots: [{
+            events: [{
+              entity_id: '',
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              key: 'campaign_activated',
+              timestamp: (time_now.to_f * 1000).to_i
+            }],
+            decisions: [{
+              campaign_id: '',
+              experiment_id: '',
+              variation_id: '3324490562',
+              metadata: {
+                flag_key: 'feature_1',
+                rule_key: '',
+                rule_type: 'feature-test',
+                variation_key: '3324490562',
+                enabled: true
+              }
+            }]
+          }],
+          visitor_id: 'tester',
+          attributes: [{
+            entity_id: '$opt_bot_filtering',
+            key: '$opt_bot_filtering',
+            type: 'custom',
+            value: true
+          }]
+        }]
+      }
       stub_request(:post, impression_log_url)
-      user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'flag',
+          'tester',
+          {},
+          flag_key: 'feature_1',
+          enabled: true,
+          variables: {
+            'b_true' => true,
+            'd_4_2' => 4.2,
+            'i_1' => 'invalid',
+            'i_42' => 42,
+            'j_1' => {
+              'value' => 1
+            },
+            's_foo' => 'foo'
+
+          },
+          variation_key: '3324490562',
+          rule_key: nil,
+          reasons: [],
+          decision_event_dispatched: true
+        )
+      user_context_obj = forced_decision_project_instance.create_user_context(user_id)
       user_context_obj.set_forced_decision(feature_key, nil, '3324490562')
       decision = user_context_obj.decide(feature_key)
+      expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       expect(decision.variation_key).to eq('3324490562')
       expect(decision.rule_key).to be_nil
       expect(decision.enabled).to be true
@@ -131,31 +201,190 @@ describe 'Optimizely' do
       expect(decision.reasons).to eq([])
       expect(decision.user_context.forced_decisions.length).to eq(1)
       expect(decision.user_context.forced_decisions).to eq(Optimizely::OptimizelyUserContext::ForcedDecision.new(feature_key, nil) => '3324490562')
-
-      decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
-      expect(decision.reasons).to eq(['Variation (3324490562) is mapped to flag (feature_1) and user (tester) in the forced decision map.'])
     end
 
     it 'should set experiment rule in forced decision using set forced decision' do
+      impression_log_url = 'https://logx.optimizely.com/v1/events'
+      time_now = Time.now
+      post_headers = {'Content-Type' => 'application/json'}
+      allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+      allow(forced_decision_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       user_id = 'tester'
       feature_key = 'feature_1'
       original_attributes = {}
       stub_request(:post, impression_log_url)
+      expected_params = {
+        account_id: '10367498574',
+        project_id: '10431130345',
+        revision: '241',
+        client_name: 'ruby-sdk',
+        client_version: '3.9.0',
+        anonymize_ip: true,
+        enrich_decisions: true,
+        visitors: [{
+          snapshots: [{
+            events: [{
+              entity_id: '10420273888',
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              key: 'campaign_activated',
+              timestamp: (time_now.to_f * 1000).to_i
+            }],
+            decisions: [{
+              campaign_id: '10420273888',
+              experiment_id: '10390977673',
+              variation_id: '10416523121',
+              metadata: {
+                flag_key: 'feature_1',
+                rule_key: 'exp_with_audience',
+                rule_type: 'feature-test',
+                variation_key: 'b',
+                enabled: false
+              }
+            }]
+          }],
+          visitor_id: 'tester',
+          attributes: [{
+            entity_id: '$opt_bot_filtering',
+            key: '$opt_bot_filtering',
+            type: 'custom',
+            value: true
+          }]
+        }]
+      }
+
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'flag',
+          'tester',
+          {},
+          flag_key: 'feature_1',
+          enabled: false,
+          variables: {
+            'b_true' => true,
+            'd_4_2' => 4.2,
+            'i_1' => 'invalid',
+            'i_42' => 42,
+            'j_1' => {
+              'value' => 1
+            },
+            's_foo' => 'foo'
+          },
+          variation_key: 'b',
+          rule_key: 'exp_with_audience',
+          reasons: ['Variation (b) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'],
+          decision_event_dispatched: true
+        )
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
       user_context_obj.set_forced_decision(feature_key, 'exp_with_audience', 'b')
-      decision = user_context_obj.decide(feature_key)
+      decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
+      expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       expect(decision.variation_key).to eq('b')
       expect(decision.rule_key).to eq('exp_with_audience')
       expect(decision.enabled).to be false
       expect(decision.flag_key).to eq(feature_key)
       expect(decision.user_context.user_id).to eq(user_id)
       expect(decision.user_context.user_attributes.length).to eq(0)
-      expect(decision.reasons).to eq([])
       expect(decision.user_context.forced_decisions.length).to eq(1)
       expect(decision.user_context.forced_decisions).to eq(Optimizely::OptimizelyUserContext::ForcedDecision.new(feature_key, 'exp_with_audience') => 'b')
-
-      decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
       expect(decision.reasons).to eq(['Variation (b) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'])
+    end
+
+    it 'should return correct variation if rule in forced decision is deleted' do
+      impression_log_url = 'https://logx.optimizely.com/v1/events'
+      time_now = Time.now
+      post_headers = {'Content-Type' => 'application/json'}
+      allow(Time).to receive(:now).and_return(time_now)
+      allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+      allow(forced_decision_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      user_id = 'tester'
+      feature_key = 'feature_1'
+      expected_params = {
+        account_id: '10367498574',
+        project_id: '10431130345',
+        revision: '241',
+        client_name: 'ruby-sdk',
+        client_version: '3.9.0',
+        anonymize_ip: true,
+        enrich_decisions: true,
+        visitors: [{
+          snapshots: [{
+            events: [{
+              entity_id: '',
+              uuid: 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              key: 'campaign_activated',
+              timestamp: (time_now.to_f * 1000).to_i
+            }],
+            decisions: [{
+              campaign_id: '',
+              experiment_id: '',
+              variation_id: '3324490562',
+              metadata: {
+                flag_key: 'feature_1',
+                rule_key: '',
+                rule_type: 'feature-test',
+                variation_key: '3324490562',
+                enabled: true
+              }
+            }]
+          }],
+          visitor_id: 'tester',
+          attributes: [{
+            entity_id: '$opt_bot_filtering',
+            key: '$opt_bot_filtering',
+            type: 'custom',
+            value: true
+          }]
+        }]
+      }
+      stub_request(:post, impression_log_url)
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
+      expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
+        .with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
+          'flag',
+          'tester',
+          {},
+          flag_key: 'feature_1',
+          enabled: true,
+          variables: {
+            'b_true' => true,
+            'd_4_2' => 4.2,
+            'i_1' => 'invalid',
+            'i_42' => 42,
+            'j_1' => {
+              'value' => 1
+            },
+            's_foo' => 'foo'
+          },
+          variation_key: '3324490562',
+          rule_key: nil,
+          reasons: [],
+          decision_event_dispatched: true
+        )
+      user_context_obj = forced_decision_project_instance.create_user_context(user_id)
+      # set forced decision with flag
+      user_context_obj.set_forced_decision(feature_key, nil, '3324490562')
+      # set forced decision with flag and rule
+      user_context_obj.set_forced_decision(feature_key, 'exp_with_audience', 'b')
+      # remove rule forced decision with flag
+      user_context_obj.remove_forced_decision(feature_key, 'exp_with_audience')
+      # decision should be based on flag forced decision
+      decision = user_context_obj.decide(feature_key)
+      expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
+      expect(decision.variation_key).to eq('3324490562')
+      expect(decision.rule_key).to be_nil
+      expect(decision.enabled).to be true
+      expect(decision.flag_key).to eq(feature_key)
+      expect(decision.user_context.user_id).to eq(user_id)
+      expect(decision.user_context.user_attributes.length).to eq(0)
+      expect(decision.reasons).to eq([])
+      expect(decision.user_context.forced_decisions.length).to eq(1)
+      expect(decision.user_context.forced_decisions).to eq(Optimizely::OptimizelyUserContext::ForcedDecision.new(feature_key, nil) => '3324490562')
     end
 
     it 'should set delivery rule in forced decision using set forced decision' do
@@ -312,6 +541,7 @@ describe 'Optimizely' do
       # with forced decisions
       user_context_obj.set_forced_decision('a', nil, 'b')
       user_context_obj.set_forced_decision('a', 'c', 'd')
+      user_context_obj.set_forced_decision('a', '', 'e')
 
       user_clone_2 = user_context_obj.clone
       expect(user_clone_2.user_id).to eq(user_id)
@@ -321,11 +551,86 @@ describe 'Optimizely' do
       expect(user_clone_2.get_forced_decision('a')).to eq('b')
       expect(user_clone_2.get_forced_decision('a', 'c')).to eq('d')
       expect(user_clone_2.get_forced_decision('x')).to be_nil
+      expect(user_clone_2.get_forced_decision('a', '')).to eq('e')
 
       # forced decisions should be copied separately
       user_context_obj.set_forced_decision('a', 'new-rk', 'new-vk')
       expect(user_context_obj.get_forced_decision('a', 'new-rk')).to eq('new-vk')
       expect(user_clone_2.get_forced_decision('a', 'new-rk')).to be_nil
+    end
+
+    it 'should set, get, remove, remove all and clone in synchronize manner' do
+      user_id = 'tester'
+      original_attributes = {}
+      threads = []
+      user_clone = nil
+      user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
+      allow(user_context_obj).to receive(:clone)
+      allow(user_context_obj).to receive(:set_forced_decision)
+      allow(user_context_obj).to receive(:get_forced_decision)
+      allow(user_context_obj).to receive(:remove_forced_decision)
+      allow(user_context_obj).to receive(:remove_all_forced_decision)
+
+      # clone
+      threads << Thread.new do
+        100.times do
+          user_clone = user_context_obj.clone
+        end
+      end
+
+      # set forced decision
+      threads << Thread.new do
+        100.times do
+          user_context_obj.set_forced_decision('0', nil, 'var')
+        end
+      end
+
+      threads << Thread.new do
+        100.times do
+          user_context_obj.set_forced_decision('1', nil, 'var')
+        end
+      end
+
+      # get forced decision
+      threads << Thread.new do
+        100.times do
+          user_context_obj.get_forced_decision('0', nil)
+        end
+      end
+
+      threads << Thread.new do
+        100.times do
+          user_context_obj.get_forced_decision('1', nil)
+        end
+      end
+
+      # remove forced decision
+      threads << Thread.new do
+        100.times do
+          user_context_obj.remove_forced_decision('0', nil)
+        end
+      end
+
+      threads << Thread.new do
+        100.times do
+          user_context_obj.remove_forced_decision('1', nil)
+        end
+      end
+
+      # remove all forced decision
+      threads << Thread.new do
+        user_context_obj.remove_all_forced_decision
+      end
+
+      threads.each(&:join)
+      expect(user_context_obj).to have_received(:clone).exactly(100).times
+      expect(user_context_obj).to have_received(:set_forced_decision).with('0', nil, 'var').exactly(100).times
+      expect(user_context_obj).to have_received(:set_forced_decision).with('1', nil, 'var').exactly(100).times
+      expect(user_context_obj).to have_received(:get_forced_decision).with('0', nil).exactly(100).times
+      expect(user_context_obj).to have_received(:get_forced_decision).with('1', nil).exactly(100).times
+      expect(user_context_obj).to have_received(:remove_forced_decision).with('0', nil).exactly(100).times
+      expect(user_context_obj).to have_received(:remove_forced_decision).with('1', nil).exactly(100).times
+      expect(user_context_obj).to have_received(:remove_all_forced_decision).once
     end
   end
 end

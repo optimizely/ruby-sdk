@@ -23,6 +23,7 @@ require 'optimizely/exceptions'
 describe Optimizely::DatafileProjectConfig do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
+  let(:decision_JSON) { OptimizelySpec::DECIDE_FORCED_DECISION_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
@@ -1071,6 +1072,58 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'should return false if the experiment is not a rollout test' do
       expect(config.rollout_experiment?('177771')).to eq(false)
+    end
+  end
+
+  describe '#feature variation map' do
+    let(:config) { Optimizely::DatafileProjectConfig.new(decision_JSON, logger, error_handler) }
+
+    it 'should return valid flag variation map without duplicates' do
+      # variation '3324490634' is repeated in datafile but should appear once in map
+      expected_feature_variation_map = {
+        'feature_1' => [{
+          'variables' => [],
+          'featureEnabled' => true,
+          'id' => '10389729780',
+          'key' => 'a'
+        }, {
+          'variables' => [],
+          'id' => '10416523121',
+          'key' => 'b',
+          'featureEnabled' => false
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490633',
+          'key' => '3324490633',
+          'variables' => []
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490634',
+          'key' => '3324490634',
+          'variables' => []
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490562',
+          'key' => '3324490562',
+          'variables' => []
+        }, {
+          'variables' => [],
+          'id' => '18257766532',
+          'key' => '18257766532',
+          'featureEnabled' => true
+        }], 'feature_2' => [{
+          'variables' => [],
+          'featureEnabled' => true,
+          'id' => '10418551353',
+          'key' => 'variation_with_traffic'
+        }, {
+          'variables' => [],
+          'featureEnabled' => false,
+          'id' => '10418510624',
+          'key' => 'variation_no_traffic'
+        }], 'feature_3' => []
+      }
+      expect(config.send(:generate_feature_variation_map, config.feature_flags)).to eq(expected_feature_variation_map)
     end
   end
 end

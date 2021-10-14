@@ -1455,13 +1455,21 @@ module OptimizelySpec
         'layerId' => '3319450668',
         'status' => 'Running',
         'trafficAllocation' => [{
-          'endOfRange' => 10_000,
+          'endOfRange' => 9_000,
           'entityId' => '3324490633'
+        }, {
+          'entityId' => '3324490634',
+          'endOfRange' => 1_000
         }],
         'variations' => [{
           'featureEnabled' => true,
           'id' => '3324490633',
           'key' => '3324490633',
+          'variables' => []
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490634',
+          'key' => '3324490634',
           'variables' => []
         }]
       }, {
@@ -1474,11 +1482,19 @@ module OptimizelySpec
         'trafficAllocation' => [{
           'endOfRange' => 0,
           'entityId' => '3324490562'
+        }, {
+          'entityId' => '3324490634',
+          'endOfRange' => 0
         }],
         'variations' => [{
           'featureEnabled' => true,
           'id' => '3324490562',
           'key' => '3324490562',
+          'variables' => []
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490634',
+          'key' => '3324490634',
           'variables' => []
         }]
       }, {
@@ -1489,13 +1505,21 @@ module OptimizelySpec
           'id' => '18257766532',
           'key' => '18257766532',
           'featureEnabled' => true
+        }, {
+          'featureEnabled' => true,
+          'id' => '3324490634',
+          'key' => '3324490634',
+          'variables' => []
         }],
         'id' => '18322080788',
         'key' => '18322080788',
         'layerId' => '18263344648',
         'trafficAllocation' => [{
           'entityId' => '18257766532',
-          'endOfRange' => 10_000
+          'endOfRange' => 9_000
+        }, {
+          'entityId' => '3324490634',
+          'endOfRange' => 1_000
         }],
         'forcedVariations' => {}
       }],
