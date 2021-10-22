@@ -2147,7 +2147,7 @@ describe 'Optimizely' do
       it 'should log an error message and return nil' do
         expect(project_instance.get_feature_variable_string('totally_invalid_feature_key', 'string_variable', user_id, user_attributes))
           .to eq(nil)
-        expect(spy_logger).to have_received(:log).twice
+        expect(spy_logger).to have_received(:log).exactly(2).times
         expect(spy_logger).to have_received(:log).once
                                                  .with(
                                                    Logger::ERROR,
@@ -3978,15 +3978,15 @@ describe 'Optimizely' do
         user_context = project_instance.create_user_context('user1')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, []).once
+          .with(anything, anything, anything, []).once
         project_instance.decide(user_context, 'multi_variate_feature')
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]).once
+          .with(anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]).once
         project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
 
         expect(project_instance.decision_service).to receive(:get_variation_for_feature)
-          .with(anything, anything, anything, anything, [
+          .with(anything, anything, anything, [
                   Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,
                   Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES,
                   Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY,
@@ -4044,6 +4044,7 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url)
       user_context = project_instance.create_user_context('user1')
       decisions = project_instance.decide_all(user_context, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY])
+
       expect(decisions.length).to eq(6)
       expect(decisions['boolean_single_variable_feature'].as_json).to eq(
         enabled: true,
