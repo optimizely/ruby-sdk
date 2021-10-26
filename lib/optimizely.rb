@@ -198,8 +198,8 @@ module Optimizely
       decision_event_dispatched = false
       experiment = nil
       decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-
-      variation, reasons_received = user_context.find_validated_forced_decision(key, nil)
+      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(key, nil)
+      variation, reasons_received = user_context.find_validated_forced_decision(context)
       reasons.push(*reasons_received)
 
       if variation

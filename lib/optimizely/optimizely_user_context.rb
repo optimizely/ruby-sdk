@@ -24,9 +24,11 @@ module Optimizely
 
     attr_reader :user_id
     attr_reader :forced_decisions
-    attr_reader :ForcedDecision
+    attr_reader :OptimizelyDecisionContext
+    attr_reader :OptimizelyForcedDecision
 
-    ForcedDecision = Struct.new(:flag_key, :rule_key)
+    OptimizelyDecisionContext = Struct.new(:flag_key, :rule_key)
+    OptimizelyForcedDecision = Struct.new(:variation)
     def initialize(optimizely_client, user_id, user_attributes)
       @attr_mutex = Mutex.new
       @forced_decision_mutex = Mutex.new
@@ -100,23 +102,22 @@ module Optimizely
     #
     # @return - true if the forced decision has been set successfully.
 
-    def set_forced_decision(flag_key, rule_key, variation_key)
+    def set_forced_decision(context, decision)
+      flag_key = context[:flag_key]
       return false if @optimizely_client&.get_optimizely_config.nil?
       return false if flag_key.empty? || flag_key.nil?
 
-      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
-      @forced_decision_mutex.synchronize { @forced_decisions[forced_decision_key] = variation_key }
+      @forced_decision_mutex.synchronize { @forced_decisions[context] = decision }
 
       true
     end
 
-    def find_forced_decision(flag_key, rule_key = nil)
+    def find_forced_decision(context)
       return nil if @forced_decisions.empty?
 
-      variation_key = nil
-      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
-      @forced_decision_mutex.synchronize { variation_key = @forced_decisions[forced_decision_key] }
-      variation_key
+      decision = nil
+      @forced_decision_mutex.synchronize { decision = @forced_decisions[context] }
+      decision
     end
 
     # Returns the forced decision for a given flag and an optional rule.
@@ -126,10 +127,10 @@ module Optimizely
     #
     # @return - A variation key or nil if forced decisions are not set for the parameters.
 
-    def get_forced_decision(flag_key, rule_key = nil)
+    def get_forced_decision(context)
       return nil if @optimizely_client&.get_optimizely_config.nil?
 
-      find_forced_decision(flag_key, rule_key)
+      find_forced_decision(context)
     end
 
     # Removes the forced decision for a given flag and an optional rule.
@@ -139,14 +140,13 @@ module Optimizely
     #
     # @return - true if the forced decision has been removed successfully.
 
-    def remove_forced_decision(flag_key, rule_key = nil)
+    def remove_forced_decision(context)
       return false if @optimizely_client&.get_optimizely_config.nil?
 
-      forced_decision_key = ForcedDecision.new(flag_key, rule_key)
       deleted = false
       @forced_decision_mutex.synchronize do
-        if @forced_decisions.key?(forced_decision_key)
-          @forced_decisions.delete(forced_decision_key)
+        if @forced_decisions.key?(context)
+          @forced_decisions.delete(context)
           deleted = true
         end
       end
@@ -164,8 +164,11 @@ module Optimizely
       true
     end
 
-    def find_validated_forced_decision(flag_key, rule_key)
-      variation_key = find_forced_decision(flag_key, rule_key)
+    def find_validated_forced_decision(context)
+      decision = find_forced_decision(context)
+      flag_key = context[:flag_key]
+      rule_key = context[:rule_key]
+      variation_key = decision ? decision[:variation] : decision
       reasons = []
       target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
       if variation_key

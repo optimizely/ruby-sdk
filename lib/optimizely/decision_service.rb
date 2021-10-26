@@ -263,7 +263,8 @@ module Optimizely
       # Returns variation_id and reasons
       reasons = []
 
-      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'])
+      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
+      variation, forced_reasons = user.find_validated_forced_decision(context)
       reasons.push(*forced_reasons)
 
       return [variation['id'], reasons] if variation
@@ -287,7 +288,8 @@ module Optimizely
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
-      variation, forced_reasons = user.find_validated_forced_decision(flag_key, rule['key'])
+      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
+      variation, forced_reasons = user.find_validated_forced_decision(context)
       reasons.push(*forced_reasons)
 
       return [variation, skip_to_everyone_else, reasons] if variation
