@@ -96,9 +96,8 @@ module Optimizely
 
     # Sets the forced decision (variation key) for a given flag and an optional rule.
     #
-    # @param flag_key - A flag key.
-    # @param rule_key - An experiment or delivery rule key (optional).
-    # @param variation_key - A variation key.
+    # @param context - An OptimizelyDecisionContext object containg flag key and rule key.
+    # @param decision - An OptimizelyForcedDecision object containing variation key
     #
     # @return - true if the forced decision has been set successfully.
 
@@ -122,8 +121,7 @@ module Optimizely
 
     # Returns the forced decision for a given flag and an optional rule.
     #
-    # @param flag_key - A flag key.
-    # @param rule_key - An experiment or delivery rule key (optional).
+    # @param context - An OptimizelyDecisionContext object containg flag key and rule key.
     #
     # @return - A variation key or nil if forced decisions are not set for the parameters.
 
@@ -135,8 +133,7 @@ module Optimizely
 
     # Removes the forced decision for a given flag and an optional rule.
     #
-    # @param flag_key - A flag key.
-    # @param rule_key - An experiment or delivery rule key (optional).
+    # @param context - An OptimizelyDecisionContext object containg flag key and rule key.
     #
     # @return - true if the forced decision has been removed successfully.
 
