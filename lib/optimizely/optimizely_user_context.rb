@@ -28,7 +28,7 @@ module Optimizely
     attr_reader :OptimizelyForcedDecision
 
     OptimizelyDecisionContext = Struct.new(:flag_key, :rule_key)
-    OptimizelyForcedDecision = Struct.new(:variation)
+    OptimizelyForcedDecision = Struct.new(:variation_key)
     def initialize(optimizely_client, user_id, user_attributes)
       @attr_mutex = Mutex.new
       @forced_decision_mutex = Mutex.new
@@ -165,7 +165,7 @@ module Optimizely
       decision = find_forced_decision(context)
       flag_key = context[:flag_key]
       rule_key = context[:rule_key]
-      variation_key = decision ? decision[:variation] : decision
+      variation_key = decision ? decision[:variation_key] : decision
       reasons = []
       target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
       if variation_key
