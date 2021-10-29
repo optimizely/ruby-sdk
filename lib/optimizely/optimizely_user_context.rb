@@ -104,7 +104,7 @@ module Optimizely
     def set_forced_decision(context, decision)
       flag_key = context[:flag_key]
       return false if @optimizely_client&.get_optimizely_config.nil?
-      return false if flag_key.empty? || flag_key.nil?
+      return false if flag_key.nil?
 
       @forced_decision_mutex.synchronize { @forced_decisions[context] = decision }
 
