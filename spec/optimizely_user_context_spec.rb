@@ -573,6 +573,25 @@ describe 'Optimizely' do
       expect(status).to be false
     end
 
+    it 'should return valid variation for duplicate OptimizelyDecisionContext in forced decision' do
+      user_id = 'tester'
+      feature_key = 'feature_1'
+      original_attributes = {}
+      stub_request(:post, impression_log_url)
+      user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
+
+      context_with_rule = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, 'r')
+      decision_for_rule = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('ev1')
+
+      context_with_rule_dup = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, 'r')
+      decision_for_rule_dup = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('dupv1')
+
+      user_context_obj.set_forced_decision(context_with_rule, decision_for_rule)
+      user_context_obj.set_forced_decision(context_with_rule_dup, decision_for_rule_dup)
+
+      expect(user_context_obj.get_forced_decision(context_with_rule)).to eq(decision_for_rule_dup)
+    end
+
     it 'should clone forced decision in user context' do
       user_id = 'tester'
       original_attributes = {'country' => 'us'}
