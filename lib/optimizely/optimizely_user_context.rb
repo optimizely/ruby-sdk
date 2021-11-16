@@ -102,9 +102,8 @@ module Optimizely
     # @return - true if the forced decision has been set successfully.
 
     def set_forced_decision(context, decision)
-      unless @optimizely_client&.is_valid
-        return false
-      end
+      return false unless @optimizely_client&.is_valid
+
       flag_key = context[:flag_key]
       return false if flag_key.nil?
 
@@ -128,9 +127,7 @@ module Optimizely
     # @return - A variation key or nil if forced decisions are not set for the parameters.
 
     def get_forced_decision(context)
-      unless @optimizely_client&.is_valid
-        return nil
-      end
+      return nil unless @optimizely_client&.is_valid
 
       find_forced_decision(context)
     end
@@ -142,9 +139,7 @@ module Optimizely
     # @return - true if the forced decision has been removed successfully.
 
     def remove_forced_decision(context)
-      unless @optimizely_client&.is_valid
-        return false
-      end
+      return false unless @optimizely_client&.is_valid
 
       deleted = false
       @forced_decision_mutex.synchronize do
@@ -161,9 +156,7 @@ module Optimizely
     # @return - true if forced decisions have been removed successfully.
 
     def remove_all_forced_decision
-      unless @optimizely_client&.is_valid
-        return false
-      end
+      return false unless @optimizely_client&.is_valid
 
       @forced_decision_mutex.synchronize { @forced_decisions.clear }
       true
