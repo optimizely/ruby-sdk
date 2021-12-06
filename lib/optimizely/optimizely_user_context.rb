@@ -154,7 +154,7 @@ module Optimizely
     #
     # @return - true if forced decisions have been removed successfully.
 
-    def remove_all_forced_decision
+    def remove_all_forced_decisions
       return false if @optimizely_client&.get_optimizely_config.nil?
 
       @forced_decision_mutex.synchronize { @forced_decisions.clear }

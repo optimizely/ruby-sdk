@@ -99,7 +99,7 @@ describe 'Optimizely' do
       expect(status).to be_nil
       status = user_context_obj.remove_forced_decision(context)
       expect(status).to be false
-      status = user_context_obj.remove_all_forced_decision
+      status = user_context_obj.remove_all_forced_decisions
       expect(status).to be false
     end
 
@@ -115,7 +115,7 @@ describe 'Optimizely' do
       expect(status).to eq(decision)
       status = user_context_obj.remove_forced_decision(context)
       expect(status).to be true
-      status = user_context_obj.remove_all_forced_decision
+      status = user_context_obj.remove_all_forced_decisions
       expect(status).to be true
     end
 
@@ -565,7 +565,7 @@ describe 'Optimizely' do
       expect(user_context_obj.get_forced_decision(context_with_flag)).to eq(decision_for_flag)
       expect(user_context_obj.get_forced_decision(context_with_rule)).to eq(decision_for_rule)
 
-      user_context_obj.remove_all_forced_decision
+      user_context_obj.remove_all_forced_decisions
       expect(user_context_obj.get_forced_decision(context_with_flag)).to be_nil
       expect(user_context_obj.get_forced_decision(context_with_rule)).to be_nil
 
@@ -647,7 +647,7 @@ describe 'Optimizely' do
       allow(user_context_obj).to receive(:set_forced_decision)
       allow(user_context_obj).to receive(:get_forced_decision)
       allow(user_context_obj).to receive(:remove_forced_decision)
-      allow(user_context_obj).to receive(:remove_all_forced_decision)
+      allow(user_context_obj).to receive(:remove_all_forced_decisions)
 
       context_with_flag_1 = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new('0', nil)
       decision_for_flag_1 = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('var')
@@ -703,7 +703,7 @@ describe 'Optimizely' do
 
       # remove all forced decision
       threads << Thread.new do
-        user_context_obj.remove_all_forced_decision
+        user_context_obj.remove_all_forced_decisions
       end
 
       threads.each(&:join)
@@ -714,7 +714,7 @@ describe 'Optimizely' do
       expect(user_context_obj).to have_received(:get_forced_decision).with(context_with_flag_2).exactly(100).times
       expect(user_context_obj).to have_received(:remove_forced_decision).with(context_with_flag_1).exactly(100).times
       expect(user_context_obj).to have_received(:remove_forced_decision).with(context_with_flag_2).exactly(100).times
-      expect(user_context_obj).to have_received(:remove_all_forced_decision).once
+      expect(user_context_obj).to have_received(:remove_all_forced_decisions).once
     end
   end
 end
