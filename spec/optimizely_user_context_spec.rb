@@ -85,24 +85,6 @@ describe 'Optimizely' do
   end
 
   describe '#forced_decisions' do
-    it 'should return invalid status for invalid datafile in forced decision calls' do
-      user_id = 'test_user'
-      original_attributes = {}
-      invalid_project_instance = Optimizely::Project.new('Invalid datafile', nil, spy_logger, error_handler)
-      user_context_obj = Optimizely::OptimizelyUserContext.new(invalid_project_instance, user_id, original_attributes)
-      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new('feature_1', nil)
-      decision = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('3324490562')
-
-      status = user_context_obj.set_forced_decision(context, decision)
-      expect(status).to be false
-      status = user_context_obj.get_forced_decision(context)
-      expect(status).to be_nil
-      status = user_context_obj.remove_forced_decision(context)
-      expect(status).to be false
-      status = user_context_obj.remove_all_forced_decisions
-      expect(status).to be false
-    end
-
     it 'should return status for datafile in forced decision calls' do
       user_id = 'test_user'
       original_attributes = {}
