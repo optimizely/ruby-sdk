@@ -193,6 +193,7 @@ module Optimizely
         next unless variation_id
 
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+        variation = project_config.get_variation_from_flag(feature_flag['key'], variation_id, 'id') if variation.nil?
 
         return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
       end

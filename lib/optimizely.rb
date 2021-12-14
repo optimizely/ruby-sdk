@@ -214,8 +214,8 @@ module Optimizely
         experiment = decision.experiment
         rule_key = experiment ? experiment['key'] : nil
         variation = decision['variation']
-        variation_key = variation['key']
-        feature_enabled = variation['featureEnabled']
+        variation_key = variation ? variation['key'] : nil
+        feature_enabled = variation ? variation['featureEnabled'] : false
         decision_source = decision.source
       end
 
@@ -298,8 +298,8 @@ module Optimizely
       decisions
     end
 
-    def get_flag_variation_by_key(flag_key, variation_key)
-      project_config.get_variation_from_flag(flag_key, variation_key)
+    def get_flag_variation(flag_key, target_value, attribute)
+      project_config.get_variation_from_flag(flag_key, target_value, attribute)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
@@ -1098,12 +1098,13 @@ module Optimizely
       experiment_id = experiment['id']
       experiment_key = experiment['key']
 
-      if experiment_id != ''
-        variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
-      else
-        varaition = get_flag_variation_by_key(flag_key, variation_key)
-        variation_id = varaition ? varaition['id'] : ''
-      end
+      variation = get_flag_variation(flag_key, variation_key, 'key')
+
+      variation_id = if !variation
+                       config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
+                     else
+                       variation ? variation['id'] : ''
+                     end
 
       metadata = {
         flag_key: flag_key,
