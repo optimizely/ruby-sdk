@@ -1101,7 +1101,7 @@ module Optimizely
       variation = get_flag_variation(flag_key, variation_key, 'key')
 
       variation_id = if !variation
-                       config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
+                       experiment_id != '' ? config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) : ''
                      else
                        variation ? variation['id'] : ''
                      end
