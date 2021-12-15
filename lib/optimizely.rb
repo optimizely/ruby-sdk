@@ -298,6 +298,15 @@ module Optimizely
       decisions
     end
 
+    # Gets variation using variation key or id and flag key.
+    #
+    # @param flag_key - flag key from which the variation is required.
+    # @param target_value - variation value either id or key that will be matched.
+    # @param attribute - string representing variation attribute.
+    #
+    # @return [variation]
+    # @return [nil] if no variation found in flag_variation_map.
+
     def get_flag_variation(flag_key, target_value, attribute)
       project_config.get_variation_from_flag(flag_key, target_value, attribute)
     end
