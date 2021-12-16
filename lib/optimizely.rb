@@ -1107,13 +1107,12 @@ module Optimizely
       experiment_id = experiment['id']
       experiment_key = experiment['key']
 
-      variation = get_flag_variation(flag_key, variation_key, 'key')
+      variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) unless experiment_id.empty?
 
-      variation_id = if !variation
-                       experiment_id != '' ? config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) : ''
-                     else
-                       variation ? variation['id'] : ''
-                     end
+      unless variation_id
+        variation = !flag_key.empty? ? get_flag_variation(flag_key, variation_key, 'key') : nil
+        variation_id = variation ? variation['id'] : ''
+      end
 
       metadata = {
         flag_key: flag_key,
