@@ -284,6 +284,29 @@ describe 'Optimizely' do
       expect(decision.reasons).to eq(['Variation (b) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'])
     end
 
+    it 'should return an expected decision object when forced decision is called and variation of different experiment but same flag key' do
+      user_id = 'tester'
+      feature_key = 'feature_1'
+      original_attributes = {}
+      user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
+      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, 'exp_with_audience')
+      forced_decision = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('3324490633')
+      user_context_obj.set_forced_decision(context, forced_decision)
+      expected = expect do
+        decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
+        expect(decision.variation_key).to eq('3324490633')
+        expect(decision.rule_key).to eq('exp_with_audience')
+        expect(decision.enabled).to be false
+        expect(decision.flag_key).to eq(feature_key)
+        expect(decision.user_context.user_id).to eq(user_id)
+        expect(decision.user_context.user_attributes.length).to eq(0)
+        expect(decision.user_context.forced_decisions.length).to eq(1)
+        expect(decision.user_context.forced_decisions).to eq(context => forced_decision)
+        expect(decision.reasons).to eq(['Variation (3324490633) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'])
+      end
+      expected.to raise_error
+    end
+
     it 'should return correct variation if rule in forced decision is deleted' do
       impression_log_url = 'https://logx.optimizely.com/v1/events'
       time_now = Time.now

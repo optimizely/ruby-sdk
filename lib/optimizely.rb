@@ -214,8 +214,8 @@ module Optimizely
         experiment = decision.experiment
         rule_key = experiment ? experiment['key'] : nil
         variation = decision['variation']
-        variation_key = variation['key']
-        feature_enabled = variation['featureEnabled']
+        variation_key = variation ? variation['key'] : nil
+        feature_enabled = variation ? variation['featureEnabled'] : false
         decision_source = decision.source
       end
 
@@ -298,8 +298,17 @@ module Optimizely
       decisions
     end
 
-    def get_flag_variation_by_key(flag_key, variation_key)
-      project_config.get_variation_from_flag(flag_key, variation_key)
+    # Gets variation using variation key or id and flag key.
+    #
+    # @param flag_key - flag key from which the variation is required.
+    # @param target_value - variation value either id or key that will be matched.
+    # @param attribute - string representing variation attribute.
+    #
+    # @return [variation]
+    # @return [nil] if no variation found in flag_variation_map.
+
+    def get_flag_variation(flag_key, target_value, attribute)
+      project_config.get_variation_from_flag(flag_key, target_value, attribute)
     end
 
     # Buckets visitor and sends impression event to Optimizely.
@@ -1098,11 +1107,11 @@ module Optimizely
       experiment_id = experiment['id']
       experiment_key = experiment['key']
 
-      if experiment_id != ''
-        variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key)
-      else
-        varaition = get_flag_variation_by_key(flag_key, variation_key)
-        variation_id = varaition ? varaition['id'] : ''
+      variation_id = config.get_variation_id_from_key_by_experiment_id(experiment_id, variation_key) unless experiment_id.empty?
+
+      unless variation_id
+        variation = !flag_key.empty? ? get_flag_variation(flag_key, variation_key, 'key') : nil
+        variation_id = variation ? variation['id'] : ''
       end
 
       metadata = {

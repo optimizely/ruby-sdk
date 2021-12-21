@@ -164,7 +164,7 @@ module Optimizely
       reasons = []
       target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
       if variation_key
-        variation = @optimizely_client.get_flag_variation_by_key(flag_key, variation_key)
+        variation = @optimizely_client.get_flag_variation(flag_key, variation_key, 'key')
         if variation
           reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{@user_id}) in the forced decision map."
           reasons.push(reason)

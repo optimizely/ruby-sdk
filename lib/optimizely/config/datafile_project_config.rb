@@ -302,9 +302,9 @@ module Optimizely
       nil
     end
 
-    def get_variation_from_flag(flag_key, variation_key)
+    def get_variation_from_flag(flag_key, target_value, attribute)
       variations = @flag_variation_map[flag_key]
-      return variations.select { |variation| variation['key'] == variation_key }.first if variations
+      return variations.select { |variation| variation[attribute] == target_value }.first if variations
 
       nil
     end
