@@ -1,5 +1,17 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.10.0
+January 6, 2022
+
+### New Features
+- Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#287](https://github.com/optimizely/ruby-sdk/pull/287), [#288](https://github.com/optimizely/ruby-sdk/pull/288), [#289](https://github.com/optimizely/ruby-sdk/pull/289), [#290](https://github.com/optimizely/ruby-sdk/pull/290), [#291](https://github.com/optimizely/ruby-sdk/pull/291)):
+	- setForcedDecision
+	- getForcedDecision
+	- removeForcedDecision
+	- removeAllForcedDecisions
+
+- For details, refer to our documentation pages: [OptimizelyUserContext](https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyusercontext-ruby) and [Forced Decision methods](https://docs.developers.optimizely.com/full-stack/v4.0/docs/forced-decision-methods-ruby).
+
 ## 3.9.0
 September 16, 2021
 
