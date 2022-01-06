@@ -418,7 +418,7 @@ module Optimizely
     end
 
     def validated_forced_decision(context, user_context)
-      decision = user_context.find_forced_decision(context)
+      decision = user_context.get_forced_decision(context)
       flag_key = context[:flag_key]
       rule_key = context[:rule_key]
       variation_key = decision ? decision[:variation_key] : decision
