@@ -265,7 +265,7 @@ module Optimizely
       reasons = []
 
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
-      variation, forced_reasons = validated_forced_decision(context, user)
+      variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
 
       return [variation['id'], reasons] if variation
@@ -290,7 +290,7 @@ module Optimizely
       skip_to_everyone_else = false
       rule = rules[rule_index]
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
-      variation, forced_reasons = validated_forced_decision(context, user)
+      variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
 
       return [variation, skip_to_everyone_else, reasons] if variation
@@ -417,7 +417,7 @@ module Optimizely
       [variation, decide_reasons]
     end
 
-    def validated_forced_decision(context, user_context)
+    def validated_forced_decision(project_config, context, user_context)
       decision = user_context.get_forced_decision(context)
       flag_key = context[:flag_key]
       rule_key = context[:rule_key]
@@ -425,7 +425,7 @@ module Optimizely
       reasons = []
       target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
       if variation_key
-        variation = user_context.optimizely_client.get_flag_variation(flag_key, variation_key, 'key')
+        variation = project_config.get_flag_variation(flag_key, variation_key, 'key')
         if variation
           reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{user_context.user_id}) in the forced decision map."
           reasons.push(reason)
