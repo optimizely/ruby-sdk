@@ -1,7 +1,7 @@
 # Optimizely Ruby SDK Changelog
 
 ## 3.10.0
-January 6, 2022
+January 11, 2022
 
 ### New Features
 - Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#287](https://github.com/optimizely/ruby-sdk/pull/287), [#288](https://github.com/optimizely/ruby-sdk/pull/288), [#289](https://github.com/optimizely/ruby-sdk/pull/289), [#290](https://github.com/optimizely/ruby-sdk/pull/290), [#291](https://github.com/optimizely/ruby-sdk/pull/291), [#293](https://github.com/optimizely/ruby-sdk/pull/293)):
