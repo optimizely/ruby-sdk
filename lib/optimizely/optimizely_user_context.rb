@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2020-2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ module Optimizely
     attr_reader :forced_decisions
     attr_reader :OptimizelyDecisionContext
     attr_reader :OptimizelyForcedDecision
+    attr_reader :optimizely_client
 
     OptimizelyDecisionContext = Struct.new(:flag_key, :rule_key)
     OptimizelyForcedDecision = Struct.new(:variation_key)
@@ -154,28 +155,6 @@ module Optimizely
 
       @forced_decision_mutex.synchronize { @forced_decisions.clear }
       true
-    end
-
-    def find_validated_forced_decision(context)
-      decision = find_forced_decision(context)
-      flag_key = context[:flag_key]
-      rule_key = context[:rule_key]
-      variation_key = decision ? decision[:variation_key] : decision
-      reasons = []
-      target = rule_key ? "flag (#{flag_key}), rule (#{rule_key})" : "flag (#{flag_key})"
-      if variation_key
-        variation = @optimizely_client.get_flag_variation(flag_key, variation_key, 'key')
-        if variation
-          reason = "Variation (#{variation_key}) is mapped to #{target} and user (#{@user_id}) in the forced decision map."
-          reasons.push(reason)
-          return variation, reasons
-        else
-          reason = "Invalid variation is mapped to #{target} and user (#{@user_id}) in the forced decision map."
-          reasons.push(reason)
-        end
-      end
-
-      [nil, reasons]
     end
 
     # Track an event
