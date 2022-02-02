@@ -4,7 +4,7 @@
 February 2, 2022
 
 ### Enhancements:
-- Generate OptimizelyConfig object on API Call instead of SDK initialization to make the initialization faster (([#296](https://github.com/optimizely/ruby-sdk/pull/296)).
+- Generate OptimizelyConfig object on API Call instead of SDK initialization to make the initialization faster ([#296](https://github.com/optimizely/ruby-sdk/pull/296)).
 
 ## 3.10.0
 January 11, 2022
