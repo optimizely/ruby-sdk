@@ -1,9 +1,15 @@
 # Optimizely Ruby SDK Changelog
 
+## 3.10.1
+February 2, 2022
+
+### Enhancements:
+- Generate OptimizelyConfig object on API Call instead of SDK initialization to make the initialization faster (([#296](https://github.com/optimizely/ruby-sdk/pull/296)).
+
 ## 3.10.0
 January 11, 2022
 
-### New Features
+### New Features:
 - Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#287](https://github.com/optimizely/ruby-sdk/pull/287), [#288](https://github.com/optimizely/ruby-sdk/pull/288), [#289](https://github.com/optimizely/ruby-sdk/pull/289), [#290](https://github.com/optimizely/ruby-sdk/pull/290), [#291](https://github.com/optimizely/ruby-sdk/pull/291), [#293](https://github.com/optimizely/ruby-sdk/pull/293)):
 	- setForcedDecision
 	- getForcedDecision
