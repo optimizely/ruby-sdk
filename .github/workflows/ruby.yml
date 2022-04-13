@@ -1,0 +1,28 @@
+name: Ruby
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lint_markdown_files:
+    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@uzair/gitAction
+
+  integration_tests:
+    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@uzair/gitAction
+    secrets:
+      CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
+      TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+
+  fullstack_production_suite:
+    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@uzair/gitAction
+    with:
+      FULLSTACK_TEST_REPO: ProdTesting
+    secrets:
+      CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
+      TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+
+  unit_tests:
+    uses: optimizely/ruby-sdk/.github/workflows/unit_tests.yml@uzair/gitAction
