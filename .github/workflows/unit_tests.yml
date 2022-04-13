@@ -21,6 +21,6 @@ jobs:
     - name: Run unit tests
       run: |
         bundle exec rake spec
-    - name: Run coveralls
+    - name: Run coverallss
       run: |
-        coveralls
+        bundle exec coveralls
