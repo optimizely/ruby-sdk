@@ -19,4 +19,4 @@ jobs:
       run: |
         bundle exec rake spec;
         rubocop
-        coveralls
+        coveralls_reborn
