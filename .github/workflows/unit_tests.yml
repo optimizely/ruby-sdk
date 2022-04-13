@@ -23,4 +23,4 @@ jobs:
         bundle exec rake spec
     - name: Run coveralls
       run: |
-        coveralls_reborn
+        bundle exec coveralls_reborn
