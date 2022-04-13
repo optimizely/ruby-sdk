@@ -10,10 +10,11 @@ jobs:
         ruby: [ '2.3.7', '2.4.4', '2.5.1', '2.6.0' ]
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Ruby
+    - name: Set up Ruby ${{ matrix.ruby }}
       uses: ruby/setup-ruby@v1
       with:
-        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
     - name: Install gem
       run: |
         gem install awesome_bot
