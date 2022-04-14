@@ -25,4 +25,24 @@ jobs:
       TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
 
   unit_tests:
-    uses: optimizely/ruby-sdk/.github/workflows/unit_tests.yml@uzair/git-actions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby: [ '2.3.7', '2.4.4', '2.5.1', '2.6.0' ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Ruby ${{ matrix.ruby }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+    - name: Run linting
+      run: |
+        bundle exec rubocop
+    - name: Run unit tests
+      run: |
+        bundle exec rake spec
+    - name: Run coveralls
+      run: |
+        bundle exec coveralls
+
