@@ -45,4 +45,3 @@ jobs:
     - name: Run coveralls
       run: |
         bundle exec coveralls
-
