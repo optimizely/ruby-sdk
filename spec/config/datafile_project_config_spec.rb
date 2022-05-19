@@ -808,14 +808,14 @@ describe Optimizely::DatafileProjectConfig do
     describe 'get_event_from_key' do
       it 'should log a message when provided event key is invalid' do
         config.get_event_from_key('invalid_key')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Event 'invalid_key' is not in datafile.")
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Event key 'invalid_key' is not in datafile.")
       end
     end
 
     describe 'get_audience_from_id' do
       it 'should log a message when provided audience ID is invalid' do
         config.get_audience_from_id('invalid_id')
-        expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Audience 'invalid_id' is not in datafile.")
+        expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Audience id 'invalid_id' is not in datafile.")
       end
     end
 
@@ -919,7 +919,7 @@ describe Optimizely::DatafileProjectConfig do
       it 'should log a message when there is no experiment key map for the experiment' do
         config.get_whitelisted_variations('invalid_key')
         expect(spy_logger).to have_received(:log).with(Logger::ERROR,
-                                                       "Experiment ID 'invalid_key' is not in datafile.")
+                                                       "Experiment id 'invalid_key' is not in datafile.")
       end
     end
 
