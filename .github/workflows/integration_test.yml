@@ -54,4 +54,3 @@ jobs:
       run: |
         echo "$GITHUB_CONTEXT"
         home/runner/travisci-tools/trigger-script-with-status-update.sh
-        
