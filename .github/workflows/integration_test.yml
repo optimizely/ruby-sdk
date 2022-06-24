@@ -48,6 +48,7 @@ jobs:
         PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         UPSTREAM_SHA: ${{ github.sha }}
         TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
+        TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
         EVENT_MESSAGE: ${{ github.event.message }}
         HOME: 'home/runner'
       run: |
