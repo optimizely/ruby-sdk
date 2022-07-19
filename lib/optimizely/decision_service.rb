@@ -106,7 +106,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, user_context, @logger)
       decide_reasons.push(*reasons_received)
       unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -304,7 +304,7 @@ module Optimizely
 
       logging_key = everyone_else ? 'Everyone Else' : (rule_index + 1).to_s
 
-      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rule, user, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
       reasons.push(*reasons_received)
       unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions for targeting rule '#{logging_key}'."

@@ -24,13 +24,12 @@ module Optimizely
   module Audience
     module_function
 
-    def user_meets_audience_conditions?(config, experiment, attributes, logger, logging_hash = nil, logging_key = nil)
+    def user_meets_audience_conditions?(config, experiment, user_context, logger, logging_hash = nil, logging_key = nil)
       # Determine for given experiment/rollout rule if user satisfies the audience conditions.
       #
       # config - Representation of the Optimizely project config.
       # experiment - Experiment/Rollout rule in which user is to be bucketed.
-      # attributes - Hash representing user attributes which will be used in determining if
-      #              the audience conditions are met.
+      # user_context - Optimizely user context instance
       # logger - Provides a logger instance.
       # logging_hash - Optional string representing logs hash inside Helpers::Constants.
       #                This defaults to 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'.
@@ -57,9 +56,7 @@ module Optimizely
         return true, decide_reasons
       end
 
-      attributes ||= {}
-
-      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes, logger)
+      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(user_context, logger)
 
       evaluate_custom_attr = lambda do |condition|
         return custom_attr_condition_evaluator.evaluate(condition)

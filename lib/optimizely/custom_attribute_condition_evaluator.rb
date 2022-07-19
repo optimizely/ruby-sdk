@@ -55,8 +55,9 @@ module Optimizely
 
     attr_reader :user_attributes
 
-    def initialize(user_attributes, logger)
-      @user_attributes = user_attributes
+    def initialize(user_context, logger)
+      @user_context = user_context
+      @user_attributes = user_context.user_attributes
       @logger = logger
     end
 
