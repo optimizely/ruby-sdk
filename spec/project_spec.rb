@@ -851,7 +851,7 @@ describe 'Optimizely' do
           false, nil, nil, http_project_config_manager, notification_center
         )
 
-        until http_project_config_manager.ready?; end
+        until http_project_config_manager.ready? do sleep 0.1 end
 
         expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -877,7 +877,7 @@ describe 'Optimizely' do
           false, nil, nil, http_project_config_manager, notification_center
         )
 
-        until http_project_config_manager.ready?; end
+        until http_project_config_manager.ready? do sleep 0.1 end
 
         expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -910,7 +910,7 @@ describe 'Optimizely' do
           false, nil, 'valid_sdk_key', nil, notification_center
         )
 
-        until project_instance.config_manager.ready?; end
+        until project_instance.config_manager.ready? do sleep 0.1 end
 
         expect(project_instance.is_valid).to be true
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -3437,7 +3437,7 @@ describe 'Optimizely' do
         false, nil, nil, http_project_config_manager
       )
 
-      until http_project_config_manager.ready?; end
+      until http_project_config_manager.ready? do sleep 0.1 end
 
       expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       expect(project_instance.is_valid).to be true
