@@ -1863,7 +1863,7 @@ describe 'Optimizely' do
       disabled_features = features_keys.map { |x| x[:key] if x[:value] == false }.compact
 
       features_keys.each do |feature|
-        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', 'browser_type' => 'chrome').and_return(feature[:value])
+        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', {'browser_type' => 'chrome'}).and_return(feature[:value])
       end
 
       # Checks enabled features are returned
