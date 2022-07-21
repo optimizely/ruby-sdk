@@ -19,10 +19,12 @@ require 'spec_helper'
 describe Optimizely::Audience do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_typed_audience_JSON) { JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES) }
+  let(:config_integration_JSON) { JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS) }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:typed_audience_config) { Optimizely::DatafileProjectConfig.new(config_typed_audience_JSON, spy_logger, error_handler) }
+  let(:integration_config) { Optimizely::DatafileProjectConfig.new(config_integration_JSON, spy_logger, error_handler) }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
 
@@ -358,5 +360,26 @@ describe Optimizely::Audience do
       Logger::INFO,
       "Audiences for rule 'some_key' collectively evaluated to TRUE."
     )
+  end
+
+  it 'should return a unique array of odp segments' do
+    seg1 = {'name' => 'odp.audiences', 'type' => 'third_party_dimension', 'match' => 'qualified', 'value' => 'seg1'}
+    seg2 = {'name' => 'odp.audiences', 'type' => 'third_party_dimension', 'match' => 'qualified', 'value' => 'seg2'}
+    seg3 = {'name' => 'odp.audiences', 'type' => 'third_party_dimension', 'match' => 'qualified', 'value' => 'seg3'}
+    other = {'name' => 'other', 'type' => 'custom_attribute', 'match' => 'eq', 'value' => 'a'}
+
+    expect(Optimizely::Audience.get_segments([seg1])).to match_array %w[seg1]
+
+    expect(Optimizely::Audience.get_segments(['or', seg1])).to match_array %w[seg1]
+
+    expect(Optimizely::Audience.get_segments(['and', ['or', seg1]])).to match_array %w[seg1]
+
+    expect(Optimizely::Audience.get_segments(['and', ['or', seg1], ['or', seg2], ['and', other]])).to match_array %w[seg1 seg2]
+
+    expect(Optimizely::Audience.get_segments(['and', ['or', seg1, other, seg2]])).to match_array %w[seg1 seg2]
+
+    segments = Optimizely::Audience.get_segments(['and', ['or', seg1, other, seg2], ['and', seg1, seg2, seg3]])
+    expect(segments.length).to be 3
+    expect(segments).to match_array %w[seg1 seg2 seg3]
   end
 end

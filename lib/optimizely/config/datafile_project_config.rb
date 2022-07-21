@@ -46,6 +46,7 @@ module Optimizely
     attr_reader :integrations
     attr_reader :public_key_for_odp
     attr_reader :host_for_odp
+    attr_reader :all_segments
 
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
@@ -151,6 +152,11 @@ module Optimizely
       if (odp_integration = @integration_key_map&.fetch('odp', nil))
         @public_key_for_odp = odp_integration['publicKey']
         @host_for_odp = odp_integration['host']
+      end
+
+      @all_segments = []
+      @audience_id_map.each_value do |audience|
+        @all_segments.concat Audience.get_segments(audience['conditions'])
       end
 
       @flag_variation_map = generate_feature_variation_map(@feature_flags)

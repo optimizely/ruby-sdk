@@ -22,7 +22,7 @@ require_relative 'semantic_version'
 
 module Optimizely
   class CustomAttributeConditionEvaluator
-    CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
+    CONDITION_TYPES = %w[custom_attribute third_party_dimension].freeze
 
     # Conditional match types
     EXACT_MATCH_TYPE = 'exact'
@@ -37,6 +37,7 @@ module Optimizely
     SEMVER_GT = 'semver_gt'
     SEMVER_LE = 'semver_le'
     SEMVER_LT = 'semver_lt'
+    QUALIFIED_MATCH_TYPE = 'qualified'
 
     EVALUATORS_BY_MATCH_TYPE = {
       EXACT_MATCH_TYPE => :exact_evaluator,
@@ -50,7 +51,8 @@ module Optimizely
       SEMVER_GE => :semver_greater_than_or_equal_evaluator,
       SEMVER_GT => :semver_greater_than_evaluator,
       SEMVER_LE => :semver_less_than_or_equal_evaluator,
-      SEMVER_LT => :semver_less_than_evaluator
+      SEMVER_LT => :semver_less_than_evaluator,
+      QUALIFIED_MATCH_TYPE => :qualified_evaluator
     }.freeze
 
     attr_reader :user_attributes
@@ -70,7 +72,7 @@ module Optimizely
       # Returns boolean if the given user attributes match/don't match the given conditions,
       #         nil if the given conditions can't be evaluated.
 
-      unless leaf_condition['type'] == CUSTOM_ATTRIBUTE_CONDITION_TYPE
+      unless CONDITION_TYPES.include? leaf_condition['type']
         @logger.log(
           Logger::WARN,
           format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_TYPE'], leaf_condition)
@@ -80,7 +82,7 @@ module Optimizely
 
       condition_match = leaf_condition['match'] || EXACT_MATCH_TYPE
 
-      if !@user_attributes.key?(leaf_condition['name']) && condition_match != EXISTS_MATCH_TYPE
+      if !@user_attributes.key?(leaf_condition['name']) && ![EXISTS_MATCH_TYPE, QUALIFIED_MATCH_TYPE].include?(condition_match)
         @logger.log(
           Logger::DEBUG,
           format(
@@ -92,7 +94,7 @@ module Optimizely
         return nil
       end
 
-      if @user_attributes[leaf_condition['name']].nil? && condition_match != EXISTS_MATCH_TYPE
+      if @user_attributes[leaf_condition['name']].nil? && ![EXISTS_MATCH_TYPE, QUALIFIED_MATCH_TYPE].include?(condition_match)
         @logger.log(
           Logger::DEBUG,
           format(
@@ -326,6 +328,25 @@ module Optimizely
       user_version = @user_attributes[condition['name']]
 
       SemanticVersion.compare_user_version_with_target_version(target_version, user_version) <= 0
+    end
+
+    def qualified_evaluator(condition)
+      # Evaluate the given match condition for the given user qaulified segments.
+      # Returns boolean true if condition value is in the user's qualified segments,
+      #                 false if the condition value is not in the user's qualified segments,
+      #                 nil if the condition value isn't a string.
+
+      condition_value = condition['value']
+
+      unless condition_value.is_a?(String)
+        @logger.log(
+          Logger::WARN,
+          format(Helpers::Constants::AUDIENCE_EVALUATION_LOGS['UNKNOWN_CONDITION_VALUE'], condition)
+        )
+        return nil
+      end
+
+      @user_context.qualified_for?(condition_value)
     end
 
     private

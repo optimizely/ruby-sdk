@@ -856,4 +856,45 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
     end
   end
+  describe 'qualified match type' do
+    before(:context) do
+      @qualified_conditions = {'match' => 'qualified', 'name' => 'odp.audiences', 'type' => 'third_party_dimension', 'value' => 'odp-segment-2'}
+    end
+
+    it 'should return true when user is qualified' do
+      user_context.qualified_segments = ['odp-segment-2']
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be true
+    end
+
+    it 'should return false when user is not qualified' do
+      user_context.qualified_segments = ['odp-segment-1']
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be false
+    end
+
+    it 'should return false with no qualified segments' do
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be false
+    end
+
+    it 'should return true when name is different' do
+      @qualified_conditions['name'] = 'other-name'
+      user_context.qualified_segments = ['odp-segment-2']
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be true
+    end
+
+    it 'should log and return nil when condition value is invalid' do
+      @qualified_conditions['value'] = 5
+      user_context.instance_variable_set(:@user_attributes, {'text' => 'This is a test message!'})
+      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be_nil
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition #{@qualified_conditions} has an unsupported condition value. You may need to upgrade "\
+          'to a newer release of the Optimizely SDK.'
+      )
+    end
+  end
 end

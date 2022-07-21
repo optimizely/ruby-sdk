@@ -90,5 +90,38 @@ module Optimizely
 
       [eval_result, decide_reasons]
     end
+
+    def get_segments(conditions)
+      # Return any audience segments from provided conditions.
+      #
+      # conditions - Nested array of and/or conditions.
+      #              Example: ['and', operand_1, ['or', operand_2, operand_3]]
+      #
+      # Returns unique array of segment names.
+      conditions = JSON.parse(conditions) if conditions.is_a?(String)
+      @parse_segments.call(conditions).uniq
+    end
+
+    @parse_segments = lambda { |conditions|
+      # Return any audience segments from provided conditions.
+      # Helper function for get_segments.
+      #
+      # conditions - Nested array of and/or conditions.
+      #              Example: ['and', operand_1, ['or', operand_2, operand_3]]
+      #
+      # Returns array of segment names.
+      segments = []
+
+      conditions.each do |condition|
+        case condition
+        when Array
+          segments.concat @parse_segments.call(condition)
+        when Hash
+          segments.push(condition['value']) if condition.fetch('match', nil) == 'qualified'
+        end
+      end
+
+      segments
+    }
   end
 end

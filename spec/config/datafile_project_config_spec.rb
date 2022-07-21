@@ -797,6 +797,7 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.public_key_for_odp).to eq(odp_integration['publicKey'])
       expect(project_config.host_for_odp).to eq(odp_integration['host'])
 
+      expect(project_config.all_segments).to eq(%w[odp-segment-1 odp-segment-2 odp-segment-3])
     end
 
     it 'should initialize properties correctly upon creating project with empty integrations' do

@@ -60,6 +60,8 @@ module Optimizely
 
     def host_for_odp; end
 
+    def all_segments; end
+
     def experiment_running?(experiment); end
 
     def get_experiment_from_key(experiment_key); end
