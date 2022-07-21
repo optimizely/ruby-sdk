@@ -59,7 +59,7 @@ describe Optimizely::Audience do
   end
 
   it 'should pass conditions when audience conditions exist else audienceIds are passed' do
-    user_context.instance_variable_set(:@user_attributes, {'test_attribute' => 'test_value_1'})
+    user_context.instance_variable_set(:@user_attributes, 'test_attribute' => 'test_value_1')
     experiment = config.experiment_key_map['test_experiment']
     experiment['audienceIds'] = ['11154']
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate)
@@ -99,10 +99,10 @@ describe Optimizely::Audience do
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_context, spy_logger)
     expect(user_meets_audience_conditions).to be false
     expect(reasons).to eq([
-        "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
-        "Audience '11154' evaluated to UNKNOWN.",
-        "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
-        ])
+                            "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+                            "Audience '11154' evaluated to UNKNOWN.",
+                            "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE."
+                          ])
 
     # asserts nil attributes default to empty dict
     expect(Optimizely::CustomAttributeConditionEvaluator).to have_received(:new).with(user_context, spy_logger).once
@@ -110,7 +110,7 @@ describe Optimizely::Audience do
 
   it 'should return true for user_meets_audience_conditions? when condition tree evaluator returns true' do
     experiment = config.experiment_key_map['test_experiment']
-    user_context.instance_variable_set(:@user_attributes, {'test_attribute' => 'test_value_1'})
+    user_context.instance_variable_set(:@user_attributes, 'test_attribute' => 'test_value_1')
 
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate).and_return(true)
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_context, spy_logger)
@@ -122,7 +122,7 @@ describe Optimizely::Audience do
 
   it 'should return false for user_meets_audience_conditions? when condition tree evaluator returns false or nil' do
     experiment = config.experiment_key_map['test_experiment_with_audience']
-    user_context.instance_variable_set(:@user_attributes, {'browser_type' => 'firefox'})
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'firefox')
 
     # condition tree evaluator returns nil
     allow(Optimizely::ConditionTreeEvaluator).to receive(:evaluate).and_return(nil)
@@ -144,7 +144,7 @@ describe Optimizely::Audience do
 
   it 'should correctly evaluate audience Ids and call custom attribute evaluator for leaf nodes' do
     experiment = config.experiment_key_map['test_experiment_with_audience']
-    user_context.instance_variable_set(:@user_attributes, {'browser_type' => 'firefox'})
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'firefox')
     experiment['audienceIds'] = %w[11154 11155]
     experiment['audienceConditions'] = nil
 
@@ -163,7 +163,7 @@ describe Optimizely::Audience do
   end
 
   it 'should correctly evaluate audienceConditions and call custom attribute evaluator for leaf nodes' do
-    user_context.instance_variable_set(:@user_attributes, {'house' => 'Gryffindor', 'lasers' => 45.5})
+    user_context.instance_variable_set(:@user_attributes, 'house' => 'Gryffindor', 'lasers' => 45.5)
     experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
     experiment['audienceIds'] = []
     experiment['audienceConditions'] = ['or', %w[or 3468206642 3988293898], %w[or 3988293899 3468206646]]
@@ -194,7 +194,7 @@ describe Optimizely::Audience do
   end
 
   it 'should correctly evaluate leaf node in audienceConditions' do
-    user_context.instance_variable_set(:@user_attributes, {'browser' => 'chrome'})
+    user_context.instance_variable_set(:@user_attributes, 'browser' => 'chrome')
     experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
     experiment['audienceConditions'] = '3468206645'
     customer_attr = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
@@ -212,7 +212,7 @@ describe Optimizely::Audience do
 
   it 'should return nil when audience not found' do
     experiment = config.experiment_key_map['test_experiment_with_audience']
-    user_context.instance_variable_set(:@user_attributes, {'browser_type' => 5.5})
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 5.5)
     experiment['audienceIds'] = %w[11110]
 
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_context, spy_logger)
@@ -234,7 +234,7 @@ describe Optimizely::Audience do
 
   it 'should log and return false for user_meets_audience_conditions? evaluates audienceIds' do
     experiment = config.experiment_key_map['test_experiment_with_audience']
-    user_context.instance_variable_set(:@user_attributes, {'browser_type' => 5.5})
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 5.5)
     experiment['audienceIds'] = %w[11154 11155]
     experiment['audienceConditions'] = nil
 
@@ -284,7 +284,7 @@ describe Optimizely::Audience do
   end
 
   it 'should log and return true for user_meets_audience_conditions? evaluates audienceConditions' do
-    user_context.instance_variable_set(:@user_attributes, {'lasers' => 45.5})
+    user_context.instance_variable_set(:@user_attributes, 'lasers' => 45.5)
     experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
     experiment['audienceIds'] = []
     experiment['audienceConditions'] = ['or', %w[or 3468206647 3988293898 3468206646]]
@@ -343,7 +343,7 @@ describe Optimizely::Audience do
     logging_hash = 'ROLLOUT_AUDIENCE_EVALUATION_LOGS'
     logging_key = 'some_key'
 
-    user_context.instance_variable_set(:@user_attributes, {'lasers' => 45.5})
+    user_context.instance_variable_set(:@user_attributes, 'lasers' => 45.5)
     experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
     experiment['audienceIds'] = []
     experiment['audienceConditions'] = ['or', %w[or 3468206647 3988293898 3468206646]]

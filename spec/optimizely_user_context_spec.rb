@@ -748,7 +748,7 @@ describe 'Optimizely' do
 
   it 'should hit other audience with segments in ab test' do
     stub_request(:post, impression_log_url)
-    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {"age" => 30})
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', 'age' => 30)
     user_context_obj.qualified_segments = %w[odp-segment-none]
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])

@@ -128,7 +128,7 @@ describe 'Optimizely' do
     it 'should be valid when datafile contains integrations with only key' do
       config = config_body_integrations.dup
       config['integrations'].clear
-      config['integrations'].push({'key' => '123'})
+      config['integrations'].push('key' => '123')
       integrations_json = JSON.dump(config)
 
       project_instance = Optimizely::Project.new(integrations_json)
