@@ -30,6 +30,7 @@ describe 'Optimizely' do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
+  let(:config_body_integrations) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
@@ -113,6 +114,25 @@ describe 'Optimizely' do
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true)
+    end
+
+    it 'should be invalid when datafile contains integrations missing key' do
+      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      config = config_body_integrations.dup
+      config['integrations'][0].delete('key')
+      integrations_json = JSON.dump(config)
+
+      Optimizely::Project.new(integrations_json)
+    end
+
+    it 'should be valid when datafile contains integrations with only key' do
+      config = config_body_integrations.dup
+      config['integrations'].clear
+      config['integrations'].push({'key' => '123'})
+      integrations_json = JSON.dump(config)
+
+      project_instance = Optimizely::Project.new(integrations_json)
+      expect(project_instance.is_valid).to be true
     end
 
     it 'should log and raise an error when provided a datafile that is not JSON and skip_json_validation is true' do

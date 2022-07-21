@@ -24,6 +24,8 @@ describe Optimizely::DatafileProjectConfig do
   let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:decision_JSON) { OptimizelySpec::DECIDE_FORCED_DECISION_JSON }
+  let(:integrations_config) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS }
+  let(:integrations_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:logger) { Optimizely::NoOpLogger.new }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler) }
@@ -782,6 +784,32 @@ describe Optimizely::DatafileProjectConfig do
       project_config = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
 
       expect(project_config.send_flag_decisions).to eq(false)
+    end
+
+    it 'should initialize properties correctly upon creating project with integrations' do
+      project_config = Optimizely::DatafileProjectConfig.new(integrations_JSON, logger, error_handler)
+      integrations = integrations_config['integrations']
+      odp_integration = integrations[0]
+
+      expect(project_config.integrations).to eq(integrations)
+      expect(project_config.integration_key_map['odp']).to eq(odp_integration)
+
+      expect(project_config.public_key_for_odp).to eq(odp_integration['publicKey'])
+      expect(project_config.host_for_odp).to eq(odp_integration['host'])
+
+    end
+
+    it 'should initialize properties correctly upon creating project with empty integrations' do
+      config = integrations_config.dup
+      config['integrations'] = []
+      integrations_json = JSON.dump(config)
+
+      project_config = Optimizely::DatafileProjectConfig.new(integrations_json, logger, error_handler)
+
+      expect(project_config.integrations).to eq([])
+
+      expect(project_config.public_key_for_odp).to eq(nil)
+      expect(project_config.host_for_odp).to eq(nil)
     end
   end
 

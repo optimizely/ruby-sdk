@@ -43,6 +43,9 @@ module Optimizely
     attr_reader :rollouts
     attr_reader :version
     attr_reader :send_flag_decisions
+    attr_reader :integrations
+    attr_reader :public_key_for_odp
+    attr_reader :host_for_odp
 
     attr_reader :attribute_key_map
     attr_reader :audience_id_map
@@ -61,6 +64,7 @@ module Optimizely
     attr_reader :variation_id_map_by_experiment_id
     attr_reader :variation_key_map_by_experiment_id
     attr_reader :flag_variation_map
+    attr_reader :integration_key_map
 
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
@@ -92,6 +96,7 @@ module Optimizely
       @environment_key = config.fetch('environmentKey', '')
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
+      @integrations = config.fetch('integrations', [])
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config
@@ -117,6 +122,7 @@ module Optimizely
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
+      @integration_key_map = generate_key_map(@integrations, 'key')
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
@@ -140,6 +146,11 @@ module Optimizely
       @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+      end
+
+      if (odp_integration = @integration_key_map&.fetch('odp', nil))
+        @public_key_for_odp = odp_integration['publicKey']
+        @host_for_odp = odp_integration['host']
       end
 
       @flag_variation_map = generate_feature_variation_map(@feature_flags)
