@@ -135,6 +135,16 @@ describe 'Optimizely' do
       expect(project_instance.is_valid).to be true
     end
 
+    it 'should be valid when datafile contains integrations with arbitrary fields' do
+      config = config_body_integrations.dup
+      config['integrations'].clear
+      config['integrations'].push('key' => 'future', 'any-key-1' => 1, 'any-key-2' => 'any-value-2')
+      integrations_json = JSON.dump(config)
+
+      project_instance = Optimizely::Project.new(integrations_json)
+      expect(project_instance.is_valid).to be true
+    end
+
     it 'should log and raise an error when provided a datafile that is not JSON and skip_json_validation is true' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidInputError)
