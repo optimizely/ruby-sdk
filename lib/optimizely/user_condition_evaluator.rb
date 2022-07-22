@@ -21,7 +21,7 @@ require_relative 'helpers/validator'
 require_relative 'semantic_version'
 
 module Optimizely
-  class CustomAttributeConditionEvaluator
+  class UserConditionEvaluator
     CONDITION_TYPES = %w[custom_attribute third_party_dimension].freeze
 
     # Conditional match types

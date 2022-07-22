@@ -83,7 +83,7 @@ describe Optimizely::Audience do
 
   it 'should return false for user_meets_audience_conditions? if there are audiences but nil or empty attributes' do
     experiment = config.experiment_key_map['test_experiment_with_audience']
-    allow(Optimizely::CustomAttributeConditionEvaluator).to receive(:new).and_call_original
+    allow(Optimizely::UserConditionEvaluator).to receive(:new).and_call_original
 
     # attributes set to empty dict
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_context, spy_logger)
@@ -105,7 +105,7 @@ describe Optimizely::Audience do
                           ])
 
     # asserts nil attributes default to empty dict
-    expect(Optimizely::CustomAttributeConditionEvaluator).to have_received(:new).with(user_context, spy_logger).once
+    expect(Optimizely::UserConditionEvaluator).to have_received(:new).with(user_context, spy_logger).once
   end
 
   it 'should return true for user_meets_audience_conditions? when condition tree evaluator returns true' do
@@ -153,7 +153,7 @@ describe Optimizely::Audience do
     audience_11154_condition = JSON.parse(audience_11154['conditions'])[1][1][1]
     audience_11155_condition = JSON.parse(audience_11155['conditions'])[1][1][1]
 
-    customer_attr = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+    customer_attr = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     allow(customer_attr).to receive(:exact_evaluator)
     customer_attr.evaluate(audience_11154_condition)
     customer_attr.evaluate(audience_11155_condition)
@@ -178,7 +178,7 @@ describe Optimizely::Audience do
     audience_3988293899_condition = audience_3988293899['conditions'][1][1][1]
     audience_3468206646_condition = audience_3468206646['conditions'][1][1][1]
 
-    customer_attr = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+    customer_attr = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     allow(customer_attr).to receive(:exact_evaluator)
     allow(customer_attr).to receive(:substring_evaluator)
     allow(customer_attr).to receive(:exists_evaluator)
@@ -197,7 +197,7 @@ describe Optimizely::Audience do
     user_context.instance_variable_set(:@user_attributes, 'browser' => 'chrome')
     experiment = typed_audience_config.get_experiment_from_key('audience_combinations_experiment')
     experiment['audienceConditions'] = '3468206645'
-    customer_attr = Optimizely::CustomAttributeConditionEvaluator.new(user_context, spy_logger)
+    customer_attr = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
 
     audience_3468206645 = typed_audience_config.get_audience_from_id('3468206645')
     audience_3468206645_condition1 = audience_3468206645['conditions'][1][1][1]
