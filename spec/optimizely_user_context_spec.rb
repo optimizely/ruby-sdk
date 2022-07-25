@@ -24,10 +24,12 @@ describe 'Optimizely' do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
   let(:forced_decision_JSON) { OptimizelySpec::DECIDE_FORCED_DECISION_JSON }
+  let(:integration_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler) }
+  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
 
   describe '#initialize' do
@@ -721,5 +723,75 @@ describe 'Optimizely' do
       expect(user_context_obj).to have_received(:remove_forced_decision).with(context_with_flag_2).exactly(100).times
       expect(user_context_obj).to have_received(:remove_all_forced_decisions).once
     end
+  end
+  it 'should clone qualified segments in user context' do
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    qualified_segments = %w[seg1 seg2]
+    user_context_obj.qualified_segments = qualified_segments
+    user_clone_1 = user_context_obj.clone
+
+    expect(user_clone_1.qualified_segments).not_to be_empty
+    expect(user_clone_1.qualified_segments).to eq qualified_segments
+    expect(user_clone_1.qualified_segments).not_to be user_context_obj.qualified_segments
+    expect(user_clone_1.qualified_segments).not_to be qualified_segments
+  end
+
+  it 'should hit segment in ab test' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-1 odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment')
+
+    expect(decision.variation_key).to eq 'variation-a'
+  end
+
+  it 'should hit other audience with segments in ab test' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', 'age' => 30)
+    user_context_obj.qualified_segments = %w[odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'variation-a'
+  end
+
+  it 'should hit segment in rollout' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-2]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-on'
+  end
+
+  it 'should miss segment in rollout' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
+  end
+
+  it 'should miss segment with empty segments' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = []
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
+  end
+
+  it 'should not fail without any segments' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
   end
 end
