@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'coveralls_reborn'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop', '0.73.0'
+  spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'webmock'
 
   spec.add_runtime_dependency 'json-schema', '~> 2.6'
