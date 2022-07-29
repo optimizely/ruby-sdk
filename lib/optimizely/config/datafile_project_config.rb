@@ -31,7 +31,8 @@ module Optimizely
                 :experiment_id_map, :experiment_key_map, :feature_flag_key_map, :feature_variable_key_map,
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
-                :variation_key_map_by_experiment_id, :flag_variation_map
+                :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
+                :public_key_for_odp, :host_for_odp, :all_segments
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -66,6 +67,7 @@ module Optimizely
       @environment_key = config.fetch('environmentKey', '')
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
+      @integrations = config.fetch('integrations', [])
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config
@@ -91,6 +93,7 @@ module Optimizely
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
+      @integration_key_map = generate_key_map(@integrations, 'key')
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
@@ -114,6 +117,16 @@ module Optimizely
       @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+      end
+
+      if (odp_integration = @integration_key_map&.fetch('odp', nil))
+        @public_key_for_odp = odp_integration['publicKey']
+        @host_for_odp = odp_integration['host']
+      end
+
+      @all_segments = []
+      @audience_id_map.each_value do |audience|
+        @all_segments.concat Audience.get_segments(audience['conditions'])
       end
 
       @flag_variation_map = generate_feature_variation_map(@feature_flags)

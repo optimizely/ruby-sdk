@@ -106,7 +106,7 @@ module Optimizely
       end
 
       # Check audience conditions
-      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, attributes, @logger)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, experiment, user_context, @logger)
       decide_reasons.push(*reasons_received)
       unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
@@ -276,27 +276,27 @@ module Optimizely
       [variation_id, reasons]
     end
 
-    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user)
+    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context)
       # Determine which variation the user is in for a given rollout.
       # Returns the variation from delivery rules.
       #
       # project_config - project_config - Instance of ProjectConfig
       # flag_key - The feature flag the user wants to access
       # rule - An experiment rule key
-      # user - Optimizely user context instance
+      # user_context - Optimizely user context instance
       #
       # Returns variation, boolean to skip for eveyone else rule and reasons
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
-      variation, forced_reasons = validated_forced_decision(project_config, context, user)
+      variation, forced_reasons = validated_forced_decision(project_config, context, user_context)
       reasons.push(*forced_reasons)
 
       return [variation, skip_to_everyone_else, reasons] if variation
 
-      user_id = user.user_id
-      attributes = user.user_attributes
+      user_id = user_context.user_id
+      attributes = user_context.user_attributes
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
       reasons.push(*bucketing_id_reasons)
 
@@ -304,7 +304,7 @@ module Optimizely
 
       logging_key = everyone_else ? 'Everyone Else' : (rule_index + 1).to_s
 
-      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rule, attributes, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, rule, user_context, @logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', logging_key)
       reasons.push(*reasons_received)
       unless user_meets_audience_conditions
         message = "User '#{user_id}' does not meet the conditions for targeting rule '#{logging_key}'."

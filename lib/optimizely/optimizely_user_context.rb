@@ -29,15 +29,18 @@ module Optimizely
     def initialize(optimizely_client, user_id, user_attributes)
       @attr_mutex = Mutex.new
       @forced_decision_mutex = Mutex.new
+      @qualified_segment_mutex = Mutex.new
       @optimizely_client = optimizely_client
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
       @forced_decisions = {}
+      @qualified_segments = []
     end
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
       @forced_decision_mutex.synchronize { user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty? }
+      @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.empty? }
       user_context
     end
 
@@ -170,6 +173,32 @@ module Optimizely
 
     def to_json(*args)
       as_json.to_json(*args)
+    end
+
+    # Returns An array of qualified segments for this user
+    #
+    # @return - An array of segments names.
+
+    def qualified_segments
+      @qualified_segment_mutex.synchronize { @qualified_segments.clone }
+    end
+
+    # Replace qualified segments with provided segments
+    #
+    # @param segments - An array of segment names
+
+    def qualified_segments=(segments)
+      @qualified_segment_mutex.synchronize { @qualified_segments = segments.clone }
+    end
+
+    # Checks if user is qualified for the provided segment.
+    #
+    # @param segment - A segment name
+
+    def qualified_for?(segment)
+      return false if @qualified_segments.empty?
+
+      @qualified_segment_mutex.synchronize { @qualified_segments.include?(segment) }
     end
   end
 end
