@@ -7,6 +7,7 @@ Gem::Specification.new do |spec|
   spec.version       = Optimizely::VERSION
   spec.authors       = ['Optimizely']
   spec.email         = ['developers@optimizely.com']
+  spec.required_ruby_version = '~> 2.7'
 
   spec.summary       = "Ruby SDK for Optimizely's testing framework"
   spec.description   = "A Ruby SDK for Optimizely's Full Stack product."
