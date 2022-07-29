@@ -126,7 +126,7 @@ module Optimizely
             condition_name
           )
         )
-        return nil
+        nil
       rescue InvalidSemanticVersion
         condition_name = leaf_condition['name']
 
@@ -138,7 +138,7 @@ module Optimizely
             condition_name
           )
         )
-        return nil
+        nil
       end
     end
 

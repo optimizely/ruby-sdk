@@ -88,7 +88,7 @@ module Optimizely
 
       unless target_parts.empty?
         target_prefix = target_parts[0].to_s
-        target_suffix = target_parts[1..-1]
+        target_suffix = target_parts[1..]
       end
 
       # expect a version string of the form x.y.z

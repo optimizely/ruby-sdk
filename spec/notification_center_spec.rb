@@ -29,7 +29,7 @@ describe Optimizely::NotificationCenter do
   let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, error_handler) }
 
   before(:context) do
-    class CallBack
+    class CallBack # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
       attr_reader :args
 
       def call(*args)
@@ -117,7 +117,7 @@ describe Optimizely::NotificationCenter do
 
       it 'should add and return notification ID when multiple
             valid callbacks are added for a single notification type' do
-        class CallBackSecond
+        class CallBackSecond # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
           def call; end
         end
 
@@ -335,7 +335,7 @@ describe Optimizely::NotificationCenter do
         @callback_second = CallBackSecond.new
         @callback_reference_second = @callback_second.method(:call)
 
-        class CallBackThird
+        class CallBackThird # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
           def call; end
         end
 
@@ -404,7 +404,7 @@ describe Optimizely::NotificationCenter do
     end
 
     describe '.send_notifications' do
-      class Invitation
+      class Invitation # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
         def initialize(logger)
           @logger = logger
         end
@@ -507,7 +507,7 @@ describe Optimizely::NotificationCenter do
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                                                :arg1, 'arg2', arg3: 4)
 
-        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
+        expect(actual_args).to eq([:arg1, 'arg2', {arg3: 4}])
       end
 
       it 'should send notifications to lambdas' do
@@ -518,7 +518,7 @@ describe Optimizely::NotificationCenter do
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                                                :arg1, 'arg2', arg3: 4)
 
-        expect(actual_args).to eq([:arg1, 'arg2', arg3: 4])
+        expect(actual_args).to eq([:arg1, 'arg2', {arg3: 4}])
       end
 
       it 'should send notifications to callables' do
@@ -528,7 +528,7 @@ describe Optimizely::NotificationCenter do
         notification_center.send_notifications(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
                                                :arg1, 'arg2', arg3: 4)
 
-        expect(callback.args).to eq([:arg1, 'arg2', arg3: 4])
+        expect(callback.args).to eq([:arg1, 'arg2', {arg3: 4}])
       end
     end
 

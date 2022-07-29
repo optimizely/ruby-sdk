@@ -168,7 +168,7 @@ module Optimizely
 
         return true if boolean?(value_1) && boolean?(value_2)
 
-        value_1.class == value_2.class
+        value_1.instance_of?(value_2.class)
       end
 
       def finite_number?(value)

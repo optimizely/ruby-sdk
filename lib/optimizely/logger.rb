@@ -34,7 +34,8 @@ module Optimizely
     # Simple wrapper around Logger.
 
     def initialize(min_level = Logger::INFO)
-      @logger = Logger.new(STDOUT)
+      super()
+      @logger = Logger.new($stdout)
       @logger.level = min_level
     end
 

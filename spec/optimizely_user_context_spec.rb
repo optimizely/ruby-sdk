@@ -36,14 +36,14 @@ describe 'Optimizely' do
       attributes = {' browser' => 'firefox'}
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, attributes)
 
-      expect(user_context_obj.instance_variable_get(:@optimizely_client)). to eq(project_instance)
-      expect(user_context_obj.instance_variable_get(:@user_id)). to eq(user_id)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(attributes)
+      expect(user_context_obj.instance_variable_get(:@optimizely_client)).to eq(project_instance)
+      expect(user_context_obj.instance_variable_get(:@user_id)).to eq(user_id)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(attributes)
     end
 
     it 'should set user attributes to empty hash when passed nil' do
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, 'test_user', nil)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq({})
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq({})
     end
   end
 
@@ -56,7 +56,7 @@ describe 'Optimizely' do
 
       expected_attributes = attributes
       expected_attributes['id'] = 49
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(expected_attributes)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(expected_attributes)
     end
 
     it 'should override attribute value if key already exists in hash' do
@@ -68,7 +68,7 @@ describe 'Optimizely' do
       expected_attributes = attributes
       expected_attributes['browser'] = 'chrome'
 
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(expected_attributes)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(expected_attributes)
     end
 
     it 'should not alter original attributes object when attrubute is modified in the user context' do
@@ -76,7 +76,7 @@ describe 'Optimizely' do
       original_attributes = {'browser' => 'firefox'}
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, original_attributes)
       user_context_obj.set_attribute('id', 49)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(
         'browser' => 'firefox',
         'id' => 49
       )

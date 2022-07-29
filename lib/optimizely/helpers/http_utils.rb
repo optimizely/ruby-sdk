@@ -23,14 +23,15 @@ module Optimizely
     module HttpUtils
       module_function
 
-      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil)
+      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil) # rubocop:disable Metrics/ParameterLists, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
         # makes http/https GET/POST request and returns response
         #
         uri = URI.parse(url)
 
-        if http_method == :get
+        case http_method
+        when :get
           request = Net::HTTP::Get.new(uri.request_uri)
-        elsif http_method == :post
+        when :post
           request = Net::HTTP::Post.new(uri.request_uri)
           request.body = request_body if request_body
         else

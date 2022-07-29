@@ -27,10 +27,7 @@ module Optimizely
   class Event
     # Representation of an event which can be sent to the Optimizely logging endpoint.
 
-    attr_reader :http_verb
-    attr_reader :params
-    attr_reader :url
-    attr_reader :headers
+    attr_reader :http_verb, :params, :url, :headers
 
     def initialize(http_verb, url, params, headers)
       @http_verb = http_verb
@@ -90,7 +87,7 @@ module Optimizely
         )
       end
 
-      common_params = {
+      {
         account_id: project_config.account_id,
         project_id: project_config.project_id,
         visitors: [
@@ -106,8 +103,6 @@ module Optimizely
         enrich_decisions: true,
         client_version: VERSION
       }
-
-      common_params
     end
   end
 
@@ -166,7 +161,7 @@ module Optimizely
       experiment_key = experiment['key']
       experiment_id = experiment['id']
 
-      impression_event_params = {
+      {
         decisions: [{
           campaign_id: project_config.experiment_key_map[experiment_key]['layerId'],
           experiment_id: experiment_id,
@@ -179,8 +174,6 @@ module Optimizely
           uuid: create_uuid
         }]
       }
-
-      impression_event_params
     end
 
     def get_conversion_params(event, event_tags)

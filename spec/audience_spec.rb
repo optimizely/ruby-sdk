@@ -231,7 +231,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11110"].'
+      "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11110\"]."
     )
 
     expect(spy_logger).to have_received(:log).once.with(
@@ -260,7 +260,7 @@ describe Optimizely::Audience do
 
     expect(spy_logger).to have_received(:log).once.with(
       Logger::DEBUG,
-      "Evaluating audiences for experiment 'test_experiment_with_audience': " + '["11154", "11155"].'
+      "Evaluating audiences for experiment 'test_experiment_with_audience': [\"11154\", \"11155\"]."
     )
 
     # audience_11154

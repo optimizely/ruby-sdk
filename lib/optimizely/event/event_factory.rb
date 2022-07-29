@@ -41,10 +41,11 @@ module Optimizely
         visitors = []
         user_context = nil
         user_events.each do |user_event|
-          if user_event.is_a? Optimizely::ImpressionEvent
+          case user_event
+          when Optimizely::ImpressionEvent
             visitor = create_impression_event_visitor(user_event)
             visitors.push(visitor)
-          elsif user_event.is_a? Optimizely::ConversionEvent
+          when Optimizely::ConversionEvent
             visitor = create_conversion_event_visitor(user_event)
             visitors.push(visitor)
           else

@@ -18,6 +18,7 @@
 module Optimizely
   class Visitor
     attr_reader :snapshots, :visitor_id, :attributes
+
     def initialize(snapshots:, visitor_id:, attributes:)
       @snapshots = snapshots
       @visitor_id = visitor_id

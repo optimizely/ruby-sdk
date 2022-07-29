@@ -30,6 +30,7 @@ module Optimizely
       tags:,
       bot_filtering:
     )
+      super()
       @event_context = event_context
       @uuid = SecureRandom.uuid
       @timestamp = Helpers::DateTimeUtils.create_timestamp

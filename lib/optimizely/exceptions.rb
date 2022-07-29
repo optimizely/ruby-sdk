@@ -107,10 +107,6 @@ module Optimizely
 
   class InvalidInputsError < Error
     # Raised when an invalid inputs are provided during Project instantiation
-
-    def initialize(msg)
-      super msg
-    end
   end
 
   class InvalidProjectConfigError < Error

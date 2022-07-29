@@ -135,14 +135,12 @@ module Optimizely
       return nil unless notification_type_valid?(notification_type)
 
       @notifications[notification_type].each do |notification|
-        begin
-          notification_callback = notification[:callback]
-          notification_callback.call(*args)
-          @logger.log Logger::INFO, "Notification #{notification_type} sent successfully."
-        rescue => e
-          @logger.log(Logger::ERROR, "Problem calling notify callback. Error: #{e}")
-          return nil
-        end
+        notification_callback = notification[:callback]
+        notification_callback.call(*args)
+        @logger.log Logger::INFO, "Notification #{notification_type} sent successfully."
+      rescue => e
+        @logger.log(Logger::ERROR, "Problem calling notify callback. Error: #{e}")
+        return nil
       end
     end
 

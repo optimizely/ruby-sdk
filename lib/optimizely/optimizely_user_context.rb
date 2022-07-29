@@ -22,11 +22,7 @@ module Optimizely
   class OptimizelyUserContext
     # Representation of an Optimizely User Context using which APIs are to be called.
 
-    attr_reader :user_id
-    attr_reader :forced_decisions
-    attr_reader :OptimizelyDecisionContext
-    attr_reader :OptimizelyForcedDecision
-    attr_reader :optimizely_client
+    attr_reader :user_id, :forced_decisions, :optimizely_client
 
     OptimizelyDecisionContext = Struct.new(:flag_key, :rule_key)
     OptimizelyForcedDecision = Struct.new(:variation_key)

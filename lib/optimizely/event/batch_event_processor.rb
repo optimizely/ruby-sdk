@@ -43,6 +43,7 @@ module Optimizely
       logger: NoOpLogger.new,
       notification_center: nil
     )
+      super()
       @event_queue = event_queue
       @logger = logger
       @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger)
@@ -101,8 +102,8 @@ module Optimizely
         @event_queue.push(user_event, true)
         @wait_mutex.synchronize { @resource.signal }
       rescue => e
-        @logger.log(Logger::WARN, 'Payload not accepted by the queue: ' + e.message)
-        return
+        @logger.log(Logger::WARN, "Payload not accepted by the queue: #{e.message}")
+        nil
       end
     end
 
