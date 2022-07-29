@@ -51,7 +51,7 @@ describe 'Optimizely' do
 
   describe '.initialize' do
     it 'should take in a custom logger when instantiating Project class' do
-      class CustomLogger # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class CustomLogger # rubocop:disable Lint/ConstantDefinitionInBlock
         def log(log_message)
           log_message
         end
@@ -63,7 +63,7 @@ describe 'Optimizely' do
     end
 
     it 'should take in a custom error handler when instantiating Project class' do
-      class CustomErrorHandler # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class CustomErrorHandler # rubocop:disable Lint/ConstantDefinitionInBlock
         def handle_error(error)
           error
         end
@@ -92,21 +92,21 @@ describe 'Optimizely' do
     it 'should log an error when given an invalid logger' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
 
-      class InvalidLogger; end # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class InvalidLogger; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new)
     end
 
     it 'should log an error when given an invalid event_dispatcher' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
 
-      class InvalidEventDispatcher; end # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class InvalidEventDispatcher; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new)
     end
 
     it 'should log an error when given an invalid error_handler' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
-      class InvalidErrorHandler; end # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class InvalidErrorHandler; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new)
     end
 
@@ -1893,7 +1893,7 @@ describe 'Optimizely' do
       disabled_features = features_keys.map { |x| x[:key] if x[:value] == false }.compact
 
       features_keys.each do |feature|
-        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', {'browser_type' => 'chrome'}).and_return(feature[:value]) # rubocop:disable Style/BracesAroundHashParameters, Lint/RedundantCopDisableDirective, Lint/UnneededCopDisableDirective
+        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', {'browser_type' => 'chrome'}).and_return(feature[:value]) # rubocop:disable Style/BracesAroundHashParameters
       end
 
       # Checks enabled features are returned
@@ -2565,7 +2565,7 @@ describe 'Optimizely' do
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
         it 'should return the default variable value' do
-          Decision = Struct.new(:experiment, :variation, :source) # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+          Decision = Struct.new(:experiment, :variation, :source) # rubocop:disable Lint/ConstantDefinitionInBlock
           variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
           decision_to_return = Decision.new({'key' => 'test-exp'}, variation_to_return, 'feature-test')
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)

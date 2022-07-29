@@ -29,7 +29,7 @@ describe Optimizely::NotificationCenter do
   let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, error_handler) }
 
   before(:context) do
-    class CallBack # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+    class CallBack # rubocop:disable Lint/ConstantDefinitionInBlock
       attr_reader :args
 
       def call(*args)
@@ -117,7 +117,7 @@ describe Optimizely::NotificationCenter do
 
       it 'should add and return notification ID when multiple
             valid callbacks are added for a single notification type' do
-        class CallBackSecond # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+        class CallBackSecond # rubocop:disable Lint/ConstantDefinitionInBlock
           def call; end
         end
 
@@ -335,7 +335,7 @@ describe Optimizely::NotificationCenter do
         @callback_second = CallBackSecond.new
         @callback_reference_second = @callback_second.method(:call)
 
-        class CallBackThird # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+        class CallBackThird # rubocop:disable Lint/ConstantDefinitionInBlock
           def call; end
         end
 
@@ -404,7 +404,7 @@ describe Optimizely::NotificationCenter do
     end
 
     describe '.send_notifications' do
-      class Invitation # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class Invitation # rubocop:disable Lint/ConstantDefinitionInBlock
         def initialize(logger)
           @logger = logger
         end

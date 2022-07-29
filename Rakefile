@@ -6,7 +6,7 @@ require_relative 'spec/benchmarking/benchmark'
 begin
   require 'rspec/core/rake_task'
   RSpec::Core::RakeTask.new(:spec)
-rescue LoadError # rubocop:disable Lint/HandleExceptions, Lint/RedundantCopDisableDirective, List/UnneededCopDisableDirective
+rescue LoadError # rubocop:disable Lint/HandleExceptions
 end
 require 'optimizely/version'
 

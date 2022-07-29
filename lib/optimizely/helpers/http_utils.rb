@@ -23,7 +23,7 @@ module Optimizely
     module HttpUtils
       module_function
 
-      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil) # rubocop:disable Metrics/ParameterLists, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil) # rubocop:disable Metrics/ParameterLists
         # makes http/https GET/POST request and returns response
         #
         uri = URI.parse(url)

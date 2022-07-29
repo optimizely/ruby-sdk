@@ -67,7 +67,7 @@ describe Optimizely::OptimizelyFactory do
 
   describe '.default_instance_with_manager' do
     it 'should take provided custom config manager' do
-      class CustomConfigManager # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      class CustomConfigManager # rubocop:disable Lint/ConstantDefinitionInBlock
         attr_reader :config
       end
 

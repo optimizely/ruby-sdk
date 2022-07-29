@@ -23,10 +23,10 @@ describe Optimizely::HTTPProjectConfigManager do
   let(:spy_logger) { spy('logger') }
 
   before(:context) do
-    VALID_SDK_KEY_CONFIG = OptimizelySpec::VALID_CONFIG_BODY.dup # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+    VALID_SDK_KEY_CONFIG = OptimizelySpec::VALID_CONFIG_BODY.dup # rubocop:disable Lint/ConstantDefinitionInBlock
     VALID_SDK_KEY_CONFIG['accountId'] = '12002'
     VALID_SDK_KEY_CONFIG['revision'] = '81'
-    VALID_SDK_KEY_CONFIG_JSON = JSON.dump(VALID_SDK_KEY_CONFIG) # rubocop:disable Lint/ConstantDefinitionInBlock, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+    VALID_SDK_KEY_CONFIG_JSON = JSON.dump(VALID_SDK_KEY_CONFIG) # rubocop:disable Lint/ConstantDefinitionInBlock
   end
 
   before(:example) do

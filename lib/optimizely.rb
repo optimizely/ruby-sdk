@@ -63,12 +63,12 @@ module Optimizely
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
 
-    def initialize( # rubocop:disable Metrics/ParameterLists, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+    def initialize( # rubocop:disable Metrics/ParameterLists
       datafile = nil,
       event_dispatcher = nil,
       logger = nil,
       error_handler = nil,
-      skip_json_validation = false, # rubocop:disable Style/OptionalBooleanParameter, Lint/UnneededCopDisableDirective, Lint/RedundantCopDisableDirective
+      skip_json_validation = false, # rubocop:disable Style/OptionalBooleanParameter
       user_profile_service = nil,
       sdk_key = nil,
       config_manager = nil,
