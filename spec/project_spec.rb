@@ -3655,7 +3655,7 @@ describe 'Optimizely' do
           project_id: '111001',
           revision: '42',
           client_name: 'ruby-sdk',
-          client_version: '3.10.1',
+          client_version: Optimizely::VERSION,
           anonymize_ip: false,
           enrich_decisions: true,
           visitors: [{
@@ -3801,7 +3801,7 @@ describe 'Optimizely' do
           project_id: '111001',
           revision: '42',
           client_name: 'ruby-sdk',
-          client_version: '3.10.1',
+          client_version: Optimizely::VERSION,
           anonymize_ip: false,
           enrich_decisions: true,
           visitors: [{
