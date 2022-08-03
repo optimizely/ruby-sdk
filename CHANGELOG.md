@@ -1,7 +1,7 @@
 # Optimizely Ruby SDK Changelog
 
 ## 4.0.0
-August 1st, 2022
+August 3st, 2022
 
 The 4.0 release drops support for EOL versions of Ruby.
 
