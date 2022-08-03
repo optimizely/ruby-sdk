@@ -8,16 +8,16 @@ on:
 
 jobs:
   lint_markdown_files:
-    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@aleap/update_ruby_version
+    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@master
 
   integration_tests:
-    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@aleap/update_ruby_version
+    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@master
     secrets:
       CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
       TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
 
   fullstack_production_suite:
-    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@aleap/update_ruby_version
+    uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@master
     with:
       FULLSTACK_TEST_REPO: ProdTesting
     secrets:
