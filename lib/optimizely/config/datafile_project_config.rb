@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019-2021, Optimizely and contributors
+#    Copyright 2019-2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,53 +24,23 @@ module Optimizely
     RUNNING_EXPERIMENT_STATUS = ['Running'].freeze
     RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
-    attr_reader :datafile
-    attr_reader :account_id
-    attr_reader :attributes
-    attr_reader :audiences
-    attr_reader :typed_audiences
-    attr_reader :events
-    attr_reader :experiments
-    attr_reader :feature_flags
-    attr_reader :groups
-    attr_reader :project_id
+    attr_reader :datafile, :account_id, :attributes, :audiences, :typed_audiences, :events,
+                :experiments, :feature_flags, :groups, :project_id, :bot_filtering, :revision,
+                :sdk_key, :environment_key, :rollouts, :version, :send_flag_decisions,
+                :attribute_key_map, :audience_id_map, :event_key_map, :experiment_feature_map,
+                :experiment_id_map, :experiment_key_map, :feature_flag_key_map, :feature_variable_key_map,
+                :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
+                :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
+                :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
+                :public_key_for_odp, :host_for_odp, :all_segments
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
-    attr_reader :bot_filtering
-    attr_reader :revision
-    attr_reader :sdk_key
-    attr_reader :environment_key
-    attr_reader :rollouts
-    attr_reader :version
-    attr_reader :send_flag_decisions
-    attr_reader :integrations
-    attr_reader :public_key_for_odp
-    attr_reader :host_for_odp
-    attr_reader :all_segments
-
-    attr_reader :attribute_key_map
-    attr_reader :audience_id_map
-    attr_reader :event_key_map
-    attr_reader :experiment_feature_map
-    attr_reader :experiment_id_map
-    attr_reader :experiment_key_map
-    attr_reader :feature_flag_key_map
-    attr_reader :feature_variable_key_map
-    attr_reader :group_id_map
-    attr_reader :rollout_id_map
-    attr_reader :rollout_experiment_id_map
-    attr_reader :variation_id_map
-    attr_reader :variation_id_to_variable_usage_map
-    attr_reader :variation_key_map
-    attr_reader :variation_id_map_by_experiment_id
-    attr_reader :variation_key_map_by_experiment_id
-    attr_reader :flag_variation_map
-    attr_reader :integration_key_map
 
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
       #
       # datafile - JSON string representing the project
+      super()
 
       config = JSON.parse(datafile)
 
@@ -224,7 +194,7 @@ module Optimizely
         config = new(datafile, logger, error_handler)
       rescue StandardError => e
         default_logger = SimpleLogger.new
-        error_to_handle = e.class == InvalidDatafileVersionError ? e : InvalidInputError.new('datafile')
+        error_to_handle = e.instance_of?(InvalidDatafileVersionError) ? e : InvalidInputError.new('datafile')
         error_msg = error_to_handle.message
 
         default_logger.log(Logger::ERROR, error_msg)

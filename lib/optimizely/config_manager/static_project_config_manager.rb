@@ -34,6 +34,7 @@ module Optimizely
       # skip_json_validation - Optional boolean param which allows skipping JSON schema
       #                       validation upon object invocation. By default JSON schema validation will be performed.
       # Returns instance of DatafileProjectConfig, nil otherwise.
+      super()
       @config = DatafileProjectConfig.create(
         datafile,
         logger,

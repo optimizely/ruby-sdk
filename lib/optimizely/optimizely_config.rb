@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019-2021, Optimizely and contributors
+#    Copyright 2019-2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ module Optimizely
     def config
       experiments_map_object = experiments_map
       features_map = get_features_map(experiments_id_map)
-      config = {
+      {
         'sdkKey' => @project_config.sdk_key,
         'datafile' => @project_config.datafile,
         # This experimentsMap is for experiments of legacy projects only.
@@ -63,7 +63,6 @@ module Optimizely
         'events' => get_events_list(@project_config.events),
         'environmentKey' => @project_config.environment_key
       }
-      config
     end
 
     private
@@ -204,13 +203,13 @@ module Optimizely
       conditions_str = ''
       length = conditions.length()
       return '' if length.zero?
-      return '"' + lookup_name_from_id(conditions[0], audiences_map) + '"' if length == 1 && !OPERATORS.include?(conditions[0])
+      return "\"#{lookup_name_from_id(conditions[0], audiences_map)}\"" if length == 1 && !OPERATORS.include?(conditions[0])
 
       # Edge cases for lengths 0, 1 or 2
       if length == 2 && OPERATORS.include?(conditions[0]) && !conditions[1].is_a?(Array) && !OPERATORS.include?(conditions[1])
-        return '"' + lookup_name_from_id(conditions[1], audiences_map) + '"' if conditions[0] != 'not'
+        return "\"#{lookup_name_from_id(conditions[1], audiences_map)}\"" if conditions[0] != 'not'
 
-        return conditions[0].upcase + ' "' + lookup_name_from_id(conditions[1], audiences_map) + '"'
+        return "#{conditions[0].upcase} \"#{lookup_name_from_id(conditions[1], audiences_map)}\""
 
       end
       if length > 1
@@ -223,9 +222,9 @@ module Optimizely
             # Check if at the end or not to determine where to add the operand
             # Recursive call to call stringify on embedded list
             conditions_str += if n + 1 < length
-                                '(' + stringify_conditions(conditions[n], audiences_map) + ') '
+                                "(#{stringify_conditions(conditions[n], audiences_map)}) "
                               else
-                                operand + ' (' + stringify_conditions(conditions[n], audiences_map) + ')'
+                                "#{operand} (#{stringify_conditions(conditions[n], audiences_map)})"
                               end
           # If the item is not a list, we process as an audience ID and retrieve the name
           else
@@ -233,11 +232,11 @@ module Optimizely
             unless audience_name.nil?
               # Below handles all cases for one ID or greater
               conditions_str += if n + 1 < length - 1
-                                  '"' + audience_name + '" ' + operand + ' '
+                                  "\"#{audience_name}\" #{operand} "
                                 elsif n + 1 == length
-                                  operand + ' "' + audience_name + '"'
+                                  "#{operand} \"#{audience_name}\""
                                 else
-                                  '"' + audience_name + '" '
+                                  "\"#{audience_name}\" "
                                 end
             end
           end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -129,13 +129,13 @@ module Optimizely
     #
     # if @max_event_batch_size and @max_event_flush_interval are nil then default batchsize and flush_interval
     # will be used to setup batchEventProcessor.
-    def self.custom_instance(
+    def self.custom_instance( # rubocop:disable Metrics/ParameterLists
       sdk_key,
       datafile = nil,
       event_dispatcher = nil,
       logger = nil,
       error_handler = nil,
-      skip_json_validation = false,
+      skip_json_validation = false, # rubocop:disable Style/OptionalBooleanParameter
       user_profile_service = nil,
       config_manager = nil,
       notification_center = nil

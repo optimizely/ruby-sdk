@@ -7,6 +7,7 @@ Gem::Specification.new do |spec|
   spec.version       = Optimizely::VERSION
   spec.authors       = ['Optimizely']
   spec.email         = ['developers@optimizely.com']
+  spec.required_ruby_version = '>= 2.7'
 
   spec.summary       = "Ruby SDK for Optimizely's testing framework"
   spec.description   = "A Ruby SDK for Optimizely's Full Stack product."
@@ -20,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'coveralls_reborn'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop', '0.73.0'
+  spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'webmock'
 
   spec.add_runtime_dependency 'json-schema', '~> 2.6'

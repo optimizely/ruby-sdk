@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ describe 'Optimizely' do
 
   describe '.initialize' do
     it 'should take in a custom logger when instantiating Project class' do
-      class CustomLogger
+      class CustomLogger # rubocop:disable Lint/ConstantDefinitionInBlock
         def log(log_message)
           log_message
         end
@@ -63,7 +63,7 @@ describe 'Optimizely' do
     end
 
     it 'should take in a custom error handler when instantiating Project class' do
-      class CustomErrorHandler
+      class CustomErrorHandler # rubocop:disable Lint/ConstantDefinitionInBlock
         def handle_error(error)
           error
         end
@@ -71,7 +71,7 @@ describe 'Optimizely' do
 
       error_handler = CustomErrorHandler.new
       instance_with_error_handler = Optimizely::Project.new(config_body_JSON, nil, nil, error_handler)
-      expect(instance_with_error_handler.error_handler.handle_error('test_message')). to eq('test_message')
+      expect(instance_with_error_handler.error_handler.handle_error('test_message')).to eq('test_message')
     end
 
     it 'should log an error when datafile is null' do
@@ -92,21 +92,21 @@ describe 'Optimizely' do
     it 'should log an error when given an invalid logger' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
 
-      class InvalidLogger; end
+      class InvalidLogger; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new)
     end
 
     it 'should log an error when given an invalid event_dispatcher' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
 
-      class InvalidEventDispatcher; end
+      class InvalidEventDispatcher; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new)
     end
 
     it 'should log an error when given an invalid error_handler' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
-      class InvalidErrorHandler; end
+      class InvalidErrorHandler; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new)
     end
 
@@ -881,7 +881,7 @@ describe 'Optimizely' do
           false, nil, nil, http_project_config_manager, notification_center
         )
 
-        until http_project_config_manager.ready?; end
+        sleep 0.1 until http_project_config_manager.ready?
 
         expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -907,7 +907,7 @@ describe 'Optimizely' do
           false, nil, nil, http_project_config_manager, notification_center
         )
 
-        until http_project_config_manager.ready?; end
+        sleep 0.1 until http_project_config_manager.ready?
 
         expect(http_project_config_manager.config).not_to eq(nil)
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -940,7 +940,7 @@ describe 'Optimizely' do
           false, nil, 'valid_sdk_key', nil, notification_center
         )
 
-        until project_instance.config_manager.ready?; end
+        sleep 0.1 until project_instance.config_manager.ready?
 
         expect(project_instance.is_valid).to be true
         expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
@@ -1893,7 +1893,7 @@ describe 'Optimizely' do
       disabled_features = features_keys.map { |x| x[:key] if x[:value] == false }.compact
 
       features_keys.each do |feature|
-        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', 'browser_type' => 'chrome').and_return(feature[:value])
+        allow(project_instance).to receive(:is_feature_enabled).with(feature[:key], 'test_user', {'browser_type' => 'chrome'}).and_return(feature[:value])
       end
 
       # Checks enabled features are returned
@@ -2565,7 +2565,7 @@ describe 'Optimizely' do
     describe 'when the feature flag is enabled for the user' do
       describe 'and a variable usage instance is not found' do
         it 'should return the default variable value' do
-          Decision = Struct.new(:experiment, :variation, :source)
+          Decision = Struct.new(:experiment, :variation, :source) # rubocop:disable Lint/ConstantDefinitionInBlock
           variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
           decision_to_return = Decision.new({'key' => 'test-exp'}, variation_to_return, 'feature-test')
           allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
@@ -3249,26 +3249,26 @@ describe 'Optimizely' do
     # setForcedVariation on a paused experiment and then call getVariation.
     it 'should return null when getVariation is called on a paused experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment_not_started', 'test_user', 'control_not_started')
-      expect(project_instance.get_variation('test_experiment_not_started', 'test_user')). to eq(nil)
+      expect(project_instance.get_variation('test_experiment_not_started', 'test_user')).to eq(nil)
     end
 
     # setForcedVariation on a running experiment and then call getVariation.
     it 'should return expected variation id  when getVariation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
-      expect(project_instance.get_variation('test_experiment', 'test_user')). to eq('variation')
+      expect(project_instance.get_variation('test_experiment', 'test_user')).to eq('variation')
     end
 
     # setForcedVariation on a whitelisted user on the variation that they are not forced into and then call getVariation on the user.
     it 'should return expected forced variation id  when getVariation is called on a running experiment after setForcedVariation is called on a whitelisted user' do
       project_instance.set_forced_variation('test_experiment', 'forced_user1', 'variation')
-      expect(project_instance.get_variation('test_experiment', 'forced_user1')). to eq('variation')
+      expect(project_instance.get_variation('test_experiment', 'forced_user1')).to eq('variation')
     end
 
     # setForcedVariation on a running experiment with a previously set variation (different from the one set by setForcedVariation) and then call getVariation.
     it 'should return latest set variation when different variations are set on the same experiment' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'control')
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
-      expect(project_instance.get_variation('test_experiment', 'test_user')). to eq('variation')
+      expect(project_instance.get_variation('test_experiment', 'test_user')).to eq('variation')
     end
 
     # setForcedVariation on a running experiment with audience enabled and then call getVariation on that same experiment with invalid attributes.
@@ -3285,7 +3285,7 @@ describe 'Optimizely' do
     # getForceVariation on a running experiment after setforcevariation
     it 'should return expected variation id  when get_forced_variation is called on a running experiment after setForcedVariation' do
       project_instance.set_forced_variation('test_experiment', 'test_user', 'variation')
-      expect(project_instance.get_forced_variation('test_experiment', 'test_user')). to eq('variation')
+      expect(project_instance.get_forced_variation('test_experiment', 'test_user')).to eq('variation')
     end
   end
 
@@ -3467,7 +3467,7 @@ describe 'Optimizely' do
         false, nil, nil, http_project_config_manager
       )
 
-      until http_project_config_manager.ready?; end
+      sleep 0.1 until http_project_config_manager.ready?
 
       expect(project_instance.activate('test_experiment', 'test_user')).not_to eq(nil)
       expect(project_instance.is_valid).to be true
@@ -3655,7 +3655,7 @@ describe 'Optimizely' do
           project_id: '111001',
           revision: '42',
           client_name: 'ruby-sdk',
-          client_version: '3.10.1',
+          client_version: Optimizely::VERSION,
           anonymize_ip: false,
           enrich_decisions: true,
           visitors: [{
@@ -3801,7 +3801,7 @@ describe 'Optimizely' do
           project_id: '111001',
           revision: '42',
           client_name: 'ruby-sdk',
-          client_version: '3.10.1',
+          client_version: Optimizely::VERSION,
           anonymize_ip: false,
           enrich_decisions: true,
           visitors: [{

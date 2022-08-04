@@ -1,5 +1,11 @@
 # Optimizely Ruby SDK Changelog
 
+
+## Unreleased
+
+### Changes:
+* Breaking change: Changed official supported versions of Ruby to 2.7, 3.0 and 3.1
+
 ## 3.10.1
 February 2, 2022
 

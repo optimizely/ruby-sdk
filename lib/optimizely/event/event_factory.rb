@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ module Optimizely
         visitors = []
         user_context = nil
         user_events.each do |user_event|
-          if user_event.is_a? Optimizely::ImpressionEvent
+          case user_event
+          when Optimizely::ImpressionEvent
             visitor = create_impression_event_visitor(user_event)
             visitors.push(visitor)
-          elsif user_event.is_a? Optimizely::ConversionEvent
+          when Optimizely::ConversionEvent
             visitor = create_conversion_event_visitor(user_event)
             visitors.push(visitor)
           else

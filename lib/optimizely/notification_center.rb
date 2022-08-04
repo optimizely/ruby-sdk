@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2019, Optimizely and contributors
+#    Copyright 2017-2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -135,14 +135,12 @@ module Optimizely
       return nil unless notification_type_valid?(notification_type)
 
       @notifications[notification_type].each do |notification|
-        begin
-          notification_callback = notification[:callback]
-          notification_callback.call(*args)
-          @logger.log Logger::INFO, "Notification #{notification_type} sent successfully."
-        rescue => e
-          @logger.log(Logger::ERROR, "Problem calling notify callback. Error: #{e}")
-          return nil
-        end
+        notification_callback = notification[:callback]
+        notification_callback.call(*args)
+        @logger.log Logger::INFO, "Notification #{notification_type} sent successfully."
+      rescue => e
+        @logger.log(Logger::ERROR, "Problem calling notify callback. Error: #{e}")
+        return nil
       end
     end
 
