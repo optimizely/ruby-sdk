@@ -382,6 +382,12 @@ module Optimizely
         'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for rule '%s': %s."
       }.merge(AUDIENCE_EVALUATION_LOGS).freeze
 
+      ODP_LOGS = {
+        FETCH_SEGMENTS_FAILED: 'Audience segments fetch failed (%s).',
+        ODP_EVENT_FAILED: 'ODP event send failed (invalid url).',
+        ODP_NOT_ENABLED: 'ODP is not enabled.'
+      }.freeze
+
       DECISION_NOTIFICATION_TYPES = {
         'AB_TEST' => 'ab-test',
         'FEATURE' => 'feature',
@@ -404,6 +410,14 @@ module Optimizely
         'MIN_SECONDS_LIMIT' => 1,
         # Time in seconds before which request for datafile times out
         'REQUEST_TIMEOUT' => 10
+      }.freeze
+
+      ODP_GRAPHQL_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_REST_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
       }.freeze
 
       HTTP_HEADERS = {
