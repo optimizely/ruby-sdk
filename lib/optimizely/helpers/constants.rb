@@ -412,6 +412,10 @@ module Optimizely
         'REQUEST_TIMEOUT' => 10
       }.freeze
 
+      EVENT_DISPATCH_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
       ODP_GRAPHQL_API_CONFIG = {
         REQUEST_TIMEOUT: 10
       }.freeze
