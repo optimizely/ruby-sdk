@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint_markdown_files:
-    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@master
+    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@aleap/ci_cleanup
 
   integration_tests:
     uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@master
