@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Source clear scan
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
         env:
           SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
         run: curl -sSL https://download.sourceclear.com/ci.sh | bash -s - scan
