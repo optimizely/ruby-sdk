@@ -18,14 +18,14 @@
 require 'spec_helper'
 require 'optimizely/odp/zaius_graphql_api_manager'
 
-describe Optimizely::ZaiusGraphQlApiManager do
+describe Optimizely::ZaiusGraphQLApiManager do
   let(:user_key) { 'vuid' }
   let(:user_value) { 'test-user-value' }
   let(:api_key) { 'test-api-key' }
   let(:api_host) { 'https://test-host' }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:zaius_manager) { Optimizely::ZaiusGraphQlApiManager.new(logger: spy_logger) }
+  let(:zaius_manager) { Optimizely::ZaiusGraphQLApiManager.new(logger: spy_logger) }
   let(:good_response_data) do
     {
       data: {
@@ -430,7 +430,7 @@ describe Optimizely::ZaiusGraphQlApiManager do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_raise(SocketError)
       stub_request(:post, "#{api_host}/v3/graphql")
 
-      zaius_manager = Optimizely::ZaiusGraphQlApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
+      zaius_manager = Optimizely::ZaiusGraphQLApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
       zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, anything, anything, :proxy_config)
     end
