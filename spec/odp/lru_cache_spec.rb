@@ -97,6 +97,18 @@ describe Optimizely::LRUCache do
     expect(cache.lookup(4)).to eq 400
   end
 
+  it 'should make element stale after timeout even with lookup' do
+    max_timeout = 1
+
+    cache = Optimizely::LRUCache.new(1000, max_timeout)
+
+    cache.save(1, 100)
+    sleep(0.5)
+    cache.lookup(1)
+    sleep(0.5)
+    expect(cache.lookup(1)).to be_nil
+  end
+
   it 'should not make elements stale when timeout is zero' do
     max_timeout = 0
     cache = Optimizely::LRUCache.new(1000, max_timeout)

@@ -44,11 +44,9 @@ module Optimizely
       @cache_mutex.synchronize do
         return nil unless @map.include?(key)
 
-        old_element = @map[key]
-        @map.delete(key)
-        return nil if old_element.stale?(@timeout)
+        element = @map.delete(key)
+        return nil if element.stale?(@timeout)
 
-        element = CacheElement.new(old_element.value)
         @map[key] = element
 
         element.value
