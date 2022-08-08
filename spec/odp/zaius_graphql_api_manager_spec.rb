@@ -266,7 +266,7 @@ describe Optimizely::ZaiusGraphQlApiManager do
       )
     end
 
-    it 'should log error and return nil with invalid identifier exception' do
+    it 'should log warning and return nil with invalid identifier exception' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_identifier_response_data.to_json)
 
@@ -274,7 +274,7 @@ describe Optimizely::ZaiusGraphQlApiManager do
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
-        Logger::ERROR,
+        Logger::WARN,
         'Audience segments fetch failed (invalid identifier).'
       )
     end

@@ -51,35 +51,39 @@ module Optimizely
         )
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
-        log_error(:FETCH_SEGMENTS_FAILED, 'network error')
+        log_failure('network error')
         return nil
       rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError => e
-        log_error(:FETCH_SEGMENTS_FAILED, e)
+        log_failure(e)
         return nil
       end
 
       status = response.code.to_i
       if status >= 400
-        log_error(:FETCH_SEGMENTS_FAILED, status)
+        log_failure(status)
         return nil
       end
 
       begin
         response = JSON.parse(response.body)
       rescue JSON::ParserError
-        log_error(:FETCH_SEGMENTS_FAILED, 'JSON decode error')
+        log_failure('JSON decode error')
         return nil
       end
 
       if response.include?('errors')
         error_class = response['errors']&.first&.dig('extensions', 'classification') || 'decode error'
-        log_error(:FETCH_SEGMENTS_FAILED, error_class == 'InvalidIdentifierException' ? 'invalid identifier' : error_class)
+        if error_class == 'InvalidIdentifierException'
+          log_failure('invalid identifier', Logger::WARN)
+        else
+          log_failure(error_class)
+        end
         return nil
       end
 
       audiences = response.dig('data', 'customer', 'audiences', 'edges')
       unless audiences
-        log_error(:FETCH_SEGMENTS_FAILED, 'decode error')
+        log_failure('decode error')
         return nil
       end
 
@@ -87,7 +91,7 @@ module Optimizely
         name = edge.dig('node', 'name')
         state = edge.dig('node', 'state')
         unless name && state
-          log_error(:FETCH_SEGMENTS_FAILED, 'decode error')
+          log_failure('decode error')
           return nil
         end
         state == 'qualified' ? name : nil
@@ -96,8 +100,8 @@ module Optimizely
 
     private
 
-    def log_error(type, error)
-      @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[type], error))
+    def log_failure(message, level = Logger::ERROR)
+      @logger.log(level, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], message))
     end
   end
 end
