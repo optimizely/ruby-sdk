@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ module Optimizely
 
       if conditions.is_a? Array
         first_operator =  conditions[0]
-        rest_of_conditions = conditions[1..-1]
+        rest_of_conditions = conditions[1..]
 
         # Operator to apply is not explicit - assume 'or'
         unless EVALUATORS_BY_OPERATOR_TYPE.include?(conditions[0])

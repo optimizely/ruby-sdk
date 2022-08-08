@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 module Optimizely
   class VisitorAttribute
     attr_reader :entity_id, :key, :type, :value
+
     def initialize(entity_id:, key:, type:, value:)
       @entity_id = entity_id
       @key = key

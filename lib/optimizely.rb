@@ -63,12 +63,12 @@ module Optimizely
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
 
-    def initialize(
+    def initialize( # rubocop:disable Metrics/ParameterLists
       datafile = nil,
       event_dispatcher = nil,
       logger = nil,
       error_handler = nil,
-      skip_json_validation = false,
+      skip_json_validation = false, # rubocop:disable Style/OptionalBooleanParameter
       user_profile_service = nil,
       sdk_key = nil,
       config_manager = nil,
@@ -146,8 +146,7 @@ module Optimizely
       # validate attributes
       return nil unless user_inputs_valid?(attributes)
 
-      user_context = OptimizelyUserContext.new(self, user_id, attributes)
-      user_context
+      OptimizelyUserContext.new(self, user_id, attributes)
     end
 
     def decide(user_context, key, decide_options = [])
@@ -219,11 +218,9 @@ module Optimizely
         decision_source = decision.source
       end
 
-      unless decide_options.include? OptimizelyDecideOption::DISABLE_DECISION_EVENT
-        if decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions
-          send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes)
-          decision_event_dispatched = true
-        end
+      if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions)
+        send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes)
+        decision_event_dispatched = true
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
@@ -610,15 +607,13 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable').message)
         return nil
       end
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         nil,
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     # Get the String value of the specified variable in the feature flag.
@@ -636,15 +631,13 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_string').message)
         return nil
       end
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['STRING'],
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     # Get the Json value of the specified variable in the feature flag in a Dict.
@@ -662,15 +655,13 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('get_feature_variable_json').message)
         return nil
       end
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['JSON'],
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     # Get the Boolean value of the specified variable in the feature flag.
@@ -689,15 +680,13 @@ module Optimizely
         return nil
       end
 
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['BOOLEAN'],
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     # Get the Double value of the specified variable in the feature flag.
@@ -716,15 +705,13 @@ module Optimizely
         return nil
       end
 
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['DOUBLE'],
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     # Get values of all the variables in the feature flag and returns them in a Dict
@@ -809,15 +796,13 @@ module Optimizely
         return nil
       end
 
-      variable_value = get_feature_variable_for_type(
+      get_feature_variable_for_type(
         feature_flag_key,
         variable_key,
         Optimizely::Helpers::Constants::VARIABLE_TYPES['INTEGER'],
         user_id,
         attributes
       )
-
-      variable_value
     end
 
     def is_valid

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ module Optimizely
 
         return true if boolean?(value_1) && boolean?(value_2)
 
-        value_1.class == value_2.class
+        value_1.instance_of?(value_2.class)
       end
 
       def finite_number?(value)

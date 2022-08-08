@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, 2022 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ module Optimizely
         @logger.log(Logger::ERROR, error_msg)
         @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
       else
-        @logger.log(Logger::DEBUG, 'event successfully sent with response code ' + response.code.to_s)
+        @logger.log(Logger::DEBUG, "event successfully sent with response code #{response.code}")
       end
     rescue Timeout::Error => e
       @logger.log(Logger::ERROR, "Request Timed out. Error: #{e}")

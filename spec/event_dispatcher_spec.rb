@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ describe Optimizely::EventDispatcher do
   end
 
   it 'should properly dispatch V2 (GET) events' do
-    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    get_url = "#{@url}?a=111001&g=111028&n=test_event&u=test_user"
     stub_request(:get, get_url)
     event = Optimizely::Event.new(:get, get_url, @params, @post_headers)
     @event_dispatcher.dispatch_event(event)
@@ -98,7 +98,7 @@ describe Optimizely::EventDispatcher do
   end
 
   it 'should properly dispatch V2 (GET) events with timeout exception' do
-    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    get_url = "#{@url}?a=111001&g=111028&n=test_event&u=test_user"
     event = Optimizely::Event.new(:get, get_url, @params, @post_headers)
     timeout_error = Timeout::Error.new
     stub_request(:get, get_url).to_raise(timeout_error)
@@ -109,7 +109,7 @@ describe Optimizely::EventDispatcher do
   end
 
   it 'should log and handle Timeout error' do
-    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    get_url = "#{@url}?a=111001&g=111028&n=test_event&u=test_user"
     event = Optimizely::Event.new(:post, get_url, @params, @post_headers)
     timeout_error = Timeout::Error.new
     stub_request(:post, get_url).to_raise(timeout_error)
@@ -125,7 +125,7 @@ describe Optimizely::EventDispatcher do
   end
 
   it 'should log and handle any standard error' do
-    get_url = @url + '?a=111001&g=111028&n=test_event&u=test_user'
+    get_url = "#{@url}?a=111001&g=111028&n=test_event&u=test_user"
     event = Optimizely::Event.new(:post, get_url, @params, @post_headers)
     stub_request(:post, get_url).to_raise(ArgumentError.new)
 
