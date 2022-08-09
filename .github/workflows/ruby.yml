@@ -7,9 +7,6 @@ on:
     branches: [ master ]
 
 jobs:
-  lint_markdown_files:
-    uses: optimizely/ruby-sdk/.github/workflows/lint_markdown.yml@master
-
   integration_tests:
     uses: optimizely/ruby-sdk/.github/workflows/integration_test.yml@master
     secrets:
