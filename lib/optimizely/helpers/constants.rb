@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -382,6 +382,12 @@ module Optimizely
         'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for rule '%s': %s."
       }.merge(AUDIENCE_EVALUATION_LOGS).freeze
 
+      ODP_LOGS = {
+        FETCH_SEGMENTS_FAILED: 'Audience segments fetch failed (%s).',
+        ODP_EVENT_FAILED: 'ODP event send failed (invalid url).',
+        ODP_NOT_ENABLED: 'ODP is not enabled.'
+      }.freeze
+
       DECISION_NOTIFICATION_TYPES = {
         'AB_TEST' => 'ab-test',
         'FEATURE' => 'feature',
@@ -404,6 +410,18 @@ module Optimizely
         'MIN_SECONDS_LIMIT' => 1,
         # Time in seconds before which request for datafile times out
         'REQUEST_TIMEOUT' => 10
+      }.freeze
+
+      EVENT_DISPATCH_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_GRAPHQL_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_REST_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
       }.freeze
 
       HTTP_HEADERS = {

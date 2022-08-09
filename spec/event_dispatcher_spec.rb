@@ -52,7 +52,7 @@ describe Optimizely::EventDispatcher do
         event.http_verb,
         event.params.to_json,
         event.headers,
-        Optimizely::EventDispatcher::REQUEST_TIMEOUT,
+        Optimizely::Helpers::Constants::EVENT_DISPATCH_CONFIG[:REQUEST_TIMEOUT],
         proxy_config
       )
 
