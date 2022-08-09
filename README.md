@@ -11,6 +11,9 @@ Optimizely Rollouts is free feature flags for development teams. Easily roll out
 
 ## Getting Started
 
+### Requirements
+* Ruby 2.7+
+
 ### Installing the SDK
 
 The SDK is available through [RubyGems](https://rubygems.org/gems/optimizely-sdk). To install:
