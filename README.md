@@ -1,5 +1,5 @@
 # Optimizely Ruby SDK
-[![Build Status](https://travis-ci.org/optimizely/ruby-sdk.svg?branch=master)](https://travis-ci.org/optimizely/ruby-sdk)
+[![Build Status](https://github.com/optimizely/ruby-sdk/actions/workflows/ruby.yml/badge.svg?branch=master)](https://github.com/optimizely/ruby-sdk/actions/workflows/ruby.yml?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/ruby-sdk/badge.svg)](https://coveralls.io/github/optimizely/ruby-sdk)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-extra-configurations-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
