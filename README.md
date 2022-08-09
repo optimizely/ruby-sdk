@@ -1,5 +1,5 @@
 # Optimizely Ruby SDK
-[![Build Status](https://travis-ci.org/optimizely/ruby-sdk.svg?branch=master)](https://travis-ci.org/optimizely/ruby-sdk)
+[![Build Status](https://github.com/optimizely/ruby-sdk/actions/workflows/ruby.yml/badge.svg?branch=master)](https://github.com/optimizely/ruby-sdk/actions/workflows/ruby.yml?query=branch%3Amaster)
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/ruby-sdk/badge.svg)](https://coveralls.io/github/optimizely/ruby-sdk)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-extra-configurations-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
@@ -66,7 +66,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
           notification_center,
           event_processor
       )
-      ```   
+      ```
 
 
 #### HTTP Config Manager
@@ -91,7 +91,7 @@ The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL 
         datafile_access_token: nil,
         proxy_config: nil
       )
-~~~~~~   
+~~~~~~
 **Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
 
 **sdk_key**
@@ -137,7 +137,7 @@ A notification signal will be triggered whenever a _new_ datafile is fetched and
 
 #### BatchEventProcessor
 
-[BatchEventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/batch_event_processor.rb) is a batched implementation of the [EventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/event_processor.rb)  
+[BatchEventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/batch_event_processor.rb) is a batched implementation of the [EventProcessor](https://github.com/optimizely/ruby-sdk/blob/master/lib/optimizely/event/event_processor.rb)
 
    * Events passed to the `BatchEventProcessor` are immediately added to a `Queue`.
 
@@ -153,7 +153,7 @@ event_processor = Optimizely::BatchEventProcessor.new(
     logger: logger,
     notification_center: notification_center
 )
-~~~~~~   
+~~~~~~
 
 #### Advanced configuration
 The following properties can be used to customize the `BatchEventProcessor` configuration.
@@ -204,16 +204,16 @@ Please see [CONTRIBUTING](CONTRIBUTING.md).
 ### Credits
 This software incorporates code from the following open source projects:
 
-**Httparty** [https://github.com/jnunemaker/httparty](https://github.com/jnunemaker/httparty)  
-Copyright &copy; 2008 John Nunemaker  
+**Httparty** [https://github.com/jnunemaker/httparty](https://github.com/jnunemaker/httparty)
+Copyright &copy; 2008 John Nunemaker
 License (MIT): [https://github.com/jnunemaker/httparty/blob/master/MIT-LICENSE](https://github.com/jnunemaker/httparty/blob/master/MIT-LICENSE)
 
-**JSON Schema Validator** [https://github.com/ruby-json-schema/json-schema](https://github.com/ruby-json-schema/json-schema)  
-Copyright &copy; 2010-2011, Lookingglass Cyber Solutions  
+**JSON Schema Validator** [https://github.com/ruby-json-schema/json-schema](https://github.com/ruby-json-schema/json-schema)
+Copyright &copy; 2010-2011, Lookingglass Cyber Solutions
 License (MIT): [https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md](https://github.com/ruby-json-schema/json-schema/blob/master/LICENSE.md)
 
-**Murmurhash3** [https://github.com/funny-falcon/murmurhash3-ruby](https://github.com/funny-falcon/murmurhash3-ruby)  
-Copyright &copy; 2012 Sokolov Yura 'funny-falcon'  
+**Murmurhash3** [https://github.com/funny-falcon/murmurhash3-ruby](https://github.com/funny-falcon/murmurhash3-ruby)
+Copyright &copy; 2012 Sokolov Yura 'funny-falcon'
 License (MIT): [https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE](https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LICENSE)
 
 
@@ -221,28 +221,28 @@ License (MIT): [https://github.com/funny-falcon/murmurhash3-ruby/blob/master/LIC
 This software may be used with additional code that is separately downloaded by you.  _These components are subject to
 their own license terms, which you should review carefully_.
 
-**Bundler** [https://github.com/bundler/bundler](https://github.com/bundler/bundler)  
-Copyright &copy; 2008-2018 Andre Arko, Engine Yard, et al  
+**Bundler** [https://github.com/bundler/bundler](https://github.com/bundler/bundler)
+Copyright &copy; 2008-2018 Andre Arko, Engine Yard, et al
 License (MIT): [https://github.com/bundler/bundler/blob/master/LICENSE.md](https://github.com/bundler/bundler/blob/master/LICENSE.md)
 
-**Coveralls** [https://github.com/lemurheavy/coveralls-ruby](https://github.com/lemurheavy/coveralls-ruby)  
-Copyright &copy; 2012 Wil Gieseler    
+**Coveralls** [https://github.com/lemurheavy/coveralls-ruby](https://github.com/lemurheavy/coveralls-ruby)
+Copyright &copy; 2012 Wil Gieseler
 License (MIT): [https://github.com/lemurheavy/coveralls-ruby/blob/master/LICENSE](https://github.com/lemurheavy/coveralls-ruby/blob/master/LICENSE)
 
-**Rake** [https://github.com/ruby/rake](https://github.com/ruby/rake)  
-Copyright &copy; 2004-2017 Jim Weirich  
-License (MIT): [https://github.com/ruby/rake/blob/master/MIT-LICENSE](https://github.com/ruby/rake/blob/master/MIT-LICENSE)  
+**Rake** [https://github.com/ruby/rake](https://github.com/ruby/rake)
+Copyright &copy; 2004-2017 Jim Weirich
+License (MIT): [https://github.com/ruby/rake/blob/master/MIT-LICENSE](https://github.com/ruby/rake/blob/master/MIT-LICENSE)
 
-**RSpec** [https://github.com/rspec/rspec](https://github.com/rspec/rspec)  
-Copyright &copy; 2009 Chad Humphries, David Chelimsky  
-Copyright &copy; 2006 David Chelimsky, The RSpec Development Team  
-Copyright &copy; 2005 Steven Baker  
-License (MIT): [https://github.com/rspec/rspec/blob/master/LICENSE.md](https://github.com/rspec/rspec/blob/master/LICENSE.md)  
+**RSpec** [https://github.com/rspec/rspec](https://github.com/rspec/rspec)
+Copyright &copy; 2009 Chad Humphries, David Chelimsky
+Copyright &copy; 2006 David Chelimsky, The RSpec Development Team
+Copyright &copy; 2005 Steven Baker
+License (MIT): [https://github.com/rspec/rspec/blob/master/LICENSE.md](https://github.com/rspec/rspec/blob/master/LICENSE.md)
 
-**RuboCop** [https://github.com/rubocop-hq/rubocop](https://github.com/rubocop-hq/rubocop)  
-Copyright &copy; 2012-19 Bozhidar Batsov  
+**RuboCop** [https://github.com/rubocop-hq/rubocop](https://github.com/rubocop-hq/rubocop)
+Copyright &copy; 2012-19 Bozhidar Batsov
 License (MIT): [https://github.com/rubocop-hq/rubocop/blob/master/LICENSE.txt](https://github.com/rubocop-hq/rubocop/blob/master/LICENSE.txt)
 
-**WebMock** [https://github.com/bblimke/webmock](https://github.com/bblimke/webmock)  
-Copyright &copy; 2009-2010 Bartosz Blimke    
+**WebMock** [https://github.com/bblimke/webmock](https://github.com/bblimke/webmock)
+Copyright &copy; 2009-2010 Bartosz Blimke
 License (MIT): [https://github.com/bblimke/webmock/blob/master/LICENSE](https://github.com/bblimke/webmock/blob/master/LICENSE)
