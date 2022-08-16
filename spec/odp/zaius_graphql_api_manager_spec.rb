@@ -240,12 +240,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       expect(segments).to match_array []
     end
 
-    it 'should log error and return empty array when response is missing node' do
+    it 'should log error and return nil when response is missing node' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: node_missing_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -253,12 +253,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array when response keys are incorrect' do
+    it 'should log error and return nil when response keys are incorrect' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: mixed_missing_keys_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -266,12 +266,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log warning and return empty array with invalid identifier exception' do
+    it 'should log warning and return nil with invalid identifier exception' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_identifier_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -279,12 +279,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with other exception' do
+    it 'should log error and return nil with other exception' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: other_exception_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -292,12 +292,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with bad response data' do
+    it 'should log error and return nil with bad response data' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: bad_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -305,12 +305,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with invalid name' do
+    it 'should log error and return nil with invalid name' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: name_invalid_response_data)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -318,12 +318,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with invalid key' do
+    it 'should log error and return nil with invalid key' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_edges_key_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -331,12 +331,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with invalid key in error body' do
+    it 'should log error and return nil with invalid key in error body' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_key_for_error_response_data.to_json)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -344,12 +344,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with network error' do
+    it 'should log error and return nil with network error' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .and_raise(SocketError)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -362,12 +362,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with http status 400' do
+    it 'should log error and return nil with http status 400' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 400)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
@@ -375,12 +375,12 @@ describe Optimizely::ZaiusGraphQLApiManager do
       )
     end
 
-    it 'should log error and return empty array with http status 500' do
+    it 'should log error and return nil with http status 500' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 500)
 
       segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
-      expect(segments).to match_array([])
+      expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
         Logger::ERROR,
