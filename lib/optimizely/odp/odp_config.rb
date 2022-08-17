@@ -22,36 +22,32 @@ module Optimizely
   class OdpConfig
     # Contains configuration used for ODP integration.
     #
-    # @param api_host - The host URL for the ODP audience segments API (optional). If not provided, SDK will use the default host in datafile.
-    # @param api_key - The public API key for the ODP account from which the audience segments will be fetched (optional). If not provided, SDK will use the default publicKey in datafile.
+    # @param api_host - The host URL for the ODP audience segments API (optional).
+    # @param api_key - The public API key for the ODP account from which the audience segments will be fetched (optional).
     # @param segments_to_check - An array of all ODP segments used in the current datafile (associated with api_host/api_key).
-    # @param odp_enabled - A boolean value indicating whether odp is enabled for the project or not.
     def initialize(api_key = nil, api_host = nil, segments_to_check = [])
       @api_key = api_key
       @api_host = api_host
       @segments_to_check = segments_to_check
-      @odp_enabled = !api_key.nil? && !api_host.nil? ? true : false
       @mutex = Mutex.new
     end
 
     # Replaces the existing configuration
     #
-    # @param api_host - The host URL for the ODP audience segments API (optional). If not provided, SDK will use the default host in datafile.
-    # @param api_key - The public API key for the ODP account from which the audience segments will be fetched (optional). If not provided, SDK will use the default publicKey in datafile.
+    # @param api_host - The host URL for the ODP audience segments API (optional).
+    # @param api_key - The public API key for the ODP account from which the audience segments will be fetched (optional).
     # @param segments_to_check - An array of all ODP segments used in the current datafile (associated with api_host/api_key).
     #
     # @return - True if the provided values were different than the existing values.
 
     def update(api_key = nil, api_host = nil, segments_to_check = [])
       @mutex.synchronize do
-        @odp_enabled = !api_key.nil? && !api_host.nil? ? true : false
-
-        return false if @api_key == api_key && @api_host == api_host && @segments_to_check == segments_to_check
+        break false if @api_key == api_key && @api_host == api_host && @segments_to_check == segments_to_check
 
         @api_key = api_key
         @api_host = api_host
         @segments_to_check = segments_to_check
-        true
+        break true
       end
     end
 
@@ -103,20 +99,12 @@ module Optimizely
       @mutex.synchronize { @segments_to_check = segments_to_check.clone }
     end
 
-    # Returns True if odp is enabled and ready
+    # Returns True if odp is integrated
     #
     # @return - bool
 
-    def odp_enabled
-      @mutex.synchronize { @odp_enabled.clone }
-    end
-
-    # Enable/disable the odp integration
-    #
-    # @param odp_enabled - bool
-
-    def odp_enabled=(odp_enabled)
-      @mutex.synchronize { @odp_enabled = odp_enabled.clone }
+    def odp_integrated?
+      @mutex.synchronize { !@api_key.nil? && !@api_host.nil? }
     end
   end
 end

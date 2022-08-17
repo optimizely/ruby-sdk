@@ -24,51 +24,55 @@ module Optimizely
     # Schedules connections to ODP for audience segmentation and caches the results
     attr_reader :odp_config, :segments_cache, :zaius_manager, :logger
 
-    def initialize(cache_size, cache_timeout_in_secs, odp_config, api_manager = nil, logger = nil, proxy_config = nil)
+    def initialize(odp_config, segments_cache, api_manager = nil, logger = nil, proxy_config = nil)
       @odp_config = odp_config
       @logger = logger || NoOpLogger.new
       @zaius_manager = api_manager || ZaiusGraphQLApiManager.new(logger: @logger, proxy_config: proxy_config)
-      @segments_cache = Optimizely::LRUCache.new(cache_size, cache_timeout_in_secs)
+      @segments_cache = segments_cache
     end
 
-    def fetch_qualified_segments(segment_request)
-      odp_api_key = @odp_config&.api_key
-      odp_api_host = @odp_config&.api_host
-
-      unless odp_api_host && odp_api_key
-        @logger.log(Logger::ERROR, 'api_key/api_host not defined')
-        segment_request.segments = nil
-        return
+    # Returns qualified segments for the user from the cache or the ODP server if not in the cache.
+    #
+    # @param user_key - The key for identifying the id type.
+    # @param user_value - The id itself.
+    # @param options - An array of OptimizelySegmentOptions used to ignore and/or reset the cache.
+    #
+    # @return - Array of qualified segments.
+    def fetch_qualified_segments(user_key, user_value, options)
+      unless @odp_config.odp_integrated?
+        @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], 'ODP is not enabled'))
+        return nil
       end
+
+      odp_api_key = @odp_config.api_key
+      odp_api_host = @odp_config.api_host
       segments_to_check = @odp_config&.segments_to_check
 
       unless segments_to_check&.size&.positive?
-        segment_request.segments = []
-        return
+        @logger.log(Logger::DEBUG, 'No segments are used in the project. Returning empty list')
+        return []
       end
 
-      cache_key = make_cache_key(segment_request.user_key, segment_request.user_value)
+      cache_key = make_cache_key(user_key, user_value)
 
-      ignore_cache = segment_request.options.include?(OptimizelySegmentOption::IGNORE_CACHE)
-      reset_cache = segment_request.options.include?(OptimizelySegmentOption::RESET_CACHE)
+      ignore_cache = options.include?(OptimizelySegmentOption::IGNORE_CACHE)
+      reset_cache = options.include?(OptimizelySegmentOption::RESET_CACHE)
 
       reset if reset_cache
 
       unless ignore_cache || reset_cache
         segments = @segments_cache.lookup(cache_key)
         unless segments.nil?
-          segment_request.segments = segments
-          return
+          @logger.log(Logger::DEBUG, 'ODP cache hit. Returning segments from cache.')
+          return segments
         end
       end
 
-      Thread.new do
-        segments = @zaius_manager.fetch_segments(odp_api_key, odp_api_host, segment_request.user_key, segment_request.user_value, segments_to_check)
-        @segments_cache.save(cache_key, segments) unless segments.nil? || ignore_cache
-        segment_request.segments = segments
-      end
+      @logger.log(Logger::DEBUG, 'ODP cache miss. Making a call to ODP server.')
 
-      nil
+      segments = @zaius_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value, segments_to_check)
+      @segments_cache.save(cache_key, segments) unless segments.nil? || ignore_cache
+      segments
     end
 
     def reset
@@ -84,37 +88,8 @@ module Optimizely
   end
 
   class OptimizelySegmentOption
+    # Options for the OdpSegmentManager
     IGNORE_CACHE = :IGNORE_CACHE
     RESET_CACHE = :RESET_CACHE
-  end
-
-  class OdpSegmentRequest
-    # Allows asynchronous communication between OptimizelyUserContext and OdpSegmentManger
-    attr_reader :user_key, :user_value, :options
-
-    def initialize(user_key, user_value, options)
-      @user_key = user_key
-      @user_value = user_value
-      @options = options
-      @queue = Thread::SizedQueue.new(1)
-      @segments = nil
-    end
-
-    # If this method is called without a corresponding call to segments=, it will wait indefinitely
-    def wait_for_segments
-      return @segments if @queue.closed?
-
-      @segments = @queue.pop
-      @queue.close
-      @segments
-    end
-
-    def segments=(segments)
-      if @queue.closed?
-        @segments = segments
-        return
-      end
-      @queue.push(segments, non_block: true)
-    end
   end
 end
