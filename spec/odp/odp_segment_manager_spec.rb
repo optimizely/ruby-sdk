@@ -20,10 +20,7 @@ require 'optimizely/odp/zaius_graphql_api_manager'
 require 'optimizely/logger'
 
 describe Optimizely::OdpSegmentManager do
-  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
-  let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:datafile_project_config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:api_host) { 'https://test-host' }
   let(:user_key) { 'fs_user_id' }
   let(:user_value) { 'test-user-value' }
@@ -94,6 +91,8 @@ describe Optimizely::OdpSegmentManager do
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
       segment_request = Optimizely::OdpSegmentRequest.new(user_key, user_value, [])
 
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
+
       segment_manager.fetch_qualified_segments(segment_request)
 
       expect(segment_request.wait_for_segments).to match_array(%w[a b])
@@ -108,6 +107,8 @@ describe Optimizely::OdpSegmentManager do
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
       segment_request = Optimizely::OdpSegmentRequest.new(user_key, user_value, [])
 
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
+
       segment_manager.fetch_qualified_segments(segment_request)
 
       expect(segment_request.wait_for_segments).to match_array([])
@@ -120,6 +121,8 @@ describe Optimizely::OdpSegmentManager do
 
       odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
+
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
 
       cache_key = segment_manager.send(:make_cache_key, user_key, '123')
       segment_manager.segments_cache.save(cache_key, %w[d])
@@ -138,6 +141,8 @@ describe Optimizely::OdpSegmentManager do
       odp_config = Optimizely::OdpConfig.new
       odp_config.update(api_key, api_host, %w[a b c])
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
+
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
 
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[c])
@@ -170,17 +175,21 @@ describe Optimizely::OdpSegmentManager do
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config)
       segment_request = Optimizely::OdpSegmentRequest.new(user_key, user_value, [])
 
+      expect(segment_manager.zaius_manager).to receive(:log_failure)
+
       segment_manager.fetch_qualified_segments(segment_request)
 
       expect(segment_request.wait_for_segments).to be_nil
     end
 
-    it 'should return success with ignore cache' do
+    it 'should return non cached value with ignore cache' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
       odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
+
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
 
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[d])
@@ -194,15 +203,18 @@ describe Optimizely::OdpSegmentManager do
       expect(spy_logger).not_to have_received(:log)
     end
 
-    it 'should return success with reset cache' do
+    it 'should reset cache and return non cached value with reset cache' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
       odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
       segment_manager = Optimizely::OdpSegmentManager.new(1000, 1000, odp_config, nil, spy_logger)
 
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
+
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[d])
+      segment_manager.segments_cache.save('123', %w[c d])
 
       segment_request = Optimizely::OdpSegmentRequest.new(user_key, user_value, [Optimizely::OptimizelySegmentOption::RESET_CACHE])
 
@@ -210,7 +222,7 @@ describe Optimizely::OdpSegmentManager do
 
       expect(segment_request.wait_for_segments).to match_array(%w[a b])
       expect(segment_manager.segments_cache.lookup(cache_key)).to match_array(%w[a b])
-      expect(spy_logger).not_to have_received(:log)
+      expect(segment_manager.segments_cache.instance_variable_get('@map').length).to be 1
     end
 
     it 'should make correct cache key' do
@@ -231,8 +243,7 @@ describe Optimizely::OdpSegmentManager do
         sleep(1)
         %w[a b]
       end
-
-      expect(segment_manager.logger).not_to receive(:log)
+      expect(segment_manager.zaius_manager).not_to receive(:log_failure)
 
       thread_count = 1000
       threads = []
