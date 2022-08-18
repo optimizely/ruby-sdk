@@ -43,11 +43,11 @@ module Optimizely
         response = Helpers::HttpUtils.make_request(
           url, :post, events.to_json, headers, Optimizely::Helpers::Constants::ODP_REST_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
         )
-      rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET
+      rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::EFAULT, Errno::ENETUNREACH, Errno::ENETDOWN, Errno::ECONNREFUSED
         log_failure('network error')
         should_retry = true
         return should_retry
-      rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError => e
+      rescue StandardError => e
         log_failure(e)
         return should_retry
       end
