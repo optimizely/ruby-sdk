@@ -55,7 +55,7 @@ module Optimizely
       status = response.code.to_i
       if status >= 400
         log_failure(!response.body.empty? ? response.body : "#{status}: #{response.message}")
-        should_retry = true if status >= 500
+        should_retry = status >= 500
       end
       should_retry
     end
