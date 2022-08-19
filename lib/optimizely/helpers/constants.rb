@@ -384,7 +384,7 @@ module Optimizely
 
       ODP_LOGS = {
         FETCH_SEGMENTS_FAILED: 'Audience segments fetch failed (%s).',
-        ODP_EVENT_FAILED: 'ODP event send failed (invalid url).',
+        ODP_EVENT_FAILED: 'ODP event send failed (%s).',
         ODP_NOT_ENABLED: 'ODP is not enabled.'
       }.freeze
 
