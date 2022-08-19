@@ -19,7 +19,7 @@
 require 'json'
 
 module Optimizely
-  class ZaiusGraphQlApiManager
+  class ZaiusGraphQLApiManager
     # Interface that handles fetching audience segments.
 
     def initialize(logger: nil, proxy_config: nil)
@@ -52,23 +52,23 @@ module Optimizely
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
         log_failure('network error')
-        return []
+        return nil
       rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError => e
         log_failure(e)
-        return []
+        return nil
       end
 
       status = response.code.to_i
       if status >= 400
         log_failure(status)
-        return []
+        return nil
       end
 
       begin
         response = JSON.parse(response.body)
       rescue JSON::ParserError
         log_failure('JSON decode error')
-        return []
+        return nil
       end
 
       if response.include?('errors')
@@ -78,13 +78,13 @@ module Optimizely
         else
           log_failure(error_class)
         end
-        return []
+        return nil
       end
 
       audiences = response.dig('data', 'customer', 'audiences', 'edges')
       unless audiences
         log_failure('decode error')
-        return []
+        return nil
       end
 
       audiences.filter_map do |edge|
@@ -92,7 +92,7 @@ module Optimizely
         state = edge.dig('node', 'state')
         unless name && state
           log_failure('decode error')
-          return []
+          return nil
         end
         state == 'qualified' ? name : nil
       end
