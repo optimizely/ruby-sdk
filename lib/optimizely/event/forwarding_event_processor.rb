@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, Optimizely and contributors
+#    Copyright 2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ module Optimizely
     # ForwardingEventProcessor is a basic transformation stage for converting
     # the event batch into a LogEvent to be dispatched.
     def initialize(event_dispatcher, logger = nil, notification_center = nil)
+      super()
       @event_dispatcher = event_dispatcher
       @logger = logger || NoOpLogger.new
       @notification_center = notification_center

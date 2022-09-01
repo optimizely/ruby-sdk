@@ -69,6 +69,7 @@ module Optimizely
       datafile_access_token: nil,
       proxy_config: nil
     )
+      super()
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @access_token = datafile_access_token

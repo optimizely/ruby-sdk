@@ -1,7 +1,7 @@
 inherit_from: .rubocop_todo.yml
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.7
 
 Layout/SpaceInsideHashLiteralBraces:
   EnforcedStyle: no_space
@@ -21,7 +21,7 @@ Metrics/ClassLength:
 Metrics/CyclomaticComplexity:
   Enabled: false
 
-Metrics/LineLength:
+Layout/LineLength:
   Enabled: false
 
 Metrics/MethodLength:
@@ -49,4 +49,4 @@ Lint/RescueException:
   Enabled: true
 
 Layout/EndOfLine:
-  EnforcedStyle: lf
+  Enabled: false

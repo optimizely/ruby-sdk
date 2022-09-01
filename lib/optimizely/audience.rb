@@ -16,7 +16,7 @@
 #    limitations under the License.
 #
 require 'json'
-require_relative './custom_attribute_condition_evaluator'
+require_relative './user_condition_evaluator'
 require_relative 'condition_tree_evaluator'
 require_relative 'helpers/constants'
 
@@ -24,13 +24,12 @@ module Optimizely
   module Audience
     module_function
 
-    def user_meets_audience_conditions?(config, experiment, attributes, logger, logging_hash = nil, logging_key = nil)
+    def user_meets_audience_conditions?(config, experiment, user_context, logger, logging_hash = nil, logging_key = nil)
       # Determine for given experiment/rollout rule if user satisfies the audience conditions.
       #
       # config - Representation of the Optimizely project config.
       # experiment - Experiment/Rollout rule in which user is to be bucketed.
-      # attributes - Hash representing user attributes which will be used in determining if
-      #              the audience conditions are met.
+      # user_context - Optimizely user context instance
       # logger - Provides a logger instance.
       # logging_hash - Optional string representing logs hash inside Helpers::Constants.
       #                This defaults to 'EXPERIMENT_AUDIENCE_EVALUATION_LOGS'.
@@ -57,12 +56,10 @@ module Optimizely
         return true, decide_reasons
       end
 
-      attributes ||= {}
+      user_condition_evaluator = UserConditionEvaluator.new(user_context, logger)
 
-      custom_attr_condition_evaluator = CustomAttributeConditionEvaluator.new(attributes, logger)
-
-      evaluate_custom_attr = lambda do |condition|
-        return custom_attr_condition_evaluator.evaluate(condition)
+      evaluate_user_conditions = lambda do |condition|
+        return user_condition_evaluator.evaluate(condition)
       end
 
       evaluate_audience = lambda do |audience_id|
@@ -75,7 +72,7 @@ module Optimizely
         decide_reasons.push(message)
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
-        result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_custom_attr)
+        result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_user_conditions)
         result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
         message = format(logs_hash['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
         logger.log(Logger::DEBUG, message)
@@ -93,5 +90,38 @@ module Optimizely
 
       [eval_result, decide_reasons]
     end
+
+    def get_segments(conditions)
+      # Return any audience segments from provided conditions.
+      #
+      # conditions - Nested array of and/or conditions.
+      #              Example: ['and', operand_1, ['or', operand_2, operand_3]]
+      #
+      # Returns unique array of segment names.
+      conditions = JSON.parse(conditions) if conditions.is_a?(String)
+      @parse_segments.call(conditions).uniq
+    end
+
+    @parse_segments = lambda { |conditions|
+      # Return any audience segments from provided conditions.
+      # Helper function for get_segments.
+      #
+      # conditions - Nested array of and/or conditions.
+      #              Example: ['and', operand_1, ['or', operand_2, operand_3]]
+      #
+      # Returns array of segment names.
+      segments = []
+
+      conditions.each do |condition|
+        case condition
+        when Array
+          segments.concat @parse_segments.call(condition)
+        when Hash
+          segments.push(condition['value']) if condition.fetch('match', nil) == 'qualified'
+        end
+      end
+
+      segments
+    }
   end
 end

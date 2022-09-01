@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019-2020 Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, 2022 Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #
 require_relative 'exceptions'
 require_relative 'helpers/http_utils'
+require_relative 'helpers/constants'
 
 module Optimizely
   class NoOpEventDispatcher
@@ -26,9 +27,6 @@ module Optimizely
   end
 
   class EventDispatcher
-    # @api constants
-    REQUEST_TIMEOUT = 10
-
     def initialize(logger: nil, error_handler: nil, proxy_config: nil)
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -40,7 +38,7 @@ module Optimizely
     # @param event - Event object
     def dispatch_event(event)
       response = Helpers::HttpUtils.make_request(
-        event.url, event.http_verb, event.params.to_json, event.headers, REQUEST_TIMEOUT, @proxy_config
+        event.url, event.http_verb, event.params.to_json, event.headers, Helpers::Constants::EVENT_DISPATCH_CONFIG[:REQUEST_TIMEOUT], @proxy_config
       )
 
       error_msg = "Event failed to dispatch with response code: #{response.code}"
@@ -54,7 +52,7 @@ module Optimizely
         @logger.log(Logger::ERROR, error_msg)
         @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
       else
-        @logger.log(Logger::DEBUG, 'event successfully sent with response code ' + response.code.to_s)
+        @logger.log(Logger::DEBUG, "event successfully sent with response code #{response.code}")
       end
     rescue Timeout::Error => e
       @logger.log(Logger::ERROR, "Request Timed out. Error: #{e}")

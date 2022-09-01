@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ describe 'Optimizely' do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
   let(:forced_decision_JSON) { OptimizelySpec::DECIDE_FORCED_DECISION_JSON }
+  let(:integration_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler) }
+  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
 
   describe '#initialize' do
@@ -36,14 +38,14 @@ describe 'Optimizely' do
       attributes = {' browser' => 'firefox'}
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, attributes)
 
-      expect(user_context_obj.instance_variable_get(:@optimizely_client)). to eq(project_instance)
-      expect(user_context_obj.instance_variable_get(:@user_id)). to eq(user_id)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(attributes)
+      expect(user_context_obj.instance_variable_get(:@optimizely_client)).to eq(project_instance)
+      expect(user_context_obj.instance_variable_get(:@user_id)).to eq(user_id)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(attributes)
     end
 
     it 'should set user attributes to empty hash when passed nil' do
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, 'test_user', nil)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq({})
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq({})
     end
   end
 
@@ -56,7 +58,7 @@ describe 'Optimizely' do
 
       expected_attributes = attributes
       expected_attributes['id'] = 49
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(expected_attributes)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(expected_attributes)
     end
 
     it 'should override attribute value if key already exists in hash' do
@@ -68,7 +70,7 @@ describe 'Optimizely' do
       expected_attributes = attributes
       expected_attributes['browser'] = 'chrome'
 
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(expected_attributes)
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(expected_attributes)
     end
 
     it 'should not alter original attributes object when attrubute is modified in the user context' do
@@ -76,7 +78,7 @@ describe 'Optimizely' do
       original_attributes = {'browser' => 'firefox'}
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, user_id, original_attributes)
       user_context_obj.set_attribute('id', 49)
-      expect(user_context_obj.instance_variable_get(:@user_attributes)). to eq(
+      expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq(
         'browser' => 'firefox',
         'id' => 49
       )
@@ -115,7 +117,7 @@ describe 'Optimizely' do
         project_id: '10431130345',
         revision: '241',
         client_name: 'ruby-sdk',
-        client_version: '3.10.1',
+        client_version: Optimizely::VERSION,
         anonymize_ip: true,
         enrich_decisions: true,
         visitors: [{
@@ -208,7 +210,7 @@ describe 'Optimizely' do
         project_id: '10431130345',
         revision: '241',
         client_name: 'ruby-sdk',
-        client_version: '3.10.1',
+        client_version: Optimizely::VERSION,
         anonymize_ip: true,
         enrich_decisions: true,
         visitors: [{
@@ -321,7 +323,7 @@ describe 'Optimizely' do
         project_id: '10431130345',
         revision: '241',
         client_name: 'ruby-sdk',
-        client_version: '3.10.1',
+        client_version: Optimizely::VERSION,
         anonymize_ip: true,
         enrich_decisions: true,
         visitors: [{
@@ -721,5 +723,75 @@ describe 'Optimizely' do
       expect(user_context_obj).to have_received(:remove_forced_decision).with(context_with_flag_2).exactly(100).times
       expect(user_context_obj).to have_received(:remove_all_forced_decisions).once
     end
+  end
+  it 'should clone qualified segments in user context' do
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    qualified_segments = %w[seg1 seg2]
+    user_context_obj.qualified_segments = qualified_segments
+    user_clone_1 = user_context_obj.clone
+
+    expect(user_clone_1.qualified_segments).not_to be_empty
+    expect(user_clone_1.qualified_segments).to eq qualified_segments
+    expect(user_clone_1.qualified_segments).not_to be user_context_obj.qualified_segments
+    expect(user_clone_1.qualified_segments).not_to be qualified_segments
+  end
+
+  it 'should hit segment in ab test' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-1 odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment')
+
+    expect(decision.variation_key).to eq 'variation-a'
+  end
+
+  it 'should hit other audience with segments in ab test' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', 'age' => 30)
+    user_context_obj.qualified_segments = %w[odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'variation-a'
+  end
+
+  it 'should hit segment in rollout' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-2]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-on'
+  end
+
+  it 'should miss segment in rollout' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = %w[odp-segment-none]
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
+  end
+
+  it 'should miss segment with empty segments' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+    user_context_obj.qualified_segments = []
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
+  end
+
+  it 'should not fail without any segments' do
+    stub_request(:post, impression_log_url)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+    decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+
+    expect(decision.variation_key).to eq 'rollout-variation-off'
   end
 end

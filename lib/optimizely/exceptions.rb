@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -107,10 +107,6 @@ module Optimizely
 
   class InvalidInputsError < Error
     # Raised when an invalid inputs are provided during Project instantiation
-
-    def initialize(msg)
-      super msg
-    end
   end
 
   class InvalidProjectConfigError < Error
