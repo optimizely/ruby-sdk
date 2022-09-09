@@ -424,6 +424,12 @@ module Optimizely
         REQUEST_TIMEOUT: 10
       }.freeze
 
+      ODP_CONFIG_STATE = {
+        UNDETERMINED: 'UNDETERMINED',
+        INTEGRATED: 'INTEGRATED',
+        NOT_INTEGRATED: 'NOT_INTEGRATED'
+      }.freeze
+
       HTTP_HEADERS = {
         'IF_MODIFIED_SINCE' => 'If-Modified-Since',
         'LAST_MODIFIED' => 'Last-Modified'

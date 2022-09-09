@@ -39,14 +39,14 @@ module Optimizely
     #
     # @return - Array of qualified segments.
     def fetch_qualified_segments(user_key, user_value, options)
-      unless @odp_config.odp_integrated?
-        @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], 'ODP is not enabled'))
-        return nil
-      end
-
       odp_api_key = @odp_config.api_key
       odp_api_host = @odp_config.api_host
       segments_to_check = @odp_config&.segments_to_check
+
+      if odp_api_key.nil? || odp_api_host.nil?
+        @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], 'ODP is not enabled'))
+        return nil
+      end
 
       unless segments_to_check&.size&.positive?
         @logger.log(Logger::DEBUG, 'No segments are used in the project. Returning empty list')
