@@ -32,7 +32,7 @@ module Optimizely
       @api_host = api_host
       @segments_to_check = segments_to_check
       @mutex = Mutex.new
-      @odp_state = @api_host.nil? && @api_key.nil? ? ODP_CONFIG_STATE[:UNDETERMINED] : ODP_CONFIG_STATE[:INTEGRATED]
+      @odp_state = @api_host.nil? || @api_key.nil? ? ODP_CONFIG_STATE[:UNDETERMINED] : ODP_CONFIG_STATE[:INTEGRATED]
     end
 
     # Replaces the existing configuration
@@ -46,7 +46,7 @@ module Optimizely
     def update(api_key = nil, api_host = nil, segments_to_check = [])
       updated = false
       @mutex.synchronize do
-        @odp_state = api_host.nil? && api_key.nil? ? ODP_CONFIG_STATE[:NOT_INTEGRATED] : ODP_CONFIG_STATE[:INTEGRATED]
+        @odp_state = api_host.nil? || api_key.nil? ? ODP_CONFIG_STATE[:NOT_INTEGRATED] : ODP_CONFIG_STATE[:INTEGRATED]
 
         if @api_key != api_key || @api_host != api_host || @segments_to_check != segments_to_check
           @api_key = api_key

@@ -352,6 +352,8 @@ describe Optimizely::OdpEventManager do
       event[:data][:data_source] = 'my-app'
       odp_event = Optimizely::OdpEvent.new(**event)
 
+      expect(odp_event.instance_variable_get('@data')[:data_source]).to eq 'my-app'
+
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, [odp_event]).and_return(false)
       event_manager.start!
 
