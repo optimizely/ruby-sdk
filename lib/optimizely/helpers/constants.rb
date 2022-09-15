@@ -434,7 +434,7 @@ module Optimizely
       ODP_EVENT_MANAGER = {
         DEFAULT_QUEUE_CAPACITY: 10_000,
         DEFAULT_BATCH_SIZE: 10,
-        DEFAULT_FLUSH_INTERVAL: 1,
+        DEFAULT_FLUSH_INTERVAL_SECONDS: 1,
         DEFAULT_RETRY_COUNT: 3
       }.freeze
 

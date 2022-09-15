@@ -44,7 +44,7 @@ module Optimizely
       @logger = logger
       @zaius_manager = api_manager || ZaiusRestApiManager.new(logger: @logger, proxy_config: proxy_config)
       @batch_size = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
-      @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL]
+      @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
       @flush_deadline = 0
       @retry_count = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_RETRY_COUNT]
       # current_batch should only be accessed by processing thread
@@ -123,6 +123,8 @@ module Optimizely
         return
       end
 
+      @event_queue.close
+
       @mutex.synchronize do
         @received.signal
       end
@@ -135,7 +137,7 @@ module Optimizely
     end
 
     def running?
-      @thread && !!@thread.status
+      @thread && !!@thread.status && !@event_queue.closed?
     end
 
     private
