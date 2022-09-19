@@ -35,7 +35,11 @@ module Optimizely
       proxy_config: nil
     )
       super()
+
       @odp_config = odp_config
+      @api_host = odp_config.api_host
+      @api_key = odp_config.api_key
+
       @mutex = Mutex.new
       @event_queue = SizedQueue.new(Optimizely::Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_QUEUE_CAPACITY])
       @queue_capacity = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_QUEUE_CAPACITY]
@@ -67,6 +71,19 @@ module Optimizely
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error flushing ODP event queue.')
         return
+      end
+
+      @mutex.synchronize do
+        @received.signal
+      end
+    end
+
+    def update_config
+      begin
+        # Adds update config signal to event_queue.
+        @event_queue.push(:UPDATE_CONFIG, non_block: true)
+      rescue ThreadError
+        @logger.log(Logger::ERROR, 'Error updating ODP config for the event queue')
       end
 
       @mutex.synchronize do
@@ -164,10 +181,14 @@ module Optimizely
         when :FLUSH_SIGNAL
           @logger.log(Logger::DEBUG, 'ODP event queue: received flush signal.')
           flush_batch!
-          next
+
+        when :UPDATE_CONFIG
+          @logger.log(Logger::DEBUG, 'ODP event queue: received update config signal.')
+          process_config_update
 
         when Optimizely::OdpEvent
           add_to_batch(item)
+
         when nil && !@current_batch.empty?
           @logger.log(Logger::DEBUG, 'ODP event queue: flushing on interval.')
           flush_batch!
@@ -190,10 +211,7 @@ module Optimizely
         return
       end
 
-      api_key = @odp_config.api_key
-      api_host = @odp_config.api_host
-
-      if api_key.nil? || api_host.nil?
+      if @api_key.nil? || @api_host.nil?
         @logger.log(Logger::DEBUG, Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
         @current_batch.clear
         return
@@ -205,7 +223,7 @@ module Optimizely
       i = 0
       while i < @retry_count
         begin
-          should_retry = @zaius_manager.send_odp_events(api_key, api_host, @current_batch)
+          should_retry = @zaius_manager.send_odp_events(@api_key, @api_host, @current_batch)
         rescue StandardError => e
           should_retry = false
           @logger.log(Logger::ERROR, format(Helpers::Constants::ODP_LOGS[:ODP_EVENT_FAILED], "Error: #{e.message} #{@current_batch.to_json}"))
@@ -246,6 +264,14 @@ module Optimizely
       return nil if @current_batch.empty?
 
       time_till_flush
+    end
+
+    def process_config_update
+      # Updates the configuration used to send events.
+      flush_batch! unless @current_batch.empty?
+
+      @api_key = @odp_config.api_key
+      @api_host = @odp_config.api_host
     end
   end
 end

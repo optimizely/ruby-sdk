@@ -296,8 +296,8 @@ describe Optimizely::OdpEventManager do
     it 'should log debug when odp disabled' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
       odp_config.update(nil, nil, nil)
+      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
       event_manager.start!
 
       event_manager.send_event(**events[0])
@@ -391,8 +391,9 @@ describe Optimizely::OdpEventManager do
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
 
-      odp_config.update(api_key, api_host, [])
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
+      odp_config.update(api_key, api_host, [])
+      event_manager.update_config
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -405,6 +406,7 @@ describe Optimizely::OdpEventManager do
       expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, 'ODP event queue: cannot send before the datafile has loaded.')
       expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, 'ODP event queue: adding event.')
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: received flush signal.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: received update config signal.')
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 2.')
       event_manager.stop!
     end
@@ -419,8 +421,10 @@ describe Optimizely::OdpEventManager do
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
 
-      odp_config.update(nil, nil, [])
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
+
+      odp_config.update(nil, nil, [])
+      event_manager.update_config
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -448,6 +452,7 @@ describe Optimizely::OdpEventManager do
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
 
       odp_config.update(nil, nil, [])
+      event_manager.update_config
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -456,31 +461,36 @@ describe Optimizely::OdpEventManager do
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 2.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: received update config signal.')
       expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, Optimizely::Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
       expect(event_manager.instance_variable_get('@current_batch').length).to eq 0
       event_manager.stop!
     end
 
     it 'should discard events if odp is disabled after there are events in queue' do
+      allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new(api_key, api_host)
 
       event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
-      expect(event_manager.zaius_manager).not_to receive(:send_odp_events)
-      event_manager.instance_variable_set('@batch_size', 2)
+      event_manager.instance_variable_set('@batch_size', 3)
 
+      allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
       allow(event_manager).to receive(:running?).and_return(true)
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
+      odp_config.update(nil, nil, [])
+      event_manager.update_config
 
       RSpec::Mocks.space.proxy_for(event_manager).remove_stub(:running?)
 
-      odp_config.update(nil, nil, [])
       event_manager.start!
+      event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
+      event_manager.send_event(**events[0])
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
 
       expect(event_manager.instance_variable_get('@current_batch').length).to eq 0
-      expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, Optimizely::Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
+      expect(spy_logger).to have_received(:log).exactly(3).times.with(Logger::DEBUG, Optimizely::Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
       event_manager.stop!
     end
