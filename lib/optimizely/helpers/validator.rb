@@ -178,6 +178,11 @@ module Optimizely
 
         value.is_a?(Numeric) && value.to_f.finite? && value.abs <= Constants::FINITE_NUMBER_LIMIT
       end
+
+      def odp_data_types_valid?(data)
+        valid_types = [String, Float, Integer, TrueClass, FalseClass, NilClass]
+        data.values.all? { |e| valid_types.member? e.class }
+      end
     end
   end
 end

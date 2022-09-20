@@ -385,7 +385,8 @@ module Optimizely
       ODP_LOGS = {
         FETCH_SEGMENTS_FAILED: 'Audience segments fetch failed (%s).',
         ODP_EVENT_FAILED: 'ODP event send failed (%s).',
-        ODP_NOT_ENABLED: 'ODP is not enabled.'
+        ODP_NOT_ENABLED: 'ODP is not enabled.',
+        ODP_NOT_INTEGRATED: 'ODP is not integrated.'
       }.freeze
 
       DECISION_NOTIFICATION_TYPES = {
@@ -422,6 +423,19 @@ module Optimizely
 
       ODP_REST_API_CONFIG = {
         REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_CONFIG_STATE = {
+        UNDETERMINED: 'UNDETERMINED',
+        INTEGRATED: 'INTEGRATED',
+        NOT_INTEGRATED: 'NOT_INTEGRATED'
+      }.freeze
+
+      ODP_EVENT_MANAGER = {
+        DEFAULT_QUEUE_CAPACITY: 10_000,
+        DEFAULT_BATCH_SIZE: 10,
+        DEFAULT_FLUSH_INTERVAL_SECONDS: 1,
+        DEFAULT_RETRY_COUNT: 3
       }.freeze
 
       HTTP_HEADERS = {

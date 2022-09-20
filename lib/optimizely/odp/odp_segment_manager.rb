@@ -39,14 +39,14 @@ module Optimizely
     #
     # @return - Array of qualified segments.
     def fetch_qualified_segments(user_key, user_value, options)
-      unless @odp_config.odp_integrated?
-        @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], 'ODP is not enabled'))
-        return nil
-      end
-
       odp_api_key = @odp_config.api_key
       odp_api_host = @odp_config.api_host
       segments_to_check = @odp_config&.segments_to_check
+
+      if odp_api_key.nil? || odp_api_host.nil?
+        @logger.log(Logger::ERROR, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], 'ODP is not enabled'))
+        return nil
+      end
 
       unless segments_to_check&.size&.positive?
         @logger.log(Logger::DEBUG, 'No segments are used in the project. Returning empty list')
@@ -66,9 +66,10 @@ module Optimizely
           @logger.log(Logger::DEBUG, 'ODP cache hit. Returning segments from cache.')
           return segments
         end
+        @logger.log(Logger::DEBUG, 'ODP cache miss.')
       end
 
-      @logger.log(Logger::DEBUG, 'ODP cache miss. Making a call to ODP server.')
+      @logger.log(Logger::DEBUG, 'Making a call to ODP server.')
 
       segments = @zaius_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value, segments_to_check)
       @segments_cache.save(cache_key, segments) unless segments.nil? || ignore_cache

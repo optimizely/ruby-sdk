@@ -17,9 +17,11 @@
 #
 
 require 'optimizely/logger'
+require_relative '../helpers/constants'
 
 module Optimizely
   class OdpConfig
+    ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
     # Contains configuration used for ODP integration.
     #
     # @param api_host - The host URL for the ODP audience segments API (optional).
@@ -30,6 +32,7 @@ module Optimizely
       @api_host = api_host
       @segments_to_check = segments_to_check
       @mutex = Mutex.new
+      @odp_state = @api_host.nil? || @api_key.nil? ? ODP_CONFIG_STATE[:UNDETERMINED] : ODP_CONFIG_STATE[:INTEGRATED]
     end
 
     # Replaces the existing configuration
@@ -41,14 +44,19 @@ module Optimizely
     # @return - True if the provided values were different than the existing values.
 
     def update(api_key = nil, api_host = nil, segments_to_check = [])
+      updated = false
       @mutex.synchronize do
-        break false if @api_key == api_key && @api_host == api_host && @segments_to_check == segments_to_check
+        @odp_state = api_host.nil? || api_key.nil? ? ODP_CONFIG_STATE[:NOT_INTEGRATED] : ODP_CONFIG_STATE[:INTEGRATED]
 
-        @api_key = api_key
-        @api_host = api_host
-        @segments_to_check = segments_to_check
-        break true
+        if @api_key != api_key || @api_host != api_host || @segments_to_check != segments_to_check
+          @api_key = api_key
+          @api_host = api_host
+          @segments_to_check = segments_to_check
+          updated = true
+        end
       end
+
+      updated
     end
 
     # Returns the api host for odp connections
@@ -99,12 +107,12 @@ module Optimizely
       @mutex.synchronize { @segments_to_check = segments_to_check.clone }
     end
 
-    # Returns True if odp is integrated
+    # Returns the state of odp integration (UNDETERMINED, INTEGRATED, NOT_INTEGRATED)
     #
-    # @return - bool
+    # @return - string
 
-    def odp_integrated?
-      @mutex.synchronize { !@api_key.nil? && !@api_host.nil? }
+    def odp_state
+      @mutex.synchronize { @odp_state }
     end
   end
 end
