@@ -99,13 +99,15 @@ describe Optimizely::OdpEventManager do
       config = Optimizely::OdpConfig.new
 
       api_manager = Optimizely::ZaiusRestApiManager.new
-      event_manager = Optimizely::OdpEventManager.new(config, api_manager: api_manager, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(api_manager: api_manager, logger: spy_logger)
+      event_manager.start!(config)
 
       expect(event_manager.odp_config).to be config
       expect(event_manager.zaius_manager).to be api_manager
       expect(event_manager.logger).to be spy_logger
+      event_manager.stop!
 
-      event_manager = Optimizely::OdpEventManager.new(config)
+      event_manager = Optimizely::OdpEventManager.new
       expect(event_manager.logger).to be_a Optimizely::NoOpLogger
       expect(event_manager.zaius_manager).to be_a Optimizely::ZaiusRestApiManager
     end
@@ -115,8 +117,8 @@ describe Optimizely::OdpEventManager do
     it 'should process events successfully' do
       stub_request(:post, "#{api_host}/v3/events")
         .to_return(status: 200)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
-      event_manager.start!
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -132,9 +134,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should flush at batch size' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.instance_variable_set('@batch_size', 2)
 
@@ -152,9 +154,9 @@ describe Optimizely::OdpEventManager do
       batch_count = 4
 
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).exactly(batch_count).times.and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.instance_variable_set('@batch_size', 2)
 
@@ -174,7 +176,8 @@ describe Optimizely::OdpEventManager do
 
     it 'should process backlog successfully' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      event_manager.odp_config = odp_config
 
       event_manager.instance_variable_set('@batch_size', 2)
       batch_count = 4
@@ -187,7 +190,7 @@ describe Optimizely::OdpEventManager do
         event_manager.send_event(**events[1])
       end
       RSpec::Mocks.space.proxy_for(event_manager).remove_stub(:running?)
-      event_manager.start!
+      event_manager.start!(odp_config)
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
       event_manager.stop!
@@ -201,9 +204,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should flush with flush signal' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -218,9 +221,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should flush multiple times successfully' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).exactly(4).times.with(api_key, api_host, odp_events).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
       flush_count = 4
 
       flush_count.times do
@@ -241,10 +244,10 @@ describe Optimizely::OdpEventManager do
 
     it 'should log error on retry failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       retry_count = event_manager.instance_variable_get('@retry_count')
       allow(event_manager.zaius_manager).to receive(:send_odp_events).exactly(retry_count + 1).times.with(api_key, api_host, odp_events).and_return(true)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -260,9 +263,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should retry on network failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(true, true, false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -278,9 +281,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should log error on send failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_raise(StandardError, 'Unexpected error')
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -297,8 +300,8 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new
       odp_config.update(nil, nil, nil)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
-      event_manager.start!
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -314,7 +317,8 @@ describe Optimizely::OdpEventManager do
     it 'should log error when queue is full' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       stub_const('Optimizely::Helpers::Constants::ODP_EVENT_MANAGER', {DEFAULT_QUEUE_CAPACITY: 1})
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      event_manager.odp_config = odp_config
       allow(event_manager).to receive(:running?).and_return(true)
 
       event_manager.send_event(**events[0])
@@ -329,9 +333,9 @@ describe Optimizely::OdpEventManager do
 
     it 'should log error on exception within thread' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager).to receive(:add_to_batch).and_raise(StandardError, 'Unexpected error')
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       sleep(0.1)
@@ -346,7 +350,7 @@ describe Optimizely::OdpEventManager do
 
     it 'should work with overriden event data' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
 
       event = events[0]
       event[:data][:data_source] = 'my-app'
@@ -355,7 +359,7 @@ describe Optimizely::OdpEventManager do
       expect(odp_event.instance_variable_get('@data')[:data_source]).to eq 'my-app'
 
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, [odp_event]).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**event)
       event_manager.flush
@@ -366,10 +370,10 @@ describe Optimizely::OdpEventManager do
 
     it 'should flush when timeout is reached' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
       event_manager.instance_variable_set('@flush_interval', 0.5)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -384,9 +388,9 @@ describe Optimizely::OdpEventManager do
     it 'should discard events received before datafile is ready and process normally' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -414,9 +418,9 @@ describe Optimizely::OdpEventManager do
     it 'should discard events before and after odp is disabled' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       expect(event_manager.zaius_manager).not_to receive(:send_odp_events)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
@@ -441,9 +445,9 @@ describe Optimizely::OdpEventManager do
     it 'should begin discarding events if odp is disabled after being enabled' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new(api_key, api_host)
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
-      event_manager.start!
+      event_manager.start!(odp_config)
 
       event_manager.instance_variable_set('@batch_size', 2)
 
@@ -471,19 +475,21 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new(api_key, api_host)
 
-      event_manager = Optimizely::OdpEventManager.new(odp_config, logger: spy_logger)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      event_manager.odp_config = odp_config
       event_manager.instance_variable_set('@batch_size', 3)
 
       allow(event_manager.zaius_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
       allow(event_manager).to receive(:running?).and_return(true)
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
-      odp_config.update(nil, nil, [])
-      event_manager.update_config
 
       RSpec::Mocks.space.proxy_for(event_manager).remove_stub(:running?)
 
-      event_manager.start!
+      event_manager.start!(odp_config)
+      odp_config.update(nil, nil, [])
+      event_manager.update_config
+
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
       event_manager.send_event(**events[0])
@@ -493,6 +499,15 @@ describe Optimizely::OdpEventManager do
       expect(spy_logger).to have_received(:log).exactly(3).times.with(Logger::DEBUG, Optimizely::Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
       event_manager.stop!
+    end
+
+    it 'should reject events submitted before odp_config is set' do
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      expect(event_manager).not_to receive(:dispatch)
+      event_manager.send_event(**events[0])
+
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
   end
 end
