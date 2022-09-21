@@ -22,10 +22,11 @@ require_relative 'zaius_graphql_api_manager'
 module Optimizely
   class OdpSegmentManager
     # Schedules connections to ODP for audience segmentation and caches the results
-    attr_reader :odp_config, :segments_cache, :zaius_manager, :logger
+    attr_accessor :odp_config
+    attr_reader :segments_cache, :zaius_manager, :logger
 
-    def initialize(odp_config, segments_cache, api_manager = nil, logger = nil, proxy_config = nil)
-      @odp_config = odp_config
+    def initialize(segments_cache, api_manager = nil, logger = nil, proxy_config = nil)
+      @odp_config = nil
       @logger = logger || NoOpLogger.new
       @zaius_manager = api_manager || ZaiusGraphQLApiManager.new(logger: @logger, proxy_config: proxy_config)
       @segments_cache = segments_cache
@@ -39,8 +40,8 @@ module Optimizely
     #
     # @return - Array of qualified segments.
     def fetch_qualified_segments(user_key, user_value, options)
-      odp_api_key = @odp_config.api_key
-      odp_api_host = @odp_config.api_host
+      odp_api_key = @odp_config&.api_key
+      odp_api_host = @odp_config&.api_host
       segments_to_check = @odp_config&.segments_to_check
 
       if odp_api_key.nil? || odp_api_host.nil?
