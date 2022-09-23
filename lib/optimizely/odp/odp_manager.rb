@@ -28,6 +28,9 @@ require_relative 'odp_event_manager'
 module Optimizely
   class OdpManager
     ODP_LOGS = Helpers::Constants::ODP_LOGS
+    ODP_MANAGER_CONFIG = Helpers::Constants::ODP_MANAGER_CONFIG
+    ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
+
     def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
@@ -36,7 +39,7 @@ module Optimizely
       @odp_config = OdpConfig.new
 
       unless @enabled
-        @logger.log(Logger::DEBUG, 'ODP is disabled')
+        @logger.log(Logger::INFO, ODP_LOGS[:ODP_NOT_ENABLED])
         return
       end
 
@@ -62,24 +65,38 @@ module Optimizely
       #
       # @return - Array of qualified segments or nil.
       options ||= []
-      unless @enabled && @segment_manager
+      unless @enabled
         @logger.log(Logger::ERROR, ODP_LOGS[:ODP_NOT_ENABLED])
         return nil
       end
 
-      if @odp_config.odp_state == Helpers::Constants::ODP_CONFIG_STATE[:UNDETERMINED]
+      if @odp_config.odp_state == ODP_CONFIG_STATE[:UNDETERMINED]
         @logger.log(Logger::ERROR, 'Cannot fetch segments before the datafile has loaded.')
         return nil
       end
 
-      @segment_manager.fetch_qualified_segments(Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options)
+      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options)
     end
 
     def identify_user(user_id:)
-      send_event(
-        type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE],
+      unless @enabled
+        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (ODP disabled).')
+        return
+      end
+
+      case @odp_config.odp_state
+      when ODP_CONFIG_STATE[:UNDETERMINED]
+        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (datafile not ready).')
+        return
+      when ODP_CONFIG_STATE[:NOT_INTEGRATED]
+        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (ODP not integrated).')
+        return
+      end
+
+      @event_manager.send_event(
+        type: ODP_MANAGER_CONFIG[:EVENT_TYPE],
         action: 'identified',
-        identifiers: {Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id},
+        identifiers: {ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id},
         data: {}
       )
     end
@@ -91,13 +108,13 @@ module Optimizely
       # @param action - the event action name.
       # @param identifiers - a hash for identifiers.
       # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
-      unless @enabled && @event_manager
-        @logger.log(Logger::DEBUG, format(ODP_LOGS[:ODP_EVENT_NOT_DISPATCHED], action, 'ODP disabled'))
+      unless @enabled
+        @logger.log(Logger::ERROR, ODP_LOGS[:ODP_NOT_ENABLED])
         return
       end
 
       unless Helpers::Validator.odp_data_types_valid?(data)
-        @logger.log(Logger::DEBUG, format(ODP_LOGS[:ODP_EVENT_NOT_DISPATCHED], action, 'ODP data is not valid'))
+        @logger.log(Logger::ERROR, ODP_LOGS[:ODP_INVALID_DATA])
         return
       end
 
@@ -114,12 +131,14 @@ module Optimizely
         return
       end
 
-      @segment_manager&.reset
-      @event_manager&.update_config
+      @segment_manager.reset
+      @event_manager.update_config
     end
 
     def close!
-      @event_manager&.stop!
+      return unless @enabled
+
+      @event_manager.stop!
     end
   end
 end

@@ -97,7 +97,7 @@ describe Optimizely::OdpManager do
     end
 
     it 'should not instantiate event/segment managers when disabled' do
-      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP is disabled')
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'ODP is not enabled.')
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
       manager = Optimizely::OdpManager.new(disable: true, logger: spy_logger)
 
@@ -208,9 +208,8 @@ describe Optimizely::OdpManager do
       manager.close!
     end
 
-    it 'should log debug if data is invalid' do
-      expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, "ODP 'a1' event is not dispatched (ODP data is not valid)")
+    it 'should log error if data is invalid' do
+      expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP data is not valid.')
 
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.update_odp_config(api_key, api_host, segments_to_check)
@@ -245,7 +244,7 @@ describe Optimizely::OdpManager do
 
     it 'should log debug if disabled' do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, "ODP 'identified' event is not dispatched (ODP disabled)")
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (ODP disabled).')
 
       manager = Optimizely::OdpManager.new(disable: true, logger: spy_logger)
       manager.identify_user(user_id: user_value)
@@ -255,7 +254,7 @@ describe Optimizely::OdpManager do
 
     it 'should log debug if not integrated' do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, Optimizely::Helpers::Constants::ODP_LOGS[:ODP_NOT_INTEGRATED])
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (ODP not integrated).')
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.update_odp_config(nil, nil, [])
       manager.identify_user(user_id: user_value)
@@ -265,7 +264,7 @@ describe Optimizely::OdpManager do
 
     it 'should log debug if datafile not ready' do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP event queue: cannot send before the datafile has loaded.')
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (datafile not ready).')
 
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.identify_user(user_id: user_value)
