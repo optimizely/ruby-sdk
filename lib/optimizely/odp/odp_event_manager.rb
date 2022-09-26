@@ -26,19 +26,19 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :batch_size, :odp_config, :zaius_manager, :logger
+    attr_reader :batch_size, :zaius_manager, :logger
+    attr_accessor :odp_config
 
     def initialize(
-      odp_config,
       api_manager: nil,
       logger: NoOpLogger.new,
       proxy_config: nil
     )
       super()
 
-      @odp_config = odp_config
-      @api_host = odp_config.api_host
-      @api_key = odp_config.api_key
+      @odp_config = nil
+      @api_host = nil
+      @api_key = nil
 
       @mutex = Mutex.new
       @event_queue = SizedQueue.new(Optimizely::Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_QUEUE_CAPACITY])
@@ -53,14 +53,20 @@ module Optimizely
       @retry_count = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_RETRY_COUNT]
       # current_batch should only be accessed by processing thread
       @current_batch = []
+      @thread = nil
       @thread_exception = false
     end
 
-    def start!
+    def start!(odp_config)
       if running?
         @logger.log(Logger::WARN, 'Service already started.')
         return
       end
+
+      @odp_config = odp_config
+      @api_host = odp_config.api_host
+      @api_key = odp_config.api_key
+
       @thread = Thread.new { run }
       @logger.log(Logger::INFO, 'Starting scheduler.')
     end
@@ -117,7 +123,10 @@ module Optimizely
     end
 
     def send_event(type:, action:, identifiers:, data:)
-      case @odp_config.odp_state
+      case @odp_config&.odp_state
+      when nil
+        @logger.log(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
+        return
       when OdpConfig::ODP_CONFIG_STATE[:UNDETERMINED]
         @logger.log(Logger::DEBUG, 'ODP event queue: cannot send before the datafile has loaded.')
         return
@@ -154,7 +163,7 @@ module Optimizely
     end
 
     def running?
-      @thread && !!@thread.status && !@event_queue.closed?
+      !!@thread && !!@thread.status && !@event_queue.closed?
     end
 
     private
@@ -270,8 +279,8 @@ module Optimizely
       # Updates the configuration used to send events.
       flush_batch! unless @current_batch.empty?
 
-      @api_key = @odp_config.api_key
-      @api_host = @odp_config.api_host
+      @api_key = @odp_config&.api_key
+      @api_host = @odp_config&.api_host
     end
   end
 end
