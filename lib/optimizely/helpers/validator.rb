@@ -183,6 +183,22 @@ module Optimizely
         valid_types = [String, Float, Integer, TrueClass, FalseClass, NilClass]
         data.values.all? { |e| valid_types.member? e.class }
       end
+
+      def segments_cache_valid?(segments_cache)
+        # Determines if a given segments_cache is valid.
+        #
+        # segments_cache - custom cache to be validated.
+        #
+        # Returns boolean depending on whether cache has required methods.
+        (
+          segments_cache.respond_to?(:reset) &&
+          segments_cache.method(:reset)&.parameters&.empty? &&
+          segments_cache.respond_to?(:lookup) &&
+          segments_cache.method(:lookup)&.parameters&.length&.positive? &&
+          segments_cache.respond_to?(:save) &&
+          segments_cache.method(:save)&.parameters&.length&.positive?
+        )
+      end
     end
   end
 end

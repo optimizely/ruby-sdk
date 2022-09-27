@@ -34,13 +34,15 @@ module Optimizely
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
       @forced_decisions = {}
-      @qualified_segments = []
+      @qualified_segments = nil
+
+      @optimizely_client.odp_manager.identify_user(user_id: user_id)
     end
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
       @forced_decision_mutex.synchronize { user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty? }
-      @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.empty? }
+      @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.nil? }
       user_context
     end
 
@@ -194,11 +196,25 @@ module Optimizely
     # Checks if user is qualified for the provided segment.
     #
     # @param segment - A segment name
+    # @return true if qualified.
 
     def qualified_for?(segment)
-      return false if @qualified_segments.empty?
+      return false if @qualified_segments.nil? || @qualified_segments.empty?
 
       @qualified_segment_mutex.synchronize { @qualified_segments.include?(segment) }
+    end
+
+    # Fetch all qualified segments for the user context.
+    #
+    # The segments fetched will be saved in `@qualified_segments` and can be accessed any time.
+    #
+    # @param options - A set of options for fetching qualified segments (optional).
+    # @return On success, returns a non-nil segments array (can be empty). On failure, nil is returned.
+
+    def fetch_qualified_segments(options = [])
+      segments = @optimizely_client.odp_manager.fetch_qualified_segments(user_id: @user_id, options: options)
+      self.qualified_segments = segments
+      segments
     end
   end
 end

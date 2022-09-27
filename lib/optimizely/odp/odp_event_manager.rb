@@ -17,6 +17,7 @@
 #
 require_relative 'zaius_rest_api_manager'
 require_relative '../helpers/constants'
+require_relative 'odp_event'
 
 module Optimizely
   class OdpEventManager

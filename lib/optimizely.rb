@@ -38,6 +38,8 @@ require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
 require_relative 'optimizely/optimizely_config'
 require_relative 'optimizely/optimizely_user_context'
+require_relative 'optimizely/odp/lru_cache'
+require_relative 'optimizely/odp/odp_manager'
 
 module Optimizely
   class Project
@@ -46,7 +48,7 @@ module Optimizely
     attr_reader :notification_center
     # @api no-doc
     attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
-                :event_processor, :logger, :stopped
+                :event_processor, :logger, :odp_manager, :stopped
 
     # Constructor for Projects.
     #
@@ -74,7 +76,9 @@ module Optimizely
       config_manager = nil,
       notification_center = nil,
       event_processor = nil,
-      default_decide_options = []
+      default_decide_options = [],
+      odp_segments_cache = nil,
+      sdk_settings = {}
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -98,6 +102,41 @@ module Optimizely
 
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
+      unless sdk_settings.is_a? Hash
+        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not a hash.')
+        sdk_settings = {}
+      end
+
+      odp_disabled = sdk_settings[:disable_odp] || false
+      unless odp_disabled
+        @notification_center.add_notification_listener(
+          NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
+          -> { update_odp_config_on_datafile_update }
+        )
+      end
+
+      segments_cache_size = sdk_settings[:segments_cache_size]
+      segments_cache_timeout_in_secs = sdk_settings[:segments_cache_timeout_in_secs]
+
+      if odp_segments_cache && !Helpers::Validator.segments_cache_valid?(odp_segments_cache)
+        @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
+        odp_segments_cache = nil
+      end
+
+      if (segments_cache_size || segments_cache_timeout_in_secs) && !odp_segments_cache
+        odp_segments_cache = LRUCache.new(
+          segments_cache_size || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
+          segments_cache_timeout_in_secs || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECS]
+        )
+      end
+
+      # odp manager must be initialized before config_manager to ensure update of odp_config
+      @odp_manager = OdpManager.new(
+        disable: odp_disabled,
+        segments_cache: odp_segments_cache,
+        logger: @logger
+      )
+
       @config_manager = if config_manager.respond_to?(:config)
                           config_manager
                         elsif sdk_key
@@ -112,6 +151,7 @@ module Optimizely
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
+      update_odp_config_on_datafile_update if datafile && !odp_disabled
 
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
@@ -816,6 +856,7 @@ module Optimizely
       @stopped = true
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
+      @odp_manager.stop! if @odp_manager.respond_to?(:stop!)
     end
 
     def get_optimizely_config
@@ -867,6 +908,17 @@ module Optimizely
       else
         OptimizelyConfig.new(project_config).config
       end
+    end
+
+    # Send an event to the ODP server.
+    #
+    # @param action - the event action name.
+    # @param type - the event type (default = "fullstack").
+    # @param identifiers - a hash for identifiers.
+    # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
+
+    def send_odp_event(action:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], identifiers: {}, data: {})
+      @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 
     private
@@ -1125,6 +1177,13 @@ module Optimizely
 
     def project_config
       @config_manager.config
+    end
+
+    def update_odp_config_on_datafile_update
+      config = @config_manager&.config
+      return unless config
+
+      @odp_manager.update_odp_config(config.public_key_for_odp, config.host_for_odp, config.all_segments)
     end
   end
 end

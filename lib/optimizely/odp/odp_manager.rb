@@ -135,7 +135,7 @@ module Optimizely
       @event_manager.update_config
     end
 
-    def close!
+    def stop!
       return unless @enabled
 
       @event_manager.stop!
