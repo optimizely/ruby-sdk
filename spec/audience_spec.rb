@@ -25,7 +25,7 @@ describe Optimizely::Audience do
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:typed_audience_config) { Optimizely::DatafileProjectConfig.new(config_typed_audience_JSON, spy_logger, error_handler) }
   let(:integration_config) { Optimizely::DatafileProjectConfig.new(config_integration_JSON, spy_logger, error_handler) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
 
   it 'should return true for user_meets_audience_conditions? when experiment is using no audience' do

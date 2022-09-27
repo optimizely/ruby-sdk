@@ -25,7 +25,7 @@ describe Optimizely::UserConditionEvaluator do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
 
   it 'should return true when the attributes pass the audience conditions and no match type is provided' do
@@ -61,7 +61,7 @@ describe Optimizely::UserConditionEvaluator do
     user_context.instance_variable_set(:@user_attributes, 'weird_condition' => 'bye')
     condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
-    expect(spy_logger).to have_received(:log).exactly(1).times
+    expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
@@ -74,7 +74,7 @@ describe Optimizely::UserConditionEvaluator do
     user_context.instance_variable_set(:@user_attributes, 'weird_condition' => 'bye')
     condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
-    expect(spy_logger).to have_received(:log).exactly(1).times
+    expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
@@ -102,7 +102,8 @@ describe Optimizely::UserConditionEvaluator do
     it 'should return false if there is no user-provided value' do
       condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be false
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
     end
 
     it 'should return false if the user-provided value is nil' do

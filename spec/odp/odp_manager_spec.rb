@@ -60,7 +60,7 @@ describe Optimizely::OdpManager do
       expect(segments_cache.instance_variable_get('@capacity')).to eq 10_000
       expect(segments_cache.instance_variable_get('@timeout')).to eq 600
 
-      manager.close!
+      manager.stop!
       expect(event_manager.running?).to be false
     end
 
@@ -73,7 +73,7 @@ describe Optimizely::OdpManager do
       expect(manager.instance_variable_get('@segment_manager')).to be segment_manager
       expect(manager.instance_variable_get('@segment_manager').instance_variable_get('@segments_cache')).to be segments_cache
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should allow custom segments_cache' do
@@ -83,7 +83,7 @@ describe Optimizely::OdpManager do
 
       expect(manager.instance_variable_get('@segment_manager').instance_variable_get('@segments_cache')).to be segments_cache
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should allow custom event_manager' do
@@ -93,7 +93,7 @@ describe Optimizely::OdpManager do
 
       expect(manager.instance_variable_get('@event_manager')).to be event_manager
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should not instantiate event/segment managers when disabled' do
@@ -120,7 +120,7 @@ describe Optimizely::OdpManager do
       segments = manager.fetch_qualified_segments(user_id: user_value, options: nil)
 
       expect(segments).to eq [segments_to_check[0]]
-      manager.close!
+      manager.stop!
     end
 
     it 'should log error if disabled' do
@@ -137,7 +137,7 @@ describe Optimizely::OdpManager do
 
       response = manager.fetch_qualified_segments(user_id: 'user1', options: nil)
       expect(response).to be_nil
-      manager.close!
+      manager.stop!
     end
 
     it 'should ignore cache' do
@@ -160,7 +160,7 @@ describe Optimizely::OdpManager do
       segments = manager.fetch_qualified_segments(user_id: user_value, options: [Optimizely::OptimizelySegmentOption::IGNORE_CACHE])
 
       expect(segments).to eq [segments_to_check[0]]
-      manager.close!
+      manager.stop!
     end
 
     it 'should reset cache' do
@@ -184,7 +184,7 @@ describe Optimizely::OdpManager do
 
       expect(segments).to eq [segments_to_check[0]]
       expect(segments_cache.lookup('wow')).to be_nil
-      manager.close!
+      manager.stop!
     end
   end
 
@@ -205,7 +205,7 @@ describe Optimizely::OdpManager do
 
       manager.send_event(**event)
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should log error if data is invalid' do
@@ -217,7 +217,7 @@ describe Optimizely::OdpManager do
 
       manager.send_event(**event)
 
-      manager.close!
+      manager.stop!
     end
   end
 
@@ -239,7 +239,7 @@ describe Optimizely::OdpManager do
 
       manager.identify_user(user_id: user_value)
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should log debug if disabled' do
@@ -249,7 +249,7 @@ describe Optimizely::OdpManager do
       manager = Optimizely::OdpManager.new(disable: true, logger: spy_logger)
       manager.identify_user(user_id: user_value)
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should log debug if not integrated' do
@@ -259,7 +259,7 @@ describe Optimizely::OdpManager do
       manager.update_odp_config(nil, nil, [])
       manager.identify_user(user_id: user_value)
 
-      manager.close!
+      manager.stop!
     end
 
     it 'should log debug if datafile not ready' do
@@ -269,7 +269,7 @@ describe Optimizely::OdpManager do
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.identify_user(user_id: user_value)
 
-      manager.close!
+      manager.stop!
     end
   end
 
@@ -306,7 +306,7 @@ describe Optimizely::OdpManager do
       expect(event_manager.instance_variable_get('@api_host')).to eq api_host
       expect(event_manager.instance_variable_get('@api_key')).to eq api_key
 
-      manager.close!
+      manager.stop!
     end
   end
 end
