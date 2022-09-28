@@ -31,6 +31,7 @@ describe 'Optimizely' do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
   let(:config_body_integrations) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS }
+  let(:config_body_integrations_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
@@ -204,6 +205,14 @@ describe 'Optimizely' do
                'test_user',
                'browser' => 'chrome'
              )).to be_instance_of(Optimizely::OptimizelyUserContext)
+    end
+
+    it 'should send identify event when called with odp enabled' do
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      expect(project.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+      project.create_user_context('tester')
+
+      project.close
     end
   end
 
@@ -4423,6 +4432,125 @@ describe 'Optimizely' do
         custom_project_instance.decide(user_context, 'multi_variate_feature')
         custom_project_instance.close
       end
+    end
+  end
+
+  describe 'sdk_settings' do
+    it 'should log info when disabled' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'ODP is not enabled.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], nil, {disable_odp: true})
+      expect(project.odp_manager.instance_variable_get('@event_manager')).to be_nil
+      expect(project.odp_manager.instance_variable_get('@segment_manager')).to be_nil
+      project.close
+    end
+
+    it 'should accept cache_size' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], nil, {segments_cache_size: 5})
+      segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
+      expect(segment_manager.instance_variable_get('@segments_cache').capacity).to eq 5
+      project.close
+    end
+
+    it 'should accept cache_timeout' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], nil, {segments_cache_timeout_in_secs: 5})
+      segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
+      expect(segment_manager.instance_variable_get('@segments_cache').timeout).to eq 5
+      project.close
+    end
+
+    it 'should accept cache_size and cache_timeout' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], nil, {segments_cache_size: 10, segments_cache_timeout_in_secs: 5})
+      segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
+      segments_cache = segment_manager.instance_variable_get('@segments_cache')
+      expect(segments_cache.capacity).to eq 10
+      expect(segments_cache.timeout).to eq 5
+      project.close
+    end
+
+    it 'should accept valid custom cache' do
+      class CustomCache # rubocop:disable Lint/ConstantDefinitionInBlock
+        def reset; end
+        def lookup(key); end
+        def save(key, value); end
+      end
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], CustomCache.new)
+      segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
+      expect(segment_manager.instance_variable_get('@segments_cache')).to be_a CustomCache
+      project.close
+    end
+
+    it 'should revert to default cache when custom cache is invalid' do
+      class InvalidCustomCache; end # rubocop:disable Lint/ConstantDefinitionInBlock
+
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], InvalidCustomCache.new)
+      segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
+      expect(segment_manager.instance_variable_get('@segments_cache')).to be_a Optimizely::LRUCache
+      project.close
+    end
+  end
+
+  describe '#send_odp_event' do
+    it 'should send event with StaticProjectConfigManager' do
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
+      expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.close
+    end
+
+    it 'should send event with HTTPProjectConfigManager' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
+      expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
+      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, 'sdk-key')
+
+      # wait until project_config ready
+      project.send(:project_config)
+
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.close
+    end
+
+    it 'should log error when odp disabled' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
+      custom_project_instance = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true})
+      custom_project_instance.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      custom_project_instance.close
+    end
+
+    it 'should log debug if datafile not ready' do
+      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before the datafile has loaded.')
+      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, 'sdk-key')
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.close
+    end
+
+    it 'should log error with invalid data' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP data is not valid.')
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {'wow': {}})
+      project.close
     end
   end
 end

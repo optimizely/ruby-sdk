@@ -29,8 +29,41 @@ describe 'Optimizely' do
   let(:spy_logger) { spy('logger') }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
   let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
-  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
+  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
+  let(:good_response_data) do
+    {
+      data: {
+        customer: {
+          audiences: {
+            edges: [
+              {
+                node: {
+                  name: 'a',
+                  state: 'qualified',
+                  description: 'qualifed sample 1'
+                }
+              },
+              {
+                node: {
+                  name: 'b',
+                  state: 'qualified',
+                  description: 'qualifed sample 2'
+                }
+              },
+              {
+                node: {
+                  name: 'c',
+                  state: 'not_qualified',
+                  description: 'not-qualified sample'
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  end
 
   describe '#initialize' do
     it 'should set passed value as expected' do
@@ -725,6 +758,7 @@ describe 'Optimizely' do
     end
   end
   it 'should clone qualified segments in user context' do
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
     qualified_segments = %w[seg1 seg2]
     user_context_obj.qualified_segments = qualified_segments
@@ -734,64 +768,181 @@ describe 'Optimizely' do
     expect(user_clone_1.qualified_segments).to eq qualified_segments
     expect(user_clone_1.qualified_segments).not_to be user_context_obj.qualified_segments
     expect(user_clone_1.qualified_segments).not_to be qualified_segments
+    integration_project_instance.close
   end
 
   it 'should hit segment in ab test' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
     user_context_obj.qualified_segments = %w[odp-segment-1 odp-segment-none]
 
     decision = user_context_obj.decide('flag-segment')
 
     expect(decision.variation_key).to eq 'variation-a'
+    integration_project_instance.close
   end
 
   it 'should hit other audience with segments in ab test' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', 'age' => 30)
     user_context_obj.qualified_segments = %w[odp-segment-none]
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
 
     expect(decision.variation_key).to eq 'variation-a'
+    integration_project_instance.close
   end
 
   it 'should hit segment in rollout' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
     user_context_obj.qualified_segments = %w[odp-segment-2]
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
 
     expect(decision.variation_key).to eq 'rollout-variation-on'
+    integration_project_instance.close
   end
 
   it 'should miss segment in rollout' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
     user_context_obj.qualified_segments = %w[odp-segment-none]
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
 
     expect(decision.variation_key).to eq 'rollout-variation-off'
+    integration_project_instance.close
   end
 
   it 'should miss segment with empty segments' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
     user_context_obj.qualified_segments = []
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
 
     expect(decision.variation_key).to eq 'rollout-variation-off'
+    integration_project_instance.close
   end
 
   it 'should not fail without any segments' do
     stub_request(:post, impression_log_url)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
 
     expect(decision.variation_key).to eq 'rollout-variation-off'
+    integration_project_instance.close
+  end
+
+  it 'should send identify event when user context created' do
+    stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+    stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+    Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+    integration_project_instance.close
+  end
+
+  describe '#fetch_qualified_segments' do
+    it 'should fetch segments' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+      segments = user_context_obj.fetch_qualified_segments
+
+      expect(user_context_obj.qualified_segments).to eq %w[a b]
+      expect(segments).to eq %w[a b]
+      integration_project_instance.close
+    end
+
+    it 'should return empty array when not qualified for any segments' do
+      good_response_data[:data][:customer][:audiences][:edges].map { |e| e[:node][:state] = 'unqualified' }
+
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+      segments = user_context_obj.fetch_qualified_segments
+
+      expect(user_context_obj.qualified_segments).to eq []
+      expect(segments).to eq []
+      integration_project_instance.close
+    end
+
+    it 'should fetch segments and reset cache' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      segments_cache = integration_project_instance.odp_manager.instance_variable_get('@segment_manager').instance_variable_get('@segments_cache')
+      segments_cache.save('wow', 'great')
+      expect(segments_cache.lookup('wow')).to eq 'great'
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+      segments = user_context_obj.fetch_qualified_segments([:RESET_CACHE])
+
+      expect(segments_cache.lookup('wow')).to be_nil
+      expect(user_context_obj.qualified_segments).to eq %w[a b]
+      expect(segments).to eq %w[a b]
+      integration_project_instance.close
+    end
+
+    it 'should fetch segments from cache' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+
+      segment_manager = integration_project_instance.odp_manager.instance_variable_get('@segment_manager')
+      cache_key = segment_manager.send(:make_cache_key, Optimizely::Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], 'tester')
+
+      segments_cache = segment_manager.instance_variable_get('@segments_cache')
+      segments_cache.save(cache_key, %w[great])
+      expect(segments_cache.lookup(cache_key)).to eq %w[great]
+
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+      segments = user_context_obj.fetch_qualified_segments
+
+      expect(user_context_obj.qualified_segments).to eq %w[great]
+      expect(segments).to eq %w[great]
+      integration_project_instance.close
+    end
+
+    it 'should fetch segments and ignore cache' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+
+      segment_manager = integration_project_instance.odp_manager.instance_variable_get('@segment_manager')
+      cache_key = segment_manager.send(:make_cache_key, Optimizely::Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], 'tester')
+
+      segments_cache = segment_manager.instance_variable_get('@segments_cache')
+      segments_cache.save(cache_key, %w[great])
+      expect(segments_cache.lookup(cache_key)).to eq %w[great]
+
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+      segments = user_context_obj.fetch_qualified_segments([:IGNORE_CACHE])
+
+      expect(user_context_obj.qualified_segments).to eq %w[a b]
+      expect(segments).to eq %w[a b]
+      expect(segments_cache.lookup(cache_key)).to eq %w[great]
+      integration_project_instance.close
+    end
+
+    it 'should return nil on error' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 500)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+      segments = user_context_obj.fetch_qualified_segments
+
+      expect(user_context_obj.qualified_segments).to be_nil
+      expect(segments).to be_nil
+      integration_project_instance.close
+    end
   end
 end

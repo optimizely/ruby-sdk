@@ -1240,7 +1240,7 @@ module OptimizelySpec
     'integrations' => [
       {
         'key' => 'odp',
-        'host' => 'https =>//api.zaius.com',
+        'host' => 'https://api.zaius.com',
         'publicKey' => 'W4WzcEs-ABgXorzY7h1LCQ'
       }
     ],
