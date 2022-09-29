@@ -113,21 +113,21 @@ module Optimizely
           NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
           -> { update_odp_config_on_datafile_update }
         )
-      end
 
-      segments_cache_size = sdk_settings[:segments_cache_size]
-      segments_cache_timeout_in_secs = sdk_settings[:segments_cache_timeout_in_secs]
+        segments_cache_size = sdk_settings[:segments_cache_size]
+        segments_cache_timeout_in_secs = sdk_settings[:segments_cache_timeout_in_secs]
 
-      if odp_segments_cache && !Helpers::Validator.segments_cache_valid?(odp_segments_cache)
-        @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
-        odp_segments_cache = nil
-      end
+        if odp_segments_cache && !Helpers::Validator.segments_cache_valid?(odp_segments_cache)
+          @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
+          odp_segments_cache = nil
+        end
 
-      if (segments_cache_size || segments_cache_timeout_in_secs) && !odp_segments_cache
-        odp_segments_cache = LRUCache.new(
-          segments_cache_size || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
-          segments_cache_timeout_in_secs || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECS]
-        )
+        if (segments_cache_size || segments_cache_timeout_in_secs) && !odp_segments_cache
+          odp_segments_cache = LRUCache.new(
+            segments_cache_size || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
+            segments_cache_timeout_in_secs || Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECS]
+          )
+        end
       end
 
       # odp manager must be initialized before config_manager to ensure update of odp_config
