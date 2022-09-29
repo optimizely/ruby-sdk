@@ -36,7 +36,7 @@ module Optimizely
       @forced_decisions = {}
       @qualified_segments = nil
 
-      @optimizely_client.odp_manager.identify_user(user_id: user_id)
+      @optimizely_client&.identify_user(user_id: user_id)
     end
 
     def clone
@@ -216,7 +216,7 @@ module Optimizely
     # @return On success, returns a non-nil segments array (can be empty). On failure, nil is returned.
 
     def fetch_qualified_segments(options = [])
-      segments = @optimizely_client.odp_manager.fetch_qualified_segments(user_id: @user_id, options: options)
+      segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: options)
       self.qualified_segments = segments
       segments
     end

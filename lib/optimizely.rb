@@ -921,6 +921,14 @@ module Optimizely
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 
+    def identify_user(user_id:)
+      @odp_manager.identify_user(user_id: user_id)
+    end
+
+    def fetch_qualified_segments(user_id:, options: [])
+      @odp_manager.fetch_qualified_segments(user_id: user_id, options: options)
+    end
+
     private
 
     def get_variation_with_config(experiment_key, user_id, attributes, config)
