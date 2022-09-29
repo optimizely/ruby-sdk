@@ -199,9 +199,13 @@ module Optimizely
     # @return true if qualified.
 
     def qualified_for?(segment)
-      return false if @qualified_segments.nil? || @qualified_segments.empty?
+      qualified = false
+      @qualified_segment_mutex.synchronize do
+        break if @qualified_segments.nil? || @qualified_segments.empty?
 
-      @qualified_segment_mutex.synchronize { @qualified_segments.include?(segment) }
+        qualified = @qualified_segments.include?(segment)
+      end
+      qualified
     end
 
     # Fetch all qualified segments for the user context.
