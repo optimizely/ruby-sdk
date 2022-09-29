@@ -28,8 +28,9 @@ describe Optimizely::DecisionService do
   let(:spy_user_profile_service) { spy('user_profile_service') }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_user_profile_service) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   describe '#get_variation' do
     before(:example) do

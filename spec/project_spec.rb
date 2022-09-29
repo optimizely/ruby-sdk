@@ -41,6 +41,7 @@ describe 'Optimizely' do
   let(:project_config) { project_instance.config_manager.config }
   let(:time_now) { Time.now }
   let(:post_headers) { {'Content-Type' => 'application/json'} }
+  after(:example) { project_instance.close }
 
   it 'has a version number' do
     expect(Optimizely::VERSION).not_to be_nil
@@ -122,6 +123,7 @@ describe 'Optimizely' do
     end
 
     it 'should not validate the JSON schema of the datafile when skip_json_validation is true' do
+      project_instance.close
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
       Optimizely::Project.new(config_body_JSON, nil, nil, nil, true).close
@@ -4437,6 +4439,7 @@ describe 'Optimizely' do
 
   describe 'sdk_settings' do
     it 'should log info when disabled' do
+      project_instance.close
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       expect(spy_logger).to receive(:log).once.with(Logger::INFO, 'ODP is not enabled.')

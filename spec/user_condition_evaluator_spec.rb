@@ -25,8 +25,9 @@ describe Optimizely::UserConditionEvaluator do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   it 'should return true when the attributes pass the audience conditions and no match type is provided' do
     user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'safari')

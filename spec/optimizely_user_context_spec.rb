@@ -27,9 +27,9 @@ describe 'Optimizely' do
   let(:integration_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
-  let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil, {disable_odp: true}) }
-  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], nil) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler) }
+  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:good_response_data) do
     {
@@ -63,6 +63,11 @@ describe 'Optimizely' do
         }
       }
     }
+  end
+  after(:example) do
+    project_instance.close
+    forced_decision_project_instance.close
+    integration_project_instance.close
   end
 
   describe '#initialize' do
