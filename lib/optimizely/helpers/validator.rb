@@ -199,6 +199,34 @@ module Optimizely
           segments_cache.method(:save)&.parameters&.length&.positive?
         )
       end
+
+      def segment_manager_valid?(segment_manager)
+        # Determines if a given segment_manager is valid.
+        #
+        # segment_manager - custom manager to be validated.
+        #
+        # Returns boolean depending on whether manager has required methods.
+        (
+          segment_manager.respond_to?(:reset) &&
+          segment_manager.method(:reset)&.parameters&.empty? &&
+          segment_manager.respond_to?(:fetch_qualified_segments) &&
+          (segment_manager.method(:fetch_qualified_segments)&.parameters&.length || 0) >= 3
+        )
+      end
+
+      def event_manager_valid?(event_manager)
+        # Determines if a given event_manager is valid.
+        #
+        # event_manager - custom manager to be validated.
+        #
+        # Returns boolean depending on whether manager has required method and parameters.
+        return false unless event_manager.respond_to?(:send_event)
+
+        required_parameters = Set[%i[keyreq type], %i[keyreq action], %i[keyreq identifiers], %i[keyreq data]]
+        existing_parameters = event_manager.method(:send_event).parameters.to_set
+
+        existing_parameters & required_parameters == required_parameters
+      end
     end
   end
 end

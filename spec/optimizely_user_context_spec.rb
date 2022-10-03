@@ -85,6 +85,11 @@ describe 'Optimizely' do
       user_context_obj = Optimizely::OptimizelyUserContext.new(project_instance, 'test_user', nil)
       expect(user_context_obj.instance_variable_get(:@user_attributes)).to eq({})
     end
+
+    it 'should not fail with a nil client' do
+      user_context_obj = Optimizely::OptimizelyUserContext.new(nil, 'test-user', nil)
+      expect(user_context_obj).to be_a Optimizely::OptimizelyUserContext
+    end
   end
 
   describe '#set_attribute' do
@@ -948,6 +953,11 @@ describe 'Optimizely' do
       expect(user_context_obj.qualified_segments).to be_nil
       expect(segments).to be_nil
       integration_project_instance.close
+    end
+
+    it 'should not raise error with a nil client' do
+      user_context_obj = Optimizely::OptimizelyUserContext.new(nil, 'tester', {})
+      user_context_obj.fetch_qualified_segments.join
     end
   end
 end

@@ -53,8 +53,8 @@ module Optimizely
 
       @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger)
 
-      @segment_manager.odp_config = @odp_config
-      @event_manager.start!(@odp_config)
+      @segment_manager.odp_config = @odp_config if @segment_manager.respond_to?(:odp_config)
+      @event_manager.start!(@odp_config) if @event_manager.respond_to?(:start!)
     end
 
     def fetch_qualified_segments(user_id:, options:)
@@ -132,13 +132,13 @@ module Optimizely
       end
 
       @segment_manager.reset
-      @event_manager.update_config
+      @event_manager.update_config if @event_manager.respond_to?(:update_config)
     end
 
     def stop!
       return unless @enabled
 
-      @event_manager.stop!
+      @event_manager.stop! if @event_manager.respond_to?(:stop!)
     end
   end
 end
