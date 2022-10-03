@@ -862,7 +862,7 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      segments = user_context_obj.fetch_qualified_segments.value
 
       expect(user_context_obj.qualified_segments).to eq %w[a b]
       expect(segments).to eq %w[a b]
@@ -876,7 +876,7 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      segments = user_context_obj.fetch_qualified_segments.value
 
       expect(user_context_obj.qualified_segments).to eq []
       expect(segments).to eq []
@@ -891,7 +891,7 @@ describe 'Optimizely' do
       expect(segments_cache.lookup('wow')).to eq 'great'
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments([:RESET_CACHE])
+      segments = user_context_obj.fetch_qualified_segments([:RESET_CACHE]).value
 
       expect(segments_cache.lookup('wow')).to be_nil
       expect(user_context_obj.qualified_segments).to eq %w[a b]
@@ -911,7 +911,7 @@ describe 'Optimizely' do
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
 
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      segments = user_context_obj.fetch_qualified_segments
+      segments = user_context_obj.fetch_qualified_segments.value
 
       expect(user_context_obj.qualified_segments).to eq %w[great]
       expect(segments).to eq %w[great]
@@ -930,7 +930,7 @@ describe 'Optimizely' do
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
 
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      segments = user_context_obj.fetch_qualified_segments([:IGNORE_CACHE])
+      segments = user_context_obj.fetch_qualified_segments([:IGNORE_CACHE]).value
 
       expect(user_context_obj.qualified_segments).to eq %w[a b]
       expect(segments).to eq %w[a b]
@@ -943,7 +943,7 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      segments = user_context_obj.fetch_qualified_segments.value
 
       expect(user_context_obj.qualified_segments).to be_nil
       expect(segments).to be_nil

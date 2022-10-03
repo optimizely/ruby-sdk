@@ -213,12 +213,14 @@ module Optimizely
     # The segments fetched will be saved in `@qualified_segments` and can be accessed any time.
     #
     # @param options - A set of options for fetching qualified segments (optional).
-    # @return On success, returns a non-nil segments array (can be empty). On failure, nil is returned.
+    # @return a thread handle that may be joined and will returns array of segments or nil upon error
 
     def fetch_qualified_segments(options = [])
-      segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: options)
-      self.qualified_segments = segments
-      segments
+      Thread.new(options) do |opts|
+        segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: opts)
+        self.qualified_segments = segments
+        segments
+      end
     end
   end
 end
