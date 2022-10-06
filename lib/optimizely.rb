@@ -105,51 +105,14 @@ module Optimizely
 
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
-      unless @sdk_settings.is_a? Optimizely::Helpers::OptimizelySdkSettings
-        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.')
-        @sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
-      end
-
-      odp_disabled = @sdk_settings.odp_disabled
-      odp_segments_cache = @sdk_settings.odp_segments_cache
-      odp_segment_manager = @sdk_settings.odp_segment_manager
-      odp_event_manager = @sdk_settings.odp_event_manager
-
-      unless odp_disabled
-        @notification_center.add_notification_listener(
-          NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
-          -> { update_odp_config_on_datafile_update }
-        )
-
-        if odp_segment_manager && !Helpers::Validator.segment_manager_valid?(odp_segment_manager)
-          @logger.log(Logger::ERROR, 'Invalid ODP segment manager, reverting to default.')
-          odp_segment_manager = nil
-        end
-
-        if odp_event_manager && !Helpers::Validator.event_manager_valid?(odp_event_manager)
-          @logger.log(Logger::ERROR, 'Invalid ODP event manager, reverting to default.')
-          odp_event_manager = nil
-        end
-
-        unless odp_segment_manager
-          if odp_segments_cache && !Helpers::Validator.segments_cache_valid?(odp_segments_cache)
-            @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
-            odp_segments_cache = nil
-          end
-
-          odp_segments_cache ||= LRUCache.new(
-            @sdk_settings.segments_cache_size,
-            @sdk_settings.segments_cache_timeout_in_secs
-          )
-        end
-      end
+      setup_odp!
 
       # odp manager must be initialized before config_manager to ensure update of odp_config
       @odp_manager = OdpManager.new(
-        disable: odp_disabled,
-        segment_manager: odp_segment_manager,
-        event_manager: odp_event_manager,
-        segments_cache: odp_segments_cache,
+        disable: @sdk_settings.odp_disabled,
+        segment_manager: @sdk_settings.odp_segment_manager,
+        event_manager: @sdk_settings.odp_event_manager,
+        segments_cache: @sdk_settings.odp_segments_cache,
         logger: @logger
       )
 
@@ -167,7 +130,7 @@ module Optimizely
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
-      update_odp_config_on_datafile_update if datafile && !odp_disabled
+      update_odp_config_on_datafile_update if datafile && !@sdk_settings.odp_disabled
 
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
@@ -1208,6 +1171,42 @@ module Optimizely
       return unless config
 
       @odp_manager.update_odp_config(config.public_key_for_odp, config.host_for_odp, config.all_segments)
+    end
+
+    def setup_odp!
+      unless @sdk_settings.is_a? Optimizely::Helpers::OptimizelySdkSettings
+        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.')
+        @sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
+      end
+
+      return if @sdk_settings.odp_disabled
+
+      @notification_center.add_notification_listener(
+        NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
+        -> { update_odp_config_on_datafile_update }
+      )
+
+      if !@sdk_settings.odp_segment_manager.nil? && !Helpers::Validator.segment_manager_valid?(@sdk_settings.odp_segment_manager)
+        @logger.log(Logger::ERROR, 'Invalid ODP segment manager, reverting to default.')
+        @sdk_settings.odp_segment_manager = nil
+      end
+
+      if !@sdk_settings.odp_event_manager.nil? && !Helpers::Validator.event_manager_valid?(@sdk_settings.odp_event_manager)
+        @logger.log(Logger::ERROR, 'Invalid ODP event manager, reverting to default.')
+        @sdk_settings.odp_event_manager = nil
+      end
+
+      return if @sdk_settings.odp_segment_manager
+
+      if !@sdk_settings.odp_segments_cache.nil? && !Helpers::Validator.segments_cache_valid?(@sdk_settings.odp_segments_cache)
+        @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
+        @sdk_settings.odp_segments_cache = nil
+      end
+
+      @sdk_settings.odp_segments_cache ||= LRUCache.new(
+        @sdk_settings.segments_cache_size,
+        @sdk_settings.segments_cache_timeout_in_secs
+      )
     end
   end
 end

@@ -21,7 +21,7 @@ require_relative 'constants'
 module Optimizely
   module Helpers
     class OptimizelySdkSettings
-      attr_reader :odp_disabled, :segments_cache_size, :segments_cache_timeout_in_secs, :odp_segments_cache, :odp_segment_manager, :odp_event_manager
+      attr_accessor :odp_disabled, :segments_cache_size, :segments_cache_timeout_in_secs, :odp_segments_cache, :odp_segment_manager, :odp_event_manager
 
       # Contains configuration used for Optimizely Project initialization.
       #
