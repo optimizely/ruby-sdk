@@ -72,7 +72,14 @@ module Optimizely
     # @return - The api host.
 
     def api_host=(api_host)
-      @mutex.synchronize { @api_host = api_host.clone }
+      @mutex.synchronize do
+        @api_host = api_host.clone
+        if @api_host.nil?
+          @odp_state = ODP_CONFIG_STATE[:NOT_INTEGRATED]
+        elsif !@api_key.nil?
+          @odp_state = ODP_CONFIG_STATE[:INTEGRATED]
+        end
+      end
     end
 
     # Returns the api key for odp connections
@@ -88,7 +95,14 @@ module Optimizely
     # @param api_key - An api key
 
     def api_key=(api_key)
-      @mutex.synchronize { @api_key = api_key.clone }
+      @mutex.synchronize do
+        @api_key = api_key.clone
+        if @api_key.nil?
+          @odp_state = ODP_CONFIG_STATE[:NOT_INTEGRATED]
+        elsif !@api_host.nil?
+          @odp_state = ODP_CONFIG_STATE[:INTEGRATED]
+        end
+      end
     end
 
     # Returns An array of qualified segments for this user
