@@ -35,6 +35,7 @@ module Optimizely
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
       @forced_decisions = {}
       @qualified_segments = nil
+      @fetch_segments_thread = nil
 
       @optimizely_client&.identify_user(user_id: user_id)
     end
@@ -69,6 +70,11 @@ module Optimizely
     # @return [OptimizelyDecision] A decision result
 
     def decide(key, options = nil)
+      unless @fetch_segments_thread.nil?
+        @fetch_segments_thread.join
+        @fetch_segments_thread = nil
+      end
+
       @optimizely_client&.decide(clone, key, options)
     end
 
@@ -83,6 +89,10 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_for_keys(keys, options = nil)
+      unless @fetch_segments_thread.nil?
+        @fetch_segments_thread.join
+        @fetch_segments_thread = nil
+      end
       @optimizely_client&.decide_for_keys(clone, keys, options)
     end
 
@@ -93,6 +103,10 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_all(options = nil)
+      unless @fetch_segments_thread.nil?
+        @fetch_segments_thread.join
+        @fetch_segments_thread = nil
+      end
       @optimizely_client&.decide_all(clone, options)
     end
 
@@ -215,11 +229,16 @@ module Optimizely
     # @param options - A set of options for fetching qualified segments (optional).
     # @return a thread handle that may be joined and will returns array of segments or nil upon error
 
-    def fetch_qualified_segments(options = [])
-      Thread.new(options) do |opts|
+    def fetch_qualified_segments(non_blocking: false, options: [])
+      fetch_segments = lambda do |opts|
         segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: opts)
         self.qualified_segments = segments
         segments
+      end
+      if non_blocking
+        @fetch_segments_thread = Thread.new(options, &fetch_segments)
+      else
+        fetch_segments.call(options)
       end
     end
   end
