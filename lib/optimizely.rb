@@ -107,7 +107,6 @@ module Optimizely
 
       setup_odp!
 
-      # odp manager must be initialized before config_manager to ensure update of odp_config
       @odp_manager = OdpManager.new(
         disable: @sdk_settings.odp_disabled,
         segment_manager: @sdk_settings.odp_segment_manager,
@@ -130,7 +129,10 @@ module Optimizely
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
-      update_odp_config_on_datafile_update if datafile && !@sdk_settings.odp_disabled
+
+      # must call this even if it's scheduled as a listener
+      # in case the config manager was initialized before the listener was added
+      update_odp_config_on_datafile_update unless @sdk_settings.odp_disabled
 
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
@@ -1167,6 +1169,9 @@ module Optimizely
     end
 
     def update_odp_config_on_datafile_update
+      # if datafile isn't ready, expects to be called again by the notification_center
+      return if @config_manager.respond_to?(:ready?) && !@config_manager.ready?
+
       config = @config_manager&.config
       return unless config
 
