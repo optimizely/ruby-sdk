@@ -19,7 +19,7 @@
 require 'json'
 
 module Optimizely
-  class ZaiusRestApiManager
+  class OdpEventsApiManager
     # Interface that handles sending ODP events.
 
     def initialize(logger: nil, proxy_config: nil)

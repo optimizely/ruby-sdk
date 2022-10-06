@@ -18,7 +18,7 @@ require 'optimizely/odp/odp_event_manager'
 require 'optimizely/odp/odp_event'
 require 'optimizely/odp/lru_cache'
 require 'optimizely/odp/odp_config'
-require 'optimizely/odp/zaius_rest_api_manager'
+require 'optimizely/odp/odp_events_api_manager'
 require 'optimizely/logger'
 require 'optimizely/helpers/validator'
 require 'optimizely/helpers/constants'
@@ -145,7 +145,7 @@ describe Optimizely::OdpManager do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
       segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
 
-      expect(segment_manager.zaius_manager)
+      expect(segment_manager.api_manager)
         .to receive(:fetch_segments)
         .once
         .with(api_key, api_host, user_key, user_value, segments_to_check)
@@ -168,7 +168,7 @@ describe Optimizely::OdpManager do
       segment_manager = Optimizely::OdpSegmentManager.new(segments_cache)
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
 
-      expect(segment_manager.zaius_manager)
+      expect(segment_manager.api_manager)
         .to receive(:fetch_segments)
         .once
         .with(api_key, api_host, user_key, user_value, segments_to_check)
@@ -194,7 +194,7 @@ describe Optimizely::OdpManager do
       event_manager = Optimizely::OdpEventManager.new
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
 
-      expect(event_manager.zaius_manager)
+      expect(event_manager.api_manager)
         .to receive(:send_odp_events)
         .once
         .with(api_key, api_host, [odp_event])
@@ -228,7 +228,7 @@ describe Optimizely::OdpManager do
       event = Optimizely::OdpEvent.new(type: 'fullstack', action: 'identified', identifiers: {user_key => user_value}, data: {})
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
 
-      expect(event_manager.zaius_manager)
+      expect(event_manager.api_manager)
         .to receive(:send_odp_events)
         .once
         .with(api_key, api_host, [event])

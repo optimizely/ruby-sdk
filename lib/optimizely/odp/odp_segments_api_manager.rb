@@ -19,7 +19,7 @@
 require 'json'
 
 module Optimizely
-  class ZaiusGraphQLApiManager
+  class OdpSegmentsApiManager
     # Interface that handles fetching audience segments.
 
     def initialize(logger: nil, proxy_config: nil)

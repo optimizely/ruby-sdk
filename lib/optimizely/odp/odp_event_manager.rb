@@ -15,7 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require_relative 'zaius_rest_api_manager'
+require_relative 'odp_events_api_manager'
 require_relative '../helpers/constants'
 require_relative 'odp_event'
 
@@ -27,7 +27,7 @@ module Optimizely
     # the BlockingQueue and buffers them for either a configured batch size or for a
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
-    attr_reader :batch_size, :zaius_manager, :logger
+    attr_reader :batch_size, :api_manager, :logger
     attr_accessor :odp_config
 
     def initialize(
@@ -47,7 +47,7 @@ module Optimizely
       # received signal should be sent after adding item to event_queue
       @received = ConditionVariable.new
       @logger = logger
-      @zaius_manager = api_manager || ZaiusRestApiManager.new(logger: @logger, proxy_config: proxy_config)
+      @api_manager = api_manager || OdpEventsApiManager.new(logger: @logger, proxy_config: proxy_config)
       @batch_size = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
       @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
       @flush_deadline = 0
@@ -233,7 +233,7 @@ module Optimizely
       i = 0
       while i < @retry_count
         begin
-          should_retry = @zaius_manager.send_odp_events(@api_key, @api_host, @current_batch)
+          should_retry = @api_manager.send_odp_events(@api_key, @api_host, @current_batch)
         rescue StandardError => e
           should_retry = false
           @logger.log(Logger::ERROR, format(Helpers::Constants::ODP_LOGS[:ODP_EVENT_FAILED], "Error: #{e.message} #{@current_batch.to_json}"))
