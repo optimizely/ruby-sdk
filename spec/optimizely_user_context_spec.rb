@@ -998,10 +998,23 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      user_context_obj.fetch_qualified_segments(non_blocking: true)
-      user_context_obj.instance_variable_get('@fetch_segments_thread').join
+      user_context_obj.fetch_qualified_segments do |success|
+        expect(success).to be true
+        expect(user_context_obj.qualified_segments).to eq %w[a b]
+        integration_project_instance.close
+      end
+    end
 
-      expect(user_context_obj.qualified_segments).to eq %w[a b]
+    it 'should pass false to callback when failed and non-blocking' do
+      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 500)
+      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
+      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+      thread = user_context_obj.fetch_qualified_segments do |success|
+        expect(success).to be false
+        expect(user_context_obj.qualified_segments).to be_nil
+      end
+      thread.join
       integration_project_instance.close
     end
 
@@ -1017,10 +1030,11 @@ describe 'Optimizely' do
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
 
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      user_context_obj.fetch_qualified_segments(non_blocking: true)
-      user_context_obj.instance_variable_get('@fetch_segments_thread').join
-
-      expect(user_context_obj.qualified_segments).to eq %w[great]
+      thread = user_context_obj.fetch_qualified_segments do |success|
+        expect(success).to be true
+        expect(user_context_obj.qualified_segments).to eq %w[great]
+      end
+      thread.join
       integration_project_instance.close
     end
 
@@ -1029,37 +1043,12 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: integrated_response_data.to_json)
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      user_context_obj.fetch_qualified_segments(non_blocking: true)
-
-      decision = user_context_obj.decide('flag-segment')
-
-      expect(decision.variation_key).to eq 'variation-a'
-      integration_project_instance.close
-    end
-
-    it 'should decide_all correctly with non-blocking' do
-      stub_request(:post, impression_log_url)
-      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: integrated_response_data.to_json)
-      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
-      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      user_context_obj.fetch_qualified_segments(non_blocking: true)
-
-      decisions = user_context_obj.decide_all
-
-      expect(decisions['flag-segment'].variation_key).to eq 'variation-a'
-      integration_project_instance.close
-    end
-
-    it 'should decide_for_keys correctly with non-blocking' do
-      stub_request(:post, impression_log_url)
-      stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: integrated_response_data.to_json)
-      stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
-      user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      user_context_obj.fetch_qualified_segments(non_blocking: true)
-
-      decisions = user_context_obj.decide_for_keys(['flag-segment'])
-
-      expect(decisions['flag-segment'].variation_key).to eq 'variation-a'
+      thread = user_context_obj.fetch_qualified_segments do |success|
+        expect(success).to be true
+        decision = user_context_obj.decide('flag-segment')
+        expect(decision.variation_key).to eq 'variation-a'
+      end
+      thread.join
       integration_project_instance.close
     end
   end

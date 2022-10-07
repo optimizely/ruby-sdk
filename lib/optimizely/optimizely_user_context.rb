@@ -35,7 +35,6 @@ module Optimizely
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
       @forced_decisions = {}
       @qualified_segments = nil
-      @fetch_segments_thread = nil
 
       @optimizely_client&.identify_user(user_id: user_id)
     end
@@ -70,11 +69,6 @@ module Optimizely
     # @return [OptimizelyDecision] A decision result
 
     def decide(key, options = nil)
-      unless @fetch_segments_thread.nil?
-        @fetch_segments_thread.join
-        @fetch_segments_thread = nil
-      end
-
       @optimizely_client&.decide(clone, key, options)
     end
 
@@ -89,10 +83,6 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_for_keys(keys, options = nil)
-      unless @fetch_segments_thread.nil?
-        @fetch_segments_thread.join
-        @fetch_segments_thread = nil
-      end
       @optimizely_client&.decide_for_keys(clone, keys, options)
     end
 
@@ -103,10 +93,6 @@ module Optimizely
     # @return - Hash of decisions containing flag keys as hash keys and corresponding decisions as their values.
 
     def decide_all(options = nil)
-      unless @fetch_segments_thread.nil?
-        @fetch_segments_thread.join
-        @fetch_segments_thread = nil
-      end
       @optimizely_client&.decide_all(clone, options)
     end
 
@@ -227,18 +213,24 @@ module Optimizely
     # The segments fetched will be saved in `@qualified_segments` and can be accessed any time.
     #
     # @param options - A set of options for fetching qualified segments (optional).
-    # @return a thread handle that may be joined and will returns array of segments or nil upon error
+    # @param block - An optional block to call after segments have been fetched.
+    #                If a block is provided, segments will be fetched on a separate thread.
+    #                Block will be called with a boolean indicating if the fetch succeeded.
+    # @return An array of segments or nil if fetch was unsuccessful. Method returns the thread
+    #         handle if a block is provided.
 
-    def fetch_qualified_segments(non_blocking: false, options: [])
-      fetch_segments = lambda do |opts|
+    def fetch_qualified_segments(options: [], &block)
+      fetch_segments = lambda do |opts, callback|
         segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: opts)
         self.qualified_segments = segments
+        callback&.call(!segments.nil?)
         segments
       end
-      if non_blocking
-        @fetch_segments_thread = Thread.new(options, &fetch_segments)
+
+      if block_given?
+        Thread.new(options, block, &fetch_segments)
       else
-        fetch_segments.call(options)
+        fetch_segments.call(options, nil)
       end
     end
   end
