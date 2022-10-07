@@ -396,9 +396,7 @@ describe Optimizely::OdpEventManager do
       event_manager.send_event(**events[1])
 
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
-      odp_config.api_key = api_key
-      odp_config.api_host = api_host
-      odp_config.segments_to_check = []
+      odp_config.update(api_key, api_host, [])
       event_manager.update_config
 
       event_manager.send_event(**events[0])
@@ -457,9 +455,7 @@ describe Optimizely::OdpEventManager do
       event_manager.send_event(**events[1])
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
 
-      odp_config.api_key = nil
-      odp_config.api_host = nil
-      odp_config.segments_to_check = []
+      odp_config.update(nil, nil, [])
       event_manager.update_config
 
       event_manager.send_event(**events[0])
