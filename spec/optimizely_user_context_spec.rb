@@ -900,24 +900,24 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      success = user_context_obj.fetch_qualified_segments
 
       expect(user_context_obj.qualified_segments).to eq %w[a b]
-      expect(segments).to eq %w[a b]
+      expect(success).to be true
       integration_project_instance.close
     end
 
-    it 'should return empty array when not qualified for any segments' do
+    it 'should save empty array when not qualified for any segments' do
       good_response_data[:data][:customer][:audiences][:edges].map { |e| e[:node][:state] = 'unqualified' }
 
       stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      success = user_context_obj.fetch_qualified_segments
 
       expect(user_context_obj.qualified_segments).to eq []
-      expect(segments).to eq []
+      expect(success).to be true
       integration_project_instance.close
     end
 
@@ -929,11 +929,11 @@ describe 'Optimizely' do
       expect(segments_cache.lookup('wow')).to eq 'great'
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments(options: [:RESET_CACHE])
+      success = user_context_obj.fetch_qualified_segments(options: [:RESET_CACHE])
 
       expect(segments_cache.lookup('wow')).to be_nil
       expect(user_context_obj.qualified_segments).to eq %w[a b]
-      expect(segments).to eq %w[a b]
+      expect(success).to be true
       integration_project_instance.close
     end
 
@@ -949,10 +949,10 @@ describe 'Optimizely' do
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
 
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      segments = user_context_obj.fetch_qualified_segments
+      success = user_context_obj.fetch_qualified_segments
 
       expect(user_context_obj.qualified_segments).to eq %w[great]
-      expect(segments).to eq %w[great]
+      expect(success).to be true
       integration_project_instance.close
     end
 
@@ -968,23 +968,23 @@ describe 'Optimizely' do
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
 
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
-      segments = user_context_obj.fetch_qualified_segments(options: [:IGNORE_CACHE])
+      success = user_context_obj.fetch_qualified_segments(options: [:IGNORE_CACHE])
 
       expect(user_context_obj.qualified_segments).to eq %w[a b]
-      expect(segments).to eq %w[a b]
+      expect(success).to be true
       expect(segments_cache.lookup(cache_key)).to eq %w[great]
       integration_project_instance.close
     end
 
-    it 'should return nil on error' do
+    it 'should return false on error' do
       stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 500)
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
-      segments = user_context_obj.fetch_qualified_segments
+      success = user_context_obj.fetch_qualified_segments
 
       expect(user_context_obj.qualified_segments).to be_nil
-      expect(segments).to be_nil
+      expect(success).to be false
       integration_project_instance.close
     end
 

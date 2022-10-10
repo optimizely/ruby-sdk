@@ -216,15 +216,16 @@ module Optimizely
     # @param block - An optional block to call after segments have been fetched.
     #                If a block is provided, segments will be fetched on a separate thread.
     #                Block will be called with a boolean indicating if the fetch succeeded.
-    # @return An array of segments or nil if fetch was unsuccessful. Method returns the thread
-    #         handle if a block is provided.
+    # @return If no block is provided, a boolean indicating whether the fetch was successful.
+    #         Otherwise, returns a thread handle and the status boolean is passed to the block.
 
     def fetch_qualified_segments(options: [], &block)
       fetch_segments = lambda do |opts, callback|
         segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: opts)
         self.qualified_segments = segments
-        callback&.call(!segments.nil?)
-        segments
+        success = !segments.nil?
+        callback&.call(success)
+        success
       end
 
       if block_given?
