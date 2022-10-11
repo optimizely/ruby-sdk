@@ -4531,6 +4531,12 @@ describe 'Optimizely' do
 
     it 'should accept valid custom segment manager' do
       class CustomSegmentManager # rubocop:disable Lint/ConstantDefinitionInBlock
+        attr_accessor :odp_config
+
+        def initialize
+          @odp_config = nil
+        end
+
         def reset; end
         def fetch_qualified_segments(user_key, user_value, options); end
       end
@@ -4567,6 +4573,9 @@ describe 'Optimizely' do
     it 'should accept valid custom event manager' do
       class CustomEventManager # rubocop:disable Lint/ConstantDefinitionInBlock
         def send_event(extra_param = nil, action:, type:, identifiers:, data:, other_extra_param: 'great'); end
+        def start!(odp_config); end
+        def update_config; end
+        def stop!; end
       end
 
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')

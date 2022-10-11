@@ -837,7 +837,7 @@ module Optimizely
       @stopped = true
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
-      @odp_manager.stop! if @odp_manager.respond_to?(:stop!)
+      @odp_manager.stop!
     end
 
     def get_optimizely_config

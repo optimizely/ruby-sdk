@@ -207,6 +207,7 @@ module Optimizely
         #
         # Returns boolean depending on whether manager has required methods.
         (
+          segment_manager.respond_to?(:odp_config) &&
           segment_manager.respond_to?(:reset) &&
           segment_manager.method(:reset)&.parameters&.empty? &&
           segment_manager.respond_to?(:fetch_qualified_segments) &&
@@ -220,7 +221,12 @@ module Optimizely
         # event_manager - custom manager to be validated.
         #
         # Returns boolean depending on whether manager has required method and parameters.
-        return false unless event_manager.respond_to?(:send_event)
+        return false unless
+          event_manager.respond_to?(:send_event) &&
+          event_manager.respond_to?(:start!) &&
+          (event_manager.method(:start!)&.parameters&.length || 0) >= 1 &&
+          event_manager.respond_to?(:update_config) &&
+          event_manager.respond_to?(:stop!)
 
         required_parameters = Set[%i[keyreq type], %i[keyreq action], %i[keyreq identifiers], %i[keyreq data]]
         existing_parameters = event_manager.method(:send_event).parameters.to_set
