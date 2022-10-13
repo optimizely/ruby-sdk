@@ -46,9 +46,8 @@ describe Optimizely::OdpManager do
 
       event_manager = manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a Optimizely::OdpEventManager
-      expect(event_manager.odp_config).to be odp_config
       expect(event_manager.logger).to be logger
-      expect(event_manager.running?).to be true
+      expect(event_manager.running?).to be false
 
       segment_manager = manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a Optimizely::OdpSegmentManager
@@ -59,9 +58,6 @@ describe Optimizely::OdpManager do
       expect(segments_cache).to be_a Optimizely::LRUCache
       expect(segments_cache.instance_variable_get('@capacity')).to eq 10_000
       expect(segments_cache.instance_variable_get('@timeout')).to eq 600
-
-      manager.stop!
-      expect(event_manager.running?).to be false
     end
 
     it 'should allow custom segment_manager' do
@@ -274,15 +270,20 @@ describe Optimizely::OdpManager do
   end
 
   describe '#update_odp_config' do
-    it 'update config' do
+    it 'update config and start event_manager' do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
+
+      event_manager = manager.instance_variable_get('@event_manager')
+      expect(event_manager.running?).to be false
+
       segment_manager = manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       segments_cache.save('wow', 'great')
       expect(segments_cache.lookup('wow')).to eq 'great'
 
       manager.update_odp_config(api_key, api_host, segments_to_check)
+      expect(event_manager.running?).to be true
 
       manager_config = manager.instance_variable_get('@odp_config')
       expect(manager_config.api_host).to eq api_host
@@ -296,7 +297,6 @@ describe Optimizely::OdpManager do
       # confirm cache was reset
       expect(segments_cache.lookup('wow')).to be_nil
 
-      event_manager = manager.instance_variable_get('@event_manager')
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
       event_manager_config = event_manager.odp_config
       expect(event_manager_config.api_host).to eq api_host

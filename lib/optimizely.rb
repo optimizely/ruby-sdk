@@ -1180,7 +1180,7 @@ module Optimizely
 
     def setup_odp!
       unless @sdk_settings.is_a? Optimizely::Helpers::OptimizelySdkSettings
-        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.')
+        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.') unless @sdk_settings.nil?
         @sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
       end
 

@@ -4463,7 +4463,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should accept cache_timeout' do
@@ -4476,7 +4475,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should accept cache_size and cache_timeout' do
@@ -4491,7 +4489,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should accept valid custom cache' do
@@ -4510,7 +4507,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should revert to default cache when custom cache is invalid' do
@@ -4526,7 +4522,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should accept valid custom segment manager' do
@@ -4567,7 +4562,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Invalid ODP segment manager, reverting to default.')
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
 
     it 'should accept valid custom event manager' do
@@ -4603,7 +4597,6 @@ describe 'Optimizely' do
       project.close
 
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Invalid ODP event manager, reverting to default.')
-      expect(spy_logger).to have_received(:log).once.with(Logger::INFO, 'Stopping ODP event queue.')
     end
   end
 
@@ -4641,7 +4634,7 @@ describe 'Optimizely' do
     end
 
     it 'should log debug if datafile not ready' do
-      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before the datafile has loaded.')
+      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
       project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, 'sdk-key')
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       project.close
