@@ -16,9 +16,9 @@
 #    limitations under the License.
 #
 require 'spec_helper'
-require 'optimizely/odp/zaius_rest_api_manager'
+require 'optimizely/odp/odp_events_api_manager'
 
-describe Optimizely::ZaiusRestApiManager do
+describe Optimizely::OdpEventsApiManager do
   let(:user_key) { 'vuid' }
   let(:user_value) { 'test-user-value' }
   let(:api_key) { 'test-api-key' }
@@ -47,7 +47,7 @@ describe Optimizely::ZaiusRestApiManager do
           body: events.to_json
         ).to_return(status: 200)
 
-      api_manager = Optimizely::ZaiusRestApiManager.new
+      api_manager = Optimizely::OdpEventsApiManager.new
       expect(spy_logger).not_to receive(:log)
       should_retry = api_manager.send_odp_events(api_key, api_host, events)
 
@@ -56,7 +56,7 @@ describe Optimizely::ZaiusRestApiManager do
 
     it 'should return true on network error' do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_raise(SocketError)
-      api_manager = Optimizely::ZaiusRestApiManager.new(logger: spy_logger)
+      api_manager = Optimizely::OdpEventsApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (network error).')
 
       should_retry = api_manager.send_odp_events(api_key, api_host, events)
@@ -70,7 +70,7 @@ describe Optimizely::ZaiusRestApiManager do
           body: events.to_json
         ).to_return(status: [400, 'Bad Request'], body: failure_response_data)
 
-      api_manager = Optimizely::ZaiusRestApiManager.new(logger: spy_logger)
+      api_manager = Optimizely::OdpEventsApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(
         Logger::ERROR, 'ODP event send failed ({"title":"Bad Request","status":400,' \
                        '"timestamp":"2022-07-01T20:44:00.945Z","detail":{"invalids":' \
@@ -88,7 +88,7 @@ describe Optimizely::ZaiusRestApiManager do
           body: events.to_json
         ).to_return(status: [500, 'Internal Server Error'])
 
-      api_manager = Optimizely::ZaiusRestApiManager.new(logger: spy_logger)
+      api_manager = Optimizely::OdpEventsApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (500: Internal Server Error).')
 
       should_retry = api_manager.send_odp_events(api_key, api_host, events)

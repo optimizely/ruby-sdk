@@ -16,16 +16,16 @@
 #    limitations under the License.
 #
 require 'spec_helper'
-require 'optimizely/odp/zaius_graphql_api_manager'
+require 'optimizely/odp/odp_segments_api_manager'
 
-describe Optimizely::ZaiusGraphQLApiManager do
+describe Optimizely::OdpSegmentsApiManager do
   let(:user_key) { 'vuid' }
   let(:user_value) { 'test-user-value' }
   let(:api_key) { 'test-api-key' }
   let(:api_host) { 'https://test-host' }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:zaius_manager) { Optimizely::ZaiusGraphQLApiManager.new(logger: spy_logger) }
+  let(:api_manager) { Optimizely::OdpSegmentsApiManager.new(logger: spy_logger) }
   let(:good_response_data) do
     {
       data: {
@@ -228,7 +228,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
         )
         .to_return(status: 200, body: good_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
       expect(segments).to match_array %w[a b]
     end
 
@@ -236,7 +236,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_empty_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(segments).to match_array []
     end
 
@@ -244,7 +244,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: node_missing_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -257,7 +257,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: mixed_missing_keys_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -270,7 +270,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_identifier_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -283,7 +283,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: other_exception_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -296,7 +296,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: bad_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -309,7 +309,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: name_invalid_response_data)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -322,7 +322,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_edges_key_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -335,7 +335,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_key_for_error_response_data.to_json)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -348,7 +348,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .and_raise(SocketError)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -366,7 +366,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 400)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -379,7 +379,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 500)
 
-      segments = zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -396,7 +396,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
             '{audiences(subset:[]) {edges {node {name state}}}}}'
           }
         )
-      zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, nil)
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(
@@ -405,7 +405,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
             '{audiences(subset:[]) {edges {node {name state}}}}}'
           }
         )
-      zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(
@@ -414,7 +414,7 @@ describe Optimizely::ZaiusGraphQLApiManager do
             '{audiences(subset:["a"]) {edges {node {name state}}}}}'
           }
         )
-      zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a])
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a])
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(
@@ -423,15 +423,15 @@ describe Optimizely::ZaiusGraphQLApiManager do
             '{audiences(subset:["a", "b", "c"]) {edges {node {name state}}}}}'
           }
         )
-      zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
     end
 
     it 'should pass the proxy config that is passed in' do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_raise(SocketError)
       stub_request(:post, "#{api_host}/v3/graphql")
 
-      zaius_manager = Optimizely::ZaiusGraphQLApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
-      zaius_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
+      api_manager = Optimizely::OdpSegmentsApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, anything, anything, :proxy_config)
     end
   end

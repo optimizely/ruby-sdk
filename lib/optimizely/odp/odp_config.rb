@@ -67,28 +67,12 @@ module Optimizely
       @mutex.synchronize { @api_host.clone }
     end
 
-    # Returns the api host for odp connections
-    #
-    # @return - The api host.
-
-    def api_host=(api_host)
-      @mutex.synchronize { @api_host = api_host.clone }
-    end
-
     # Returns the api key for odp connections
     #
     # @return - The api key.
 
     def api_key
       @mutex.synchronize { @api_key.clone }
-    end
-
-    # Replace the api key with the provided string
-    #
-    # @param api_key - An api key
-
-    def api_key=(api_key)
-      @mutex.synchronize { @api_key = api_key.clone }
     end
 
     # Returns An array of qualified segments for this user

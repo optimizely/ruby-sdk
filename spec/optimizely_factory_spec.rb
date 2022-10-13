@@ -29,6 +29,8 @@ describe Optimizely::OptimizelyFactory do
   let(:user_profile_service) { spy('user_profile_service') }
   let(:event_dispatcher) { Optimizely::EventDispatcher.new }
   let(:notification_center) { Optimizely::NotificationCenter.new(spy_logger, error_handler) }
+  let(:config_body_integrations) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS }
+  let(:config_body_integrations_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
 
   before(:example) do
     WebMock.allow_net_connect!
@@ -130,6 +132,21 @@ describe Optimizely::OptimizelyFactory do
       expect(error_handler).to be(optimizely_instance.error_handler)
       expect(logger).to be(optimizely_instance.logger)
       expect(notification_center).to be(optimizely_instance.notification_center)
+    end
+
+    it 'should update odp_config correctly' do
+      stub_request(:get, 'https://cdn.optimizely.com/datafiles/instance-test.json')
+        .to_return(status: 200, body: config_body_integrations_JSON)
+      project = Optimizely::OptimizelyFactory.custom_instance('instance-test')
+
+      # wait for config to be  ready
+      project.config_manager.config
+
+      odp_config = project.instance_variable_get('@odp_manager').instance_variable_get('@odp_config')
+      expect(odp_config.api_key).to eq config_body_integrations['integrations'][0]['publicKey']
+      expect(odp_config.api_host).to eq config_body_integrations['integrations'][0]['host']
+
+      project.close
     end
   end
 

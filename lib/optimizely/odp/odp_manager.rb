@@ -31,6 +31,7 @@ module Optimizely
     ODP_MANAGER_CONFIG = Helpers::Constants::ODP_MANAGER_CONFIG
     ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
 
+    # update_odp_config must be called to complete initialization
     def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
@@ -54,7 +55,6 @@ module Optimizely
       @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger)
 
       @segment_manager.odp_config = @odp_config
-      @event_manager.start!(@odp_config)
     end
 
     def fetch_qualified_segments(user_id:, options:)
@@ -123,6 +123,7 @@ module Optimizely
 
     def update_odp_config(api_key, api_host, segments_to_check)
       # Update the odp config, reset the cache and send signal to the event processor to update its config.
+      # Start the event manager if odp is integrated.
       return unless @enabled
 
       config_changed = @odp_config.update(api_key, api_host, segments_to_check)
@@ -132,10 +133,15 @@ module Optimizely
       end
 
       @segment_manager.reset
-      @event_manager.update_config
+
+      if @event_manager.running?
+        @event_manager.update_config
+      elsif @odp_config.odp_state == ODP_CONFIG_STATE[:INTEGRATED]
+        @event_manager.start!(@odp_config)
+      end
     end
 
-    def close!
+    def stop!
       return unless @enabled
 
       @event_manager.stop!

@@ -30,6 +30,7 @@ describe Optimizely::DecisionService do
   let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_user_profile_service) }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   describe '#get_variation' do
     before(:example) do
@@ -889,7 +890,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('test_user')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
 
     it 'should not log any message and return given bucketing ID when bucketing ID is a String' do
@@ -900,7 +902,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('i_am_bucketing_id')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
 
     it 'should not log any message and return empty String when bucketing ID is empty String' do
@@ -911,7 +914,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
   end
 

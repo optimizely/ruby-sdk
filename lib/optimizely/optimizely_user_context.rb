@@ -34,13 +34,15 @@ module Optimizely
       @user_id = user_id
       @user_attributes = user_attributes.nil? ? {} : user_attributes.clone
       @forced_decisions = {}
-      @qualified_segments = []
+      @qualified_segments = nil
+
+      @optimizely_client&.identify_user(user_id: user_id)
     end
 
     def clone
       user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
       @forced_decision_mutex.synchronize { user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty? }
-      @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.empty? }
+      @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.nil? }
       user_context
     end
 
@@ -194,11 +196,43 @@ module Optimizely
     # Checks if user is qualified for the provided segment.
     #
     # @param segment - A segment name
+    # @return true if qualified.
 
     def qualified_for?(segment)
-      return false if @qualified_segments.empty?
+      qualified = false
+      @qualified_segment_mutex.synchronize do
+        break if @qualified_segments.nil? || @qualified_segments.empty?
 
-      @qualified_segment_mutex.synchronize { @qualified_segments.include?(segment) }
+        qualified = @qualified_segments.include?(segment)
+      end
+      qualified
+    end
+
+    # Fetch all qualified segments for the user context.
+    #
+    # The segments fetched will be saved in `@qualified_segments` and can be accessed any time.
+    #
+    # @param options - A set of options for fetching qualified segments (optional).
+    # @param block - An optional block to call after segments have been fetched.
+    #                If a block is provided, segments will be fetched on a separate thread.
+    #                Block will be called with a boolean indicating if the fetch succeeded.
+    # @return If no block is provided, a boolean indicating whether the fetch was successful.
+    #         Otherwise, returns a thread handle and the status boolean is passed to the block.
+
+    def fetch_qualified_segments(options: [], &block)
+      fetch_segments = lambda do |opts, callback|
+        segments = @optimizely_client&.fetch_qualified_segments(user_id: @user_id, options: opts)
+        self.qualified_segments = segments
+        success = !segments.nil?
+        callback&.call(success)
+        success
+      end
+
+      if block_given?
+        Thread.new(options, block, &fetch_segments)
+      else
+        fetch_segments.call(options, nil)
+      end
     end
   end
 end
