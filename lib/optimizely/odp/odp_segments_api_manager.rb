@@ -41,8 +41,13 @@ module Optimizely
       headers = {'Content-Type' => 'application/json', 'x-api-key' => api_key.to_s}
 
       payload = {
-        'query' => %'query {customer(#{user_key}: "#{user_value}")' \
-                   "{audiences(subset:#{segments_to_check || '[]'}) {edges {node {name state}}}}}"
+        query: 'query($vuid: String, $fs_user_id: String, $audiences: [String]) {' \
+               'customer(vuid: $vuid, fs_user_id: $fs_user_id) ' \
+               '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+        variables: {
+          user_key => user_value.to_s,
+          audiences: segments_to_check || []
+        }
       }.to_json
 
       begin

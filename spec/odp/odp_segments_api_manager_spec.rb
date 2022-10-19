@@ -26,6 +26,11 @@ describe Optimizely::OdpSegmentsApiManager do
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:api_manager) { Optimizely::OdpSegmentsApiManager.new(logger: spy_logger) }
+  let(:graphql_query) do
+    'query($vuid: String, $fs_user_id: String, $audiences: [String]) {' \
+    'customer(vuid: $vuid, fs_user_id: $fs_user_id) ' \
+    '{audiences(subset: $audiences) {edges {node {name state}}}}}'
+  end
   let(:good_response_data) do
     {
       data: {
@@ -221,10 +226,7 @@ describe Optimizely::OdpSegmentsApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(
           headers: {'content-type': 'application/json', 'x-api-key': api_key},
-          body: {
-            query: %'query {customer(#{user_key}: "#{user_value}")' \
-            '{audiences(subset:["a", "b", "c"]) {edges {node {name state}}}}}'
-          }
+          body: {query: graphql_query, variables: {user_key => user_value, audiences: %w[a b c]}}
         )
         .to_return(status: 200, body: good_response_data.to_json)
 
@@ -390,39 +392,19 @@ describe Optimizely::OdpSegmentsApiManager do
 
     it 'should create correct subset filter' do
       stub_request(:post, "#{api_host}/v3/graphql")
-        .with(
-          body: {
-            query: %'query {customer(#{user_key}: "#{user_value}")' \
-            '{audiences(subset:[]) {edges {node {name state}}}}}'
-          }
-        )
+        .with(body: {query: graphql_query, variables: {user_key => user_value, audiences: []}})
       api_manager.fetch_segments(api_key, api_host, user_key, user_value, nil)
 
       stub_request(:post, "#{api_host}/v3/graphql")
-        .with(
-          body: {
-            query: %'query {customer(#{user_key}: "#{user_value}")' \
-            '{audiences(subset:[]) {edges {node {name state}}}}}'
-          }
-        )
+        .with(body: {query: graphql_query, variables: {user_key => user_value, audiences: []}})
       api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
 
       stub_request(:post, "#{api_host}/v3/graphql")
-        .with(
-          body: {
-            query: %'query {customer(#{user_key}: "#{user_value}")' \
-            '{audiences(subset:["a"]) {edges {node {name state}}}}}'
-          }
-        )
+        .with(body: {query: graphql_query, variables: {user_key => user_value, audiences: %w[a]}})
       api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a])
 
       stub_request(:post, "#{api_host}/v3/graphql")
-        .with(
-          body: {
-            query: %'query {customer(#{user_key}: "#{user_value}")' \
-            '{audiences(subset:["a", "b", "c"]) {edges {node {name state}}}}}'
-          }
-        )
+        .with(body: {query: graphql_query, variables: {user_key => user_value, audiences: %w[a b c]}})
       api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
     end
 
