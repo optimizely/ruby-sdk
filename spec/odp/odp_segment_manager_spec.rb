@@ -16,7 +16,7 @@ require 'spec_helper'
 require 'optimizely/odp/odp_segment_manager'
 require 'optimizely/odp/lru_cache'
 require 'optimizely/odp/odp_config'
-require 'optimizely/odp/odp_segments_api_manager'
+require 'optimizely/odp/odp_segment_api_manager'
 require 'optimizely/logger'
 
 describe Optimizely::OdpSegmentManager do
@@ -63,7 +63,7 @@ describe Optimizely::OdpSegmentManager do
 
   describe '#initialize' do
     it 'should return OdpSegmentManager instance' do
-      api_manager = Optimizely::OdpSegmentsApiManager.new
+      api_manager = Optimizely::OdpSegmentApiManager.new
       segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, api_manager, spy_logger)
 
       expect(segment_manager.segments_cache).to be_a Optimizely::LRUCache
@@ -74,7 +74,7 @@ describe Optimizely::OdpSegmentManager do
 
       segment_manager = Optimizely::OdpSegmentManager.new(segments_cache)
       expect(segment_manager.logger).to be_a Optimizely::NoOpLogger
-      expect(segment_manager.api_manager).to be_a Optimizely::OdpSegmentsApiManager
+      expect(segment_manager.api_manager).to be_a Optimizely::OdpSegmentApiManager
     end
   end
 
@@ -82,8 +82,10 @@ describe Optimizely::OdpSegmentManager do
     it 'should return segments successfully' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .with({headers: {'x-api-key': api_key}, body: {
-                'query' => %'query {customer(#{user_key}: "#{user_value}")' \
-                "{audiences(subset:#{segments_to_check}) {edges {node {name state}}}}}"
+                query: 'query($userId: String, $audiences: [String]) {' \
+                       "customer(#{user_key}: $userId) " \
+                       '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+                variables: {userId: user_value, audiences: %w[a b c]}
               }})
         .to_return(status: 200, body: good_response_data)
 

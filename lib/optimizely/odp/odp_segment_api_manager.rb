@@ -19,7 +19,7 @@
 require 'json'
 
 module Optimizely
-  class OdpSegmentsApiManager
+  class OdpSegmentApiManager
     # Interface that handles fetching audience segments.
 
     def initialize(logger: nil, proxy_config: nil)
@@ -41,8 +41,13 @@ module Optimizely
       headers = {'Content-Type' => 'application/json', 'x-api-key' => api_key.to_s}
 
       payload = {
-        'query' => %'query {customer(#{user_key}: "#{user_value}")' \
-                   "{audiences(subset:#{segments_to_check || '[]'}) {edges {node {name state}}}}}"
+        query: 'query($userId: String, $audiences: [String]) {' \
+               "customer(#{user_key}: $userId) " \
+               '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+        variables: {
+          userId: user_value.to_s,
+          audiences: segments_to_check || []
+        }
       }.to_json
 
       begin

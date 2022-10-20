@@ -17,7 +17,7 @@ require 'optimizely/odp/odp_event_manager'
 require 'optimizely/odp/odp_event'
 require 'optimizely/odp/lru_cache'
 require 'optimizely/odp/odp_config'
-require 'optimizely/odp/odp_events_api_manager'
+require 'optimizely/odp/odp_event_api_manager'
 require 'optimizely/logger'
 require 'optimizely/helpers/validator'
 
@@ -98,7 +98,7 @@ describe Optimizely::OdpEventManager do
     it 'should return OdpEventManager instance' do
       config = Optimizely::OdpConfig.new
 
-      api_manager = Optimizely::OdpEventsApiManager.new
+      api_manager = Optimizely::OdpEventApiManager.new
       event_manager = Optimizely::OdpEventManager.new(api_manager: api_manager, logger: spy_logger)
       event_manager.start!(config)
 
@@ -109,7 +109,7 @@ describe Optimizely::OdpEventManager do
 
       event_manager = Optimizely::OdpEventManager.new
       expect(event_manager.logger).to be_a Optimizely::NoOpLogger
-      expect(event_manager.api_manager).to be_a Optimizely::OdpEventsApiManager
+      expect(event_manager.api_manager).to be_a Optimizely::OdpEventApiManager
     end
   end
 
