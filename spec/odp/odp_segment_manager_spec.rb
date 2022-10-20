@@ -82,10 +82,10 @@ describe Optimizely::OdpSegmentManager do
     it 'should return segments successfully' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .with({headers: {'x-api-key': api_key}, body: {
-                query: 'query($vuid: String, $fs_user_id: String, $audiences: [String]) {' \
-                       'customer(vuid: $vuid, fs_user_id: $fs_user_id) ' \
+                query: 'query($userId: String, $audiences: [String]) {' \
+                       "customer(#{user_key}: $userId) " \
                        '{audiences(subset: $audiences) {edges {node {name state}}}}}',
-                variables: {user_key => user_value, audiences: %w[a b c]}
+                variables: {userId: user_value, audiences: %w[a b c]}
               }})
         .to_return(status: 200, body: good_response_data)
 

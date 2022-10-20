@@ -46,9 +46,7 @@ module Optimizely
     def update(api_key = nil, api_host = nil, segments_to_check = [])
       updated = false
       @mutex.synchronize do
-        initial_state = @odp_state
         @odp_state = api_host.nil? || api_key.nil? ? ODP_CONFIG_STATE[:NOT_INTEGRATED] : ODP_CONFIG_STATE[:INTEGRATED]
-        updated = @odp_state != initial_state
 
         if @api_key != api_key || @api_host != api_host || @segments_to_check != segments_to_check
           @api_key = api_key
