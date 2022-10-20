@@ -17,7 +17,7 @@
 #
 
 require 'optimizely/logger'
-require_relative 'odp_segments_api_manager'
+require_relative 'odp_segment_api_manager'
 
 module Optimizely
   class OdpSegmentManager
@@ -28,7 +28,7 @@ module Optimizely
     def initialize(segments_cache, api_manager = nil, logger = nil, proxy_config = nil)
       @odp_config = nil
       @logger = logger || NoOpLogger.new
-      @api_manager = api_manager || OdpSegmentsApiManager.new(logger: @logger, proxy_config: proxy_config)
+      @api_manager = api_manager || OdpSegmentApiManager.new(logger: @logger, proxy_config: proxy_config)
       @segments_cache = segments_cache
     end
 

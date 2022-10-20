@@ -16,16 +16,16 @@
 #    limitations under the License.
 #
 require 'spec_helper'
-require 'optimizely/odp/odp_segments_api_manager'
+require 'optimizely/odp/odp_segment_api_manager'
 
-describe Optimizely::OdpSegmentsApiManager do
+describe Optimizely::OdpSegmentApiManager do
   let(:user_key) { 'vuid' }
   let(:user_value) { 'test-user-value' }
   let(:api_key) { 'test-api-key' }
   let(:api_host) { 'https://test-host' }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:api_manager) { Optimizely::OdpSegmentsApiManager.new(logger: spy_logger) }
+  let(:api_manager) { Optimizely::OdpSegmentApiManager.new(logger: spy_logger) }
   let(:graphql_query) do
     'query($userId: String, $audiences: [String]) {' \
     "customer(#{user_key}: $userId) " \
@@ -412,7 +412,7 @@ describe Optimizely::OdpSegmentsApiManager do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_raise(SocketError)
       stub_request(:post, "#{api_host}/v3/graphql")
 
-      api_manager = Optimizely::OdpSegmentsApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
+      api_manager = Optimizely::OdpSegmentApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
       api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, anything, anything, :proxy_config)
     end
