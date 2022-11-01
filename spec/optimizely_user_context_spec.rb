@@ -829,7 +829,7 @@ describe 'Optimizely' do
   it 'should hit other audience with segments in ab test' do
     stub_request(:post, impression_log_url)
     stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
-    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', 'age' => 30)
+    user_context_obj = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {'age' => 30})
     user_context_obj.qualified_segments = %w[odp-segment-none]
 
     decision = user_context_obj.decide('flag-segment', [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
@@ -890,6 +890,22 @@ describe 'Optimizely' do
     stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
     expect(integration_project_instance.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
     Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+    integration_project_instance.close
+  end
+
+  it 'should skip identify with decisions' do
+    stub_request(:post, impression_log_url)
+    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+    expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
+
+    user_context = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
+
+    expect(integration_project_instance.odp_manager).not_to receive(:identify_user)
+
+    user_context.decide('flag-segment')
+    user_context.decide_all
+    user_context.decide_for_keys(['flag-segment'])
 
     integration_project_instance.close
   end
