@@ -26,7 +26,7 @@ module Optimizely
 
     OptimizelyDecisionContext = Struct.new(:flag_key, :rule_key)
     OptimizelyForcedDecision = Struct.new(:variation_key)
-    def initialize(optimizely_client, user_id, user_attributes)
+    def initialize(optimizely_client, user_id, user_attributes, identify: true)
       @attr_mutex = Mutex.new
       @forced_decision_mutex = Mutex.new
       @qualified_segment_mutex = Mutex.new
@@ -36,11 +36,11 @@ module Optimizely
       @forced_decisions = {}
       @qualified_segments = nil
 
-      @optimizely_client&.identify_user(user_id: user_id)
+      @optimizely_client&.identify_user(user_id: user_id) if identify
     end
 
     def clone
-      user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes)
+      user_context = OptimizelyUserContext.new(@optimizely_client, @user_id, user_attributes, identify: false)
       @forced_decision_mutex.synchronize { user_context.instance_variable_set('@forced_decisions', @forced_decisions.dup) unless @forced_decisions.empty? }
       @qualified_segment_mutex.synchronize { user_context.instance_variable_set('@qualified_segments', @qualified_segments.dup) unless @qualified_segments.nil? }
       user_context
