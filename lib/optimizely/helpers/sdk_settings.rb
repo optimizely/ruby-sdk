@@ -32,7 +32,6 @@ module Optimizely
       # @param odp_segment_manager - A custom odp segment manager. Required method is: `fetch_qualified_segments(user_key, user_value, options)`.
       # @param odp_event_manager - A custom odp event manager. Required method is: `send_event(type:, action:, identifiers:, data:)`
       # @param fetch_segments_timeout - The timeout in seconds of to fetch odp segments (optional. default = 10).
-      
       def initialize(
         disable_odp: false,
         segments_cache_size: Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
