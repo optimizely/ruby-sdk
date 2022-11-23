@@ -32,7 +32,7 @@ module Optimizely
     ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
 
     # update_odp_config must be called to complete initialization
-    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil logger: nil)
+    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil, logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
       @event_manager = event_manager
