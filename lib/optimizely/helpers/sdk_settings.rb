@@ -31,13 +31,16 @@ module Optimizely
       # @param odp_segments_cache - A custom odp segments cache. Required methods include: `save(key, value)`, `lookup(key) -> value`, and `reset()`
       # @param odp_segment_manager - A custom odp segment manager. Required method is: `fetch_qualified_segments(user_key, user_value, options)`.
       # @param odp_event_manager - A custom odp event manager. Required method is: `send_event(type:, action:, identifiers:, data:)`
+      # @param fetch_segments_timeout - The timeout in seconds of to fetch odp segments (optional. default = 10).
+      
       def initialize(
         disable_odp: false,
         segments_cache_size: Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
         segments_cache_timeout_in_secs: Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECONDS],
         odp_segments_cache: nil,
         odp_segment_manager: nil,
-        odp_event_manager: nil
+        odp_event_manager: nil,
+        fetch_segments_timeout: nil
       )
         @odp_disabled = disable_odp
         @segments_cache_size = segments_cache_size
@@ -45,6 +48,7 @@ module Optimizely
         @odp_segments_cache = odp_segments_cache
         @odp_segment_manager = odp_segment_manager
         @odp_event_manager = odp_event_manager
+        @fetch_segments_timeout = fetch_segments_timeout
       end
     end
   end
