@@ -39,7 +39,7 @@ module Optimizely
     # @param options - An array of OptimizelySegmentOptions used to ignore and/or reset the cache.
     #
     # @return - Array of qualified segments.
-    def fetch_qualified_segments(user_key, user_value, options)
+    def fetch_qualified_segments(user_key, user_value, options, timeout)
       odp_api_key = @odp_config&.api_key
       odp_api_host = @odp_config&.api_host
       segments_to_check = @odp_config&.segments_to_check
@@ -72,7 +72,7 @@ module Optimizely
 
       @logger.log(Logger::DEBUG, 'Making a call to ODP server.')
 
-      segments = @api_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value, segments_to_check)
+      segments = @api_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value, segments_to_check, timeout)
       @segments_cache.save(cache_key, segments) unless segments.nil? || ignore_cache
       segments
     end
