@@ -76,7 +76,7 @@ module Optimizely
         return nil
       end
 
-      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options, fetch_segments_timeout)
+      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options, @fetch_segments_timeout)
     end
 
     def identify_user(user_id:)
