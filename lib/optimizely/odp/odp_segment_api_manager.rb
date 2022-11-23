@@ -35,7 +35,7 @@ module Optimizely
     # @param user_value - value of user_key
     # @param segments_to_check - array of segments to check
 
-    def fetch_segments(api_key, api_host, user_key, user_value, segments_to_check, timeout)
+    def fetch_segments(api_key, api_host, user_key, user_value, segments_to_check, fetch_segments_timeout)
       url = "#{api_host}/v3/graphql"
 
       headers = {'Content-Type' => 'application/json', 'x-api-key' => api_key.to_s}
@@ -52,7 +52,7 @@ module Optimizely
 
       begin
         response = Helpers::HttpUtils.make_request(
-          url, :post, payload, headers, timeout || Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
+          url, :post, payload, headers, fetch_segments_timeout || Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
         )
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")

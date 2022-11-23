@@ -32,13 +32,13 @@ module Optimizely
     ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
 
     # update_odp_config must be called to complete initialization
-    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, logger: nil, timeout: nil)
+    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
       @event_manager = event_manager
       @logger = logger || NoOpLogger.new
       @odp_config = OdpConfig.new
-      @timeout = timeout
+      @fetch_segments_timeout = fetch_segments_timeout
 
       unless @enabled
         @logger.log(Logger::INFO, ODP_LOGS[:ODP_NOT_ENABLED])
@@ -76,7 +76,7 @@ module Optimizely
         return nil
       end
 
-      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options, timeout)
+      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options, fetch_segments_timeout)
     end
 
     def identify_user(user_id:)
