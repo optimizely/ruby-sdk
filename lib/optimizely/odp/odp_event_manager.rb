@@ -28,7 +28,7 @@ module Optimizely
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
     attr_reader :batch_size, :api_manager, :logger
-    attr_accessor :odp_config, odp_event_timeout
+    attr_accessor :odp_config, :odp_event_timeout
 
     def initialize(
       api_manager: nil,
