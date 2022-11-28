@@ -104,7 +104,7 @@ module Optimizely
       )
     end
 
-    def send_event(type:, action:, identifiers:, data:, odp_event_timeout:)
+    def send_event(type:, action:, identifiers:, data:)
       # Send an event to the ODP server.
       #
       # @param type - the event type.
