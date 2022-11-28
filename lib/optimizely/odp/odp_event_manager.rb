@@ -28,7 +28,7 @@ module Optimizely
     # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
 
     attr_reader :batch_size, :api_manager, :logger
-    attr_accessor :odp_config
+    attr_accessor :odp_config, odp_event_timeout
 
     def initialize(
       api_manager: nil,
@@ -233,7 +233,7 @@ module Optimizely
       i = 0
       while i < @retry_count
         begin
-          should_retry = @api_manager.send_odp_events(@api_key, @api_host, @current_batch)
+          should_retry = @api_manager.send_odp_events(@api_key, @api_host, @current_batch, @odp_event_timeout)
         rescue StandardError => e
           should_retry = false
           @logger.log(Logger::ERROR, format(Helpers::Constants::ODP_LOGS[:ODP_EVENT_FAILED], "Error: #{e.message} #{@current_batch.to_json}"))

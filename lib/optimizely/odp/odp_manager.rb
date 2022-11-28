@@ -32,13 +32,14 @@ module Optimizely
     ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
 
     # update_odp_config must be called to complete initialization
-    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil, logger: nil)
+    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil, odp_event_timeout: nil, logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
       @event_manager = event_manager
       @logger = logger || NoOpLogger.new
       @odp_config = OdpConfig.new
       @fetch_segments_timeout = fetch_segments_timeout
+      @odp_event_timeout = odp_event_timeout
 
       unless @enabled
         @logger.log(Logger::INFO, ODP_LOGS[:ODP_NOT_ENABLED])
@@ -55,6 +56,7 @@ module Optimizely
 
       @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger)
 
+      @event_manager.odp_event_timeout = odp_event_timeout
       @segment_manager.odp_config = @odp_config
     end
 
@@ -102,7 +104,7 @@ module Optimizely
       )
     end
 
-    def send_event(type:, action:, identifiers:, data:)
+    def send_event(type:, action:, identifiers:, data:, odp_event_timeout:)
       # Send an event to the ODP server.
       #
       # @param type - the event type.
