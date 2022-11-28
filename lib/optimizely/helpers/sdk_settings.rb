@@ -39,7 +39,7 @@ module Optimizely
         odp_segments_cache: nil,
         odp_segment_manager: nil,
         odp_event_manager: nil,
-        fetch_segments_timeout: nil
+        fetch_segments_timeout: nil,
         odp_event_timeout: nil
       )
         @odp_disabled = disable_odp
