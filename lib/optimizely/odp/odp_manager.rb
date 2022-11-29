@@ -56,7 +56,7 @@ module Optimizely
 
       @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger)
 
-      @event_manager.odp_event_timeout = odp_event_timeout
+      @event_manager.odp_event_timeout = @odp_event_timeout
       @segment_manager.odp_config = @odp_config
     end
 

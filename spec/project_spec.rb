@@ -4533,7 +4533,7 @@ describe 'Optimizely' do
         end
 
         def reset; end
-        def fetch_qualified_segments(user_key, user_value, options); end
+        def fetch_qualified_segments(user_key, user_value, options, fetch_segments_timeout); end
       end
 
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
@@ -4566,6 +4566,7 @@ describe 'Optimizely' do
 
     it 'should accept valid custom event manager' do
       class CustomEventManager # rubocop:disable Lint/ConstantDefinitionInBlock
+        attr_accessor :odp_event_timeout
         def send_event(extra_param = nil, action:, type:, identifiers:, data:, other_extra_param: 'great'); end
         def start!(odp_config); end
         def update_config; end

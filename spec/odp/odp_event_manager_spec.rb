@@ -181,7 +181,7 @@ describe Optimizely::OdpEventManager do
 
       event_manager.instance_variable_set('@batch_size', 2)
       batch_count = 4
-      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(batch_count).times.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(batch_count).times.with(api_key, api_host, odp_events, nil).and_return(false)
 
       # create events before starting processing to simulate backlog
       allow(event_manager).to receive(:running?).and_return(true)
@@ -205,7 +205,7 @@ describe Optimizely::OdpEventManager do
     it 'should flush with flush signal' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(false)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
@@ -222,7 +222,7 @@ describe Optimizely::OdpEventManager do
     it 'should flush multiple times successfully' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(4).times.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(4).times.with(api_key, api_host, odp_events, nil).and_return(false)
       event_manager.start!(odp_config)
       flush_count = 4
 
@@ -246,7 +246,7 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       retry_count = event_manager.instance_variable_get('@retry_count')
-      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(retry_count + 1).times.with(api_key, api_host, odp_events).and_return(true)
+      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(retry_count + 1).times.with(api_key, api_host, odp_events, nil).and_return(true)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
@@ -264,7 +264,7 @@ describe Optimizely::OdpEventManager do
     it 'should retry on network failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(true, true, false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(true, true, false)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
@@ -282,7 +282,7 @@ describe Optimizely::OdpEventManager do
     it 'should log error on send failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_raise(StandardError, 'Unexpected error')
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_raise(StandardError, 'Unexpected error')
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
@@ -371,7 +371,7 @@ describe Optimizely::OdpEventManager do
     it 'should flush when timeout is reached' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(false)
       event_manager.instance_variable_set('@flush_interval', 0.5)
       event_manager.start!(odp_config)
 
@@ -389,7 +389,7 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(false)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
@@ -446,7 +446,7 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       odp_config = Optimizely::OdpConfig.new(api_key, api_host)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(false)
       event_manager.start!(odp_config)
 
       event_manager.instance_variable_set('@batch_size', 2)
@@ -479,7 +479,7 @@ describe Optimizely::OdpEventManager do
       event_manager.odp_config = odp_config
       event_manager.instance_variable_set('@batch_size', 3)
 
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events, nil).and_return(false)
       allow(event_manager).to receive(:running?).and_return(true)
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])

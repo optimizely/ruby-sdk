@@ -56,6 +56,7 @@ module Optimizely
       @current_batch = []
       @thread = nil
       @thread_exception = false
+      @odp_event_timeout = nil
     end
 
     def start!(odp_config)

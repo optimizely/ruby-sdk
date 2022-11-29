@@ -49,7 +49,7 @@ describe Optimizely::OdpEventApiManager do
 
       api_manager = Optimizely::OdpEventApiManager.new
       expect(spy_logger).not_to receive(:log)
-      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
 
       expect(should_retry).to be false
     end
@@ -59,7 +59,7 @@ describe Optimizely::OdpEventApiManager do
       api_manager = Optimizely::OdpEventApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (network error).')
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
 
       expect(should_retry).to be true
     end
@@ -77,7 +77,7 @@ describe Optimizely::OdpEventApiManager do
                        '[{"event":0,"message":"missing \'type\' field"}]}}).'
       )
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
 
       expect(should_retry).to be false
     end
@@ -91,7 +91,7 @@ describe Optimizely::OdpEventApiManager do
       api_manager = Optimizely::OdpEventApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (500: Internal Server Error).')
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
 
       expect(should_retry).to be true
     end
