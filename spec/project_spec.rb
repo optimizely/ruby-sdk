@@ -4567,6 +4567,7 @@ describe 'Optimizely' do
     it 'should accept valid custom event manager' do
       class CustomEventManager # rubocop:disable Lint/ConstantDefinitionInBlock
         attr_accessor :odp_event_timeout
+
         def send_event(extra_param = nil, action:, type:, identifiers:, data:, other_extra_param: 'great'); end
         def start!(odp_config); end
         def update_config; end
