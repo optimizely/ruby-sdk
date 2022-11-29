@@ -331,7 +331,7 @@ module Optimizely
     end
 
     def qualified_evaluator(condition)
-      # Evaluate the given match condition for the given user qaulified segments.
+      # Evaluate the given match condition for the given user qualified segments.
       # Returns boolean true if condition value is in the user's qualified segments,
       #                 false if the condition value is not in the user's qualified segments,
       #                 nil if the condition value isn't a string.

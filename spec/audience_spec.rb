@@ -27,6 +27,7 @@ describe Optimizely::Audience do
   let(:integration_config) { Optimizely::DatafileProjectConfig.new(config_integration_JSON, spy_logger, error_handler) }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   it 'should return true for user_meets_audience_conditions? when experiment is using no audience' do
     # Both Audience Ids and Conditions are Empty

@@ -38,6 +38,9 @@ require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
 require_relative 'optimizely/optimizely_config'
 require_relative 'optimizely/optimizely_user_context'
+require_relative 'optimizely/odp/lru_cache'
+require_relative 'optimizely/odp/odp_manager'
+require_relative 'optimizely/helpers/sdk_settings'
 
 module Optimizely
   class Project
@@ -46,7 +49,7 @@ module Optimizely
     attr_reader :notification_center
     # @api no-doc
     attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
-                :event_processor, :logger, :stopped
+                :event_processor, :logger, :odp_manager, :stopped
 
     # Constructor for Projects.
     #
@@ -62,6 +65,8 @@ module Optimizely
     # @param config_manager - Optional Responds to 'config' method.
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
+    # @param default_decide_options: Optional default decision options.
+    # @param settings: Optional instance of OptimizelySdkSettings for sdk configuration.
 
     def initialize( # rubocop:disable Metrics/ParameterLists
       datafile = nil,
@@ -74,13 +79,15 @@ module Optimizely
       config_manager = nil,
       notification_center = nil,
       event_processor = nil,
-      default_decide_options = []
+      default_decide_options = [],
+      settings = nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
       @event_dispatcher = event_dispatcher || EventDispatcher.new(logger: @logger, error_handler: @error_handler)
       @user_profile_service = user_profile_service
       @default_decide_options = []
+      @sdk_settings = settings
 
       if default_decide_options.is_a? Array
         @default_decide_options = default_decide_options.clone
@@ -98,6 +105,16 @@ module Optimizely
 
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
+      setup_odp!
+
+      @odp_manager = OdpManager.new(
+        disable: @sdk_settings.odp_disabled,
+        segment_manager: @sdk_settings.odp_segment_manager,
+        event_manager: @sdk_settings.odp_event_manager,
+        segments_cache: @sdk_settings.odp_segments_cache,
+        logger: @logger
+      )
+
       @config_manager = if config_manager.respond_to?(:config)
                           config_manager
                         elsif sdk_key
@@ -112,6 +129,10 @@ module Optimizely
                         else
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
+
+      # must call this even if it's scheduled as a listener
+      # in case the config manager was initialized before the listener was added
+      update_odp_config_on_datafile_update unless @sdk_settings.odp_disabled
 
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
@@ -816,6 +837,7 @@ module Optimizely
       @stopped = true
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
+      @odp_manager.stop!
     end
 
     def get_optimizely_config
@@ -867,6 +889,25 @@ module Optimizely
       else
         OptimizelyConfig.new(project_config).config
       end
+    end
+
+    # Send an event to the ODP server.
+    #
+    # @param action - the event action name.
+    # @param type - the event type (default = "fullstack").
+    # @param identifiers - a hash for identifiers.
+    # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
+
+    def send_odp_event(action:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], identifiers: {}, data: {})
+      @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
+    end
+
+    def identify_user(user_id:)
+      @odp_manager.identify_user(user_id: user_id)
+    end
+
+    def fetch_qualified_segments(user_id:, options: [])
+      @odp_manager.fetch_qualified_segments(user_id: user_id, options: options)
     end
 
     private
@@ -1125,6 +1166,52 @@ module Optimizely
 
     def project_config
       @config_manager.config
+    end
+
+    def update_odp_config_on_datafile_update
+      # if datafile isn't ready, expects to be called again by the notification_center
+      return if @config_manager.respond_to?(:ready?) && !@config_manager.ready?
+
+      config = @config_manager&.config
+      return unless config
+
+      @odp_manager.update_odp_config(config.public_key_for_odp, config.host_for_odp, config.all_segments)
+    end
+
+    def setup_odp!
+      unless @sdk_settings.is_a? Optimizely::Helpers::OptimizelySdkSettings
+        @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.') unless @sdk_settings.nil?
+        @sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
+      end
+
+      return if @sdk_settings.odp_disabled
+
+      @notification_center.add_notification_listener(
+        NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
+        -> { update_odp_config_on_datafile_update }
+      )
+
+      if !@sdk_settings.odp_segment_manager.nil? && !Helpers::Validator.segment_manager_valid?(@sdk_settings.odp_segment_manager)
+        @logger.log(Logger::ERROR, 'Invalid ODP segment manager, reverting to default.')
+        @sdk_settings.odp_segment_manager = nil
+      end
+
+      if !@sdk_settings.odp_event_manager.nil? && !Helpers::Validator.event_manager_valid?(@sdk_settings.odp_event_manager)
+        @logger.log(Logger::ERROR, 'Invalid ODP event manager, reverting to default.')
+        @sdk_settings.odp_event_manager = nil
+      end
+
+      return if @sdk_settings.odp_segment_manager
+
+      if !@sdk_settings.odp_segments_cache.nil? && !Helpers::Validator.segments_cache_valid?(@sdk_settings.odp_segments_cache)
+        @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
+        @sdk_settings.odp_segments_cache = nil
+      end
+
+      @sdk_settings.odp_segments_cache ||= LRUCache.new(
+        @sdk_settings.segments_cache_size,
+        @sdk_settings.segments_cache_timeout_in_secs
+      )
     end
   end
 end
