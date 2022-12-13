@@ -139,12 +139,12 @@ describe Optimizely::OdpManager do
     it 'should ignore cache' do
       segments_cache = Optimizely::LRUCache.new(500, 500)
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
 
       expect(segment_manager.api_manager)
         .to receive(:fetch_segments)
         .once
-        .with(api_key, api_host, user_key, user_value, segments_to_check, nil)
+        .with(api_key, api_host, user_key, user_value, segments_to_check)
         .and_return([segments_to_check[0]])
 
       manager = Optimizely::OdpManager.new(disable: false, segment_manager: segment_manager, logger: spy_logger)
@@ -167,7 +167,7 @@ describe Optimizely::OdpManager do
       expect(segment_manager.api_manager)
         .to receive(:fetch_segments)
         .once
-        .with(api_key, api_host, user_key, user_value, segments_to_check, nil)
+        .with(api_key, api_host, user_key, user_value, segments_to_check)
         .and_return([segments_to_check[0]])
 
       manager = Optimizely::OdpManager.new(disable: false, segment_manager: segment_manager, logger: spy_logger)
@@ -193,7 +193,7 @@ describe Optimizely::OdpManager do
       expect(event_manager.api_manager)
         .to receive(:send_odp_events)
         .once
-        .with(api_key, api_host, [odp_event], nil)
+        .with(api_key, api_host, [odp_event])
         .and_return(false)
 
       manager = Optimizely::OdpManager.new(disable: false, event_manager: event_manager, logger: spy_logger)
@@ -227,7 +227,7 @@ describe Optimizely::OdpManager do
       expect(event_manager.api_manager)
         .to receive(:send_odp_events)
         .once
-        .with(api_key, api_host, [event], nil)
+        .with(api_key, api_host, [event])
         .and_return(false)
 
       manager = Optimizely::OdpManager.new(disable: false, event_manager: event_manager, logger: spy_logger)

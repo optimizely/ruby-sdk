@@ -49,7 +49,29 @@ describe Optimizely::OdpEventApiManager do
 
       api_manager = Optimizely::OdpEventApiManager.new
       expect(spy_logger).not_to receive(:log)
-      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+
+      expect(should_retry).to be false
+    end
+
+    it 'should send timeout with custom timeout' do
+      stub_request(:post, "#{api_host}/v3/events")
+        .with(
+          headers: {'content-type': 'application/json', 'x-api-key': api_key},
+          body: events.to_json
+        ).to_return(status: 200)
+
+      api_manager = Optimizely::OdpEventApiManager.new(timeout: 14)
+      expect(Optimizely::Helpers::HttpUtils).to receive(:make_request).with(
+        "#{api_host}/v3/events",
+        :post,
+        events.to_json,
+        {"Content-Type"=>"application/json", "x-api-key"=>api_key},
+        14,
+        nil
+      ).and_call_original
+
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
 
       expect(should_retry).to be false
     end
@@ -59,7 +81,7 @@ describe Optimizely::OdpEventApiManager do
       api_manager = Optimizely::OdpEventApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (network error).')
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
 
       expect(should_retry).to be true
     end
@@ -77,7 +99,7 @@ describe Optimizely::OdpEventApiManager do
                        '[{"event":0,"message":"missing \'type\' field"}]}}).'
       )
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
 
       expect(should_retry).to be false
     end
@@ -91,7 +113,7 @@ describe Optimizely::OdpEventApiManager do
       api_manager = Optimizely::OdpEventApiManager.new(logger: spy_logger)
       expect(spy_logger).to receive(:log).with(Logger::ERROR, 'ODP event send failed (500: Internal Server Error).')
 
-      should_retry = api_manager.send_odp_events(api_key, api_host, events, nil)
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
 
       expect(should_retry).to be true
     end

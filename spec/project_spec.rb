@@ -4533,7 +4533,7 @@ describe 'Optimizely' do
         end
 
         def reset; end
-        def fetch_qualified_segments(user_key, user_value, options, fetch_segments_timeout); end
+        def fetch_qualified_segments(user_key, user_value, options); end
       end
 
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')

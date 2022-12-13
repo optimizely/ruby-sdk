@@ -230,7 +230,25 @@ describe Optimizely::OdpSegmentApiManager do
         )
         .to_return(status: 200, body: good_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
+      expect(segments).to match_array %w[a b]
+    end
+
+    it 'should send timeout for fetch segments with custom timeout' do
+      api_manager_with_timeout = Optimizely::OdpSegmentApiManager.new(logger: spy_logger, timeout: 14)
+      stub_request(:post, "#{api_host}/v3/graphql")
+        .with(
+          headers: {'content-type': 'application/json', 'x-api-key': api_key},
+          body: {query: graphql_query, variables: {userId: user_value, audiences: %w[a b c]}}
+        )
+        .to_return(status: 200, body: good_response_data.to_json)
+      expect(Optimizely::Helpers::HttpUtils).to receive(:make_request).with(anything,
+                                                                            anything,
+                                                                            anything,
+                                                                            anything,
+                                                                            14,
+                                                                            nil).and_call_original
+      segments = api_manager_with_timeout.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
       expect(segments).to match_array %w[a b]
     end
 
@@ -238,7 +256,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_empty_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, [], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(segments).to match_array []
     end
 
@@ -246,7 +264,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: node_missing_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -259,7 +277,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: mixed_missing_keys_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -272,7 +290,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_identifier_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -285,7 +303,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: other_exception_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -298,7 +316,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: bad_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -311,7 +329,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: name_invalid_response_data)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -324,7 +342,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_edges_key_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -337,7 +355,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: invalid_key_for_error_response_data.to_json)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -350,7 +368,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .and_raise(SocketError)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -368,7 +386,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 400)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -381,7 +399,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 500)
 
-      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b], nil)
+      segments = api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b])
       expect(segments).to be_nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -393,19 +411,19 @@ describe Optimizely::OdpSegmentApiManager do
     it 'should create correct subset filter' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(body: {query: graphql_query, variables: {userId: user_value, audiences: []}})
-      api_manager.fetch_segments(api_key, api_host, user_key, user_value, nil, nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, nil)
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(body: {query: graphql_query, variables: {userId: user_value, audiences: []}})
-      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [], nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(body: {query: graphql_query, variables: {userId: user_value, audiences: %w[a]}})
-      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a], nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a])
 
       stub_request(:post, "#{api_host}/v3/graphql")
         .with(body: {query: graphql_query, variables: {userId: user_value, audiences: %w[a b c]}})
-      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c], nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
     end
 
     it 'should pass the proxy config that is passed in' do
@@ -413,7 +431,7 @@ describe Optimizely::OdpSegmentApiManager do
       stub_request(:post, "#{api_host}/v3/graphql")
 
       api_manager = Optimizely::OdpSegmentApiManager.new(logger: spy_logger, proxy_config: :proxy_config)
-      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [], nil)
+      api_manager.fetch_segments(api_key, api_host, user_key, user_value, [])
       expect(Optimizely::Helpers::HttpUtils).to have_received(:make_request).with(anything, anything, anything, anything, anything, :proxy_config)
     end
   end

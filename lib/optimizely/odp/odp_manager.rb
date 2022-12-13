@@ -38,8 +38,6 @@ module Optimizely
       @event_manager = event_manager
       @logger = logger || NoOpLogger.new
       @odp_config = OdpConfig.new
-      @fetch_segments_timeout = fetch_segments_timeout
-      @odp_event_timeout = odp_event_timeout
 
       unless @enabled
         @logger.log(Logger::INFO, ODP_LOGS[:ODP_NOT_ENABLED])
@@ -51,12 +49,11 @@ module Optimizely
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECONDS]
         )
-        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger)
+        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger, timeout: fetch_segments_timeout)
       end
 
-      @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger)
+      @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger, timeout: odp_event_timeout)
 
-      @event_manager.odp_event_timeout = @odp_event_timeout
       @segment_manager.odp_config = @odp_config
     end
 
@@ -78,7 +75,7 @@ module Optimizely
         return nil
       end
 
-      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options, @fetch_segments_timeout)
+      @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options)
     end
 
     def identify_user(user_id:)

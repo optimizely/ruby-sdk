@@ -64,7 +64,7 @@ describe Optimizely::OdpSegmentManager do
   describe '#initialize' do
     it 'should return OdpSegmentManager instance' do
       api_manager = Optimizely::OdpSegmentApiManager.new
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, api_manager, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, api_manager, spy_logger, nil)
 
       expect(segment_manager.segments_cache).to be_a Optimizely::LRUCache
       expect(segment_manager.segments_cache).to be segments_cache
@@ -89,10 +89,10 @@ describe Optimizely::OdpSegmentManager do
               }})
         .to_return(status: 200, body: good_response_data)
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, segments_to_check)
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to match_array(%w[a b])
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
@@ -102,10 +102,10 @@ describe Optimizely::OdpSegmentManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, [])
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to match_array([])
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
@@ -115,13 +115,13 @@ describe Optimizely::OdpSegmentManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
 
       cache_key = segment_manager.send(:make_cache_key, user_key, '123')
       segment_manager.segments_cache.save(cache_key, %w[d])
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to match_array(%w[a b])
       actual_cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
@@ -130,23 +130,23 @@ describe Optimizely::OdpSegmentManager do
     end
 
     it 'should return success with cache hit' do
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
 
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[c])
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to match_array(%w[c])
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
 
     it 'should return nil and log error with missing api_host/api_key' do
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to be_nil
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Audience segments fetch failed (ODP is not enabled).')
@@ -156,10 +156,10 @@ describe Optimizely::OdpSegmentManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 500, body: '{}')
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, segments_to_check)
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [])
 
       expect(segments).to be_nil
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Audience segments fetch failed (500).')
@@ -169,13 +169,13 @@ describe Optimizely::OdpSegmentManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
 
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[d])
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [Optimizely::OptimizelySegmentOption::IGNORE_CACHE], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [Optimizely::OptimizelySegmentOption::IGNORE_CACHE])
 
       expect(segments).to match_array(%w[a b])
       expect(segment_manager.segments_cache.lookup(cache_key)).to match_array(%w[d])
@@ -186,14 +186,14 @@ describe Optimizely::OdpSegmentManager do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_response_data)
 
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
       segment_manager.odp_config = Optimizely::OdpConfig.new(api_key, api_host, %w[a b c])
 
       cache_key = segment_manager.send(:make_cache_key, user_key, user_value)
       segment_manager.segments_cache.save(cache_key, %w[d])
       segment_manager.segments_cache.save('123', %w[c d])
 
-      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [Optimizely::OptimizelySegmentOption::RESET_CACHE], nil)
+      segments = segment_manager.fetch_qualified_segments(user_key, user_value, [Optimizely::OptimizelySegmentOption::RESET_CACHE])
 
       expect(segments).to match_array(%w[a b])
       expect(segment_manager.segments_cache.lookup(cache_key)).to match_array(%w[a b])
@@ -208,9 +208,9 @@ describe Optimizely::OdpSegmentManager do
     end
 
     it 'should log error if odp_config not set' do
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
 
-      response = segment_manager.fetch_qualified_segments(user_key, user_value, [], nil)
+      response = segment_manager.fetch_qualified_segments(user_key, user_value, [])
       expect(response).to be_nil
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Audience segments fetch failed (ODP is not enabled).')
     end
