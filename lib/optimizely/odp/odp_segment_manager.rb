@@ -28,7 +28,7 @@ module Optimizely
     def initialize(segments_cache, api_manager = nil, logger = nil, proxy_config = nil, timeout: nil)
       @odp_config = nil
       @logger = logger || NoOpLogger.new
-      @api_manager = api_manager || OdpSegmentApiManager.new(logger: @logger, proxy_config: proxy_config, timeout:timeout)
+      @api_manager = api_manager || OdpSegmentApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: timeout)
       @segments_cache = segments_cache
     end
 

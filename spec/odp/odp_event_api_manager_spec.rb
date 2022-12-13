@@ -66,7 +66,7 @@ describe Optimizely::OdpEventApiManager do
         "#{api_host}/v3/events",
         :post,
         events.to_json,
-        {"Content-Type"=>"application/json", "x-api-key"=>api_key},
+        {'Content-Type' => 'application/json', 'x-api-key' => api_key},
         14,
         nil
       ).and_call_original
