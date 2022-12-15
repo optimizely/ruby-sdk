@@ -49,10 +49,10 @@ module Optimizely
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECONDS]
         )
-        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger, timeout: fetch_segments_timeout, batch_size: odp_event_batch_size)
+        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger, timeout: fetch_segments_timeout)
       end
 
-      @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger, timeout: odp_event_timeout)
+      @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger, timeout: odp_event_timeout, batch_size: odp_event_batch_size)
 
       @segment_manager.odp_config = @odp_config
     end
