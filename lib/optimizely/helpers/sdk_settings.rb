@@ -41,7 +41,8 @@ module Optimizely
         odp_segment_manager: nil,
         odp_event_manager: nil,
         fetch_segments_timeout: nil,
-        odp_event_timeout: nil
+        odp_event_timeout: nil,
+        odp_event_batch_size: nil
       )
         @odp_disabled = disable_odp
         @segments_cache_size = segments_cache_size
@@ -51,6 +52,7 @@ module Optimizely
         @odp_event_manager = odp_event_manager
         @fetch_segments_timeout = fetch_segments_timeout
         @odp_event_timeout = odp_event_timeout
+        @odp_event_batch_size = odp_event_batch_size
       end
     end
   end

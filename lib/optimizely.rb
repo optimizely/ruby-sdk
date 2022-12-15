@@ -114,6 +114,7 @@ module Optimizely
         segments_cache: @sdk_settings.odp_segments_cache,
         fetch_segments_timeout: @sdk_settings.fetch_segments_timeout,
         odp_event_timeout: @sdk_settings.odp_event_timeout,
+        odp_event_batch_size: @sdk_settings.odp_event_batch_size,
         logger: @logger
       )
 

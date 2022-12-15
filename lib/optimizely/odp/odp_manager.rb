@@ -32,7 +32,7 @@ module Optimizely
     ODP_CONFIG_STATE = Helpers::Constants::ODP_CONFIG_STATE
 
     # update_odp_config must be called to complete initialization
-    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil, odp_event_timeout: nil, logger: nil)
+    def initialize(disable:, segments_cache: nil, segment_manager: nil, event_manager: nil, fetch_segments_timeout: nil, odp_event_timeout: nil, odp_event_batch_size: nil, logger: nil)
       @enabled = !disable
       @segment_manager = segment_manager
       @event_manager = event_manager
@@ -49,7 +49,7 @@ module Optimizely
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
           Helpers::Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_TIMEOUT_SECONDS]
         )
-        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger, timeout: fetch_segments_timeout)
+        @segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, @logger, timeout: fetch_segments_timeout, batch_size: odp_event_batch_size)
       end
 
       @event_manager ||= Optimizely::OdpEventManager.new(logger: @logger, timeout: odp_event_timeout)
