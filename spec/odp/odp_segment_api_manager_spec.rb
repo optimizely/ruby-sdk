@@ -234,6 +234,24 @@ describe Optimizely::OdpSegmentApiManager do
       expect(segments).to match_array %w[a b]
     end
 
+    it 'should send timeout for fetch segments with custom timeout' do
+      api_manager_with_timeout = Optimizely::OdpSegmentApiManager.new(logger: spy_logger, timeout: 14)
+      stub_request(:post, "#{api_host}/v3/graphql")
+        .with(
+          headers: {'content-type': 'application/json', 'x-api-key': api_key},
+          body: {query: graphql_query, variables: {userId: user_value, audiences: %w[a b c]}}
+        )
+        .to_return(status: 200, body: good_response_data.to_json)
+      expect(Optimizely::Helpers::HttpUtils).to receive(:make_request).with(anything,
+                                                                            anything,
+                                                                            anything,
+                                                                            anything,
+                                                                            14,
+                                                                            nil).and_call_original
+      segments = api_manager_with_timeout.fetch_segments(api_key, api_host, user_key, user_value, %w[a b c])
+      expect(segments).to match_array %w[a b]
+    end
+
     it 'should get empty array when empty array is given' do
       stub_request(:post, "#{api_host}/v3/graphql")
         .to_return(status: 200, body: good_empty_response_data.to_json)

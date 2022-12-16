@@ -139,7 +139,7 @@ describe Optimizely::OdpManager do
     it 'should ignore cache' do
       segments_cache = Optimizely::LRUCache.new(500, 500)
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger)
+      segment_manager = Optimizely::OdpSegmentManager.new(segments_cache, nil, spy_logger, nil)
 
       expect(segment_manager.api_manager)
         .to receive(:fetch_segments)

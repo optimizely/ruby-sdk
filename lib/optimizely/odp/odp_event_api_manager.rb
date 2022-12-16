@@ -22,9 +22,10 @@ module Optimizely
   class OdpEventApiManager
     # Interface that handles sending ODP events.
 
-    def initialize(logger: nil, proxy_config: nil)
+    def initialize(logger: nil, proxy_config: nil, timeout: nil)
       @logger = logger || NoOpLogger.new
       @proxy_config = proxy_config
+      @timeout = timeout || Optimizely::Helpers::Constants::ODP_REST_API_CONFIG[:REQUEST_TIMEOUT]
     end
 
     # Send events to the ODP Events API.
@@ -41,7 +42,7 @@ module Optimizely
 
       begin
         response = Helpers::HttpUtils.make_request(
-          url, :post, events.to_json, headers, Optimizely::Helpers::Constants::ODP_REST_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
+          url, :post, events.to_json, headers, @timeout, @proxy_config
         )
       rescue SocketError, Timeout::Error, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::EFAULT, Errno::ENETUNREACH, Errno::ENETDOWN, Errno::ECONNREFUSED
         log_failure('network error')

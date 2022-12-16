@@ -33,7 +33,8 @@ module Optimizely
     def initialize(
       api_manager: nil,
       logger: NoOpLogger.new,
-      proxy_config: nil
+      proxy_config: nil,
+      timeout: nil
     )
       super()
 
@@ -47,7 +48,7 @@ module Optimizely
       # received signal should be sent after adding item to event_queue
       @received = ConditionVariable.new
       @logger = logger
-      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config)
+      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: timeout)
       @batch_size = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
       @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
       @flush_deadline = 0
