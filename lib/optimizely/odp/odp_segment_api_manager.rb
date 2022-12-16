@@ -22,9 +22,10 @@ module Optimizely
   class OdpSegmentApiManager
     # Interface that handles fetching audience segments.
 
-    def initialize(logger: nil, proxy_config: nil)
+    def initialize(logger: nil, proxy_config: nil, timeout: nil)
       @logger = logger || NoOpLogger.new
       @proxy_config = proxy_config
+      @timeout = timeout || Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT]
     end
 
     # Fetch segments from the ODP GraphQL API.
@@ -52,7 +53,7 @@ module Optimizely
 
       begin
         response = Helpers::HttpUtils.make_request(
-          url, :post, payload, headers, Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
+          url, :post, payload, headers, @timeout, @proxy_config
         )
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
