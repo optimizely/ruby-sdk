@@ -112,12 +112,12 @@ module Optimizely
       # Returns array of segment names.
       segments = []
 
-      conditions.each do |condition|
-        case condition
-        when Array
+      case conditions
+      when Hash
+        segments.push(conditions['value']) if conditions.fetch('match', nil) == 'qualified'
+      when Array
+        conditions.each do |condition|
           segments.concat @parse_segments.call(condition)
-        when Hash
-          segments.push(condition['value']) if condition.fetch('match', nil) == 'qualified'
         end
       end
 
