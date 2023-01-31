@@ -17,6 +17,7 @@
 #
 
 require 'json'
+require_relative '../exceptions'
 
 module Optimizely
   class OdpSegmentApiManager
@@ -59,7 +60,7 @@ module Optimizely
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
         log_failure('network error')
         return nil
-      rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError => e
+      rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, HTTPUriError => e
         log_failure(e)
         return nil
       end

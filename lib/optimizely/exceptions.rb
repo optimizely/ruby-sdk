@@ -25,6 +25,13 @@ module Optimizely
     end
   end
 
+  class HTTPUriError < Error
+    # Raised when a provided URI is invalid.
+    def initialize(msg = 'Provided URI was invalid.')
+      super
+    end
+  end
+
   class InvalidAudienceError < Error
     # Raised when an invalid audience is provided
 
