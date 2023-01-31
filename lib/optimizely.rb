@@ -530,7 +530,7 @@ module Optimizely
         return false
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
 
       feature_enabled = false
@@ -770,7 +770,7 @@ module Optimizely
         return nil
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
@@ -931,7 +931,7 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes)
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       variation_id, = @decision_service.get_variation(config, experiment_id, user_context)
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
@@ -998,7 +998,7 @@ module Optimizely
         return nil
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
