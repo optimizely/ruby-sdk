@@ -181,7 +181,7 @@ module Optimizely
 
       def odp_data_types_valid?(data)
         valid_types = [String, Float, Integer, TrueClass, FalseClass, NilClass]
-        data.values.all? { |e| valid_types.member? e.class }
+        data&.values&.all? { |e| valid_types.member? e.class }
       end
 
       def segments_cache_valid?(segments_cache)
