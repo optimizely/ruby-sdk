@@ -201,7 +201,7 @@ module Optimizely
     def stringify_conditions(conditions, audiences_map)
       operand = 'OR'
       conditions_str = ''
-      length = conditions.length()
+      length = conditions.length
       return '' if length.zero?
       return "\"#{lookup_name_from_id(conditions[0], audiences_map)}\"" if length == 1 && !OPERATORS.include?(conditions[0])
 

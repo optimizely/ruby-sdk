@@ -4659,5 +4659,25 @@ describe 'Optimizely' do
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {'wow': {}})
       project.close
     end
+
+    it 'should not send odp events with legacy apis' do
+      experiment_key = 'experiment-segment'
+      feature_key = 'flag-segment'
+      user_id = 'test_user'
+
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      allow(project.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
+      expect(project.odp_manager).not_to receive(:send_event)
+
+      project.activate(experiment_key, user_id)
+      project.track('event1', user_id)
+      project.get_variation(experiment_key, user_id)
+      project.get_all_feature_variables(feature_key, user_id)
+      project.is_feature_enabled(feature_key, user_id)
+
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+
+      project.close
+    end
   end
 end
