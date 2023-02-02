@@ -530,6 +530,8 @@ module Optimizely
       #
       # array - Array consisting of hash
       # key - Key in each hash which will be key in the map
+      # first_value - Determines which value to save if there are duplicate keys. By default the last instance of the key
+      #               will be saved. Set to true to save the first key/value encountered.
       #
       # Returns map mapping key to hash
 
