@@ -1321,7 +1321,13 @@ module OptimizelySpec
       }
     ],
     'accountId' => '10367498574',
-    'events' => [],
+    'events' => [
+      {
+        'experimentIds' => ['10420810910'],
+        'id' => '10404198134',
+        'key' => 'event1'
+      }
+    ],
     'revision' => '101'
   }.freeze
 
