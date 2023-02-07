@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, 2022, Optimizely and contributors
+#    Copyright 2019, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ describe Optimizely::OptimizelyFactory do
   describe '.default_instance_with_manager' do
     it 'should take provided custom config manager' do
       class CustomConfigManager # rubocop:disable Lint/ConstantDefinitionInBlock
-        attr_reader :config
+        attr_reader :config, :sdk_key
       end
 
       custom_config_manager = CustomConfigManager.new
