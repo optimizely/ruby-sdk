@@ -1188,6 +1188,7 @@ module Optimizely
         @sdk_settings.odp_segments_cache = nil
       end
 
+      # no need to instantiate a cache if a custom cache or segment manager is provided.
       if !@sdk_settings.odp_disabled && @sdk_settings.odp_segment_manager.nil?
         @sdk_settings.odp_segments_cache ||= LRUCache.new(
           @sdk_settings.segments_cache_size,
