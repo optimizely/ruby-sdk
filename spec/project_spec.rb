@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, 2022, Optimizely and contributors
+#    Copyright 2016-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -28,11 +28,21 @@ require 'optimizely/optimizely_user_context'
 require 'optimizely/version'
 
 describe 'Optimizely' do
-  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
-  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
+  # need different sdk_key for every instance, otherwise notification center callbacks get called for the wrong tests
+  let!(:sdk_key) { SecureRandom.uuid }
+  let(:config_body) do
+    datafile = OptimizelySpec::VALID_CONFIG_BODY.dup
+    datafile['sdkKey'] = sdk_key
+    datafile
+  end
+  let(:config_body_JSON) { JSON.dump(config_body) }
   let(:config_body_invalid_JSON) { OptimizelySpec::INVALID_CONFIG_BODY_JSON }
-  let(:config_body_integrations) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS }
-  let(:config_body_integrations_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
+  let(:config_body_integrations) do
+    datafile = OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS.dup
+    datafile['sdkKey'] = sdk_key
+    datafile
+  end
+  let(:config_body_integrations_JSON) { JSON.dump(config_body_integrations) }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:version) { Optimizely::VERSION }
@@ -134,7 +144,7 @@ describe 'Optimizely' do
       allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::INFO, anything)
       allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::DEBUG, anything)
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      config = config_body_integrations.dup
+      config = OptimizelySpec.deep_clone(config_body_integrations)
       config['integrations'][0].delete('key')
       integrations_json = JSON.dump(config)
 
@@ -142,7 +152,7 @@ describe 'Optimizely' do
     end
 
     it 'should be valid when datafile contains integrations with only key' do
-      config = config_body_integrations.dup
+      config = OptimizelySpec.deep_clone(config_body_integrations)
       config['integrations'].clear
       config['integrations'].push('key' => '123')
       integrations_json = JSON.dump(config)
@@ -152,7 +162,7 @@ describe 'Optimizely' do
     end
 
     it 'should be valid when datafile contains integrations with arbitrary fields' do
-      config = config_body_integrations.dup
+      config = OptimizelySpec.deep_clone(config_body_integrations)
       config['integrations'].clear
       config['integrations'].push('key' => 'future', 'any-key-1' => 1, 'any-key-2' => 'any-value-2')
       integrations_json = JSON.dump(config)
@@ -881,7 +891,7 @@ describe 'Optimizely' do
     describe '.Optimizely with config manager' do
       before(:example) do
         stub_request(:post, impression_log_url)
-        stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+        stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
           .with(
             headers: {
               'Content-Type' => 'application/json'
@@ -901,7 +911,8 @@ describe 'Optimizely' do
 
         expect(notification_center).to receive(:send_notifications).ordered
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-          url: 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json',
+          sdk_key: sdk_key,
+          url: "https://cdn.optimizely.com/datafiles/#{sdk_key}.json",
           notification_center: notification_center
         )
 
@@ -928,7 +939,7 @@ describe 'Optimizely' do
         expect(notification_center).to receive(:send_notifications).ordered
 
         http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-          sdk_key: 'valid_sdk_key',
+          sdk_key: sdk_key,
           notification_center: notification_center
         )
 
@@ -948,7 +959,7 @@ describe 'Optimizely' do
     describe '.Optimizely with sdk key' do
       before(:example) do
         stub_request(:post, impression_log_url)
-        stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+        stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
           .with(
             headers: {
               'Content-Type' => 'application/json'
@@ -968,7 +979,7 @@ describe 'Optimizely' do
 
         custom_project_instance = Optimizely::Project.new(
           nil, nil, spy_logger, error_handler,
-          false, nil, 'valid_sdk_key', nil, notification_center
+          false, nil, sdk_key, nil, notification_center
         )
 
         sleep 0.1 until custom_project_instance.config_manager.ready?
@@ -3455,7 +3466,7 @@ describe 'Optimizely' do
   describe '.close' do
     before(:example) do
       stub_request(:post, impression_log_url)
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .with(
           headers: {
             'Content-Type' => 'application/json'
@@ -3466,7 +3477,7 @@ describe 'Optimizely' do
 
     it 'should stop config manager and event processor when optimizely close is called' do
       config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'valid_sdk_key',
+        sdk_key: sdk_key,
         start_by_default: true
       )
 
@@ -3490,7 +3501,7 @@ describe 'Optimizely' do
 
     it 'should stop invalid object' do
       http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'valid_sdk_key'
+        sdk_key: sdk_key
       )
 
       project_instance = Optimizely::Project.new(
@@ -3504,7 +3515,7 @@ describe 'Optimizely' do
 
     it 'shoud return optimizely as invalid for an API when close is called' do
       http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
-        sdk_key: 'valid_sdk_key'
+        sdk_key: sdk_key
       )
 
       project_instance = Optimizely::Project.new(
@@ -4440,10 +4451,10 @@ describe 'Optimizely' do
   describe 'sdk_settings' do
     it 'should log info when disabled' do
       project_instance.close
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       expect(project.odp_manager.instance_variable_get('@event_manager')).to be_nil
       expect(project.odp_manager.instance_variable_get('@segment_manager')).to be_nil
       project.close
@@ -4453,11 +4464,11 @@ describe 'Optimizely' do
     end
 
     it 'should accept cache_size' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
 
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').capacity).to eq 5
       project.close
@@ -4466,10 +4477,10 @@ describe 'Optimizely' do
     end
 
     it 'should accept cache_timeout' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').timeout).to eq 5
       project.close
@@ -4478,10 +4489,10 @@ describe 'Optimizely' do
     end
 
     it 'should accept cache_size and cache_timeout' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 10, segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 10
@@ -4498,10 +4509,10 @@ describe 'Optimizely' do
         def save(key, value); end
       end
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: CustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a CustomCache
       project.close
@@ -4613,15 +4624,17 @@ describe 'Optimizely' do
     end
 
     it 'should send event with HTTPProjectConfigManager' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
-        .to_return(status: 200, body: config_body_integrations_JSON)
+      datafile = OptimizelySpec.deep_clone(config_body_integrations)
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
+        .to_return(status: 200, body: JSON.dump(datafile))
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, 'sdk-key')
+      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
 
       # wait until project_config ready
       project.send(:project_config)
+      sleep 0.1 until project.odp_manager.instance_variable_get('@event_manager').instance_variable_get('@event_queue').empty?
 
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       project.close
@@ -4637,17 +4650,17 @@ describe 'Optimizely' do
 
     it 'should log debug if datafile not ready' do
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
-      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, 'sdk-key')
+      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       project.close
     end
 
     it 'should log error if odp not enabled with HTTPProjectConfigManager' do
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
       sleep 0.1 until project.config_manager.ready?
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       project.close

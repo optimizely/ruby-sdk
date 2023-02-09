@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, 2022, Optimizely and contributors
+#    Copyright 2019-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ describe Optimizely::HTTPProjectConfigManager do
   describe '.project_config_manager' do
     it 'should get project config when valid url is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
         url: 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json'
       )
 
@@ -75,6 +76,7 @@ describe Optimizely::HTTPProjectConfigManager do
         .to_return(status: 200, body: VALID_SDK_KEY_CONFIG_JSON, headers: {})
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
         url: 'http://cdn.optimizely.com/datafiles/valid_sdk_key.json'
       )
 

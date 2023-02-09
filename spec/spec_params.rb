@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2021, Optimizely and contributors
+#    Copyright 2016-2021, 2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -1328,7 +1328,8 @@ module OptimizelySpec
         'key' => 'event1'
       }
     ],
-    'revision' => '101'
+    'revision' => '101',
+    'sdkKey' => 'INTEGRATIONS'
   }.freeze
 
   SIMILAR_EXP_KEYS = {
@@ -1936,4 +1937,21 @@ module OptimizelySpec
   # SEND_FLAG_DECISIONS_DISABLED_CONFIG['sendFlagDecisions'] = false
 
   CONFIG_DICT_WITH_INTEGRATIONS_JSON = JSON.dump(CONFIG_DICT_WITH_INTEGRATIONS)
+
+  def self.deep_clone(obj)
+    obj.dup.tap do |new_obj|
+      case new_obj
+      when Hash
+        new_obj.each do |key, val|
+          new_obj[key] = deep_clone(val)
+        end
+      when Array
+        new_obj.map! do |val|
+          deep_clone(val)
+        end
+      else
+        new_obj
+      end
+    end
+  end
 end

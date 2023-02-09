@@ -382,7 +382,7 @@ describe 'Optimizely' do
         expect(decision.user_context.forced_decisions).to eq(context => forced_decision)
         expect(decision.reasons).to eq(['Variation (3324490633) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'])
       end
-      expected.to raise_error
+      expected.to raise_error Optimizely::InvalidVariationError
     end
 
     it 'should return correct variation if rule in forced decision is deleted' do
