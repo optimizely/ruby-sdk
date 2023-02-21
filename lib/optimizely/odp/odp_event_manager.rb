@@ -51,7 +51,7 @@ module Optimizely
       @logger = logger
       @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: request_timeout)
       @flush_interval = flush_interval || Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
-      @batch_size = @flush_interval&.zero? ? 0 : Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
+      @batch_size = @flush_interval&.zero? ? 1 : Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
       @flush_deadline = 0
       @retry_count = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_RETRY_COUNT]
       # current_batch should only be accessed by processing thread
