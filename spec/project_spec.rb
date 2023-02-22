@@ -4625,7 +4625,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_flush_interval: 0)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager.instance_variable_get('@flush_interval')).to eq 0
       project.close
@@ -4637,7 +4637,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_flush_interval: nil)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager.instance_variable_get('@flush_interval')).to eq 1
       project.close
@@ -4688,7 +4688,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 10_000
@@ -4702,7 +4702,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 0, segments_cache_timeout_in_secs: 0)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 0
