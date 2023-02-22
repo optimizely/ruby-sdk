@@ -48,7 +48,7 @@ describe 'Optimizely' do
   let(:version) { Optimizely::VERSION }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:conversion_log_url) { 'https://logx.optimizely.com/v1/events' }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1}) }
   let(:project_config) { project_instance.config_manager.config }
   let(:time_now) { Time.now }
   let(:post_headers) { {'Content-Type' => 'application/json'} }
@@ -287,6 +287,10 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url).with(query: params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
@@ -305,6 +309,10 @@ describe 'Optimizely' do
       stub_request(:post, impression_log_url).with(query: params)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq('control')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
@@ -337,13 +345,17 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('control_with_audience')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
         @project_config = @project_typed_audience_instance.config_manager.config
         @expected_activate_params = {
           account_id: '4879520872',
@@ -417,6 +429,10 @@ describe 'Optimizely' do
         # Should be included via exact match string audience with id '3468206642'
         expect(@project_typed_audience_instance.activate('typed_audience_experiment', 'test_user', 'house' => 'Gryffindor'))
           .to eq('A')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
         expect(@project_typed_audience_instance.decision_service.bucketer).to have_received(:bucket).once
       end
@@ -453,6 +469,10 @@ describe 'Optimizely' do
         # Should be included via exact match number audience with id '3468206646'
         expect(@project_typed_audience_instance.activate('typed_audience_experiment', 'test_user', 'lasers' => 45.5))
           .to eq('A')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
         expect(@project_typed_audience_instance.decision_service.bucketer).to have_received(:bucket).once
       end
@@ -510,6 +530,10 @@ describe 'Optimizely' do
 
         expect(@project_typed_audience_instance.activate('audience_combinations_experiment', 'test_user', user_attributes))
           .to eq('A')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
         expect(@project_typed_audience_instance.decision_service.bucketer).to have_received(:bucket).once
       end
@@ -522,6 +546,10 @@ describe 'Optimizely' do
 
         expect(@project_typed_audience_instance.activate('audience_combinations_experiment', 'test_user', user_attributes))
           .to eq(nil)
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).not_to have_received(:dispatch_event)
         expect(@project_typed_audience_instance.decision_service.bucketer).not_to have_received(:bucket)
       end
@@ -579,6 +607,10 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', attributes))
         .to eq('control_with_audience')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
@@ -625,6 +657,10 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', attributes))
         .to eq('control_with_audience')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(project_instance.decision_service.bucketer).to have_received(:bucket).once
     end
@@ -660,6 +696,10 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'test_user', 'browser_type' => 'firefox'))
         .to eq('variation_with_audience')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
     end
 
@@ -748,6 +788,10 @@ describe 'Optimizely' do
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(nil)
 
       expect(project_instance.activate('test_experiment', 'test_user')).to eq(nil)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Not activating user 'test_user'.")
       expect(project_instance.event_dispatcher).to_not have_received(:dispatch_event)
     end
@@ -781,9 +825,12 @@ describe 'Optimizely' do
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE],
         experiment, 'test_user', nil, variation_to_return,
         instance_of(Optimizely::Event)
-      ).ordered
+      )
 
       project_instance.activate('test_experiment', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
 
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment'.")
     end
@@ -798,12 +845,19 @@ describe 'Optimizely' do
       allow(project_instance.decision_service.bucketer).to receive(:bucket).and_return(variation_to_return)
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
       project_instance.activate('test_experiment', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Error dispatching event: #{log_event} RuntimeError.")
     end
 
     it 'should raise an exception when called with invalid attributes' do
       expect { project_instance.activate('test_experiment', 'test_user', 'invalid') }
         .to raise_error(Optimizely::InvalidAttributeFormatError)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
     end
 
     it 'should override the audience check if the user is whitelisted to a specific variation' do
@@ -833,6 +887,10 @@ describe 'Optimizely' do
 
       expect(project_instance.activate('test_experiment_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser'))
         .to eq('variation_with_audience')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, params, post_headers)).once
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
     end
@@ -1054,6 +1112,10 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
@@ -1061,11 +1123,15 @@ describe 'Optimizely' do
       project_instance.decision_service.set_forced_variation(project_config, 'test_experiment', 'test_user', 'variation')
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_track_event_params, post_headers)).once
     end
 
     it 'should properly track an event with tags even when the project does not have a custom logger' do
-      custom_project_instance = Optimizely::Project.new(config_body_JSON)
+      custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
 
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
@@ -1073,6 +1139,10 @@ describe 'Optimizely' do
       custom_project_instance.decision_service.set_forced_variation(project_config, 'test_experiment', 'test_user', 'variation')
       allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       custom_project_instance.track('test_event', 'test_user', nil, revenue: 42)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until custom_project_instance.event_processor.event_queue.empty?
+
       expect(custom_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
       custom_project_instance.close
     end
@@ -1085,6 +1155,10 @@ describe 'Optimizely' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(any_args).and_raise(RuntimeError)
 
       project_instance.track('test_event', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Error dispatching event: #{log_event} RuntimeError.")
     end
 
@@ -1110,9 +1184,13 @@ describe 'Optimizely' do
         .with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK],
           'test_event', 'test_user', nil, {'revenue' => 42}, conversion_event
-        ).ordered
+        )
 
       project_instance.track('test_event', 'test_user', nil, 'revenue' => 42)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
@@ -1129,12 +1207,16 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'firefox')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
         @expected_event_params = {
           account_id: '4879520872',
           project_id: '11624721371',
@@ -1179,6 +1261,10 @@ describe 'Optimizely' do
         # Should be included via substring match string audience with id '3988293898'
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('item_bought', 'test_user', 'house' => 'Welcome to Slytherin!')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, @expected_event_params, post_headers)).once
       end
 
@@ -1187,6 +1273,10 @@ describe 'Optimizely' do
         params[:visitors][0][:attributes][0][:value] = 'Welcome to Hufflepuff!'
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('item_bought', 'test_user', 'house' => 'Welcome to Hufflepuff!')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
       end
 
@@ -1217,6 +1307,10 @@ describe 'Optimizely' do
         params[:visitors][0][:snapshots][0][:events][0][:key] = 'user_signed_up'
         allow(@project_typed_audience_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         @project_typed_audience_instance.track('user_signed_up', 'test_user', user_attributes)
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until @project_typed_audience_instance.event_processor.event_queue.empty?
+
         expect(@project_typed_audience_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
       end
     end
@@ -1234,6 +1328,10 @@ describe 'Optimizely' do
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_with_audience', 'test_user', 'browser_type' => 'cyberdog')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
@@ -1243,6 +1341,10 @@ describe 'Optimizely' do
       params[:visitors][0][:snapshots][0][:events][0][:key] = 'test_event_not_running'
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       project_instance.track('test_event_not_running', 'test_user')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
 
@@ -1312,6 +1414,10 @@ describe 'Optimizely' do
       allow(Optimizely::Audience).to receive(:user_in_experiment?)
 
       project_instance.track('test_event_with_audience', 'forced_audience_user', 'browser_type' => 'wrong_browser')
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(Optimizely::Audience).to_not have_received(:user_in_experiment?)
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, conversion_log_url, params, post_headers)).once
     end
@@ -1586,6 +1692,10 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
@@ -1604,6 +1714,10 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
@@ -1621,6 +1735,10 @@ describe 'Optimizely' do
       expect(variation_to_return['featureEnabled']).to be false
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is not enabled for user 'test_user'.")
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
@@ -1638,6 +1756,10 @@ describe 'Optimizely' do
       expect(variation_to_return['featureEnabled']).to be true
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'boolean_single_variable_feature' is enabled for user 'test_user'.")
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
     end
@@ -1713,7 +1835,7 @@ describe 'Optimizely' do
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
-        ).ordered
+        )
 
       expect(project_instance.notification_center).to receive(:send_notifications)
         .with(
@@ -1730,6 +1852,10 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Activating user 'test_user' in experiment 'test_experiment_multivariate'.")
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is enabled for user 'test_user'.")
     end
@@ -1747,6 +1873,10 @@ describe 'Optimizely' do
       allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be false
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
       expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(instance_of(Optimizely::Event)).once
       expect(spy_logger).to have_received(:log).once.with(Logger::INFO, "Feature 'multi_variate_feature' is not enabled for user 'test_user'.")
     end
@@ -1769,7 +1899,9 @@ describe 'Optimizely' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
         # Activate listener
-        expect(project_instance.notification_center).to receive(:send_notifications).ordered
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        )
 
         # Decision listener called when the user is in experiment with variation feature on.
         expect(variation_to_return['featureEnabled']).to be true
@@ -1786,6 +1918,9 @@ describe 'Optimizely' do
         ).ordered
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
       end
 
       it 'should call decision listener when user is bucketed into a feature experiment with featureEnabled property is false' do
@@ -1800,7 +1935,9 @@ describe 'Optimizely' do
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
 
-        expect(project_instance.notification_center).to receive(:send_notifications).ordered
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
 
         # DECISION listener called when the user is in experiment with variation feature off.
         expect(variation_to_return['featureEnabled']).to be false
@@ -1817,6 +1954,9 @@ describe 'Optimizely' do
         )
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'browser_type' => 'chrome')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
       end
 
       it 'should call decision listener when user is bucketed into rollout with featureEnabled property is true' do
@@ -1832,7 +1972,9 @@ describe 'Optimizely' do
         # DECISION listener called when the user is in rollout with variation feature true.
         expect(variation_to_return['featureEnabled']).to be true
 
-        expect(project_instance.notification_center).to receive(:send_notifications).ordered
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           'feature', 'test_user', {'browser_type' => 'firefox'},
@@ -1843,6 +1985,9 @@ describe 'Optimizely' do
         )
 
         project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user', 'browser_type' => 'firefox')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
       end
 
       it 'should call decision listener when user is bucketed into rollout with featureEnabled property is false' do
@@ -1863,7 +2008,9 @@ describe 'Optimizely' do
 
       it 'call decision listener when the user is not bucketed into any experiment or rollout' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
-        expect(project_instance.notification_center).to receive(:send_notifications).ordered
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
 
         expect(project_instance.notification_center).to receive(:send_notifications).with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -1875,6 +2022,9 @@ describe 'Optimizely' do
         )
 
         project_instance.is_feature_enabled('multi_variate_feature', 'test_user', 'browser_type' => 'firefox')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
       end
     end
   end
@@ -3698,6 +3848,10 @@ describe 'Optimizely' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
         expect(decision.as_json).to include(
           flag_key: 'multi_variate_feature',
           enabled: true,
@@ -3844,6 +3998,10 @@ describe 'Optimizely' do
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
+
+        # wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
         expect(decision.as_json).to include(
           flag_key: 'multi_variate_feature',
           enabled: false,
@@ -4454,7 +4612,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       expect(project.odp_manager.instance_variable_get('@event_manager')).to be_nil
       expect(project.odp_manager.instance_variable_get('@segment_manager')).to be_nil
       project.close
@@ -4468,7 +4626,7 @@ describe 'Optimizely' do
         .to_return(status: 200, body: config_body_integrations_JSON)
 
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').capacity).to eq 5
       project.close
@@ -4480,7 +4638,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').timeout).to eq 5
       project.close
@@ -4492,7 +4650,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 10, segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 10
@@ -4512,7 +4670,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: CustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a CustomCache
       project.close
@@ -4526,7 +4684,7 @@ describe 'Optimizely' do
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: InvalidCustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a Optimizely::LRUCache
@@ -4550,7 +4708,7 @@ describe 'Optimizely' do
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: CustomSegmentManager.new)
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a CustomSegmentManager
       project.fetch_qualified_segments(user_id: 'test')
@@ -4566,7 +4724,7 @@ describe 'Optimizely' do
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: InvalidSegmentManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a Optimizely::OdpSegmentManager
@@ -4588,7 +4746,7 @@ describe 'Optimizely' do
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: CustomEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a CustomEventManager
       project.send_odp_event(action: 'test')
@@ -4603,7 +4761,7 @@ describe 'Optimizely' do
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: InvalidEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
 
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a Optimizely::OdpEventManager
@@ -4643,7 +4801,7 @@ describe 'Optimizely' do
     it 'should log error when odp disabled' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      custom_project_instance = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], sdk_settings)
+      custom_project_instance = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
       custom_project_instance.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       custom_project_instance.close
     end
@@ -4660,7 +4818,7 @@ describe 'Optimizely' do
         .to_return(status: 200, body: config_body_integrations_JSON)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       sleep 0.1 until project.config_manager.ready?
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
       project.close
