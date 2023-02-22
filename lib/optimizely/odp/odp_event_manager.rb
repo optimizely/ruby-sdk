@@ -36,8 +36,6 @@ module Optimizely
       request_timeout: nil,
       flush_interval: nil
     )
-      super()
-
       @odp_config = nil
       @api_host = nil
       @api_key = nil
