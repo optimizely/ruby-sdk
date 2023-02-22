@@ -139,7 +139,8 @@ module Optimizely
                              event_dispatcher: @event_dispatcher,
                              logger: @logger,
                              notification_center: @notification_center,
-                             **event_processor_options
+                             batch_size: event_processor_options[:batch_size] || BatchEventProcessor::DEFAULT_BATCH_SIZE,
+                             flush_interval: event_processor_options[:flush_interval] || BatchEventProcessor::DEFAULT_BATCH_INTERVAL
                            )
                          end
     end
