@@ -25,7 +25,7 @@ require_relative 'optimizely/decide/optimizely_decision_message'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
-require_relative 'optimizely/event/forwarding_event_processor'
+require_relative 'optimizely/event/batch_event_processor'
 require_relative 'optimizely/event/event_factory'
 require_relative 'optimizely/event/user_event_factory'
 require_relative 'optimizely/event_dispatcher'
@@ -67,6 +67,7 @@ module Optimizely
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
     # @param default_decide_options: Optional default decision options.
+    # @param event_processor_options: Optional hash of options to be passed to the default batch event processor.
     # @param settings: Optional instance of OptimizelySdkSettings for sdk configuration.
 
     def initialize( # rubocop:disable Metrics/ParameterLists
@@ -81,6 +82,7 @@ module Optimizely
       notification_center = nil,
       event_processor = nil,
       default_decide_options = [],
+      event_processor_options = {},
       settings = nil
     )
       @logger = logger || NoOpLogger.new
@@ -95,6 +97,11 @@ module Optimizely
       else
         @logger.log(Logger::DEBUG, 'Provided default decide options is not an array.')
         @default_decide_options = []
+      end
+
+      unless event_processor_options.is_a? Hash
+        @logger.log(Logger::DEBUG, 'Provided event processor options is not a hash.')
+        event_processor_options = {}
       end
 
       begin
@@ -128,7 +135,12 @@ module Optimizely
       @event_processor = if event_processor.respond_to?(:process)
                            event_processor
                          else
-                           ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
+                           BatchEventProcessor.new(
+                             event_dispatcher: @event_dispatcher,
+                             logger: @logger,
+                             notification_center: @notification_center,
+                             **event_processor_options
+                           )
                          end
     end
 
