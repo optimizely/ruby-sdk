@@ -4793,6 +4793,7 @@ describe 'Optimizely' do
         def start!(odp_config); end
         def update_config; end
         def stop!; end
+        def running?; end
       end
 
       stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
