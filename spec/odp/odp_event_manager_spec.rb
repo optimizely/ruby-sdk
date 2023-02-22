@@ -368,7 +368,7 @@ describe Optimizely::OdpEventManager do
       event_manager.stop!
     end
 
-    it 'should flush when timeout is reached' do
+    it 'should flush when flush interval is reached' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
@@ -379,6 +379,22 @@ describe Optimizely::OdpEventManager do
       event_manager.send_event(**events[1])
       sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
       sleep(1)
+
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+      expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing on interval.')
+      event_manager.stop!
+    end
+
+    it 'should flush when flush interval is zero' do
+      allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(false)
+      event_manager.instance_variable_set('@flush_interval', 0.0)
+      event_manager.start!(odp_config)
+
+      event_manager.send_event(**events[0])
+      event_manager.send_event(**events[1])
+      sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing on interval.')
