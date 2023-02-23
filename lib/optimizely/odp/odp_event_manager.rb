@@ -24,7 +24,7 @@ module Optimizely
     # Events passed to the OdpEventManager are immediately added to an EventQueue.
     # The OdpEventManager maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
-    # maximum duration before the resulting LogEvent is sent to the Odp.
+    # maximum duration before the resulting LogEvent is sent to Odp.
 
     attr_reader :batch_size, :api_manager, :logger
     attr_accessor :odp_config
