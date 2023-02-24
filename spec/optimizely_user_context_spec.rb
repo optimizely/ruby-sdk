@@ -28,7 +28,7 @@ describe 'Optimizely' do
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
-  let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler) }
+  let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1}) }
   let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:good_response_data) do
@@ -258,6 +258,10 @@ describe 'Optimizely' do
       forced_decision = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('3324490562')
       user_context_obj.set_forced_decision(context, forced_decision)
       decision = user_context_obj.decide(feature_key)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until forced_decision_project_instance.event_processor.event_queue.empty?
+
       expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       expect(decision.variation_key).to eq('3324490562')
       expect(decision.rule_key).to be_nil
@@ -350,6 +354,10 @@ describe 'Optimizely' do
       forced_decision = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('b')
       user_context_obj.set_forced_decision(context, forced_decision)
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until forced_decision_project_instance.event_processor.event_queue.empty?
+
       expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       expect(decision.variation_key).to eq('b')
       expect(decision.rule_key).to eq('exp_with_audience')
@@ -471,6 +479,10 @@ describe 'Optimizely' do
       user_context_obj.remove_forced_decision(context_with_rule)
       # decision should be based on flag forced decision
       decision = user_context_obj.decide(feature_key)
+
+      # wait for batch processing thread to send event
+      sleep 0.1 until forced_decision_project_instance.event_processor.event_queue.empty?
+
       expect(forced_decision_project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       expect(decision.variation_key).to eq('3324490562')
       expect(decision.rule_key).to be_nil

@@ -18,6 +18,8 @@
 require 'json'
 require 'spec_helper'
 require 'optimizely/helpers/validator'
+require 'optimizely/event/forwarding_event_processor'
+require 'optimizely/event_dispatcher'
 require 'optimizely/logger'
 
 describe Optimizely::UserConditionEvaluator do
@@ -25,7 +27,8 @@ describe Optimizely::UserConditionEvaluator do
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:event_processor) { Optimizely::ForwardingEventProcessor.new(Optimizely::EventDispatcher.new) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, event_processor) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
   after(:example) { project_instance.close }
 

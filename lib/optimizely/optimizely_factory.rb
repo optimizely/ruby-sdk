@@ -178,6 +178,7 @@ module Optimizely
         notification_center,
         event_processor,
         [],
+        {},
         settings
       )
     end

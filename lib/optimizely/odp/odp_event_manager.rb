@@ -21,11 +21,10 @@ require_relative 'odp_event'
 
 module Optimizely
   class OdpEventManager
-    # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
-    # Events passed to the BatchEventProcessor are immediately added to an EventQueue.
-    # The BatchEventProcessor maintains a single consumer thread that pulls events off of
+    # Events passed to the OdpEventManager are immediately added to an EventQueue.
+    # The OdpEventManager maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
-    # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
+    # maximum duration before the resulting OdpEvent is sent to Odp.
 
     attr_reader :batch_size, :api_manager, :logger
     attr_accessor :odp_config
@@ -37,8 +36,6 @@ module Optimizely
       request_timeout: nil,
       flush_interval: nil
     )
-      super()
-
       @odp_config = nil
       @api_host = nil
       @api_key = nil
