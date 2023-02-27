@@ -900,7 +900,11 @@ module Optimizely
     # @param identifiers - a hash for identifiers.
     # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
 
-    def send_odp_event(action:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], identifiers: {}, data: {})
+    def send_odp_event(action:, identifiers:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], data: {})
+      unless identifiers.is_a?(Hash) && !identifiers.empty?
+        @logger.log(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
+        return
+      end
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 

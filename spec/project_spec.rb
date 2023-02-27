@@ -4802,7 +4802,7 @@ describe 'Optimizely' do
       project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a CustomEventManager
-      project.send_odp_event(action: 'test')
+      project.send_odp_event(action: 'test', identifiers: {wow: 'great'})
       project.close
 
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
@@ -4830,7 +4830,7 @@ describe 'Optimizely' do
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
       project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
-      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
@@ -4847,7 +4847,7 @@ describe 'Optimizely' do
       project.send(:project_config)
       sleep 0.1 until project.odp_manager.instance_variable_get('@event_manager').instance_variable_get('@event_queue').empty?
 
-      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
@@ -4855,14 +4855,14 @@ describe 'Optimizely' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
       custom_project_instance = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
-      custom_project_instance.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      custom_project_instance.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       custom_project_instance.close
     end
 
     it 'should log debug if datafile not ready' do
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
       project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
-      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
@@ -4873,14 +4873,28 @@ describe 'Optimizely' do
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
       project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       sleep 0.1 until project.config_manager.ready?
-      project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {})
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
     it 'should log error with invalid data' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP data is not valid.')
       project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {'wow': {}})
+      project.close
+    end
+
+    it 'should log error with empty identifiers' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {'wow': {}})
+      project.close
+    end
+
+    it 'should log error with nil identifiers' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: 'great', identifiers: nil, data: {'wow': {}})
       project.close
     end
 
