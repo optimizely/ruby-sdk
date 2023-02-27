@@ -896,8 +896,8 @@ module Optimizely
     # Send an event to the ODP server.
     #
     # @param action - the event action name.
+    # @param identifiers - a hash for identifiers. The caller must provide at least one key-value pair.
     # @param type - the event type (default = "fullstack").
-    # @param identifiers - a hash for identifiers.
     # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
 
     def send_odp_event(action:, identifiers:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], data: {})
