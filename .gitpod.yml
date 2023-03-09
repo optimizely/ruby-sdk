@@ -5,11 +5,14 @@
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
 
 tasks:
-  - before: |
-      bundle install &&
-      gem install optimizely-sdk &&
-      rake build &&
-      gem install pkg/optimizely-sdk-4.0.0.gem
+  - init: |
+      (
+        set -e
+        bundle install
+        gem install optimizely-sdk
+        rake build
+        gem install pkg/optimizely-sdk-4.0.0.gem
+      )
 
 vscode:
   extensions:
