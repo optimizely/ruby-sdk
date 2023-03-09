@@ -5,7 +5,7 @@
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
 
 tasks:
-  - init: |
+  - before: |
       bundle install &&
       gem install optimizely-sdk &&
       rake build &&
