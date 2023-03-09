@@ -10,3 +10,9 @@ tasks:
       gem install optimizely-sdk &&
       rake build &&
       gem install pkg/optimizely-sdk-4.0.0.gem
+
+vscode:
+  extensions:
+    - rebornix.ruby@0.28.1
+    - castwide.solargraph@0.24.0
+    - wingrunr21.vscode-ruby@0.28.0
