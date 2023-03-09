@@ -17,6 +17,7 @@
 #
 
 require 'net/http'
+require_relative '../exceptions'
 
 module Optimizely
   module Helpers
@@ -27,6 +28,8 @@ module Optimizely
         # makes http/https GET/POST request and returns response
         #
         uri = URI.parse(url)
+
+        raise HTTPUriError unless uri.respond_to?(:request_uri)
 
         case http_method
         when :get

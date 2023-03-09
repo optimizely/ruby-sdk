@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, 2022, Optimizely and contributors
+#    Copyright 2019-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ module Optimizely
   class HTTPProjectConfigManager < ProjectConfigManager
     # Config manager that polls for the datafile and updated ProjectConfig based on an update interval.
 
-    attr_reader :stopped
+    attr_reader :stopped, :sdk_key
 
     # Initialize config manager. One of sdk_key or url has to be set to be able to use.
     #
-    # sdk_key - Optional string uniquely identifying the datafile. It's required unless a URL is passed in.
-    # datafile: Optional JSON string representing the project.
+    # sdk_key - Optional string uniquely identifying the datafile. It's required unless a datafile with sdk_key is passed in.
+    # datafile - Optional JSON string representing the project. If nil, sdk_key is required.
     # polling_interval - Optional floating point number representing time interval in seconds
     #                  at which to request datafile and set ProjectConfig.
     # blocking_timeout - Optional Time in seconds to block the config call until config object has been initialized.
@@ -83,6 +83,10 @@ module Optimizely
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
       @optimizely_config = nil
       @config = datafile.nil? ? nil : DatafileProjectConfig.create(datafile, @logger, @error_handler, @skip_json_validation)
+      @sdk_key = sdk_key || @config&.sdk_key
+
+      raise MissingSdkKeyError if @sdk_key.nil?
+
       @mutex = Mutex.new
       @resource = ConditionVariable.new
       @async_scheduler = AsyncScheduler.new(method(:fetch_datafile_config), @polling_interval, auto_update, @logger)
@@ -221,6 +225,10 @@ module Optimizely
       @optimizely_config = nil
 
       @notification_center.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE])
+
+      NotificationCenterRegistry
+        .get_notification_center(@sdk_key, @logger)
+        &.send_notifications(NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE])
 
       @logger.log(Logger::DEBUG, 'Received new datafile and updated config. ' \
         "Old revision number: #{previous_revision}. New revision number: #{@config.revision}.")

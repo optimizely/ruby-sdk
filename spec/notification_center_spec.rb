@@ -313,7 +313,7 @@ describe Optimizely::NotificationCenter do
         notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
         @inner_notification_center.clear_notification_listeners(notification_type)
         expect { @inner_notification_center.clear_notification_listeners(notification_type) }
-          .to_not raise_error(Optimizely::InvalidNotificationType)
+          .to_not raise_error
         expect(
           @inner_notification_center.notifications[
             Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2022, Optimizely and contributors
+#    Copyright 2016-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ require_relative 'optimizely/decide/optimizely_decision_message'
 require_relative 'optimizely/decision_service'
 require_relative 'optimizely/error_handler'
 require_relative 'optimizely/event_builder'
-require_relative 'optimizely/event/forwarding_event_processor'
+require_relative 'optimizely/event/batch_event_processor'
 require_relative 'optimizely/event/event_factory'
 require_relative 'optimizely/event/user_event_factory'
 require_relative 'optimizely/event_dispatcher'
@@ -36,6 +36,7 @@ require_relative 'optimizely/helpers/validator'
 require_relative 'optimizely/helpers/variable_type'
 require_relative 'optimizely/logger'
 require_relative 'optimizely/notification_center'
+require_relative 'optimizely/notification_center_registry'
 require_relative 'optimizely/optimizely_config'
 require_relative 'optimizely/optimizely_user_context'
 require_relative 'optimizely/odp/lru_cache'
@@ -66,6 +67,7 @@ module Optimizely
     # @param notification_center - Optional Instance of NotificationCenter.
     # @param event_processor - Optional Responds to process.
     # @param default_decide_options: Optional default decision options.
+    # @param event_processor_options: Optional hash of options to be passed to the default batch event processor.
     # @param settings: Optional instance of OptimizelySdkSettings for sdk configuration.
 
     def initialize( # rubocop:disable Metrics/ParameterLists
@@ -80,6 +82,7 @@ module Optimizely
       notification_center = nil,
       event_processor = nil,
       default_decide_options = [],
+      event_processor_options = {},
       settings = nil
     )
       @logger = logger || NoOpLogger.new
@@ -96,6 +99,11 @@ module Optimizely
         @default_decide_options = []
       end
 
+      unless event_processor_options.is_a? Hash
+        @logger.log(Logger::DEBUG, 'Provided event processor options is not a hash.')
+        event_processor_options = {}
+      end
+
       begin
         validate_instantiation_options
       rescue InvalidInputError => e
@@ -105,19 +113,7 @@ module Optimizely
 
       @notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(@logger, @error_handler)
 
-      setup_odp!
-
-      @odp_manager = OdpManager.new(
-        disable: @sdk_settings.odp_disabled,
-        segment_manager: @sdk_settings.odp_segment_manager,
-        event_manager: @sdk_settings.odp_event_manager,
-        segments_cache: @sdk_settings.odp_segments_cache,
-        fetch_segments_timeout: @sdk_settings.fetch_segments_timeout,
-        odp_event_timeout: @sdk_settings.odp_event_timeout,
-        logger: @logger
-      )
-
-      @config_manager = if config_manager.respond_to?(:config)
+      @config_manager = if config_manager.respond_to?(:config) && config_manager.respond_to?(:sdk_key)
                           config_manager
                         elsif sdk_key
                           HTTPProjectConfigManager.new(
@@ -132,16 +128,20 @@ module Optimizely
                           StaticProjectConfigManager.new(datafile, @logger, @error_handler, skip_json_validation)
                         end
 
-      # must call this even if it's scheduled as a listener
-      # in case the config manager was initialized before the listener was added
-      update_odp_config_on_datafile_update unless @sdk_settings.odp_disabled
+      setup_odp!(@config_manager.sdk_key)
 
       @decision_service = DecisionService.new(@logger, @user_profile_service)
 
       @event_processor = if event_processor.respond_to?(:process)
                            event_processor
                          else
-                           ForwardingEventProcessor.new(@event_dispatcher, @logger, @notification_center)
+                           BatchEventProcessor.new(
+                             event_dispatcher: @event_dispatcher,
+                             logger: @logger,
+                             notification_center: @notification_center,
+                             batch_size: event_processor_options[:batch_size] || BatchEventProcessor::DEFAULT_BATCH_SIZE,
+                             flush_interval: event_processor_options[:flush_interval] || BatchEventProcessor::DEFAULT_BATCH_INTERVAL
+                           )
                          end
     end
 
@@ -530,7 +530,7 @@ module Optimizely
         return false
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
 
       feature_enabled = false
@@ -770,7 +770,7 @@ module Optimizely
         return nil
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
@@ -896,11 +896,15 @@ module Optimizely
     # Send an event to the ODP server.
     #
     # @param action - the event action name.
+    # @param identifiers - a hash for identifiers. The caller must provide at least one key-value pair.
     # @param type - the event type (default = "fullstack").
-    # @param identifiers - a hash for identifiers.
     # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
 
-    def send_odp_event(action:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], identifiers: {}, data: {})
+    def send_odp_event(action:, identifiers:, type: Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE], data: {})
+      unless identifiers.is_a?(Hash) && !identifiers.empty?
+        @logger.log(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
+        return
+      end
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 
@@ -931,7 +935,7 @@ module Optimizely
 
       return nil unless user_inputs_valid?(attributes)
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       variation_id, = @decision_service.get_variation(config, experiment_id, user_context)
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
@@ -998,7 +1002,7 @@ module Optimizely
         return nil
       end
 
-      user_context = create_user_context(user_id, attributes)
+      user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
@@ -1171,7 +1175,7 @@ module Optimizely
     end
 
     def update_odp_config_on_datafile_update
-      # if datafile isn't ready, expects to be called again by the notification_center
+      # if datafile isn't ready, expects to be called again by the internal notification_center
       return if @config_manager.respond_to?(:ready?) && !@config_manager.ready?
 
       config = @config_manager&.config
@@ -1180,18 +1184,11 @@ module Optimizely
       @odp_manager.update_odp_config(config.public_key_for_odp, config.host_for_odp, config.all_segments)
     end
 
-    def setup_odp!
+    def setup_odp!(sdk_key)
       unless @sdk_settings.is_a? Optimizely::Helpers::OptimizelySdkSettings
         @logger.log(Logger::DEBUG, 'Provided sdk_settings is not an OptimizelySdkSettings instance.') unless @sdk_settings.nil?
         @sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
       end
-
-      return if @sdk_settings.odp_disabled
-
-      @notification_center.add_notification_listener(
-        NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
-        -> { update_odp_config_on_datafile_update }
-      )
 
       if !@sdk_settings.odp_segment_manager.nil? && !Helpers::Validator.segment_manager_valid?(@sdk_settings.odp_segment_manager)
         @logger.log(Logger::ERROR, 'Invalid ODP segment manager, reverting to default.')
@@ -1203,17 +1200,40 @@ module Optimizely
         @sdk_settings.odp_event_manager = nil
       end
 
-      return if @sdk_settings.odp_segment_manager
-
       if !@sdk_settings.odp_segments_cache.nil? && !Helpers::Validator.segments_cache_valid?(@sdk_settings.odp_segments_cache)
         @logger.log(Logger::ERROR, 'Invalid ODP segments cache, reverting to default.')
         @sdk_settings.odp_segments_cache = nil
       end
 
-      @sdk_settings.odp_segments_cache ||= LRUCache.new(
-        @sdk_settings.segments_cache_size,
-        @sdk_settings.segments_cache_timeout_in_secs
+      # no need to instantiate a cache if a custom cache or segment manager is provided.
+      if !@sdk_settings.odp_disabled && @sdk_settings.odp_segment_manager.nil?
+        @sdk_settings.odp_segments_cache ||= LRUCache.new(
+          @sdk_settings.segments_cache_size,
+          @sdk_settings.segments_cache_timeout_in_secs
+        )
+      end
+
+      @odp_manager = OdpManager.new(
+        disable: @sdk_settings.odp_disabled,
+        segment_manager: @sdk_settings.odp_segment_manager,
+        event_manager: @sdk_settings.odp_event_manager,
+        segments_cache: @sdk_settings.odp_segments_cache,
+        fetch_segments_timeout: @sdk_settings.fetch_segments_timeout,
+        odp_event_timeout: @sdk_settings.odp_event_timeout,
+        odp_flush_interval: @sdk_settings.odp_flush_interval,
+        logger: @logger
       )
+
+      return if @sdk_settings.odp_disabled
+
+      Optimizely::NotificationCenterRegistry
+        .get_notification_center(sdk_key, @logger)
+        &.add_notification_listener(
+          NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE],
+          method(:update_odp_config_on_datafile_update)
+        )
+
+      update_odp_config_on_datafile_update
     end
   end
 end

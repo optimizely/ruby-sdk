@@ -21,11 +21,10 @@ require_relative 'odp_event'
 
 module Optimizely
   class OdpEventManager
-    # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
-    # Events passed to the BatchEventProcessor are immediately added to an EventQueue.
-    # The BatchEventProcessor maintains a single consumer thread that pulls events off of
+    # Events passed to the OdpEventManager are immediately added to an EventQueue.
+    # The OdpEventManager maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
-    # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
+    # maximum duration before the resulting OdpEvent is sent to Odp.
 
     attr_reader :batch_size, :api_manager, :logger
     attr_accessor :odp_config
@@ -34,10 +33,9 @@ module Optimizely
       api_manager: nil,
       logger: NoOpLogger.new,
       proxy_config: nil,
-      timeout: nil
+      request_timeout: nil,
+      flush_interval: nil
     )
-      super()
-
       @odp_config = nil
       @api_host = nil
       @api_key = nil
@@ -48,9 +46,9 @@ module Optimizely
       # received signal should be sent after adding item to event_queue
       @received = ConditionVariable.new
       @logger = logger
-      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: timeout)
-      @batch_size = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
-      @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
+      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: request_timeout)
+      @flush_interval = flush_interval || Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
+      @batch_size = @flush_interval&.zero? ? 1 : Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
       @flush_deadline = 0
       @retry_count = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_RETRY_COUNT]
       # current_batch should only be accessed by processing thread
