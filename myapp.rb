@@ -7,6 +7,7 @@ require 'optimizely/helpers/sdk_settings'
 require 'optimizely/decide/optimizely_decide_option'
 require 'logger'
 
+# @param user_ctx [Optimizely::OptimizelyUserContext]
 def fetch_and_decide(user_ctx)
   # =========================================
   # Fetch Qualified Segments + decide
@@ -29,6 +30,7 @@ def fetch_and_decide(user_ctx)
   end
 end
 
+# @param optimizely_client [Optimizely::Project]
 def send_event(optimizely_client)
   identifiers = {'fs-user-id': 'fs-id-12', 'email': 'fs-bash-x@optimizely.com'}
 
