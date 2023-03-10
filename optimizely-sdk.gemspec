@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 2.7'
 
   spec.summary       = "Ruby SDK for Optimizely's testing framework"
-  spec.description   = "A Ruby SDK for Optimizely's Full Stack product."
+  spec.description   = 'A Ruby SDK for use with Optimizely Feature Experimentation, Optimizely Full Stack (legacy), and Optimizely Rollouts'
   spec.homepage      = 'https://www.optimizely.com/'
   spec.license       = 'Apache-2.0'
 
