@@ -40,7 +40,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 
  Initialize Optimizely with a datafile. This datafile will be used as ProjectConfig throughout the life of the Optimizely instance.
 
- ```
+ ```ruby
  optimizely_instance = Optimizely::Project.new(datafile)
  ```
 
@@ -48,7 +48,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 
  1. Initialize Optimizely by providing an `sdk_key` and an optional `datafile`. This will initialize an HTTPConfigManager that makes an HTTP GET request to the URL (formed using your provided `sdk_key` and the default datafile CDN url template) to asynchronously download the project datafile at regular intervals and update ProjectConfig when a new datafile is received.
 
-    ```
+    ```ruby
     optimizely_instance = Optimizely::OptimizelyFactory.default_instance('put_your_sdk_key_here', datafile)
     ```
 
@@ -56,14 +56,14 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 
  2. Initialize Optimizely by providing a Config Manager that implements a `config` method. You can customize our `HTTPConfigManager` as needed.
 
-    ```
+    ```ruby
     custom_config_manager = CustomConfigManager.new
     optimizely_instance = Optimizely::OptimizelyFactory.default_instance_with_config_manager(custom_config_manager)
     ```
 
  3. Initialize Optimizely with required `sdk_key` and other optional arguments.
 
-      ```
+      ```ruby
        optimizely_instance = Optimizely::OptimizelyFactory.custom_instance(
           sdk_key,
           datafile,
@@ -83,7 +83,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
 The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL at regular intervals by making HTTP requests.
 
 
-~~~~~~
+```ruby
  http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: nil,
         url: nil,
@@ -100,7 +100,7 @@ The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL 
         datafile_access_token: nil,
         proxy_config: nil
       )
-~~~~~~
+```
 **Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
 
 **sdk_key**
@@ -141,7 +141,10 @@ The following properties can be set to override the default configurations for `
 | start_by_default | true | Boolean flag to specify if datafile polling should start right away as soon as `HTTPConfigManager` initializes
 | blocking_timeout | 15 seconds | Maximum time in seconds to block the `config` call until config has been initialized
 
-A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the `notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)`
+A notification signal will be triggered whenever a _new_ datafile is fetched and Project Config is updated. To subscribe to these notifications, use the
+```ruby
+notification_center.add_notification_listener(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:OPTIMIZELY_CONFIG_UPDATE], @callback)
+```
 
 
 #### BatchEventProcessor
@@ -153,7 +156,7 @@ A notification signal will be triggered whenever a _new_ datafile is fetched and
    * The `BatchEventProcessor` maintains a single consumer thread that pulls events off of the `Queue` and buffers them for either a configured batch size or for a maximum duration before the resulting `LogEvent` is sent to the `NotificationCenter`.
 
 #### Use BatchEventProcessor
-~~~~~~
+```ruby
 event_processor = Optimizely::BatchEventProcessor.new(
     event_queue: SizedQueue.new(10),
     event_dispatcher: event_dispatcher,
@@ -162,7 +165,7 @@ event_processor = Optimizely::BatchEventProcessor.new(
     logger: logger,
     notification_center: notification_center
 )
-~~~~~~
+```
 
 #### Advanced configuration
 The following properties can be used to customize the `BatchEventProcessor` configuration.
