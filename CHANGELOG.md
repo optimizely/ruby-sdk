@@ -1,5 +1,9 @@
 # Optimizely Ruby SDK Changelog
 
+## 4.0.1
+March 13th, 2023
+
+We updated our README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#327](https://github.com/optimizely/ruby-sdk/pull/327))
 
 ## 4.0.0
 August 4, 2022
