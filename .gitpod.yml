@@ -11,7 +11,7 @@ tasks:
         bundle install
         gem install optimizely-sdk
         rake build
-        gem install pkg/optimizely-sdk-4.0.0.gem
+        gem install pkg/optimizely-sdk-4.0.1.gem
       )
 
 vscode:
