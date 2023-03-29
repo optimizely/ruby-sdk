@@ -905,14 +905,30 @@ module Optimizely
         @logger.log(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
         return
       end
+
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('send_odp_event').message)
+        return
+      end
+
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 
     def identify_user(user_id:)
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('identify_user').message)
+        return
+      end
+
       @odp_manager.identify_user(user_id: user_id)
     end
 
     def fetch_qualified_segments(user_id:, options: [])
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('fetch_qualified_segments').message)
+        return
+      end
+
       @odp_manager.fetch_qualified_segments(user_id: user_id, options: options)
     end
 
