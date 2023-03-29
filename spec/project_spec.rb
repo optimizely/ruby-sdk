@@ -4733,10 +4733,10 @@ describe 'Optimizely' do
     it 'should revert to default cache when custom cache is invalid' do
       class InvalidCustomCache; end # rubocop:disable Lint/ConstantDefinitionInBlock
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: InvalidCustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a Optimizely::LRUCache
@@ -4757,7 +4757,7 @@ describe 'Optimizely' do
         def fetch_qualified_segments(user_key, user_value, options); end
       end
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: CustomSegmentManager.new)
       project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
@@ -4773,10 +4773,10 @@ describe 'Optimizely' do
     it 'should revert to default segment manager when custom manager is invalid' do
       class InvalidSegmentManager; end # rubocop:disable Lint/ConstantDefinitionInBlock
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: InvalidSegmentManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a Optimizely::OdpSegmentManager
@@ -4796,10 +4796,10 @@ describe 'Optimizely' do
         def running?; end
       end
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: CustomEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a CustomEventManager
       project.send_odp_event(action: 'test', identifiers: {wow: 'great'})
@@ -4811,10 +4811,10 @@ describe 'Optimizely' do
     it 'should revert to default event manager when custom manager is invalid' do
       class InvalidEventManager; end # rubocop:disable Lint/ConstantDefinitionInBlock
 
-      stub_request(:get, 'https://cdn.optimizely.com/datafiles/sdk-key.json')
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: InvalidEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, 'sdk-key', nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
 
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a Optimizely::OdpEventManager
@@ -4843,8 +4843,6 @@ describe 'Optimizely' do
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
       project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
 
-      # wait until project_config ready
-      project.send(:project_config)
       sleep 0.1 until project.odp_manager.instance_variable_get('@event_manager').instance_variable_get('@event_queue').empty?
 
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
@@ -4859,8 +4857,10 @@ describe 'Optimizely' do
       custom_project_instance.close
     end
 
-    it 'should log debug if datafile not ready' do
-      expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
+    it 'should log error if datafile is invalid' do
+      stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
+        .to_return(status: 200, body: nil)
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'send_odp_event'.")
       project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
@@ -4872,7 +4872,6 @@ describe 'Optimizely' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
       project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
-      sleep 0.1 until project.config_manager.ready?
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
