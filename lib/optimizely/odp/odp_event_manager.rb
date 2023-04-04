@@ -73,7 +73,7 @@ module Optimizely
 
     def flush
       begin
-        @event_queue.push(:FLUSH_SIGNAL, non_block: true)
+        @event_queue.push(:FLUSH_SIGNAL, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error flushing ODP event queue.')
         return
@@ -87,7 +87,7 @@ module Optimizely
     def update_config
       begin
         # Adds update config signal to event_queue.
-        @event_queue.push(:UPDATE_CONFIG, non_block: true)
+        @event_queue.push(:UPDATE_CONFIG, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error updating ODP config for the event queue')
       end
@@ -111,7 +111,7 @@ module Optimizely
 
       begin
         @logger.log(Logger::DEBUG, 'ODP event queue: adding event.')
-        @event_queue.push(event, non_block: true)
+        @event_queue.push(event, true)
       rescue => e
         @logger.log(Logger::WARN, format(Helpers::Constants::ODP_LOGS[:ODP_EVENT_FAILED], e.message))
         return
@@ -143,7 +143,7 @@ module Optimizely
       return unless running?
 
       begin
-        @event_queue.push(:SHUTDOWN_SIGNAL, non_block: true)
+        @event_queue.push(:SHUTDOWN_SIGNAL, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error stopping ODP event queue.')
         return
@@ -175,7 +175,7 @@ module Optimizely
         end
 
         begin
-          item = @event_queue.pop(non_block: true)
+          item = @event_queue.pop(true)
         rescue ThreadError => e
           raise unless e.message == 'queue empty'
 
