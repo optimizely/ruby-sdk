@@ -38,7 +38,7 @@ describe Optimizely::NotificationCenter do
       end
 
       it 'should return notification center with odp callback' do
-        sdk_key = 'VALID'
+        sdk_key = 'VALID_KEY'
         stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
           .to_return(status: 200, body: config_body_JSON)
 

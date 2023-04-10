@@ -90,26 +90,28 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when datafile is null' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      Optimizely::Project.new(nil).close
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      Optimizely::Project.new(nil, nil, spy_logger).close
     end
 
     it 'should log an error when datafile is empty' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      Optimizely::Project.new('').close
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      Optimizely::Project.new('', nil, spy_logger).close
     end
 
     it 'should log an error when given a datafile that does not conform to the schema' do
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::INFO, anything)
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::DEBUG, anything)
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      Optimizely::Project.new('{"foo": "bar"}').close
+      allow(spy_logger).to receive(:log).with(Logger::INFO, anything)
+      allow(spy_logger).to receive(:log).with(Logger::DEBUG, anything)
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'SDK key not provided/cannot be found in the datafile. ODP may not work properly without it.')
+      Optimizely::Project.new('{"foo": "bar"}', nil, spy_logger).close
     end
 
     it 'should log an error when given an invalid logger' do
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::DEBUG, anything)
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::INFO, anything)
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
+      allow(Optimizely::SimpleLogger).to receive(:new).and_return(spy_logger)
+      allow(spy_logger).to receive(:log).with(Logger::DEBUG, anything)
+      allow(spy_logger).to receive(:log).with(Logger::INFO, anything)
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
 
       class InvalidLogger; end # rubocop:disable Lint/ConstantDefinitionInBlock
       Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new).close
@@ -141,14 +143,16 @@ describe 'Optimizely' do
     end
 
     it 'should be invalid when datafile contains integrations missing key' do
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::INFO, anything)
-      allow_any_instance_of(Optimizely::SimpleLogger).to receive(:log).with(Logger::DEBUG, anything)
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      # allow(Optimizely::SimpleLogger).to receive(:new).and_return(spy_logger)
+      allow(spy_logger).to receive(:log).with(Logger::INFO, anything)
+      allow(spy_logger).to receive(:log).with(Logger::DEBUG, anything)
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'SDK key not provided/cannot be found in the datafile. ODP may not work properly without it.')
       config = OptimizelySpec.deep_clone(config_body_integrations)
       config['integrations'][0].delete('key')
       integrations_json = JSON.dump(config)
 
-      Optimizely::Project.new(integrations_json)
+      Optimizely::Project.new(integrations_json, nil, spy_logger)
     end
 
     it 'should be valid when datafile contains integrations with only key' do
@@ -172,23 +176,23 @@ describe 'Optimizely' do
     end
 
     it 'should log and raise an error when provided a datafile that is not JSON and skip_json_validation is true' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidInputError)
 
-      Optimizely::Project.new('this is not JSON', nil, nil, Optimizely::RaiseErrorHandler.new, true)
+      Optimizely::Project.new('this is not JSON', nil, spy_logger, Optimizely::RaiseErrorHandler.new, true)
     end
 
     it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
 
-      Optimizely::Project.new('{"version": "2", "foo": "bar"}', nil, nil, nil, true)
+      Optimizely::Project.new('{"version": "2", "foo": "bar"}', nil, spy_logger, nil, true)
     end
 
     it 'should log and raise an error when provided a datafile of unsupported version' do
       config_body_invalid_json = JSON.parse(config_body_invalid_JSON)
-      expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
 
-      expect { Optimizely::Project.new(config_body_invalid_JSON, nil, nil, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
+      expect { Optimizely::Project.new(config_body_invalid_JSON, nil, spy_logger, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
     end
   end
 
@@ -896,12 +900,9 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       invalid_project.activate('test_exp', 'test_user')
-      expect(logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'activate'.")
       invalid_project.close
     end
@@ -1423,12 +1424,9 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       invalid_project.track('test_event', 'test_user')
-      expect(logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'track'.")
       invalid_project.close
     end
@@ -1534,12 +1532,9 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       invalid_project.get_variation('test_exp', 'test_user')
-      expect(logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_variation'.")
       invalid_project.close
     end
@@ -1625,12 +1620,9 @@ describe 'Optimizely' do
     end
 
     it 'should return false when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'is_feature_enabled'.")
       invalid_project.close
     end
@@ -2031,12 +2023,9 @@ describe 'Optimizely' do
 
   describe '#get_enabled_features' do
     it 'should return empty when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_enabled_features('test_user')).to be_empty
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_enabled_features'.")
       invalid_project.close
     end
@@ -2260,13 +2249,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable_string'.")
       invalid_project.close
     end
@@ -2413,13 +2399,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable_json'.")
       invalid_project.close
     end
@@ -2599,13 +2582,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable_boolean'.")
       invalid_project.close
     end
@@ -2646,13 +2626,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable_double'.")
       invalid_project.close
     end
@@ -2695,13 +2672,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable_integer'.")
       invalid_project.close
     end
@@ -2744,13 +2718,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_all_feature_variables'.")
       invalid_project.close
     end
@@ -2980,13 +2951,10 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       expect(invalid_project.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
         .to eq(nil)
-      expect(logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_feature_variable'.")
       invalid_project.close
     end
@@ -3498,12 +3466,9 @@ describe 'Optimizely' do
     valid_variation = {id: '111128', key: 'control'}
 
     it 'should log an error when called with an invalid Project object' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       invalid_project.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])
-      expect(logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'set_forced_variation'.")
       invalid_project.close
     end
@@ -3558,12 +3523,9 @@ describe 'Optimizely' do
     valid_experiment = {id: '111127', key: 'test_experiment'}
 
     it 'should log an error when called with an invalid Project object' do
-      logger = double('logger')
-      allow(logger).to receive(:log)
-      allow(Optimizely::SimpleLogger).to receive(:new) { logger }
       invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
       invalid_project.get_forced_variation(valid_experiment[:key], user_id)
-      expect(logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_forced_variation'.")
       invalid_project.close
     end
