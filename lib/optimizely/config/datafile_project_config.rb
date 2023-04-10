@@ -184,20 +184,19 @@ module Optimizely
       # skip_json_validation - Optional boolean param which allows skipping JSON schema
       #                       validation upon object invocation. By default JSON schema validation will be performed.
       # Returns instance of DatafileProjectConfig, nil otherwise.
+      logger ||= SimpleLogger.new
       if !skip_json_validation && !Helpers::Validator.datafile_valid?(datafile)
-        default_logger = SimpleLogger.new
-        default_logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
         return nil
       end
 
       begin
         config = new(datafile, logger, error_handler)
       rescue StandardError => e
-        default_logger = SimpleLogger.new
         error_to_handle = e.instance_of?(InvalidDatafileVersionError) ? e : InvalidInputError.new('datafile')
         error_msg = error_to_handle.message
 
-        default_logger.log(Logger::ERROR, error_msg)
+        logger.log(Logger::ERROR, error_msg)
         error_handler.handle_error error_to_handle
         return nil
       end
