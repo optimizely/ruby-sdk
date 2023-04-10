@@ -92,6 +92,20 @@ describe Optimizely::OdpEventManager do
       event[:data]['invalid-item'] = {}
       expect(Optimizely::Helpers::Validator.odp_data_types_valid?(event[:data])).to be false
     end
+
+    it 'should convert invalid event identifier' do
+      event = Optimizely::OdpEvent.new(type: 'type', action: 'action', identifiers: {'fs-user-id' => 'great'}, data: {})
+      expect(event.instance_variable_get('@identifiers')).to eq({'fs_user_id' => 'great'})
+
+      event = Optimizely::OdpEvent.new(type: 'type', action: 'action', identifiers: {'FS-user-ID' => 'great'}, data: {})
+      expect(event.instance_variable_get('@identifiers')).to eq({'fs_user_id' => 'great'})
+
+      event = Optimizely::OdpEvent.new(type: 'type', action: 'action', identifiers: {'FS_USER_ID' => 'great', 'fs.user.id' => 'wow'}, data: {})
+      expect(event.instance_variable_get('@identifiers')).to eq({'fs_user_id' => 'great', 'fs.user.id' => 'wow'})
+
+      event = Optimizely::OdpEvent.new(type: 'type', action: 'action', identifiers: {'fs_user_id' => 'great', 'fsuserid' => 'wow'}, data: {})
+      expect(event.instance_variable_get('@identifiers')).to eq({'fs_user_id' => 'great', 'fsuserid' => 'wow'})
+    end
   end
 
   describe '#initialize' do
