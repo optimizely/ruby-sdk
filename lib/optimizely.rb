@@ -895,7 +895,7 @@ module Optimizely
 
     # Send an event to the ODP server.
     #
-    # @param action - the event action name.
+    # @param action - the event action name. Cannot be nil or empty string.
     # @param identifiers - a hash for identifiers. The caller must provide at least one key-value pair.
     # @param type - the event type (default = "fullstack").
     # @param data - a hash for associated data. The default event data will be added to this data before sending to the ODP server.
@@ -910,6 +910,13 @@ module Optimizely
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('send_odp_event').message)
         return
       end
+
+      if action.nil? || action.empty?
+        @logger.log(Logger::ERROR, Helpers::Constants::ODP_LOGS[:ODP_INVALID_ACTION])
+        return
+      end
+
+      type = Helpers::Constants::ODP_MANAGER_CONFIG[:EVENT_TYPE] if type.nil? || type.empty?
 
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end

@@ -387,7 +387,8 @@ module Optimizely
         ODP_EVENT_FAILED: 'ODP event send failed (%s).',
         ODP_NOT_ENABLED: 'ODP is not enabled.',
         ODP_NOT_INTEGRATED: 'ODP is not integrated.',
-        ODP_INVALID_DATA: 'ODP data is not valid.'
+        ODP_INVALID_DATA: 'ODP data is not valid.',
+        ODP_INVALID_ACTION: 'ODP action is not valid (cannot be empty).'
       }.freeze
 
       DECISION_NOTIFICATION_TYPES = {
