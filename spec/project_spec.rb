@@ -4916,5 +4916,39 @@ describe 'Optimizely' do
 
       project.close
     end
+
+    it 'should log error with nil action' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP action is not valid (cannot be empty).')
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: nil, identifiers: {amazing: 'fantastic'}, data: {})
+      project.close
+    end
+
+    it 'should log error with empty string action' do
+      expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP action is not valid (cannot be empty).')
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project.send_odp_event(type: 'wow', action: '', identifiers: {amazing: 'fantastic'}, data: {})
+      project.close
+    end
+
+    it 'should use default with nil type' do
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      expect(project.odp_manager).to receive('send_event').with(type: 'fullstack', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
+      project.send_odp_event(type: nil, action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
+
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+
+      project.close
+    end
+
+    it 'should use default with empty string type' do
+      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      expect(project.odp_manager).to receive('send_event').with(type: 'fullstack', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
+      project.send_odp_event(type: '', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
+
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+
+      project.close
+    end
   end
 end

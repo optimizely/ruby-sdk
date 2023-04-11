@@ -17,14 +17,18 @@
 #
 
 require 'json'
+require_relative '../helpers/constants'
 
 module Optimizely
   class OdpEvent
     # Representation of an odp event which can be sent to the Optimizely odp platform.
+
+    KEY_FOR_USER_ID = Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID]
+
     def initialize(type:, action:, identifiers:, data:)
       @type = type
       @action = action
-      @identifiers = identifiers
+      @identifiers = convert_identifiers(identifiers)
       @data = add_common_event_data(data)
     end
 
@@ -37,6 +41,22 @@ module Optimizely
       }
       data.update(custom_data)
       data
+    end
+
+    def convert_identifiers(identifiers)
+      # Convert incorrect case/separator of identifier key `fs_user_id`
+      # (ie. `fs-user-id`, `FS_USER_ID`).
+
+      identifiers.clone.each_key do |key|
+        break if key == KEY_FOR_USER_ID
+
+        if ['fs-user-id', KEY_FOR_USER_ID].include?(key.downcase)
+          identifiers[KEY_FOR_USER_ID] = identifiers.delete(key)
+          break
+        end
+      end
+
+      identifiers
     end
 
     def to_json(*_args)
