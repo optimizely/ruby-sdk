@@ -79,24 +79,26 @@ module Optimizely
       end
 
       if response.include?('errors')
-        error_class = response['errors']&.first&.dig('extensions', 'classification') || 'decode error'
-        if error_class == 'InvalidIdentifierException'
+        error = response['errors'].first if response['errors'].is_a? Array
+        error_code = extract_component(error, 'extensions', 'code')
+        if error_code == 'INVALID_IDENTIFIER_EXCEPTION'
           log_failure('invalid identifier', Logger::WARN)
         else
+          error_class = extract_component(error, 'extensions', 'classification') || 'decode error'
           log_failure(error_class)
         end
         return nil
       end
 
-      audiences = response.dig('data', 'customer', 'audiences', 'edges')
+      audiences = extract_component(response, 'data', 'customer', 'audiences', 'edges')
       unless audiences
         log_failure('decode error')
         return nil
       end
 
       audiences.filter_map do |edge|
-        name = edge.dig('node', 'name')
-        state = edge.dig('node', 'state')
+        name = extract_component(edge, 'node', 'name')
+        state = extract_component(edge, 'node', 'state')
         unless name && state
           log_failure('decode error')
           return nil
@@ -109,6 +111,12 @@ module Optimizely
 
     def log_failure(message, level = Logger::ERROR)
       @logger.log(level, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], message))
+    end
+
+    def extract_component(hash, *components)
+      hash.dig(*components) if hash.is_a? Hash
+    rescue TypeError
+      nil
     end
   end
 end
