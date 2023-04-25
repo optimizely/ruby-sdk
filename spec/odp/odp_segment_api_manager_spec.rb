@@ -91,7 +91,8 @@ describe Optimizely::OdpSegmentApiManager do
             'customer'
           ],
           extensions: {
-            classification: 'InvalidIdentifierException'
+            classification: 'DataFetchingException',
+            code: 'INVALID_IDENTIFIER_EXCEPTION'
           }
         }
       ],
