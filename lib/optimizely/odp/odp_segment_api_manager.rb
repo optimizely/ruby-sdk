@@ -58,23 +58,23 @@ module Optimizely
         )
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
-        log_failure('network error')
+        log_segments_failure('network error')
         return nil
       rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, HTTPUriError => e
-        log_failure(e)
+        log_segments_failure(e)
         return nil
       end
 
       status = response.code.to_i
       if status >= 400
-        log_failure(status)
+        log_segments_failure(status)
         return nil
       end
 
       begin
         response = JSON.parse(response.body)
       rescue JSON::ParserError
-        log_failure('JSON decode error')
+        log_segments_failure('JSON decode error')
         return nil
       end
 
@@ -82,17 +82,17 @@ module Optimizely
         error = response['errors'].first if response['errors'].is_a? Array
         error_code = extract_component(error, 'extensions', 'code')
         if error_code == 'INVALID_IDENTIFIER_EXCEPTION'
-          log_failure('invalid identifier', Logger::WARN)
+          log_segments_failure('invalid identifier', Logger::WARN)
         else
           error_class = extract_component(error, 'extensions', 'classification') || 'decode error'
-          log_failure(error_class)
+          log_segments_failure(error_class)
         end
         return nil
       end
 
       audiences = extract_component(response, 'data', 'customer', 'audiences', 'edges')
       unless audiences
-        log_failure('decode error')
+        log_segments_failure('decode error')
         return nil
       end
 
@@ -100,7 +100,7 @@ module Optimizely
         name = extract_component(edge, 'node', 'name')
         state = extract_component(edge, 'node', 'state')
         unless name && state
-          log_failure('decode error')
+          log_segments_failure('decode error')
           return nil
         end
         state == 'qualified' ? name : nil
@@ -109,7 +109,7 @@ module Optimizely
 
     private
 
-    def log_failure(message, level = Logger::ERROR)
+    def log_segments_failure(message, level = Logger::ERROR)
       @logger.log(level, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], message))
     end
 
