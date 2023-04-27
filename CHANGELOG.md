@@ -7,15 +7,12 @@ April 28th, 2023
 
 The 5.0.0-beta release introduces a new primary feature, [Advanced Audience Targeting]( https://docs.developers.optimizely.com/feature-experimentation/docs/optimizely-data-platform-advanced-audience-targeting) enabled through integration with [Optimizely Data Platform (ODP)](https://docs.developers.optimizely.com/optimizely-data-platform/docs)
 ([#303](https://github.com/optimizely/ruby-sdk/pull/303),
-[#306](https://github.com/optimizely/ruby-sdk/pull/306),
 [#308](https://github.com/optimizely/ruby-sdk/pull/308),
 [#310](https://github.com/optimizely/ruby-sdk/pull/310),
 [#311](https://github.com/optimizely/ruby-sdk/pull/311),
 [#312](https://github.com/optimizely/ruby-sdk/pull/312),
 [#314](https://github.com/optimizely/ruby-sdk/pull/314),
-[#316](https://github.com/optimizely/ruby-sdk/pull/316),
-[#323](https://github.com/optimizely/ruby-sdk/pull/323),
-[#324](https://github.com/optimizely/ruby-sdk/pull/324)).
+[#316](https://github.com/optimizely/ruby-sdk/pull/316)).
 You can use ODP, a high-performance [Customer Data Platform (CDP)]( https://www.optimizely.com/optimization-glossary/customer-data-platform/), to easily create complex real-time segments (RTS) using first-party and 50+ third-party data sources out of the box. You can create custom schemas that support the user attributes important for your business, and stitch together user behavior done on different devices to better understand and target your customers for personalized user experiences. ODP can be used as a single source of truth for these segments in any Optimizely or 3rd party tool.
 
 With ODP accounts integrated into Optimizely projects, you can build audiences using segments pre-defined in ODP. The SDK will fetch the segments for given users and make decisions using the segments. For access to ODP audience targeting in your Feature Experimentation account, please contact your Optimizely Customer Success Manager.
