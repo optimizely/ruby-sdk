@@ -21,11 +21,10 @@ require_relative 'odp_event'
 
 module Optimizely
   class OdpEventManager
-    # BatchEventProcessor is a batched implementation of the Interface EventProcessor.
-    # Events passed to the BatchEventProcessor are immediately added to an EventQueue.
-    # The BatchEventProcessor maintains a single consumer thread that pulls events off of
+    # Events passed to the OdpEventManager are immediately added to an EventQueue.
+    # The OdpEventManager maintains a single consumer thread that pulls events off of
     # the BlockingQueue and buffers them for either a configured batch size or for a
-    # maximum duration before the resulting LogEvent is sent to the NotificationCenter.
+    # maximum duration before the resulting OdpEvent is sent to Odp.
 
     attr_reader :batch_size, :api_manager, :logger
     attr_accessor :odp_config
@@ -33,10 +32,10 @@ module Optimizely
     def initialize(
       api_manager: nil,
       logger: NoOpLogger.new,
-      proxy_config: nil
+      proxy_config: nil,
+      request_timeout: nil,
+      flush_interval: nil
     )
-      super()
-
       @odp_config = nil
       @api_host = nil
       @api_key = nil
@@ -47,9 +46,9 @@ module Optimizely
       # received signal should be sent after adding item to event_queue
       @received = ConditionVariable.new
       @logger = logger
-      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config)
-      @batch_size = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
-      @flush_interval = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
+      @api_manager = api_manager || OdpEventApiManager.new(logger: @logger, proxy_config: proxy_config, timeout: request_timeout)
+      @flush_interval = flush_interval || Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_FLUSH_INTERVAL_SECONDS]
+      @batch_size = @flush_interval&.zero? ? 1 : Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_BATCH_SIZE]
       @flush_deadline = 0
       @retry_count = Helpers::Constants::ODP_EVENT_MANAGER[:DEFAULT_RETRY_COUNT]
       # current_batch should only be accessed by processing thread
@@ -74,7 +73,7 @@ module Optimizely
 
     def flush
       begin
-        @event_queue.push(:FLUSH_SIGNAL, non_block: true)
+        @event_queue.push(:FLUSH_SIGNAL, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error flushing ODP event queue.')
         return
@@ -88,7 +87,7 @@ module Optimizely
     def update_config
       begin
         # Adds update config signal to event_queue.
-        @event_queue.push(:UPDATE_CONFIG, non_block: true)
+        @event_queue.push(:UPDATE_CONFIG, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error updating ODP config for the event queue')
       end
@@ -112,7 +111,7 @@ module Optimizely
 
       begin
         @logger.log(Logger::DEBUG, 'ODP event queue: adding event.')
-        @event_queue.push(event, non_block: true)
+        @event_queue.push(event, true)
       rescue => e
         @logger.log(Logger::WARN, format(Helpers::Constants::ODP_LOGS[:ODP_EVENT_FAILED], e.message))
         return
@@ -144,7 +143,7 @@ module Optimizely
       return unless running?
 
       begin
-        @event_queue.push(:SHUTDOWN_SIGNAL, non_block: true)
+        @event_queue.push(:SHUTDOWN_SIGNAL, true)
       rescue ThreadError
         @logger.log(Logger::ERROR, 'Error stopping ODP event queue.')
         return
@@ -176,7 +175,7 @@ module Optimizely
         end
 
         begin
-          item = @event_queue.pop(non_block: true)
+          item = @event_queue.pop(true)
         rescue ThreadError => e
           raise unless e.message == 'queue empty'
 

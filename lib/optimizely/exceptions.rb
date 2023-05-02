@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, 2022, Optimizely and contributors
+#    Copyright 2016-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,6 +21,20 @@ module Optimizely
   class HTTPCallError < Error
     # Raised when a 4xx or 5xx response code is recieved.
     def initialize(msg = 'HTTP call resulted in a response with an error code.')
+      super
+    end
+  end
+
+  class HTTPUriError < Error
+    # Raised when a provided URI is invalid.
+    def initialize(msg = 'Provided URI was invalid.')
+      super
+    end
+  end
+
+  class MissingSdkKeyError < Error
+    # Raised when a provided URI is invalid.
+    def initialize(msg = 'SDK key not provided/cannot be found in the datafile.')
       super
     end
   end

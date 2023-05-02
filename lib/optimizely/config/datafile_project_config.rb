@@ -93,7 +93,7 @@ module Optimizely
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
-      @integration_key_map = generate_key_map(@integrations, 'key')
+      @integration_key_map = generate_key_map(@integrations, 'key', first_value: true)
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
@@ -184,20 +184,19 @@ module Optimizely
       # skip_json_validation - Optional boolean param which allows skipping JSON schema
       #                       validation upon object invocation. By default JSON schema validation will be performed.
       # Returns instance of DatafileProjectConfig, nil otherwise.
+      logger ||= SimpleLogger.new
       if !skip_json_validation && !Helpers::Validator.datafile_valid?(datafile)
-        default_logger = SimpleLogger.new
-        default_logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
         return nil
       end
 
       begin
         config = new(datafile, logger, error_handler)
       rescue StandardError => e
-        default_logger = SimpleLogger.new
         error_to_handle = e.instance_of?(InvalidDatafileVersionError) ? e : InvalidInputError.new('datafile')
         error_msg = error_to_handle.message
 
-        default_logger.log(Logger::ERROR, error_msg)
+        logger.log(Logger::ERROR, error_msg)
         error_handler.handle_error error_to_handle
         return nil
       end
@@ -525,15 +524,19 @@ module Optimizely
       flag_variation_map
     end
 
-    def generate_key_map(array, key)
+    def generate_key_map(array, key, first_value: false)
       # Helper method to generate map from key to hash in array of hashes
       #
       # array - Array consisting of hash
       # key - Key in each hash which will be key in the map
+      # first_value - Determines which value to save if there are duplicate keys. By default the last instance of the key
+      #               will be saved. Set to true to save the first key/value encountered.
       #
       # Returns map mapping key to hash
 
-      Hash[array.map { |obj| [obj[key], obj] }]
+      array
+        .group_by { |obj| obj[key] }
+        .transform_values { |group| first_value ? group.first : group.last }
     end
   end
 end

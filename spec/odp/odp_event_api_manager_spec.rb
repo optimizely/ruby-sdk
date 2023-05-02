@@ -54,6 +54,28 @@ describe Optimizely::OdpEventApiManager do
       expect(should_retry).to be false
     end
 
+    it 'should send timeout with custom timeout' do
+      stub_request(:post, "#{api_host}/v3/events")
+        .with(
+          headers: {'content-type': 'application/json', 'x-api-key': api_key},
+          body: events.to_json
+        ).to_return(status: 200)
+
+      api_manager = Optimizely::OdpEventApiManager.new(timeout: 14)
+      expect(Optimizely::Helpers::HttpUtils).to receive(:make_request).with(
+        "#{api_host}/v3/events",
+        :post,
+        events.to_json,
+        {'Content-Type' => 'application/json', 'x-api-key' => api_key},
+        14,
+        nil
+      ).and_call_original
+
+      should_retry = api_manager.send_odp_events(api_key, api_host, events)
+
+      expect(should_retry).to be false
+    end
+
     it 'should return true on network error' do
       allow(Optimizely::Helpers::HttpUtils).to receive(:make_request).and_raise(SocketError)
       api_manager = Optimizely::OdpEventApiManager.new(logger: spy_logger)

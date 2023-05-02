@@ -17,14 +17,16 @@
 #
 
 require 'json'
+require_relative '../exceptions'
 
 module Optimizely
   class OdpSegmentApiManager
     # Interface that handles fetching audience segments.
 
-    def initialize(logger: nil, proxy_config: nil)
+    def initialize(logger: nil, proxy_config: nil, timeout: nil)
       @logger = logger || NoOpLogger.new
       @proxy_config = proxy_config
+      @timeout = timeout || Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT]
     end
 
     # Fetch segments from the ODP GraphQL API.
@@ -52,51 +54,53 @@ module Optimizely
 
       begin
         response = Helpers::HttpUtils.make_request(
-          url, :post, payload, headers, Optimizely::Helpers::Constants::ODP_GRAPHQL_API_CONFIG[:REQUEST_TIMEOUT], @proxy_config
+          url, :post, payload, headers, @timeout, @proxy_config
         )
       rescue SocketError, Timeout::Error, Net::ProtocolError, Errno::ECONNRESET => e
         @logger.log(Logger::DEBUG, "GraphQL download failed: #{e}")
-        log_failure('network error')
+        log_segments_failure('network error')
         return nil
-      rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError => e
-        log_failure(e)
+      rescue Errno::EINVAL, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, HTTPUriError => e
+        log_segments_failure(e)
         return nil
       end
 
       status = response.code.to_i
       if status >= 400
-        log_failure(status)
+        log_segments_failure(status)
         return nil
       end
 
       begin
         response = JSON.parse(response.body)
       rescue JSON::ParserError
-        log_failure('JSON decode error')
+        log_segments_failure('JSON decode error')
         return nil
       end
 
       if response.include?('errors')
-        error_class = response['errors']&.first&.dig('extensions', 'classification') || 'decode error'
-        if error_class == 'InvalidIdentifierException'
-          log_failure('invalid identifier', Logger::WARN)
+        error = response['errors'].first if response['errors'].is_a? Array
+        error_code = extract_component(error, 'extensions', 'code')
+        if error_code == 'INVALID_IDENTIFIER_EXCEPTION'
+          log_segments_failure('invalid identifier', Logger::WARN)
         else
-          log_failure(error_class)
+          error_class = extract_component(error, 'extensions', 'classification') || 'decode error'
+          log_segments_failure(error_class)
         end
         return nil
       end
 
-      audiences = response.dig('data', 'customer', 'audiences', 'edges')
+      audiences = extract_component(response, 'data', 'customer', 'audiences', 'edges')
       unless audiences
-        log_failure('decode error')
+        log_segments_failure('decode error')
         return nil
       end
 
       audiences.filter_map do |edge|
-        name = edge.dig('node', 'name')
-        state = edge.dig('node', 'state')
+        name = extract_component(edge, 'node', 'name')
+        state = extract_component(edge, 'node', 'state')
         unless name && state
-          log_failure('decode error')
+          log_segments_failure('decode error')
           return nil
         end
         state == 'qualified' ? name : nil
@@ -105,8 +109,14 @@ module Optimizely
 
     private
 
-    def log_failure(message, level = Logger::ERROR)
+    def log_segments_failure(message, level = Logger::ERROR)
       @logger.log(level, format(Optimizely::Helpers::Constants::ODP_LOGS[:FETCH_SEGMENTS_FAILED], message))
+    end
+
+    def extract_component(hash, *components)
+      hash.dig(*components) if hash.is_a? Hash
+    rescue TypeError
+      nil
     end
   end
 end
