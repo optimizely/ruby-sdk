@@ -6,7 +6,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"github.vscode-github-actions"
 			]
 		}
 	}
