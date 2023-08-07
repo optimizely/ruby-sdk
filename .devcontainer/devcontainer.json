@@ -2,12 +2,15 @@
 	"name": "Ruby SDK",
 	
 	"image": "mcr.microsoft.com/devcontainers/ruby:1-3.2-bullseye",
+
+	"postCreateCommand": "set -e && bundle install && gem install optimizely-sdk && rake build && gem install pkg/*",
 	
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"eamodio.gitlens",
-				"github.vscode-github-actions"
+				"github.vscode-github-actions",
+				"castwide.solargraph"
 			]
 		}
 	}
