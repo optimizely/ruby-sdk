@@ -47,7 +47,7 @@ describe Optimizely::Audience do
 
     user_meets_audience_conditions, reasons = Optimizely::Audience.user_meets_audience_conditions?(config, experiment, user_context, spy_logger)
     expect(user_meets_audience_conditions).to be true
-    expect(reasons).to  eq(["Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
+    expect(reasons).to eq(["Audiences for experiment 'test_experiment' collectively evaluated to TRUE."])
 
     # Audience Ids is Empty and  Audience Conditions is nil
     experiment = config.experiment_key_map['test_experiment']
