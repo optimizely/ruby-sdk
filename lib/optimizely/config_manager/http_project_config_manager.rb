@@ -270,7 +270,7 @@ module Optimizely
 
       unless polling_interval.positive? && polling_interval < 30
         @logger.log(
-          Logger::WARNING,
+          Logger::WARN,
           'Polling intervals below 30 seconds are not recommended.'
         )
       end
