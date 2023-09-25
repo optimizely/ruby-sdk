@@ -268,6 +268,13 @@ module Optimizely
         return
       end
 
+      if polling_interval < 30
+        @logger.log(
+          Logger::WARN,
+          'Polling intervals below 30 seconds are not recommended.'
+        )
+      end
+
       @polling_interval = polling_interval
     end
 
