@@ -274,7 +274,7 @@ module Optimizely
           'Polling intervals below 30 seconds are not recommended.'
         )
       end
-      
+
       @polling_interval = polling_interval
     end
 
