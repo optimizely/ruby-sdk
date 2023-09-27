@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, Optimizely and contributors
+#    Copyright 2016-2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -285,6 +285,24 @@ module Optimizely
           },
           'revision' => {
             'type' => 'string'
+          },
+          'integrations' => {
+            'type' => 'array',
+            'items' => {
+              'type' => 'object',
+              'properties' => {
+                'key' => {
+                  'type' => 'string'
+                },
+                'host' => {
+                  'type' => 'string'
+                },
+                'publicKey' => {
+                  'type' => 'string'
+                }
+              },
+              'required' => %w[key]
+            }
           }
         },
         'required' => %w[
@@ -364,6 +382,15 @@ module Optimizely
         'EVALUATING_AUDIENCES_COMBINED' => "Evaluating audiences for rule '%s': %s."
       }.merge(AUDIENCE_EVALUATION_LOGS).freeze
 
+      ODP_LOGS = {
+        FETCH_SEGMENTS_FAILED: 'Audience segments fetch failed (%s).',
+        ODP_EVENT_FAILED: 'ODP event send failed (%s).',
+        ODP_NOT_ENABLED: 'ODP is not enabled.',
+        ODP_NOT_INTEGRATED: 'ODP is not integrated.',
+        ODP_INVALID_DATA: 'ODP data is not valid.',
+        ODP_INVALID_ACTION: 'ODP action is not valid (cannot be empty).'
+      }.freeze
+
       DECISION_NOTIFICATION_TYPES = {
         'AB_TEST' => 'ab-test',
         'FEATURE' => 'feature',
@@ -386,6 +413,41 @@ module Optimizely
         'MIN_SECONDS_LIMIT' => 1,
         # Time in seconds before which request for datafile times out
         'REQUEST_TIMEOUT' => 10
+      }.freeze
+
+      EVENT_DISPATCH_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_GRAPHQL_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_REST_API_CONFIG = {
+        REQUEST_TIMEOUT: 10
+      }.freeze
+
+      ODP_SEGMENTS_CACHE_CONFIG = {
+        DEFAULT_CAPACITY: 10_000,
+        DEFAULT_TIMEOUT_SECONDS: 600
+      }.freeze
+
+      ODP_MANAGER_CONFIG = {
+        KEY_FOR_USER_ID: 'fs_user_id',
+        EVENT_TYPE: 'fullstack'
+      }.freeze
+
+      ODP_CONFIG_STATE = {
+        UNDETERMINED: 'UNDETERMINED',
+        INTEGRATED: 'INTEGRATED',
+        NOT_INTEGRATED: 'NOT_INTEGRATED'
+      }.freeze
+
+      ODP_EVENT_MANAGER = {
+        DEFAULT_QUEUE_CAPACITY: 10_000,
+        DEFAULT_BATCH_SIZE: 10,
+        DEFAULT_FLUSH_INTERVAL_SECONDS: 1,
+        DEFAULT_RETRY_COUNT: 3
       }.freeze
 
       HTTP_HEADERS = {

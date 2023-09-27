@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ module Optimizely
 
       unless target_parts.empty?
         target_prefix = target_parts[0].to_s
-        target_suffix = target_parts[1..-1]
+        target_suffix = target_parts[1..]
       end
 
       # expect a version string of the form x.y.z

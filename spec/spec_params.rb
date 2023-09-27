@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2021, Optimizely and contributors
+#    Copyright 2016-2021, 2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -1132,6 +1132,206 @@ module OptimizelySpec
     'sendFlagDecisions' => true
   }.freeze
 
+  CONFIG_DICT_WITH_INTEGRATIONS = {
+    'version' => '4',
+    'sendFlagDecisions' => true,
+    'rollouts' => [
+      {
+        'experiments' => [
+          {
+            'audienceIds' => ['13389130056'],
+            'forcedVariations' => {},
+            'id' => '3332020515',
+            'key' => 'rollout-rule-1',
+            'layerId' => '3319450668',
+            'status' => 'Running',
+            'trafficAllocation' => [
+              {
+                'endOfRange' => 10_000,
+                'entityId' => '3324490633'
+              }
+            ],
+            'variations' => [
+              {
+                'featureEnabled' => true,
+                'id' => '3324490633',
+                'key' => 'rollout-variation-on',
+                'variables' => []
+              }
+            ]
+          },
+          {
+            'audienceIds' => [],
+            'forcedVariations' => {},
+            'id' => '3332020556',
+            'key' => 'rollout-rule-2',
+            'layerId' => '3319450668',
+            'status' => 'Running',
+            'trafficAllocation' => [
+              {
+                'endOfRange' => 10_000,
+                'entityId' => '3324490644'
+              }
+            ],
+            'variations' => [
+              {
+                'featureEnabled' => false,
+                'id' => '3324490644',
+                'key' => 'rollout-variation-off',
+                'variables' => []
+              }
+            ]
+          }
+        ],
+        'id' => '3319450668'
+      }
+    ],
+    'anonymizeIP' => true,
+    'botFiltering' => true,
+    'projectId': '10431130345',
+    'variables': [],
+    'featureFlags': [
+      {
+        'experimentIds' => ['10390977673'],
+        'id' => '4482920077',
+        'key' => 'flag-segment',
+        'rolloutId' => '3319450668',
+        'variables' => [
+          {
+            'defaultValue' => '42',
+            'id' => '2687470095',
+            'key' => 'i_42',
+            'type' => 'integer'
+          }
+        ]
+      }
+    ],
+    'experiments' => [
+      {
+        'status' => 'Running',
+        'key' => 'experiment-segment',
+        'layerId' => '10420273888',
+        'trafficAllocation' => [
+          {
+            'entityId' => '10389729780',
+            'endOfRange' => 10_000
+          }
+        ],
+        'audienceIds' => ['$opt_dummy_audience'],
+        'audienceConditions' => %w[or 13389142234 13389141123],
+        'variations' => [
+          {
+            'variables' => [],
+            'featureEnabled' => true,
+            'id' => '10389729780',
+            'key' => 'variation-a'
+          },
+          {
+            'variables' => [],
+            'id' => '10416523121',
+            'key' => 'variation-b'
+          }
+        ],
+        'forcedVariations' => {},
+        'id' => '10390977673'
+      }
+    ],
+    'groups' => [],
+    'integrations' => [
+      {
+        'key' => 'odp',
+        'host' => 'https://api.zaius.com',
+        'publicKey' => 'W4WzcEs-ABgXorzY7h1LCQ'
+      }
+    ],
+    'typedAudiences' => [
+      {
+        'id' => '13389142234',
+        'conditions' => [
+          'and',
+          [
+            'or',
+            [
+              'or',
+              {
+                'value' => 'odp-segment-1',
+                'type' => 'third_party_dimension',
+                'name' => 'odp.audiences',
+                'match' => 'qualified'
+              }
+            ]
+          ]
+        ],
+        'name' => 'odp-segment-1'
+      },
+      {
+        'id' => '13389130056',
+        'conditions' => [
+          'and',
+          [
+            'or',
+            [
+              'or',
+              {
+                'value' => 'odp-segment-2',
+                'type' => 'third_party_dimension',
+                'name' => 'odp.audiences',
+                'match' => 'qualified'
+              },
+              {
+                'value' => 'us',
+                'type' => 'custom_attribute',
+                'name' => 'country',
+                'match' => 'exact'
+              }
+            ],
+            [
+              'or',
+              {
+                'value' => 'odp-segment-3',
+                'type' => 'third_party_dimension',
+                'name' => 'odp.audiences',
+                'match' => 'qualified'
+              }
+            ]
+          ]
+        ],
+        'name' => 'odp-segment-2'
+      }
+    ],
+    'audiences' => [
+      {
+        'id' => '13389141123',
+        'conditions' => '["and", ["or", ["or", {"match": "gt", "name": "age", "type": "custom_attribute", "value": 20}]]]',
+        'name' => 'adult'
+      }
+    ],
+    'attributes' => [
+      {
+        'id' => '10401066117',
+        'key' => 'gender'
+      },
+      {
+        'id' => '10401066170',
+        'key' => 'testvar'
+      },
+      {
+        'id' => '10401066171',
+        'key' => 'age'
+      }
+    ],
+    'accountId' => '10367498574',
+    'events' => [
+      {
+        'experimentIds' => ['10420810910'],
+        'id' => '10404198134',
+        'key' => 'event1'
+      }
+    ],
+    'revision' => '101',
+    'sdkKey' => 'INTEGRATIONS'
+  }.freeze
+
   SIMILAR_EXP_KEYS = {
     'version' => '4',
     'rollouts' => [],
@@ -1735,4 +1935,23 @@ module OptimizelySpec
   DECIDE_FORCED_DECISION_JSON = JSON.dump(DECIDE_FORCED_DECISION)
   # SEND_FLAG_DECISIONS_DISABLED_CONFIG = VALID_CONFIG_BODY.dup
   # SEND_FLAG_DECISIONS_DISABLED_CONFIG['sendFlagDecisions'] = false
+
+  CONFIG_DICT_WITH_INTEGRATIONS_JSON = JSON.dump(CONFIG_DICT_WITH_INTEGRATIONS)
+
+  def self.deep_clone(obj)
+    obj.dup.tap do |new_obj|
+      case new_obj
+      when Hash
+        new_obj.each do |key, val|
+          new_obj[key] = deep_clone(val)
+        end
+      when Array
+        new_obj.map! do |val|
+          deep_clone(val)
+        end
+      else
+        new_obj
+      end
+    end
+  end
 end

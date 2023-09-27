@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, Optimizely and contributors
+#    Copyright 2016-2017, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #
 require 'optimizely'
 require 'benchmark'
-require_relative 'data.rb'
+require_relative 'data'
 
 module OptimizelyBenchmark
   ITERATIONS = 10
@@ -157,10 +157,10 @@ module OptimizelyBenchmark
       trim_max_min(tms25)
       trim_max_min(tms50)
 
-      puts test, '   ' + Benchmark::CAPTION
-      puts '10 exp:' + ((tms10.reduce(:+) / tms10.size) * 1000).format(Benchmark::FORMAT)
-      puts '25 exp:' + ((tms25.reduce(:+) / tms25.size) * 1000).format(Benchmark::FORMAT)
-      puts '50 exp:' + ((tms50.reduce(:+) / tms50.size) * 1000).format(Benchmark::FORMAT)
+      puts test, "   #{Benchmark::CAPTION}"
+      puts "10 exp:#{((tms10.reduce(:+) / tms10.size) * 1000).format(Benchmark::FORMAT)}"
+      puts "25 exp:#{((tms25.reduce(:+) / tms25.size) * 1000).format(Benchmark::FORMAT)}"
+      puts "50 exp:#{((tms50.reduce(:+) / tms50.size) * 1000).format(Benchmark::FORMAT)}"
       puts ''
     end
   end

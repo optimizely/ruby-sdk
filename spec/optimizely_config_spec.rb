@@ -37,6 +37,12 @@ describe Optimizely::OptimizelyConfig do
   let(:project_config_similar_rule_keys) { Optimizely::DatafileProjectConfig.new(similar_rule_key_JSON, spy_logger, error_handler) }
   let(:project_instance_similar_rule_keys) { Optimizely::Project.new(similar_rule_key_JSON, nil, spy_logger, error_handler) }
   let(:optimizely_config_similar_rule_keys) { project_instance_similar_rule_keys.get_optimizely_config }
+  after(:example) do
+    project_instance.close
+    project_instance_sim_keys.close
+    project_instance_typed_audiences.close
+    project_instance_similar_rule_keys.close
+  end
 
   it 'should return all experiments' do
     experiments_map = optimizely_config['experimentsMap']

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, Optimizely and contributors
+#    Copyright 2016-2019, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ module Optimizely
 
         return true if boolean?(value_1) && boolean?(value_2)
 
-        value_1.class == value_2.class
+        value_1.instance_of?(value_2.class)
       end
 
       def finite_number?(value)
@@ -177,6 +177,61 @@ module Optimizely
         #   false otherwise.
 
         value.is_a?(Numeric) && value.to_f.finite? && value.abs <= Constants::FINITE_NUMBER_LIMIT
+      end
+
+      def odp_data_types_valid?(data)
+        valid_types = [String, Float, Integer, TrueClass, FalseClass, NilClass]
+        data&.values&.all? { |e| valid_types.member? e.class }
+      end
+
+      def segments_cache_valid?(segments_cache)
+        # Determines if a given segments_cache is valid.
+        #
+        # segments_cache - custom cache to be validated.
+        #
+        # Returns boolean depending on whether cache has required methods.
+        (
+          segments_cache.respond_to?(:reset) &&
+          segments_cache.method(:reset)&.parameters&.empty? &&
+          segments_cache.respond_to?(:lookup) &&
+          segments_cache.method(:lookup)&.parameters&.length&.positive? &&
+          segments_cache.respond_to?(:save) &&
+          segments_cache.method(:save)&.parameters&.length&.positive?
+        )
+      end
+
+      def segment_manager_valid?(segment_manager)
+        # Determines if a given segment_manager is valid.
+        #
+        # segment_manager - custom manager to be validated.
+        #
+        # Returns boolean depending on whether manager has required methods.
+        (
+          segment_manager.respond_to?(:odp_config) &&
+          segment_manager.respond_to?(:reset) &&
+          segment_manager.method(:reset)&.parameters&.empty? &&
+          segment_manager.respond_to?(:fetch_qualified_segments) &&
+          (segment_manager.method(:fetch_qualified_segments)&.parameters&.length || 0) >= 3
+        )
+      end
+
+      def event_manager_valid?(event_manager)
+        # Determines if a given event_manager is valid.
+        #
+        # event_manager - custom manager to be validated.
+        #
+        # Returns boolean depending on whether manager has required method and parameters.
+        return false unless
+          event_manager.respond_to?(:send_event) &&
+          event_manager.respond_to?(:start!) &&
+          (event_manager.method(:start!)&.parameters&.length || 0) >= 1 &&
+          event_manager.respond_to?(:update_config) &&
+          event_manager.respond_to?(:stop!)
+
+        required_parameters = Set[%i[keyreq type], %i[keyreq action], %i[keyreq identifiers], %i[keyreq data]]
+        existing_parameters = event_manager.method(:send_event).parameters.to_set
+
+        existing_parameters & required_parameters == required_parameters
       end
     end
   end

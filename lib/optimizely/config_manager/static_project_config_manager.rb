@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, 2022, Optimizely and contributors
+#    Copyright 2019-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ require_relative 'project_config_manager'
 module Optimizely
   class StaticProjectConfigManager < ProjectConfigManager
     # Implementation of ProjectConfigManager interface.
-    attr_reader :config
+    attr_reader :config, :sdk_key
 
     def initialize(datafile, logger, error_handler, skip_json_validation)
       # Looks up and sets datafile and config based on response body.
@@ -34,12 +34,14 @@ module Optimizely
       # skip_json_validation - Optional boolean param which allows skipping JSON schema
       #                       validation upon object invocation. By default JSON schema validation will be performed.
       # Returns instance of DatafileProjectConfig, nil otherwise.
+      super()
       @config = DatafileProjectConfig.create(
         datafile,
         logger,
         error_handler,
         skip_json_validation
       )
+      @sdk_key = @config&.sdk_key
       @optimizely_config = nil
     end
 

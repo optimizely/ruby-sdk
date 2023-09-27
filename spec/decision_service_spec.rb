@@ -29,6 +29,8 @@ describe Optimizely::DecisionService do
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_user_profile_service) }
   let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   describe '#get_variation' do
     before(:example) do
@@ -620,7 +622,6 @@ describe Optimizely::DecisionService do
     project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
     user_context = project_instance.create_user_context('user_1', {})
     user_id = 'user_1'
-    user_attributes = {}
 
     describe 'when the feature flag is not associated with a rollout' do
       it 'should log a message and return nil' do
@@ -701,9 +702,9 @@ describe Optimizely::DecisionService do
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
+                                                                                           .with(config, rollout['experiments'][0], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
+              .with(config, rollout['experiments'][1], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
 
@@ -733,9 +734,9 @@ describe Optimizely::DecisionService do
 
             # make sure we only checked the audience for the first rule
             expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                           .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
+                                                                                           .with(config, rollout['experiments'][0], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
             expect(Optimizely::Audience).not_to have_received(:user_meets_audience_conditions?)
-              .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
+              .with(config, rollout['experiments'][1], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 2)
           end
         end
       end
@@ -751,7 +752,7 @@ describe Optimizely::DecisionService do
         allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return(false)
 
         allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
-          .with(config, everyone_else_experiment, user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
+          .with(config, everyone_else_experiment, user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
           .and_return(true)
         allow(decision_service.bucketer).to receive(:bucket)
           .with(config, everyone_else_experiment, user_id, user_id)
@@ -797,11 +798,11 @@ describe Optimizely::DecisionService do
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
-                                                                                       .with(config, rollout['experiments'][0], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
+                                                                                       .with(config, rollout['experiments'][0], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '1')
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][1], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '2')
+          .with(config, rollout['experiments'][1], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', '2')
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)
-          .with(config, rollout['experiments'][2], user_attributes, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
+          .with(config, rollout['experiments'][2], user_context, spy_logger, 'ROLLOUT_AUDIENCE_EVALUATION_LOGS', 'Everyone Else')
 
         # verify log messages
         expect(spy_logger).to have_received(:log).with(Logger::DEBUG, "User '#{user_id}' does not meet the conditions for targeting rule '1'.")
@@ -889,7 +890,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('test_user')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
 
     it 'should not log any message and return given bucketing ID when bucketing ID is a String' do
@@ -900,7 +902,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('i_am_bucketing_id')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
 
     it 'should not log any message and return empty String when bucketing ID is empty String' do
@@ -911,7 +914,8 @@ describe Optimizely::DecisionService do
       bucketing_id, reason = decision_service.send(:get_bucketing_id, 'test_user', user_attributes)
       expect(bucketing_id).to eq('')
       expect(reason).to eq(nil)
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     end
   end
 

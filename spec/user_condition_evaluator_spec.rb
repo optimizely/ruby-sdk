@@ -18,18 +18,29 @@
 require 'json'
 require 'spec_helper'
 require 'optimizely/helpers/validator'
+require 'optimizely/event/forwarding_event_processor'
+require 'optimizely/event_dispatcher'
 require 'optimizely/logger'
 
-describe Optimizely::CustomAttributeConditionEvaluator do
+describe Optimizely::UserConditionEvaluator do
   let(:spy_logger) { spy('logger') }
+  let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
+  let(:error_handler) { Optimizely::NoOpErrorHandler.new }
+  let(:spy_logger) { spy('logger') }
+  let(:event_processor) { Optimizely::ForwardingEventProcessor.new(Optimizely::EventDispatcher.new) }
+  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, event_processor) }
+  let(:user_context) { project_instance.create_user_context('some-user', {}) }
+  after(:example) { project_instance.close }
 
   it 'should return true when the attributes pass the audience conditions and no match type is provided' do
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'browser_type' => 'safari'}, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'safari')
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be true
   end
 
   it 'should return false when the attributes pass the audience conditions and no match type is provided' do
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'browser_type' => 'firefox'}, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'firefox')
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be false
   end
 
@@ -40,7 +51,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       'num_users' => 10,
       'pi_value' => 3.14
     }
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new(user_attributes, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, user_attributes)
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
 
     expect(condition_evaluator.evaluate('name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'safari')).to be true
     expect(condition_evaluator.evaluate('name' => 'is_firefox', 'type' => 'custom_attribute', 'value' => true)).to be true
@@ -50,9 +62,10 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
   it 'should log and return nil when condition has an invalid type property' do
     condition = {'match' => 'exact', 'name' => 'weird_condition', 'type' => 'weird', 'value' => 'hi'}
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'weird_condition' => 'bye'}, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, 'weird_condition' => 'bye')
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
-    expect(spy_logger).to have_received(:log).exactly(1).times
+    expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
@@ -62,9 +75,10 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
   it 'should log and return nil when condition has no type property' do
     condition = {'match' => 'exact', 'name' => 'weird_condition', 'value' => 'hi'}
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'weird_condition' => 'bye'}, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, 'weird_condition' => 'bye')
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
-    expect(spy_logger).to have_received(:log).exactly(1).times
+    expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
       "Audience condition #{condition} uses an unknown condition type. You may need to upgrade to a newer release of " \
@@ -74,7 +88,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
   it 'should log and return nil when condition has an invalid match property' do
     condition = {'match' => 'invalid', 'name' => 'browser_type', 'type' => 'custom_attribute', 'value' => 'chrome'}
-    condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'browser_type' => 'chrome'}, spy_logger)
+    user_context.instance_variable_set(:@user_attributes, 'browser_type' => 'chrome')
+    condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
     expect(condition_evaluator.evaluate(condition)).to eq(nil)
     expect(spy_logger).to have_received(:log).once.with(
       Logger::WARN,
@@ -89,31 +104,37 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should return false if there is no user-provided value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be false
-      expect(spy_logger).not_to have_received(:log)
+      expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+      expect(spy_logger).not_to have_received(:log).with(Logger::WARN, anything)
     end
 
     it 'should return false if the user-provided value is nil' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => nil}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => nil)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be false
     end
 
     it 'should return true if the user-provided value is a string' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 'test'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 'test')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be true
     end
 
     it 'should return true if the user-provided value is a number' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be true
 
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be true
     end
 
     it 'should return true if the user-provided value is a boolean' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => false}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => false)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@exists_conditions)).to be true
     end
   end
@@ -125,17 +146,20 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
 
       it 'should return true if the user-provided value is equal to the condition value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => 'san francisco'}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'location' => 'san francisco')
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to be true
       end
 
       it 'should return false if the user-provided value is not equal to the condition value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => 'new york'}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'location' => 'new york')
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to be false
       end
 
       it 'should log and return nil if the user-provided value is of a different type than the condition value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => false}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'location' => false)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
           Logger::WARN,
@@ -144,7 +168,7 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
 
       it 'should log and return nil if there is no user-provided value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
           Logger::DEBUG,
@@ -154,7 +178,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
       it 'should log and return nil if the user-provided value is of a unexpected type' do
         # attribute value: nil
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => []}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'location' => [])
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
           Logger::WARN,
@@ -163,7 +188,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
         )
 
         # attribute value: empty hash
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'location' => {}}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'location' => {})
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_string_conditions)).to eq(nil)
         expect(spy_logger).to have_received(:log).once.with(
           Logger::WARN,
@@ -181,41 +207,47 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
       it 'should return true if the user-provided value is equal to the condition value' do
         # user-provided integer value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 100}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 100)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be true
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to be true
 
         # user-provided float value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 100.0}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 100.0)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be true
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to be true
       end
 
       it 'should return false if the user-provided value is not equal to the condition value' do
         # user-provided integer value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 101}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 101)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to be false
 
         # user-provided float value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 100.1}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 100.1)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to be false
       end
 
       it 'should return nil if the user-provided value is of a different type than the condition value' do
         # user-provided boolean value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => false}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => false)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to eq(nil)
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to eq(nil)
       end
 
       it 'should return nil if there is no user-provided value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).to eq(nil)
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to eq(nil)
       end
 
       it 'should return nil when user-provided value is infinite' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 1 / 0.0}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 1 / 0.0)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_float_conditions)).to be nil
 
         expect(spy_logger).to have_received(:log).once.with(
@@ -228,7 +260,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       it 'should not return nil when finite_number? returns true for provided arguments' do
         @exact_integer_conditions['value'] = 10
         allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'sum' => 10}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'sum' => 10)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_integer_conditions)).not_to be_nil
       end
     end
@@ -239,27 +272,31 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       end
 
       it 'should return true if the user-provided value is equal to the condition value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'boolean' => false}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'boolean' => false)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_boolean_conditions)).to be true
       end
 
       it 'should return false if the user-provided value is not equal to the condition value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'boolean' => true}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'boolean' => true)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_boolean_conditions)).to be false
       end
 
       it 'should return nil if the user-provided value is of a different type than the condition value' do
         # user-provided integer value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'boolean' => 10}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'boolean' => 10)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_boolean_conditions)).to eq(nil)
 
         # user-provided float value
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'boolean' => 10.0}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'boolean' => 10.0)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_boolean_conditions)).to eq(nil)
       end
 
       it 'should return nil if there is no user-provided value' do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@exact_boolean_conditions)).to eq(nil)
       end
     end
@@ -271,27 +308,31 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should return true if the condition value is a substring of the user-provided value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 'This is a test message!'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => 'This is a test message!')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to be true
     end
 
     it 'should return false if the user-provided value is not a substring of the condition value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 'Not found!'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => 'Not found!')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to be false
     end
 
     it 'should return nil if the user-provided value is not a string' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
     end
 
     it 'should log and return nil if there is no user-provided value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
@@ -301,7 +342,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
       # attribute value: nil
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => nil}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => nil)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
@@ -309,7 +351,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       )
 
       # attribute value: empty hash
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => {}}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => {})
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -320,7 +363,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should log and return nil when condition value is invalid' do
       @substring_conditions['value'] = 5
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'text' => 'This is a test message!'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'text' => 'This is a test message!')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@substring_conditions)).to be_nil
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -338,48 +382,55 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should return true if the user-provided value is greater than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
     end
 
     it 'should return false if the user-provided value is equal to condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
     end
 
     it 'should return true if the user-provided value is less than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
     end
 
     it 'should return nil if the user-provided value is not a number' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 'test'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 'test')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to eq(nil)
     end
 
     it 'should log and return nil if there is no user-provided value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -394,7 +445,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
       # attribute value: nil
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => nil}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => nil)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
@@ -403,7 +455,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       )
 
       # attribute value: empty hash
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => {})
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -413,7 +466,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should return nil when user-provided value is infinite' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 1 / 0.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 1 / 0.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -426,13 +480,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     it 'should not return nil when finite_number? returns true for provided arguments' do
       @gt_integer_conditions['value'] = 81
       allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 51)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).not_to be_nil
     end
 
     it 'should log and return nil when condition value is infinite' do
       @gt_integer_conditions['value'] = 1 / 0.0
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 51)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be_nil
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -450,36 +506,42 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should return true if the user-provided value is greater than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
     end
 
     it 'should return true if the user-provided value is equal to condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be true
     end
 
     it 'should return false if the user-provided value is less than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@gt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@gt_float_conditions)).to be false
     end
@@ -493,48 +555,55 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should return true if the user-provided value is less than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
     end
 
     it 'should return false if the user-provided value is equal to condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
     end
 
     it 'should return false if the user-provided value is greater than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
     end
 
     it 'should return nil if the user-provided value is not a number' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 'test'}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 'test')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to eq(nil)
     end
 
     it 'should log and return nil if there is no user-provided value' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({}, spy_logger)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
@@ -549,7 +618,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should log and return nil if there user-provided value is of a unexpected type' do
       # attribute value: nil
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => nil}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => nil)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::DEBUG,
@@ -558,7 +628,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
       )
 
       # attribute value: empty hash
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => {}}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => {})
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -568,7 +639,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     end
 
     it 'should return nil when user-provided value is infinite' do
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 1 / 0.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 1 / 0.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be nil
 
       expect(spy_logger).to have_received(:log).once.with(
@@ -581,13 +653,15 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     it 'should not return nil when finite_number? returns true for provided arguments' do
       @lt_integer_conditions['value'] = 65
       allow(Optimizely::Helpers::Validator).to receive(:finite_number?).twice.and_return(true, true)
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 75}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 75)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).not_to be_nil
     end
 
     it 'should log and return nil when condition value is infinite' do
       @lt_integer_conditions['value'] = 1 / 0.0
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 51}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 51)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be_nil
       expect(spy_logger).to have_received(:log).once.with(
         Logger::WARN,
@@ -605,36 +679,42 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     it 'should return false if the user-provided value is greater than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 12.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 12.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be false
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be false
     end
 
     it 'should return true if the user-provided value is equal to condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 10.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 10.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
     end
 
     it 'should return true if the user-provided value is less than the condition value' do
       # user-provided integer value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
 
       # user-provided float value
-      condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'input_value' => 8.0}, spy_logger)
+      user_context.instance_variable_set(:@user_attributes, 'input_value' => 8.0)
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
       expect(condition_evaluator.evaluate(@lt_integer_conditions)).to be true
       expect(condition_evaluator.evaluate(@lt_float_conditions)).to be true
     end
@@ -647,14 +727,16 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     ['2.0.0', '2.0'].each do |version|
       it "should return true for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be true
       end
     end
 
     ['2.9', '1.9'].each do |version|
       it "should return false for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be false
       end
     end
@@ -667,14 +749,16 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     ['2.0.0', '1.9'].each do |version|
       it "should return true for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be true
       end
     end
 
     ['2.5.1'].each do |version|
       it "should return false for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be false
       end
     end
@@ -687,14 +771,16 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     ['2.0.0', '2.9'].each do |version|
       it "should return true for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be true
       end
     end
 
     ['1.9'].each do |version|
       it "should return false for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be false
       end
     end
@@ -707,14 +793,16 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     ['1.9'].each do |version|
       it "should return true for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be true
       end
     end
 
     ['2.0.0', '2.5.1'].each do |version|
       it "should return false for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be false
       end
     end
@@ -727,14 +815,16 @@ describe Optimizely::CustomAttributeConditionEvaluator do
 
     ['2.9'].each do |version|
       it "should return true for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be true
       end
     end
 
     ['2.0.0', '1.9'].each do |version|
       it "should return false for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be false
       end
     end
@@ -748,7 +838,8 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     # version not string
     [true, 37].each do |version|
       it "should return nil for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be nil
         expect(spy_logger).to have_received(:log).once.with(
           Logger::WARN,
@@ -760,13 +851,55 @@ describe Optimizely::CustomAttributeConditionEvaluator do
     # invalid semantic version
     ['3.7.2.2', '+'].each do |version|
       it "should return nil for user version #{version}" do
-        condition_evaluator = Optimizely::CustomAttributeConditionEvaluator.new({'version' => version}, spy_logger)
+        user_context.instance_variable_set(:@user_attributes, 'version' => version)
+        condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
         expect(condition_evaluator.evaluate(@semver_condition)).to be nil
         expect(spy_logger).to have_received(:log).once.with(
           Logger::WARN,
           "Audience condition #{@semver_condition} evaluated as UNKNOWN because an invalid semantic version was passed for user attribute 'version'."
         )
       end
+    end
+  end
+  describe 'qualified match type' do
+    before(:context) do
+      @qualified_conditions = {'match' => 'qualified', 'name' => 'odp.audiences', 'type' => 'third_party_dimension', 'value' => 'odp-segment-2'}
+    end
+
+    it 'should return true when user is qualified' do
+      user_context.qualified_segments = ['odp-segment-2']
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be true
+    end
+
+    it 'should return false when user is not qualified' do
+      user_context.qualified_segments = ['odp-segment-1']
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be false
+    end
+
+    it 'should return false with no qualified segments' do
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be false
+    end
+
+    it 'should return true when name is different' do
+      @qualified_conditions['name'] = 'other-name'
+      user_context.qualified_segments = ['odp-segment-2']
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be true
+    end
+
+    it 'should log and return nil when condition value is invalid' do
+      @qualified_conditions['value'] = 5
+      user_context.instance_variable_set(:@user_attributes, 'text' => 'This is a test message!')
+      condition_evaluator = Optimizely::UserConditionEvaluator.new(user_context, spy_logger)
+      expect(condition_evaluator.evaluate(@qualified_conditions)).to be_nil
+      expect(spy_logger).to have_received(:log).once.with(
+        Logger::WARN,
+        "Audience condition #{@qualified_conditions} has an unsupported condition value. You may need to upgrade "\
+          'to a newer release of the Optimizely SDK.'
+      )
     end
   end
 end

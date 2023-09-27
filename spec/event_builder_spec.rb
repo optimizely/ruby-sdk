@@ -27,10 +27,10 @@ describe Optimizely::EventBuilder do
     @config_body = OptimizelySpec::VALID_CONFIG_BODY
     @config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
     @error_handler = Optimizely::NoOpErrorHandler.new
-    @logger = Optimizely::SimpleLogger.new
   end
 
   before(:example) do
+    @logger = spy('logger')
     config = Optimizely::DatafileProjectConfig.new(@config_body_json, @logger, @error_handler)
     @event_builder = Optimizely::EventBuilder.new(@logger)
     @event = config.get_event_from_key('test_event')

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#    Copyright 2019-2021, Optimizely and contributors
+#    Copyright 2019-2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,48 +24,23 @@ module Optimizely
     RUNNING_EXPERIMENT_STATUS = ['Running'].freeze
     RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
-    attr_reader :datafile
-    attr_reader :account_id
-    attr_reader :attributes
-    attr_reader :audiences
-    attr_reader :typed_audiences
-    attr_reader :events
-    attr_reader :experiments
-    attr_reader :feature_flags
-    attr_reader :groups
-    attr_reader :project_id
+    attr_reader :datafile, :account_id, :attributes, :audiences, :typed_audiences, :events,
+                :experiments, :feature_flags, :groups, :project_id, :bot_filtering, :revision,
+                :sdk_key, :environment_key, :rollouts, :version, :send_flag_decisions,
+                :attribute_key_map, :audience_id_map, :event_key_map, :experiment_feature_map,
+                :experiment_id_map, :experiment_key_map, :feature_flag_key_map, :feature_variable_key_map,
+                :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
+                :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
+                :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
+                :public_key_for_odp, :host_for_odp, :all_segments
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
-    attr_reader :bot_filtering
-    attr_reader :revision
-    attr_reader :sdk_key
-    attr_reader :environment_key
-    attr_reader :rollouts
-    attr_reader :version
-    attr_reader :send_flag_decisions
-
-    attr_reader :attribute_key_map
-    attr_reader :audience_id_map
-    attr_reader :event_key_map
-    attr_reader :experiment_feature_map
-    attr_reader :experiment_id_map
-    attr_reader :experiment_key_map
-    attr_reader :feature_flag_key_map
-    attr_reader :feature_variable_key_map
-    attr_reader :group_id_map
-    attr_reader :rollout_id_map
-    attr_reader :rollout_experiment_id_map
-    attr_reader :variation_id_map
-    attr_reader :variation_id_to_variable_usage_map
-    attr_reader :variation_key_map
-    attr_reader :variation_id_map_by_experiment_id
-    attr_reader :variation_key_map_by_experiment_id
-    attr_reader :flag_variation_map
 
     def initialize(datafile, logger, error_handler)
       # ProjectConfig init method to fetch and set project config data
       #
       # datafile - JSON string representing the project
+      super()
 
       config = JSON.parse(datafile)
 
@@ -92,6 +67,7 @@ module Optimizely
       @environment_key = config.fetch('environmentKey', '')
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
+      @integrations = config.fetch('integrations', [])
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config
@@ -117,6 +93,7 @@ module Optimizely
       @experiment_key_map = generate_key_map(@experiments, 'key')
       @experiment_id_map = generate_key_map(@experiments, 'id')
       @audience_id_map = generate_key_map(@audiences, 'id')
+      @integration_key_map = generate_key_map(@integrations, 'key', first_value: true)
       @audience_id_map = @audience_id_map.merge(generate_key_map(@typed_audiences, 'id')) unless @typed_audiences.empty?
       @variation_id_map = {}
       @variation_key_map = {}
@@ -140,6 +117,16 @@ module Optimizely
       @rollout_id_map.each_value do |rollout|
         exps = rollout.fetch('experiments')
         @rollout_experiment_id_map = @rollout_experiment_id_map.merge(generate_key_map(exps, 'id'))
+      end
+
+      if (odp_integration = @integration_key_map&.fetch('odp', nil))
+        @public_key_for_odp = odp_integration['publicKey']
+        @host_for_odp = odp_integration['host']
+      end
+
+      @all_segments = []
+      @audience_id_map.each_value do |audience|
+        @all_segments.concat Audience.get_segments(audience['conditions'])
       end
 
       @flag_variation_map = generate_feature_variation_map(@feature_flags)
@@ -197,20 +184,19 @@ module Optimizely
       # skip_json_validation - Optional boolean param which allows skipping JSON schema
       #                       validation upon object invocation. By default JSON schema validation will be performed.
       # Returns instance of DatafileProjectConfig, nil otherwise.
+      logger ||= SimpleLogger.new
       if !skip_json_validation && !Helpers::Validator.datafile_valid?(datafile)
-        default_logger = SimpleLogger.new
-        default_logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
+        logger.log(Logger::ERROR, InvalidInputError.new('datafile').message)
         return nil
       end
 
       begin
         config = new(datafile, logger, error_handler)
       rescue StandardError => e
-        default_logger = SimpleLogger.new
-        error_to_handle = e.class == InvalidDatafileVersionError ? e : InvalidInputError.new('datafile')
+        error_to_handle = e.instance_of?(InvalidDatafileVersionError) ? e : InvalidInputError.new('datafile')
         error_msg = error_to_handle.message
 
-        default_logger.log(Logger::ERROR, error_msg)
+        logger.log(Logger::ERROR, error_msg)
         error_handler.handle_error error_to_handle
         return nil
       end
@@ -554,15 +540,19 @@ module Optimizely
       flag_variation_map
     end
 
-    def generate_key_map(array, key)
+    def generate_key_map(array, key, first_value: false)
       # Helper method to generate map from key to hash in array of hashes
       #
       # array - Array consisting of hash
       # key - Key in each hash which will be key in the map
+      # first_value - Determines which value to save if there are duplicate keys. By default the last instance of the key
+      #               will be saved. Set to true to save the first key/value encountered.
       #
       # Returns map mapping key to hash
 
-      Hash[array.map { |obj| [obj[key], obj] }]
+      array
+        .group_by { |obj| obj[key] }
+        .transform_values { |group| first_value ? group.first : group.last }
     end
   end
 end

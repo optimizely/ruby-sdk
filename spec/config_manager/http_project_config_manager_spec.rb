@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019-2020, Optimizely and contributors
+#    Copyright 2019-2020, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ describe Optimizely::HTTPProjectConfigManager do
   let(:spy_logger) { spy('logger') }
 
   before(:context) do
-    VALID_SDK_KEY_CONFIG = OptimizelySpec::VALID_CONFIG_BODY.dup
+    VALID_SDK_KEY_CONFIG = OptimizelySpec::VALID_CONFIG_BODY.dup # rubocop:disable Lint/ConstantDefinitionInBlock
     VALID_SDK_KEY_CONFIG['accountId'] = '12002'
     VALID_SDK_KEY_CONFIG['revision'] = '81'
-    VALID_SDK_KEY_CONFIG_JSON = JSON.dump(VALID_SDK_KEY_CONFIG)
+    VALID_SDK_KEY_CONFIG_JSON = JSON.dump(VALID_SDK_KEY_CONFIG) # rubocop:disable Lint/ConstantDefinitionInBlock
   end
 
   before(:example) do
@@ -57,10 +57,11 @@ describe Optimizely::HTTPProjectConfigManager do
   describe '.project_config_manager' do
     it 'should get project config when valid url is given' do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
         url: 'https://cdn.optimizely.com/datafiles/valid_sdk_key.json'
       )
 
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
@@ -75,10 +76,11 @@ describe Optimizely::HTTPProjectConfigManager do
         .to_return(status: 200, body: VALID_SDK_KEY_CONFIG_JSON, headers: {})
 
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
+        sdk_key: 'valid_sdk_key',
         url: 'http://cdn.optimizely.com/datafiles/valid_sdk_key.json'
       )
 
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
@@ -87,7 +89,7 @@ describe Optimizely::HTTPProjectConfigManager do
         sdk_key: 'valid_sdk_key'
       )
 
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
@@ -96,7 +98,7 @@ describe Optimizely::HTTPProjectConfigManager do
         sdk_key: 'valid_sdk_key',
         url_template: 'https://cdn.optimizely.com/datafiles/%s.json'
       )
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
 
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
@@ -157,7 +159,7 @@ describe Optimizely::HTTPProjectConfigManager do
         notification_center: notification_center
       )
 
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
     end
 
     it 'should not send config update notification when datafile is provided' do
@@ -171,7 +173,7 @@ describe Optimizely::HTTPProjectConfigManager do
         start_by_default: false,
         notification_center: notification_center
       )
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
     end
   end
 
@@ -301,7 +303,7 @@ describe Optimizely::HTTPProjectConfigManager do
       @http_project_config_manager = Optimizely::HTTPProjectConfigManager.new(
         sdk_key: 'valid_sdk_key'
       )
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
       expect(@http_project_config_manager.config).to be_a Optimizely::ProjectConfig
     end
 
@@ -315,7 +317,7 @@ describe Optimizely::HTTPProjectConfigManager do
 
       @http_project_config_manager.start!
 
-      until @http_project_config_manager.ready?; end
+      sleep 0.1 until @http_project_config_manager.ready?
 
       expect(@http_project_config_manager.ready?).to be true
     end
@@ -470,7 +472,7 @@ describe Optimizely::HTTPProjectConfigManager do
         polling_interval: 0.1
       )
       expect(@http_project_config_manager.optimizely_config['revision']).to eq('42')
-      sleep 0.3
+      sleep 0.5
       expect(@http_project_config_manager.optimizely_config['revision']).to eq('81')
     end
   end

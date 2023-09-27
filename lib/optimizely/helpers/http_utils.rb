@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2020, 2022, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,20 +17,24 @@
 #
 
 require 'net/http'
+require_relative '../exceptions'
 
 module Optimizely
   module Helpers
     module HttpUtils
       module_function
 
-      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil)
+      def make_request(url, http_method, request_body = nil, headers = {}, read_timeout = nil, proxy_config = nil) # rubocop:disable Metrics/ParameterLists
         # makes http/https GET/POST request and returns response
         #
         uri = URI.parse(url)
 
-        if http_method == :get
+        raise HTTPUriError unless uri.respond_to?(:request_uri)
+
+        case http_method
+        when :get
           request = Net::HTTP::Get.new(uri.request_uri)
-        elsif http_method == :post
+        when :post
           request = Net::HTTP::Post.new(uri.request_uri)
           request.body = request_body if request_body
         else

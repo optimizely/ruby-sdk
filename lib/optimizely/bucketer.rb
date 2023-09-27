@@ -110,8 +110,8 @@ module Optimizely
       # parent_id - String entity ID to use for bucketing ID
       # traffic_allocations - Array of traffic allocations
       #
-      # Returns and array of two values where first value is the entity ID corresponding to the provided bucket value
-      # or nil if no match is found. The second value contains the array of reasons stating how the deicision was taken
+      # Returns an array of two values where first value is the entity ID corresponding to the provided bucket value
+      # or nil if no match is found. The second value contains the array of reasons stating how the decision was taken
       decide_reasons = []
       bucketing_key = format(BUCKETING_ID_TEMPLATE, bucketing_id: bucketing_id, entity_id: parent_id)
       bucket_value = generate_bucket_value(bucketing_key)
