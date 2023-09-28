@@ -128,7 +128,7 @@ module Optimizely
       raise ArgumentError, 'Cannot provide both variation_id and variation_key.' if !variation_id.nil? && !variation_key.nil?
 
       if variation_id.nil?
-        indentifier = "key '#{variation_key}'"
+        identifier = "key '#{variation_key}'"
         @variation_key = variation_key
       else
         identifier = "id '#{variation_id}'"
