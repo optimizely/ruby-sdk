@@ -97,7 +97,7 @@ module Optimizely
         identifier = "key '#{@experiment_key}'"
       else
         @experiment_id = experiment_id
-        indentifier = "id '#{@experiment_id}'"
+        identifier = "id '#{@experiment_id}'"
       end
 
       super("Experiment #{indentifier} is not in datafile.")
