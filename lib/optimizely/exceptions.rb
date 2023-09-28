@@ -135,7 +135,7 @@ module Optimizely
         @variation_id = variation_id
       end
 
-      super("Variation #{indentifier} is not in datafile.")
+      super("Variation #{identifier} is not in datafile.")
     end
   end
 
