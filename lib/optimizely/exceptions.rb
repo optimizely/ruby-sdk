@@ -100,7 +100,7 @@ module Optimizely
         identifier = "id '#{@experiment_id}'"
       end
 
-      super("Experiment #{indentifier} is not in datafile.")
+      super("Experiment #{identifier} is not in datafile.")
     end
   end
 
