@@ -131,7 +131,7 @@ module Optimizely
         indentifier = "key '#{variation_key}'"
         @variation_key = variation_key
       else
-        indentifier = "id '#{variation_id}'"
+        identifier = "id '#{variation_id}'"
         @variation_id = variation_id
       end
 
