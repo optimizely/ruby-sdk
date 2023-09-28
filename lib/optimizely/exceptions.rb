@@ -94,7 +94,7 @@ module Optimizely
 
       if experiment_id.nil?
         @experiment_key = experiment_key
-        indentifier = "key '#{@experiment_key}'"
+        identifier = "key '#{@experiment_key}'"
       else
         @experiment_id = experiment_id
         indentifier = "id '#{@experiment_id}'"
