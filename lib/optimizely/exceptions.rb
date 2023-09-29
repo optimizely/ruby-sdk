@@ -42,16 +42,28 @@ module Optimizely
   class InvalidAudienceError < Error
     # Raised when an invalid audience is provided
 
-    def initialize(msg = 'Provided audience is not in datafile.')
-      super
+    attr_reader :audience_id
+
+    def initialize(audience_id)
+      raise ArgumentError, 'audience_id must be provided' if audience_id.nil?
+
+      super("Audience id '#{audience_id}' is not in datafile.")
+
+      @audience_id = audience_id
     end
   end
 
   class InvalidAttributeError < Error
     # Raised when an invalid attribute is provided
 
-    def initialize(msg = 'Provided attribute is not in datafile.')
-      super
+    attr_reader :attribute_key
+
+    def initialize(attribute_key)
+      raise ArgumentError, 'attribute_key must be provided' if attribute_key.nil?
+
+      super("Attribute key '#{attribute_key}' is not in datafile.")
+
+      @attribute_key = attribute_key
     end
   end
 
@@ -74,24 +86,56 @@ module Optimizely
   class InvalidExperimentError < Error
     # Raised when an invalid experiment key is provided
 
-    def initialize(msg = 'Provided experiment is not in datafile.')
-      super
+    attr_reader :experiment_id, :experiment_key
+
+    def initialize(experiment_id: nil, experiment_key: nil)
+      raise ArgumentError, 'Either experiment_id or experiment_key must be provided.' if experiment_id.nil? && experiment_key.nil?
+      raise ArgumentError, 'Cannot provide both experiment_id and experiment_key.' if !experiment_id.nil? && !experiment_key.nil?
+
+      if experiment_id.nil?
+        @experiment_key = experiment_key
+        identifier = "key '#{@experiment_key}'"
+      else
+        @experiment_id = experiment_id
+        identifier = "id '#{@experiment_id}'"
+      end
+
+      super("Experiment #{identifier} is not in datafile.")
     end
   end
 
   class InvalidEventError < Error
     # Raised when an invalid event key is provided
 
-    def initialize(msg = 'Provided event is not in datafile.')
-      super
+    attr_reader :event_key
+
+    def initialize(event_key)
+      raise ArgumentError, 'event_key must be provided.' if event_key.nil?
+
+      super("Event key '#{event_key}' is not in datafile.")
+
+      @event_key = event_key
     end
   end
 
   class InvalidVariationError < Error
     # Raised when an invalid variation key or ID is provided
 
-    def initialize(msg = 'Provided variation is not in datafile.')
-      super
+    attr_reader :variation_id, :variation_key
+
+    def initialize(variation_id: nil, variation_key: nil)
+      raise ArgumentError, 'Either variation_id or variation_key must be provided.' if variation_id.nil? && variation_key.nil?
+      raise ArgumentError, 'Cannot provide both variation_id and variation_key.' if !variation_id.nil? && !variation_key.nil?
+
+      if variation_id.nil?
+        identifier = "key '#{variation_key}'"
+        @variation_key = variation_key
+      else
+        identifier = "id '#{variation_id}'"
+        @variation_id = variation_id
+      end
+
+      super("Variation #{identifier} is not in datafile.")
     end
   end
 
