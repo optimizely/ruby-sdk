@@ -17,7 +17,7 @@ Refer to the [Ruby SDK's developer documentation](https://docs.developers.optimi
 
 ### Requirements
 
-* Ruby 2.7+
+* Ruby 3.0+
 
 ### Install the SDK
 
