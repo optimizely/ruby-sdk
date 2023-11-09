@@ -102,11 +102,6 @@ module Optimizely
     end
 
     def start!
-      if @stopped
-        @logger.log(Logger::WARN, 'Not starting. Already stopped.')
-        return
-      end
-
       @async_scheduler.start!
       @stopped = false
     end
