@@ -141,7 +141,7 @@ module Optimizely
     end
 
     def optimizely_config
-      @optimizely_config = OptimizelyConfig.new(@config).config if @optimizely_config.nil?
+      @optimizely_config = OptimizelyConfig.new(@config, @logger).config if @optimizely_config.nil?
 
       @optimizely_config
     end

@@ -889,7 +889,7 @@ module Optimizely
       if @config_manager.respond_to?(:optimizely_config)
         @config_manager.optimizely_config
       else
-        OptimizelyConfig.new(project_config).config
+        OptimizelyConfig.new(project_config, @logger).config
       end
     end
 

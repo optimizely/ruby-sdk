@@ -19,6 +19,7 @@
 require 'spec_helper'
 
 describe Optimizely::OptimizelyConfig do
+  let(:config_body) { OptimizelySpec::VALID_CONFIG_BODY }
   let(:config_body_JSON) { OptimizelySpec::VALID_CONFIG_BODY_JSON }
   let(:similar_exp_keys_JSON) { OptimizelySpec::SIMILAR_EXP_KEYS_JSON }
   let(:typed_audiences_JSON) { OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES_JSON }
@@ -768,7 +769,7 @@ describe Optimizely::OptimizelyConfig do
       '',
       '"exactString" OR "999999999"'
     ]
-    optimizely_config = Optimizely::OptimizelyConfig.new(project_instance_typed_audiences.send(:project_config))
+    optimizely_config = Optimizely::OptimizelyConfig.new(project_instance_typed_audiences.send(:project_config), spy_logger)
     audiences_map = optimizely_config.send(:audiences_map)
     audience_conditions.each_with_index do |audience_condition, index|
       result = optimizely_config.send(:replace_ids_with_names, audience_condition, audiences_map)
@@ -795,5 +796,63 @@ describe Optimizely::OptimizelyConfig do
   it 'should return default sdk key and environment key' do
     expect(optimizely_config_similar_rule_keys['sdkKey']).to eq('')
     expect(optimizely_config_similar_rule_keys['environmentKey']).to eq('')
+  end
+
+  it 'should use the newest of duplicate experiment keys' do
+    duplicate_experiment_key = 'test_experiment'
+    new_experiment = {
+      'key': duplicate_experiment_key,
+      'status': 'Running',
+      'layerId': '8',
+      "audienceConditions": %w[
+        or
+        11160
+      ],
+      'audienceIds': ['11160'],
+      'id': '111137',
+      'forcedVariations': {},
+      'trafficAllocation': [
+        {'entityId': '222242', 'endOfRange': 8000},
+        {'entityId': '', 'endOfRange': 10_000}
+      ],
+      'variations': [
+        {
+          'id': '222242',
+          'key': 'control',
+          'variables': []
+        }
+      ]
+    }
+
+    new_feature = {
+      'id': '91117',
+      'key': 'new_feature',
+      'experimentIds': ['111137'],
+      'rolloutId': '',
+      'variables': [
+        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
+        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
+        {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
+        {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
+        {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
+        {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string', 'subType': 'json'},
+        {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'}
+      ]
+    }
+
+    config_body['experiments'].push(new_experiment)
+    config_body['featureFlags'].push(new_feature)
+    project_config = Optimizely::DatafileProjectConfig.new(JSON.dump(config_body), spy_logger, error_handler)
+
+    opti_config = Optimizely::OptimizelyConfig.new(project_config, spy_logger)
+
+    key_map = opti_config.config['experimentsMap']
+    id_map = opti_config.send(:experiments_id_map)
+
+    expected_warning_message = "Duplicate experiment keys found in datafile: #{duplicate_experiment_key}"
+    expect(spy_logger).to have_received(:log).once.with(Logger::WARN, expected_warning_message)
+
+    expect(key_map[duplicate_experiment_key]['id']).to eq(new_experiment[:id])
+    expect(id_map.values.count { |exp| exp['key'] == duplicate_experiment_key }).to eq(2)
   end
 end
