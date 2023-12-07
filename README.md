@@ -41,7 +41,7 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
  Initialize Optimizely with a datafile. This datafile will be used as ProjectConfig throughout the life of the Optimizely instance.
 
  ```ruby
- optimizely_instance = Optimizely::Project.new(datafile)
+ optimizely_instance = Optimizely::Project.new(datafile: datafile)
  ```
 
 #### Initialization by OptimizelyFactory

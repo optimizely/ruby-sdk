@@ -70,20 +70,20 @@ module Optimizely
     # @param event_processor_options: Optional hash of options to be passed to the default batch event processor.
     # @param settings: Optional instance of OptimizelySdkSettings for sdk configuration.
 
-    def initialize( # rubocop:disable Metrics/ParameterLists
-      datafile = nil,
-      event_dispatcher = nil,
-      logger = nil,
-      error_handler = nil,
-      skip_json_validation = false, # rubocop:disable Style/OptionalBooleanParameter
-      user_profile_service = nil,
-      sdk_key = nil,
-      config_manager = nil,
-      notification_center = nil,
-      event_processor = nil,
-      default_decide_options = [],
-      event_processor_options = {},
-      settings = nil
+    def initialize(
+      datafile: nil,
+      event_dispatcher: nil,
+      logger: nil,
+      error_handler: nil,
+      skip_json_validation: false,
+      user_profile_service: nil,
+      sdk_key: nil,
+      config_manager: nil,
+      notification_center: nil,
+      event_processor: nil,
+      default_decide_options: [],
+      event_processor_options: {},
+      settings: nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
