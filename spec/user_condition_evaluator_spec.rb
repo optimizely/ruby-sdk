@@ -28,7 +28,7 @@ describe Optimizely::UserConditionEvaluator do
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:event_processor) { Optimizely::ForwardingEventProcessor.new(Optimizely::EventDispatcher.new) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, event_processor) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler, event_processor: event_processor) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
   after(:example) { project_instance.close }
 

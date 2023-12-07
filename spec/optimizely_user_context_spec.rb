@@ -27,9 +27,9 @@ describe 'Optimizely' do
   let(:integration_JSON) { OptimizelySpec::CONFIG_DICT_WITH_INTEGRATIONS_JSON }
   let(:error_handler) { Optimizely::RaiseErrorHandler.new }
   let(:spy_logger) { spy('logger') }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
-  let(:forced_decision_project_instance) { Optimizely::Project.new(forced_decision_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1}) }
-  let(:integration_project_instance) { Optimizely::Project.new(integration_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler) }
+  let(:forced_decision_project_instance) { Optimizely::Project.new(datafile: forced_decision_JSON, logger: spy_logger, error_handler: error_handler, event_processor_options: {batch_size: 1}) }
+  let(:integration_project_instance) { Optimizely::Project.new(datafile: integration_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:good_response_data) do
     {

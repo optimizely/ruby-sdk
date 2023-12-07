@@ -26,16 +26,16 @@ describe Optimizely::OptimizelyConfig do
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:project_config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:optimizely_config) { project_instance.get_optimizely_config }
   let(:project_config_sim_keys) { Optimizely::DatafileProjectConfig.new(similar_exp_keys_JSON, spy_logger, error_handler) }
-  let(:project_instance_sim_keys) { Optimizely::Project.new(similar_exp_keys_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance_sim_keys) { Optimizely::Project.new(datafile: similar_exp_keys_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:optimizely_config_sim_keys) { project_instance_sim_keys.get_optimizely_config }
   let(:project_config_typed_audiences) { Optimizely::DatafileProjectConfig.new(typed_audiences_JSON, spy_logger, error_handler) }
-  let(:project_instance_typed_audiences) { Optimizely::Project.new(typed_audiences_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance_typed_audiences) { Optimizely::Project.new(datafile: typed_audiences_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:optimizely_config_typed_audiences) { project_instance_typed_audiences.get_optimizely_config }
   let(:project_config_similar_rule_keys) { Optimizely::DatafileProjectConfig.new(similar_rule_key_JSON, spy_logger, error_handler) }
-  let(:project_instance_similar_rule_keys) { Optimizely::Project.new(similar_rule_key_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance_similar_rule_keys) { Optimizely::Project.new(datafile: similar_rule_key_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:optimizely_config_similar_rule_keys) { project_instance_similar_rule_keys.get_optimizely_config }
   after(:example) do
     project_instance.close

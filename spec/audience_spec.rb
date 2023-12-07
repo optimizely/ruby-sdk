@@ -25,7 +25,7 @@ describe Optimizely::Audience do
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:typed_audience_config) { Optimizely::DatafileProjectConfig.new(config_typed_audience_JSON, spy_logger, error_handler) }
   let(:integration_config) { Optimizely::DatafileProjectConfig.new(config_integration_JSON, spy_logger, error_handler) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
   after(:example) { project_instance.close }
 

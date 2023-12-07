@@ -28,7 +28,7 @@ describe Optimizely::DecisionService do
   let(:spy_user_profile_service) { spy('user_profile_service') }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
   let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_user_profile_service) }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
   after(:example) { project_instance.close }
 
@@ -497,7 +497,7 @@ describe Optimizely::DecisionService do
 
   describe '#get_variation_for_feature_experiment' do
     config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
+    project_instance = Optimizely::Project.new(datafile: config_body_json)
     user_context = project_instance.create_user_context('user_1', {})
 
     describe 'when the feature flag\'s experiment ids array is empty' do
@@ -619,7 +619,7 @@ describe Optimizely::DecisionService do
 
   describe '#get_variation_for_feature_rollout' do
     config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
+    project_instance = Optimizely::Project.new(datafile: config_body_json)
     user_context = project_instance.create_user_context('user_1', {})
     user_id = 'user_1'
 
@@ -816,7 +816,7 @@ describe Optimizely::DecisionService do
 
   describe '#get_variation_for_feature' do
     config_body_json = OptimizelySpec::VALID_CONFIG_BODY_JSON
-    project_instance = Optimizely::Project.new(config_body_json, nil, nil, nil)
+    project_instance = Optimizely::Project.new(datafile: config_body_json)
     user_context = project_instance.create_user_context('user_1', {})
 
     describe 'when the user is bucketed into the feature experiment' do
