@@ -27,19 +27,19 @@ describe Optimizely::ConditionTreeEvaluator do
 
   describe 'evaluate' do
     it 'should return true for a leaf condition when the leaf condition evaluator returns true' do
-      leaf_callback = ->(_condition) { return true }
+      leaf_callback = ->(_condition) { true }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(@browser_condition, leaf_callback)).to be true
     end
 
     it 'should return false for a leaf condition when the leaf condition evaluator returns false' do
-      leaf_callback = ->(_condition) { return false }
+      leaf_callback = ->(_condition) { false }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(@browser_condition, leaf_callback)).to be false
     end
   end
 
   describe 'and evaluation' do
     it 'should return true when ALL conditions evaluate to true' do
-      leaf_callback = ->(_condition) { return true }
+      leaf_callback = ->(_condition) { true }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(['and', @browser_condition, @device_condition], leaf_callback)).to be true
     end
 
@@ -51,7 +51,7 @@ describe Optimizely::ConditionTreeEvaluator do
 
     describe 'nil handling' do
       it 'should return nil when all operands evaluate to nil' do
-        leaf_callback = ->(_condition) { return nil }
+        leaf_callback = ->(_condition) { nil }
         expect(Optimizely::ConditionTreeEvaluator.evaluate(['and', @browser_condition, @device_condition], leaf_callback)).to eq(nil)
       end
 
@@ -83,7 +83,7 @@ describe Optimizely::ConditionTreeEvaluator do
 
   describe 'or evaluation' do
     it 'should return false if all conditions evaluate to false' do
-      leaf_callback = ->(_condition) { return false }
+      leaf_callback = ->(_condition) { false }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(['or', @browser_condition, @device_condition], leaf_callback)).to be false
     end
 
@@ -95,7 +95,7 @@ describe Optimizely::ConditionTreeEvaluator do
 
     describe 'nil handling' do
       it 'should return nil when all operands evaluate to nil' do
-        leaf_callback = ->(_condition) { return nil }
+        leaf_callback = ->(_condition) { nil }
         expect(Optimizely::ConditionTreeEvaluator.evaluate(['or', @browser_condition, @device_condition], leaf_callback)).to eq(nil)
       end
 
@@ -127,34 +127,34 @@ describe Optimizely::ConditionTreeEvaluator do
 
   describe 'not evaluation' do
     it 'should return true if the condition evaluates to false' do
-      leaf_callback = ->(_condition) { return false }
+      leaf_callback = ->(_condition) { false }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(['not', @browser_condition], leaf_callback)).to be true
     end
 
     it 'should return false if the condition evaluates to true' do
-      leaf_callback = ->(_condition) { return true }
+      leaf_callback = ->(_condition) { true }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(['not', @browser_condition], leaf_callback)).to be false
     end
 
     it 'should return the result of negating the first condition, and ignore any additional conditions' do
-      leaf_callback = ->(id) { return id == '1' }
+      leaf_callback = ->(id) { id == '1' }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(%w[not 1 2 1], leaf_callback)).to be false
 
-      leaf_callback2 = ->(id) { return id == '2' }
+      leaf_callback2 = ->(id) { id == '2' }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(%w[not 1 2 1], leaf_callback2)).to be true
 
-      leaf_callback3 = ->(id) { return id == '1' ? nil : id == '3' }
+      leaf_callback3 = ->(id) { id == '1' ? nil : id == '3' }
       expect(Optimizely::ConditionTreeEvaluator.evaluate(%w[not 1 2 3], leaf_callback3)).to eq(nil)
     end
 
     describe 'nil handling' do
       it 'should return nil when operand evaluates to nil' do
-        leaf_callback = ->(_condition) { return nil }
+        leaf_callback = ->(_condition) { nil }
         expect(Optimizely::ConditionTreeEvaluator.evaluate(['not', @browser_condition, @device_condition], leaf_callback)).to eq(nil)
       end
 
       it 'should return nil when there are no operands' do
-        leaf_callback = ->(_condition) { return nil }
+        leaf_callback = ->(_condition) { nil }
         expect(Optimizely::ConditionTreeEvaluator.evaluate(['not'], leaf_callback)).to eq(nil)
       end
     end
@@ -166,7 +166,7 @@ describe Optimizely::ConditionTreeEvaluator do
       allow(leaf_callback).to receive(:call).and_return(true, false)
       expect(Optimizely::ConditionTreeEvaluator.evaluate([@browser_condition, @device_condition], leaf_callback)).to be true
 
-      leaf_callback = ->(_condition) { return false }
+      leaf_callback = ->(_condition) { false }
       allow(leaf_callback).to receive(:call).and_return(false, true)
       expect(Optimizely::ConditionTreeEvaluator.evaluate([@browser_condition, @device_condition], leaf_callback)).to be true
     end

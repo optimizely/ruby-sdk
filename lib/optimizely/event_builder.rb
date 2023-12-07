@@ -62,7 +62,7 @@ module Optimizely
 
       visitor_attributes = []
 
-      attributes&.keys&.each do |attribute_key|
+      attributes&.each_key do |attribute_key|
         # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
         if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)

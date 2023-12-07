@@ -72,7 +72,7 @@ module Optimizely
 
       def build_attribute_list(user_attributes, project_config)
         visitor_attributes = []
-        user_attributes&.keys&.each do |attribute_key|
+        user_attributes&.each_key do |attribute_key|
           # Omit attribute values that are not supported by the log endpoint.
           attribute_value = user_attributes[attribute_key]
           next unless Helpers::Validator.attribute_valid?(attribute_key, attribute_value)

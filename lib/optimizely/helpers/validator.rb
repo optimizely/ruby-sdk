@@ -190,14 +190,13 @@ module Optimizely
         # segments_cache - custom cache to be validated.
         #
         # Returns boolean depending on whether cache has required methods.
-        (
-          segments_cache.respond_to?(:reset) &&
+
+        segments_cache.respond_to?(:reset) &&
           segments_cache.method(:reset)&.parameters&.empty? &&
           segments_cache.respond_to?(:lookup) &&
           segments_cache.method(:lookup)&.parameters&.length&.positive? &&
           segments_cache.respond_to?(:save) &&
           segments_cache.method(:save)&.parameters&.length&.positive?
-        )
       end
 
       def segment_manager_valid?(segment_manager)
@@ -206,13 +205,12 @@ module Optimizely
         # segment_manager - custom manager to be validated.
         #
         # Returns boolean depending on whether manager has required methods.
-        (
-          segment_manager.respond_to?(:odp_config) &&
+
+        segment_manager.respond_to?(:odp_config) &&
           segment_manager.respond_to?(:reset) &&
           segment_manager.method(:reset)&.parameters&.empty? &&
           segment_manager.respond_to?(:fetch_qualified_segments) &&
           (segment_manager.method(:fetch_qualified_segments)&.parameters&.length || 0) >= 3
-        )
       end
 
       def event_manager_valid?(event_manager)
