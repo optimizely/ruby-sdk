@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2017, 2019-2020, Optimizely and contributors
+#    Copyright 2016-2017, 2019-2020, 2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ module Optimizely
       user_condition_evaluator = UserConditionEvaluator.new(user_context, logger)
 
       evaluate_user_conditions = lambda do |condition|
-        return user_condition_evaluator.evaluate(condition)
+        user_condition_evaluator.evaluate(condition)
       end
 
       evaluate_audience = lambda do |audience_id|

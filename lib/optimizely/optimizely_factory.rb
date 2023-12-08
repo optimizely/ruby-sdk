@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2019, 2022, Optimizely and contributors
+#    Copyright 2019, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ module Optimizely
       )
 
       Optimizely::Project.new(
-        datafile, nil, logger, error_handler, nil, nil, sdk_key, config_manager, notification_center
+        datafile: datafile, logger: logger, error_handler: error_handler, sdk_key: sdk_key, config_manager: config_manager, notification_center: notification_center
       )
     end
 
@@ -111,7 +111,7 @@ module Optimizely
     #
     # @param config_manager - Required ConfigManagerInterface Responds to 'config' method.
     def self.default_instance_with_config_manager(config_manager)
-      Optimizely::Project.new(nil, nil, nil, nil, nil, nil, nil, config_manager)
+      Optimizely::Project.new(config_manager: config_manager)
     end
 
     # Returns a new optimizely instance.
@@ -167,19 +167,17 @@ module Optimizely
       )
 
       Optimizely::Project.new(
-        datafile,
-        event_dispatcher,
-        logger,
-        error_handler,
-        skip_json_validation,
-        user_profile_service,
-        sdk_key,
-        config_manager,
-        notification_center,
-        event_processor,
-        [],
-        {},
-        settings
+        datafile: datafile,
+        event_dispatcher: event_dispatcher,
+        logger: logger,
+        error_handler: error_handler,
+        skip_json_validation: skip_json_validation,
+        user_profile_service: user_profile_service,
+        sdk_key: sdk_key,
+        config_manager: config_manager,
+        notification_center: notification_center,
+        event_processor: event_processor,
+        settings: settings
       )
     end
   end

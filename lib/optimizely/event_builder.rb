@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2019, 2022, Optimizely and contributors
+#    Copyright 2016-2019, 2022-2023, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ module Optimizely
 
       visitor_attributes = []
 
-      attributes&.keys&.each do |attribute_key|
+      attributes&.each_key do |attribute_key|
         # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
         if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
