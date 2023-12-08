@@ -840,9 +840,11 @@ describe Optimizely::OptimizelyConfig do
       ]
     }
 
-    config_body['experiments'].push(new_experiment)
-    config_body['featureFlags'].push(new_feature)
-    project_config = Optimizely::DatafileProjectConfig.new(JSON.dump(config_body), spy_logger, error_handler)
+    config = OptimizelySpec.deep_clone(config_body)
+
+    config['experiments'].push(new_experiment)
+    config['featureFlags'].push(new_feature)
+    project_config = Optimizely::DatafileProjectConfig.new(JSON.dump(config), spy_logger, error_handler)
 
     opti_config = Optimizely::OptimizelyConfig.new(project_config, spy_logger)
 
