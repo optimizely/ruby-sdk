@@ -19,8 +19,9 @@ module Optimizely
   require 'json'
   class OptimizelyConfig
     include Optimizely::ConditionTreeEvaluator
-    def initialize(project_config)
+    def initialize(project_config, logger = nil)
       @project_config = project_config
+      @logger = logger || NoOpLogger.new
       @rollouts = @project_config.rollouts
       @audiences = []
       audience_id_lookup_dict = {}
@@ -91,6 +92,7 @@ module Optimizely
 
     def experiments_map
       experiments_id_map.values.reduce({}) do |experiments_key_map, experiment|
+        @logger.log(Logger::WARN, "Duplicate experiment keys found in datafile: #{experiment['key']}") if experiments_key_map.key? experiment['key']
         experiments_key_map.update(experiment['key'] => experiment)
       end
     end

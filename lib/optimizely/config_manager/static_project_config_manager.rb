@@ -41,12 +41,13 @@ module Optimizely
         error_handler,
         skip_json_validation
       )
+      @logger = logger
       @sdk_key = @config&.sdk_key
       @optimizely_config = nil
     end
 
     def optimizely_config
-      @optimizely_config = OptimizelyConfig.new(@config).config if @optimizely_config.nil?
+      @optimizely_config = OptimizelyConfig.new(@config, @logger).config if @optimizely_config.nil?
 
       @optimizely_config
     end
