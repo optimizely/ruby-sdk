@@ -48,7 +48,7 @@ describe 'Optimizely' do
   let(:version) { Optimizely::VERSION }
   let(:impression_log_url) { 'https://logx.optimizely.com/v1/events' }
   let(:conversion_log_url) { 'https://logx.optimizely.com/v1/events' }
-  let(:project_instance) { Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1}) }
+  let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler, event_processor_options: {batch_size: 1}) }
   let(:project_config) { project_instance.config_manager.config }
   let(:time_now) { Time.now }
   let(:post_headers) { {'Content-Type' => 'application/json'} }
@@ -71,7 +71,7 @@ describe 'Optimizely' do
       end
 
       logger = CustomLogger.new
-      instance_with_logger = Optimizely::Project.new(config_body_JSON, nil, logger)
+      instance_with_logger = Optimizely::Project.new(datafile: config_body_JSON, logger: logger)
       expect(instance_with_logger.logger.log(Logger::INFO, 'test_message')).to eq('test_message')
       instance_with_logger.close
     end
@@ -84,19 +84,19 @@ describe 'Optimizely' do
       end
 
       error_handler = CustomErrorHandler.new
-      instance_with_error_handler = Optimizely::Project.new(config_body_JSON, nil, nil, error_handler)
+      instance_with_error_handler = Optimizely::Project.new(datafile: config_body_JSON, error_handler: error_handler)
       expect(instance_with_error_handler.error_handler.handle_error('test_message')).to eq('test_message')
       instance_with_error_handler.close
     end
 
     it 'should log an error when datafile is null' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      Optimizely::Project.new(nil, nil, spy_logger).close
+      Optimizely::Project.new(logger: spy_logger).close
     end
 
     it 'should log an error when datafile is empty' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
-      Optimizely::Project.new('', nil, spy_logger).close
+      Optimizely::Project.new(datafile: '', logger: spy_logger).close
     end
 
     it 'should log an error when given a datafile that does not conform to the schema' do
@@ -104,7 +104,7 @@ describe 'Optimizely' do
       allow(spy_logger).to receive(:log).with(Logger::DEBUG, anything)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'SDK key not provided/cannot be found in the datafile. ODP may not work properly without it.')
-      Optimizely::Project.new('{"foo": "bar"}', nil, spy_logger).close
+      Optimizely::Project.new(datafile: '{"foo": "bar"}', logger: spy_logger).close
     end
 
     it 'should log an error when given an invalid logger' do
@@ -114,7 +114,7 @@ describe 'Optimizely' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided logger is in an invalid format.')
 
       class InvalidLogger; end # rubocop:disable Lint/ConstantDefinitionInBlock
-      Optimizely::Project.new(config_body_JSON, nil, InvalidLogger.new).close
+      Optimizely::Project.new(datafile: config_body_JSON, logger: InvalidLogger.new).close
     end
 
     it 'should log an error when given an invalid event_dispatcher' do
@@ -123,7 +123,7 @@ describe 'Optimizely' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided event_dispatcher is in an invalid format.')
 
       class InvalidEventDispatcher; end # rubocop:disable Lint/ConstantDefinitionInBlock
-      Optimizely::Project.new(config_body_JSON, InvalidEventDispatcher.new).close
+      Optimizely::Project.new(datafile: config_body_JSON, event_dispatcher: InvalidEventDispatcher.new).close
     end
 
     it 'should log an error when given an invalid error_handler' do
@@ -132,14 +132,14 @@ describe 'Optimizely' do
       expect_any_instance_of(Optimizely::SimpleLogger).to receive(:log).once.with(Logger::ERROR, 'Provided error_handler is in an invalid format.')
 
       class InvalidErrorHandler; end # rubocop:disable Lint/ConstantDefinitionInBlock
-      Optimizely::Project.new(config_body_JSON, nil, nil, InvalidErrorHandler.new).close
+      Optimizely::Project.new(datafile: config_body_JSON, error_handler: InvalidErrorHandler.new).close
     end
 
     it 'should not validate the JSON schema of the datafile when skip_json_validation is true' do
       project_instance.close
       expect(Optimizely::Helpers::Validator).not_to receive(:datafile_valid?)
 
-      Optimizely::Project.new(config_body_JSON, nil, nil, nil, true).close
+      Optimizely::Project.new(datafile: config_body_JSON, skip_json_validation: true).close
     end
 
     it 'should be invalid when datafile contains integrations missing key' do
@@ -152,7 +152,7 @@ describe 'Optimizely' do
       config['integrations'][0].delete('key')
       integrations_json = JSON.dump(config)
 
-      Optimizely::Project.new(integrations_json, nil, spy_logger)
+      Optimizely::Project.new(datafile: integrations_json, logger: spy_logger)
     end
 
     it 'should be valid when datafile contains integrations with only key' do
@@ -161,7 +161,7 @@ describe 'Optimizely' do
       config['integrations'].push('key' => '123')
       integrations_json = JSON.dump(config)
 
-      project_instance = Optimizely::Project.new(integrations_json)
+      project_instance = Optimizely::Project.new(datafile: integrations_json)
       expect(project_instance.is_valid).to be true
     end
 
@@ -171,7 +171,7 @@ describe 'Optimizely' do
       config['integrations'].push('key' => 'future', 'any-key-1' => 1, 'any-key-2' => 'any-value-2')
       integrations_json = JSON.dump(config)
 
-      project_instance = Optimizely::Project.new(integrations_json)
+      project_instance = Optimizely::Project.new(datafile: integrations_json)
       expect(project_instance.is_valid).to be true
     end
 
@@ -179,20 +179,20 @@ describe 'Optimizely' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect_any_instance_of(Optimizely::RaiseErrorHandler).to receive(:handle_error).once.with(Optimizely::InvalidInputError)
 
-      Optimizely::Project.new('this is not JSON', nil, spy_logger, Optimizely::RaiseErrorHandler.new, true)
+      Optimizely::Project.new(datafile: 'this is not JSON', logger: spy_logger, error_handler: Optimizely::RaiseErrorHandler.new, skip_json_validation: true)
     end
 
     it 'should log an error when provided an invalid JSON datafile and skip_json_validation is true' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
 
-      Optimizely::Project.new('{"version": "2", "foo": "bar"}', nil, spy_logger, nil, true)
+      Optimizely::Project.new(datafile: '{"version": "2", "foo": "bar"}', logger: spy_logger, skip_json_validation: true)
     end
 
     it 'should log and raise an error when provided a datafile of unsupported version' do
       config_body_invalid_json = JSON.parse(config_body_invalid_JSON)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, "This version of the Ruby SDK does not support the given datafile version: #{config_body_invalid_json['version']}.")
 
-      expect { Optimizely::Project.new(config_body_invalid_JSON, nil, spy_logger, Optimizely::RaiseErrorHandler.new, true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
+      expect { Optimizely::Project.new(datafile: config_body_invalid_JSON, logger: spy_logger, error_handler: Optimizely::RaiseErrorHandler.new, skip_json_validation: true) }.to raise_error(Optimizely::InvalidDatafileVersionError, 'This version of the Ruby SDK does not support the given datafile version: 5.')
     end
   end
 
@@ -225,7 +225,7 @@ describe 'Optimizely' do
     end
 
     it 'should send identify event when called with odp enabled' do
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       expect(project.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
       project.create_user_context('tester')
 
@@ -359,7 +359,7 @@ describe 'Optimizely' do
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
+        @project_typed_audience_instance = Optimizely::Project.new(datafile: JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger: spy_logger, error_handler: error_handler, event_processor_options: {batch_size: 1})
         @project_config = @project_typed_audience_instance.config_manager.config
         @expected_activate_params = {
           account_id: '4879520872',
@@ -900,7 +900,7 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       invalid_project.activate('test_exp', 'test_user')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'activate'.")
@@ -976,8 +976,8 @@ describe 'Optimizely' do
         )
 
         custom_project_instance = Optimizely::Project.new(
-          nil, nil, spy_logger, error_handler,
-          false, nil, nil, http_project_config_manager, notification_center
+          logger: spy_logger, error_handler: error_handler,
+          config_manager: http_project_config_manager, notification_center: notification_center
         )
 
         sleep 0.1 until http_project_config_manager.ready?
@@ -1003,8 +1003,8 @@ describe 'Optimizely' do
         )
 
         custom_project_instance = Optimizely::Project.new(
-          nil, nil, spy_logger, error_handler,
-          false, nil, nil, http_project_config_manager, notification_center
+          logger: spy_logger, error_handler: error_handler,
+          config_manager: http_project_config_manager, notification_center: notification_center
         )
 
         sleep 0.1 until http_project_config_manager.ready?
@@ -1037,8 +1037,8 @@ describe 'Optimizely' do
         expect(notification_center).to receive(:send_notifications).ordered
 
         custom_project_instance = Optimizely::Project.new(
-          nil, nil, spy_logger, error_handler,
-          false, nil, sdk_key, nil, notification_center
+          logger: spy_logger, error_handler: error_handler,
+          sdk_key: sdk_key, notification_center: notification_center
         )
 
         sleep 0.1 until custom_project_instance.config_manager.ready?
@@ -1132,7 +1132,7 @@ describe 'Optimizely' do
     end
 
     it 'should properly track an event with tags even when the project does not have a custom logger' do
-      custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
+      custom_project_instance = Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler, event_processor_options: {batch_size: 1})
 
       params = @expected_track_event_params
       params[:visitors][0][:snapshots][0][:events][0][:tags] = {revenue: 42}
@@ -1217,7 +1217,7 @@ describe 'Optimizely' do
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {batch_size: 1})
+        @project_typed_audience_instance = Optimizely::Project.new(datafile: JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger: spy_logger, error_handler: error_handler, event_processor_options: {batch_size: 1})
         @expected_event_params = {
           account_id: '4879520872',
           project_id: '11624721371',
@@ -1424,7 +1424,7 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       invalid_project.track('test_event', 'test_user')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'track'.")
@@ -1532,7 +1532,7 @@ describe 'Optimizely' do
     end
 
     it 'should log an error when called with an invalid Project object' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       invalid_project.get_variation('test_exp', 'test_user')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_variation'.")
@@ -1620,7 +1620,7 @@ describe 'Optimizely' do
     end
 
     it 'should return false when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.is_feature_enabled('totally_invalid_feature_key', 'test_user')).to be false
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'is_feature_enabled'.")
@@ -1758,7 +1758,7 @@ describe 'Optimizely' do
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        @project_typed_audience_instance = Optimizely::Project.new(datafile: JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger: spy_logger, error_handler: error_handler)
         stub_request(:post, impression_log_url)
       end
       after(:example) do
@@ -2023,7 +2023,7 @@ describe 'Optimizely' do
 
   describe '#get_enabled_features' do
     it 'should return empty when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_enabled_features('test_user')).to be_empty
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_enabled_features'.")
@@ -2249,7 +2249,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2399,7 +2399,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable_json('json_single_variable_feature', 'json_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2582,7 +2582,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2626,7 +2626,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2672,7 +2672,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2718,7 +2718,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_all_feature_variables('all_variables_feature', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -2951,7 +2951,7 @@ describe 'Optimizely' do
     user_attributes = {}
 
     it 'should return nil when called with invalid project config' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
         .to eq(nil)
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, 'Provided datafile is in an invalid format.')
@@ -3161,7 +3161,7 @@ describe 'Optimizely' do
 
     describe '.typed audiences' do
       before(:example) do
-        @project_typed_audience_instance = Optimizely::Project.new(JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), nil, spy_logger, error_handler)
+        @project_typed_audience_instance = Optimizely::Project.new(datafile: JSON.dump(OptimizelySpec::CONFIG_DICT_WITH_TYPED_AUDIENCES), logger: spy_logger, error_handler: error_handler)
       end
       after(:example) do
         @project_typed_audience_instance.close
@@ -3466,7 +3466,7 @@ describe 'Optimizely' do
     valid_variation = {id: '111128', key: 'control'}
 
     it 'should log an error when called with an invalid Project object' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       invalid_project.set_forced_variation(valid_experiment[:key], user_id, valid_variation[:key])
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'set_forced_variation'.")
@@ -3523,7 +3523,7 @@ describe 'Optimizely' do
     valid_experiment = {id: '111127', key: 'test_experiment'}
 
     it 'should log an error when called with an invalid Project object' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       invalid_project.get_forced_variation(valid_experiment[:key], user_id)
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, 'Provided datafile is in an invalid format.')
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, "Optimizely instance is not valid. Failing 'get_forced_variation'.")
@@ -3569,7 +3569,7 @@ describe 'Optimizely' do
 
   describe '#is_valid' do
     it 'should return false when called with an invalid datafile' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       expect(invalid_project.is_valid).to be false
       invalid_project.close
     end
@@ -3595,9 +3595,9 @@ describe 'Optimizely' do
 
       event_processor = Optimizely::BatchEventProcessor.new(event_dispatcher: Optimizely::EventDispatcher.new)
 
-      Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler).close
+      Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler).close
 
-      project_instance = Optimizely::Project.new(nil, nil, nil, nil, true, nil, nil, config_manager, nil, event_processor)
+      project_instance = Optimizely::Project.new(skip_json_validation: true, config_manager: config_manager, event_processor: event_processor)
 
       expect(config_manager.stopped).to be false
       expect(event_processor.started).to be false
@@ -3617,8 +3617,8 @@ describe 'Optimizely' do
       )
 
       project_instance = Optimizely::Project.new(
-        nil, nil, spy_logger, error_handler,
-        false, nil, nil, http_project_config_manager
+        logger: spy_logger, error_handler: error_handler,
+        config_manager: http_project_config_manager
       )
 
       project_instance.close
@@ -3631,8 +3631,8 @@ describe 'Optimizely' do
       )
 
       project_instance = Optimizely::Project.new(
-        config_body_JSON, nil, spy_logger, error_handler,
-        false, nil, nil, http_project_config_manager
+        datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+        config_manager: http_project_config_manager
       )
 
       sleep 0.1 until http_project_config_manager.ready?
@@ -3652,8 +3652,8 @@ describe 'Optimizely' do
       )
 
       project_instance = Optimizely::Project.new(
-        nil, nil, spy_logger, error_handler,
-        false, nil, nil, static_project_config_manager
+        logger: spy_logger, error_handler: error_handler,
+        config_manager: static_project_config_manager
       )
 
       project_instance.close
@@ -3666,8 +3666,8 @@ describe 'Optimizely' do
       )
 
       project_instance = Optimizely::Project.new(
-        config_body_JSON, nil, spy_logger, error_handler,
-        false, nil, nil, static_project_config_manager
+        datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+        config_manager: static_project_config_manager
       )
 
       project_instance.close
@@ -3696,7 +3696,7 @@ describe 'Optimizely' do
   describe '#decide' do
     describe 'should return empty decision object with correct reason when sdk is not ready' do
       it 'when sdk is not ready' do
-        invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+        invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
         user_context = project_instance.create_user_context('user1')
         decision = invalid_project.decide(user_context, 'dummy_flag')
         expect(decision.as_json).to eq(
@@ -4216,7 +4216,7 @@ describe 'Optimizely' do
 
   describe '#decide_all' do
     it 'should get empty object when sdk is not ready' do
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       user_context = project_instance.create_user_context('user1')
       decisions = invalid_project.decide_all(user_context)
       expect(decisions).to eq({})
@@ -4283,7 +4283,7 @@ describe 'Optimizely' do
         boolean_feature
         empty_feature
       ]
-      invalid_project = Optimizely::Project.new('invalid', nil, spy_logger)
+      invalid_project = Optimizely::Project.new(datafile: 'invalid', logger: spy_logger)
       user_context = project_instance.create_user_context('user1')
       decisions = invalid_project.decide_for_keys(user_context, keys)
       expect(decisions).to eq({})
@@ -4354,8 +4354,8 @@ describe 'Optimizely' do
 
     it 'should get only enabled decisions for keys when ENABLED_FLAGS_ONLY is true in default_decide_options' do
       custom_project_instance = Optimizely::Project.new(
-        config_body_JSON, nil, spy_logger, error_handler,
-        false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY]
+        datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+        default_decide_options: [Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY]
       )
       keys = %w[
         boolean_single_variable_feature
@@ -4392,7 +4392,7 @@ describe 'Optimizely' do
   describe 'default_decide_options' do
     describe 'EXCLUDE_VARIABLES' do
       it 'should include variables when the option is not set in default_decide_options' do
-        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        custom_project_instance = Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler)
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]
         decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -4418,8 +4418,8 @@ describe 'Optimizely' do
 
       it 'should exclude variables when the option is set in default_decide_options' do
         custom_project_instance = Optimizely::Project.new(
-          config_body_JSON, nil, spy_logger, error_handler,
-          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES]
+          datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+          default_decide_options: [Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES]
         )
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]
@@ -4448,8 +4448,8 @@ describe 'Optimizely' do
     describe 'INCLUDE_REASONS' do
       it 'should include reasons when the option is set in default_decide_options' do
         custom_project_instance = Optimizely::Project.new(
-          config_body_JSON, nil, spy_logger, error_handler,
-          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS]
+          datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+          default_decide_options: [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS]
         )
         expect(custom_project_instance.notification_center).to receive(:send_notifications)
           .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
@@ -4497,7 +4497,7 @@ describe 'Optimizely' do
       end
 
       it 'should not include reasons when the option is not set in default_decide_options' do
-        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        custom_project_instance = Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler)
         expect(custom_project_instance.notification_center).to receive(:send_notifications)
           .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
         expect(custom_project_instance.notification_center).to receive(:send_notifications)
@@ -4532,7 +4532,7 @@ describe 'Optimizely' do
 
     describe 'DISABLE_DECISION_EVENT' do
       it 'should send event when option is not set in default_decide_options' do
-        custom_project_instance = Optimizely::Project.new(config_body_JSON, nil, spy_logger, error_handler)
+        custom_project_instance = Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler)
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]
         expect(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -4549,8 +4549,8 @@ describe 'Optimizely' do
 
       it 'should not send event when option is set in default_decide_options' do
         custom_project_instance = Optimizely::Project.new(
-          config_body_JSON, nil, spy_logger, error_handler,
-          false, nil, nil, nil, nil, nil, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]
+          datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler,
+          default_decide_options: [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]
         )
         experiment_to_return = config_body['experiments'][3]
         variation_to_return = experiment_to_return['variations'][0]
@@ -4574,7 +4574,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       expect(project.odp_manager.instance_variable_get('@event_manager')).to be_nil
       expect(project.odp_manager.instance_variable_get('@segment_manager')).to be_nil
       project.close
@@ -4587,7 +4587,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_flush_interval: 0)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager.instance_variable_get('@flush_interval')).to eq 0
       project.close
@@ -4599,7 +4599,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_flush_interval: nil)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager.instance_variable_get('@flush_interval')).to eq 1
       project.close
@@ -4612,7 +4612,7 @@ describe 'Optimizely' do
         .to_return(status: 200, body: config_body_integrations_JSON)
 
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').capacity).to eq 5
       project.close
@@ -4624,7 +4624,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache').timeout).to eq 5
       project.close
@@ -4636,7 +4636,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 10, segments_cache_timeout_in_secs: 5)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 10
@@ -4650,7 +4650,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 10_000
@@ -4664,7 +4664,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(segments_cache_size: 0, segments_cache_timeout_in_secs: 0)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       segments_cache = segment_manager.instance_variable_get('@segments_cache')
       expect(segments_cache.capacity).to eq 0
@@ -4684,7 +4684,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: CustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a CustomCache
       project.close
@@ -4698,7 +4698,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segments_cache: InvalidCustomCache.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager.instance_variable_get('@segments_cache')).to be_a Optimizely::LRUCache
@@ -4722,7 +4722,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: CustomSegmentManager.new)
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger, error_handler: error_handler, settings: sdk_settings)
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a CustomSegmentManager
       project.fetch_qualified_segments(user_id: 'test')
@@ -4738,7 +4738,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_segment_manager: InvalidSegmentManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
 
       segment_manager = project.odp_manager.instance_variable_get('@segment_manager')
       expect(segment_manager).to be_a Optimizely::OdpSegmentManager
@@ -4761,7 +4761,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: CustomEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a CustomEventManager
       project.send_odp_event(action: 'test', identifiers: {wow: 'great'})
@@ -4776,7 +4776,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: config_body_integrations_JSON)
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(odp_event_manager: InvalidEventManager.new)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
 
       event_manager = project.odp_manager.instance_variable_get('@event_manager')
       expect(event_manager).to be_a Optimizely::OdpEventManager
@@ -4791,7 +4791,7 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
@@ -4803,7 +4803,7 @@ describe 'Optimizely' do
       stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
       expect(spy_logger).to receive(:log).once.with(Logger::DEBUG, 'ODP event queue: flushing batch size 1.')
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
-      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
+      project = Optimizely::Project.new(logger: spy_logger, sdk_key: sdk_key)
 
       sleep 0.1 until project.odp_manager.instance_variable_get('@event_manager').instance_variable_get('@event_queue').empty?
 
@@ -4814,7 +4814,7 @@ describe 'Optimizely' do
     it 'should log error when odp disabled' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      custom_project_instance = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger, error_handler, false, nil, nil, nil, nil, nil, [], {}, sdk_settings)
+      custom_project_instance = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger, error_handler: error_handler, settings: sdk_settings)
       custom_project_instance.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       custom_project_instance.close
     end
@@ -4823,7 +4823,7 @@ describe 'Optimizely' do
       stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
         .to_return(status: 200, body: nil)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, "Optimizely instance is not valid. Failing 'send_odp_event'.")
-      project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
+      project = Optimizely::Project.new(logger: spy_logger, sdk_key: sdk_key)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
@@ -4833,28 +4833,28 @@ describe 'Optimizely' do
         .to_return(status: 200, body: config_body_integrations_JSON)
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP is not enabled.')
       sdk_settings = Optimizely::Helpers::OptimizelySdkSettings.new(disable_odp: true)
-      project = Optimizely::Project.new(nil, nil, spy_logger, error_handler, false, nil, sdk_key, nil, nil, nil, [], {}, sdk_settings)
+      project = Optimizely::Project.new(logger: spy_logger, error_handler: error_handler, sdk_key: sdk_key, settings: sdk_settings)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
     it 'should log error with invalid data' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP data is not valid.')
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {amazing: 'fantastic'}, data: {'wow': {}})
       project.close
     end
 
     it 'should log error with empty identifiers' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: {}, data: {'wow': {}})
       project.close
     end
 
     it 'should log error with nil identifiers' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP events must have at least one key-value pair in identifiers.')
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: 'great', identifiers: nil, data: {'wow': {}})
       project.close
     end
@@ -4864,7 +4864,7 @@ describe 'Optimizely' do
       feature_key = 'flag-segment'
       user_id = 'test_user'
 
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       allow(project.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
       expect(project.odp_manager).not_to receive(:send_event)
 
@@ -4881,20 +4881,20 @@ describe 'Optimizely' do
 
     it 'should log error with nil action' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP action is not valid (cannot be empty).')
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: nil, identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
     it 'should log error with empty string action' do
       expect(spy_logger).to receive(:log).once.with(Logger::ERROR, 'ODP action is not valid (cannot be empty).')
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       project.send_odp_event(type: 'wow', action: '', identifiers: {amazing: 'fantastic'}, data: {})
       project.close
     end
 
     it 'should use default with nil type' do
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       expect(project.odp_manager).to receive('send_event').with(type: 'fullstack', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.send_odp_event(type: nil, action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
 
@@ -4904,7 +4904,7 @@ describe 'Optimizely' do
     end
 
     it 'should use default with empty string type' do
-      project = Optimizely::Project.new(config_body_integrations_JSON, nil, spy_logger)
+      project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
       expect(project.odp_manager).to receive('send_event').with(type: 'fullstack', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
       project.send_odp_event(type: '', action: 'great', identifiers: {amazing: 'fantastic'}, data: {})
 

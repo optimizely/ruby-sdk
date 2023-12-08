@@ -42,7 +42,7 @@ describe Optimizely::NotificationCenter do
         stub_request(:get, "https://cdn.optimizely.com/datafiles/#{sdk_key}.json")
           .to_return(status: 200, body: config_body_JSON)
 
-        project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
+        project = Optimizely::Project.new(logger: spy_logger, sdk_key: sdk_key)
 
         notification_center = Optimizely::NotificationCenterRegistry.get_notification_center(sdk_key, spy_logger)
         expect(notification_center).to be_a Optimizely::NotificationCenter
@@ -60,7 +60,7 @@ describe Optimizely::NotificationCenter do
           .to_return(status: 200, body: config_body_JSON)
 
         notification_center = Optimizely::NotificationCenterRegistry.get_notification_center(sdk_key, spy_logger)
-        project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
+        project = Optimizely::Project.new(logger: spy_logger, sdk_key: sdk_key)
 
         expect(notification_center).to eq(Optimizely::NotificationCenterRegistry.get_notification_center(sdk_key, spy_logger))
         expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
@@ -78,7 +78,7 @@ describe Optimizely::NotificationCenter do
         notification_center = Optimizely::NotificationCenterRegistry.get_notification_center(sdk_key, spy_logger)
         expect(notification_center).to receive(:send_notifications).once
 
-        project = Optimizely::Project.new(nil, nil, spy_logger, nil, false, nil, sdk_key)
+        project = Optimizely::Project.new(logger: spy_logger, sdk_key: sdk_key)
         project.config_manager.config
 
         Optimizely::NotificationCenterRegistry.remove_notification_center(sdk_key)
