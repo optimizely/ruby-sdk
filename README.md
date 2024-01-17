@@ -78,6 +78,8 @@ You can initialize the Optimizely instance in two ways: directly with a datafile
       )
       ```
 
+**Note:** The SDK spawns multiple threads when initialized. These threads have infinite loops that are used for fetching the datafile, as well as batching and dispatching events in the background. When using in a web server that spawn multiple child processes, you need to initialize the SDK after those child processes or workers have been spawned.
+
 #### HTTP Config Manager
 
 The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL at regular intervals by making HTTP requests.

@@ -65,17 +65,17 @@ module Optimizely
       attributes&.each_key do |attribute_key|
         # Omit attribute values that are not supported by the log endpoint.
         attribute_value = attributes[attribute_key]
-        if Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
-          attribute_id = project_config.get_attribute_id attribute_key
-          if attribute_id
-            visitor_attributes.push(
-              entity_id: attribute_id,
-              key: attribute_key,
-              type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-              value: attribute_value
-            )
-          end
-        end
+        next unless Helpers::Validator.attribute_valid?(attribute_key, attribute_value)
+
+        attribute_id = project_config.get_attribute_id attribute_key
+        next unless attribute_id
+
+        visitor_attributes.push(
+          entity_id: attribute_id,
+          key: attribute_key,
+          type: CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+          value: attribute_value
+        )
       end
       # Append Bot Filtering Attribute
       if project_config.bot_filtering == true || project_config.bot_filtering == false
