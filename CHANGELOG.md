@@ -43,8 +43,18 @@ For details, refer to our documentation pages:
 
 * [Send Optimizely Data Platform data using Advanced Audience Targeting](https://docs.developers.optimizely.com/feature-experimentation/docs/send-odp-data-using-advanced-audience-targeting-ruby)
 
+### Logging
+
+* Add warning to polling intervals below 30 seconds ([#338](https://github.com/optimizely/ruby-sdk/pull/338))
+* Add warning to duplicate experiment keys ([#343](https://github.com/optimizely/ruby-sdk/pull/343))
+
+### Enhancements
+* Removed polling config manager stop restriction, allowing it to be restarted ([#340](https://github.com/optimizely/ruby-sdk/pull/340)).
+* Include object id/key in invalid object errors ([#301](https://github.com/optimizely/ruby-sdk/pull/301)).
+
 ### Breaking Changes
 
+* Updated required Ruby version from 2.7 -> 3.0
 * `Optimizely::Project` initialization arguments have been changed from positional to keyword ([#342](https://github.com/optimizely/ruby-sdk/pull/342)).
 * `ODPManager` in the SDK is enabled by default. Unless an ODP account is integrated into the Optimizely projects, most `ODPManager` functions will be ignored. If needed, `ODPManager` can be disabled when `Optimizely::Project` is instantiated.
 
