@@ -3,19 +3,21 @@
 require_relative 'lib/optimizely/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'optimizely-sdk'
-  spec.version       = Optimizely::VERSION
-  spec.authors       = ['Optimizely']
-  spec.email         = ['developers@optimizely.com']
+  spec.name            = 'optimizely-sdk'
+  spec.version         = Optimizely::VERSION
+  spec.authors         = ['Optimizely']
+  spec.email           = ['developers@optimizely.com']
   spec.required_ruby_version = '>= 3.0'
 
-  spec.summary       = "Ruby SDK for Optimizely's testing framework"
-  spec.description   = 'A Ruby SDK for use with Optimizely Feature Experimentation, Optimizely Full Stack (legacy), and Optimizely Rollouts'
-  spec.homepage      = 'https://www.optimizely.com/'
-  spec.license       = 'Apache-2.0'
+  spec.summary         = "Ruby SDK for Optimizely's testing framework"
+  spec.description     = 'A Ruby SDK for use with Optimizely Feature Experimentation, Optimizely Full Stack (legacy), and Optimizely Rollouts'
+  spec.homepage        = 'https://github.com/optimizely/ruby-sdk'
+  spec.source_code_uri = 'https://github.com/optimizely/ruby-sdk'
+  spec.changelog_uri   = 'https://github.com/optimizely/ruby-sdk/blob/master/CHANGELOG.md'
+  spec.license         = 'Apache-2.0'
 
-  spec.files         = Dir['lib/**/*', 'LICENSE']
-  spec.require_paths = ['lib']
+  spec.files           = Dir['lib/**/*', 'LICENSE']
+  spec.require_paths   = ['lib']
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'coveralls_reborn'
