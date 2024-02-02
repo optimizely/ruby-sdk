@@ -12,9 +12,9 @@ Gem::Specification.new do |spec|
   spec.summary         = "Ruby SDK for Optimizely's testing framework"
   spec.description     = 'A Ruby SDK for use with Optimizely Feature Experimentation, Optimizely Full Stack (legacy), and Optimizely Rollouts'
   spec.homepage        = 'https://github.com/optimizely/ruby-sdk'
-  spec.source_code_uri = 'https://github.com/optimizely/ruby-sdk'
   spec.changelog_uri   = 'https://github.com/optimizely/ruby-sdk/blob/master/CHANGELOG.md'
   spec.license         = 'Apache-2.0'
+  spec.metadata        = {'source_code_uri' => 'https://github.com/optimizely/ruby-sdk'}
 
   spec.files           = Dir['lib/**/*', 'LICENSE']
   spec.require_paths   = ['lib']
