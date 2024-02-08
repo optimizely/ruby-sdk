@@ -1,5 +1,10 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.0.1
+February 8th, 2024
+
+The 5.0.1 minor release introduces update of metadata in gemspec.
+
 ## 5.0.0
 January 18th, 2024
 
