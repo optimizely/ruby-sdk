@@ -1,7 +1,7 @@
 {
 	"name": "Ruby SDK",
 	
-	"image": "mcr.microsoft.com/devcontainers/ruby:1-3.2-bullseye",
+	"image": "mcr.microsoft.com/devcontainers/ruby:1-3.3-bullseye",
 
 	"postCreateCommand": "set -e && bundle install && gem install optimizely-sdk && rake build && gem install pkg/* && gem install solargraph",
 	
