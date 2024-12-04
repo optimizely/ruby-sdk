@@ -42,6 +42,7 @@ require_relative 'optimizely/optimizely_user_context'
 require_relative 'optimizely/odp/lru_cache'
 require_relative 'optimizely/odp/odp_manager'
 require_relative 'optimizely/helpers/sdk_settings'
+require_relative 'optimizely/user_profile_tracker'
 
 module Optimizely
   class Project
@@ -209,28 +210,23 @@ module Optimizely
         decide_options = @default_decide_options
       end
 
+      decide_options.delete(OptimizelyDecideOption::ENABLED_FLAGS_ONLY) if decide_options.include?(OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+
+      decide_for_keys(user_context, [key], decide_options, true)[key]
+    end
+
+    def create_optimizely_decision(user_context, flag_key, decision, reasons, decide_options, config)
       # Create Optimizely Decision Result.
       user_id = user_context.user_id
       attributes = user_context.user_attributes
       variation_key = nil
       feature_enabled = false
       rule_key = nil
-      flag_key = key
       all_variables = {}
       decision_event_dispatched = false
+      feature_flag = config.get_feature_flag_from_key(flag_key)
       experiment = nil
       decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
-      context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(key, nil)
-      variation, reasons_received = @decision_service.validated_forced_decision(config, context, user_context)
-      reasons.push(*reasons_received)
-
-      if variation
-        decision = Optimizely::DecisionService::Decision.new(nil, variation, Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'])
-      else
-        decision, reasons_received = @decision_service.get_variation_for_feature(config, feature_flag, user_context, decide_options)
-        reasons.push(*reasons_received)
-      end
-
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
         experiment = decision.experiment
@@ -298,7 +294,7 @@ module Optimizely
       decide_for_keys(user_context, keys, decide_options)
     end
 
-    def decide_for_keys(user_context, keys, decide_options = [])
+    def decide_for_keys(user_context, keys, decide_options = [], ignore_default_options: false)
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
 
@@ -308,13 +304,86 @@ module Optimizely
         return {}
       end
 
-      enabled_flags_only = (!decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)) || (@default_decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+      # merge decide_options and default_decide_options
+      unless ignore_default_options
+        if decide_options.is_a?(Array)
+          decide_options += @default_decide_options
+        else
+          @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
+          decide_options = @default_decide_options
+        end
+      end
+
+      # enabled_flags_only = (!decide_options.nil? && (decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)) || (@default_decide_options.include? OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
 
       decisions = {}
+      valid_keys = []
+      decision_reasons_dict = {}
+      config = project_config
+      return decisions unless config
+
+      flags_without_forced_decision = [] #: list[entities.FeatureFlag]
+      flag_decisions = {} #: dict[str, Decision]
+
       keys.each do |key|
-        decision = decide(user_context, key, decide_options)
-        decisions[key] = decision unless enabled_flags_only && !decision.enabled
+        # Retrieve the feature flag from the project's feature flag key map
+        feature_flag = config.feature_flag_key_map[key]
+
+        # If the feature flag is nil, create a default OptimizelyDecision and move to the next key
+        if feature_flag.nil?
+          decisions[key] = OptimizelyDecision.new(nil, false, nil, nil, key, user_context, [])
+          next
+        end
+        valid_keys.push(key)
+        decision_reasons = []
+        decision_reasons_dict[key] = decision_reasons
+
+        config = project_config
+        context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(key, nil)
+        variation, reasons_received = @decision_service.validated_forced_decision(config, context, user_context)
+        decision_reasons_dict[key].push(*reasons_received)
+
+        if variation
+          decision = Optimizely::DecisionService::Decision.new(nil, variation, Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'])
+          flag_decisions[key] = decision
+        else
+          flags_without_forced_decision.push(feature_flag)
+          # decision, reasons_received = @decision_service.get_variation_for_feature(config, feature_flag, user_context, decide_options)
+          # reasons.push(*reasons_received)
+        end
+        # decision = decide(user_context, key, decide_options)
+        # decisions[key] = decision unless enabled_flags_only && !decision.enabled
       end
+
+      decision_list = @decision_service.get_variations_for_feature_list(config, flags_without_forced_decision, user_context, decide_options)
+
+      flags_without_forced_decision.each_with_index do |flag, i|
+        decision = decision_list[i][0]
+        reasons = decision_list[i][1]
+        flag_key = flag.key
+        flag_decisions[flag_key] = decision
+        decision_reasons_dict[flag_key] ||= []
+        decision_reasons_dict[flag_key] += reasons
+      end
+
+      valid_keys.each do |key|
+        flag_decision = flag_decisions[key]
+        decision_reasons = decision_reasons_dict[key]
+        optimizely_decision = create_optimizely_decision(
+          user_context,
+          key,
+          flag_decision,
+          decision_reasons,
+          decide_options,
+          config
+        )
+
+        enabled_flags_only_missing = !decide_options.include?(OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+        is_enabled = optimizely_decision.enabled
+
+        decisions[key] = optimizely_decision if enabled_flags_only_missing || is_enabled
+      end
+
       decisions
     end
 
@@ -959,7 +1028,11 @@ module Optimizely
       return nil unless user_inputs_valid?(attributes)
 
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
+      user_profile_tracker = UserProfileTracker.new(user_id, @decision_service, @logger)
+      user_profile_tracker.load_user_profile
+      #TODO: Pass user profile tracker to decision service
       variation_id, = @decision_service.get_variation(config, experiment_id, user_context)
+      user_profile_tracker.save_user_profile
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
       decision_notification_type = if config.feature_experiment?(experiment_id)

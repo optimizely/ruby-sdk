@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'logger'
+
 module Optimizely
   class UserProfileTracker
     attr_reader :user_profile
