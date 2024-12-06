@@ -1028,10 +1028,9 @@ module Optimizely
       return nil unless user_inputs_valid?(attributes)
 
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
-      user_profile_tracker = UserProfileTracker.new(user_id, @decision_service, @logger)
+      user_profile_tracker = UserProfileTracker.new(user_id, @user_profile_service, @logger)
       user_profile_tracker.load_user_profile
-      #TODO: Pass user profile tracker to decision service
-      variation_id, = @decision_service.get_variation(config, experiment_id, user_context)
+      variation_id, = @decision_service.get_variation(config, experiment_id, user_context, user_profile_tracker)
       user_profile_tracker.save_user_profile
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation

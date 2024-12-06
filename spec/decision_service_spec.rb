@@ -73,7 +73,8 @@ describe Optimizely::DecisionService do
 
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
       user_context = project_instance.create_user_context('test_user')
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
+      user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)
+      variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
       expect(variation_received).to eq('111128')
 
       expect(reasons).to eq([
