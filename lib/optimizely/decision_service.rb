@@ -94,6 +94,7 @@ module Optimizely
       return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
+      # user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger) if user_profile_tracker.nil?
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
       unless should_ignore_user_profile_service && user_profile_tracker
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile_tracker.user_profile)
@@ -158,7 +159,7 @@ module Optimizely
       #
       # Returns:
       #   Array of Decision struct.
-      ignore_ups = decide_options&.include?(OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE) || false
+      ignore_ups = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       user_profile_tracker = nil
       unless ignore_ups && @user_profile_service
         user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger)
@@ -168,7 +169,7 @@ module Optimizely
       feature_flags.each do |feature_flag|
         decide_reasons = []
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
-        decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_context, decide_options)
+        decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
         if decision
           # Push the decision and reasons to decisions if the decision is not nil
           decide_reasons.push(*reasons_received)
@@ -184,7 +185,7 @@ module Optimizely
       decisions
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_context, decide_options = [])
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options = [])
       # Gets the variation the user is bucketed into for the feature flag's experiment.
       #
       # project_config - project_config - Instance of ProjectConfig
@@ -214,7 +215,7 @@ module Optimizely
         end
 
         experiment_id = experiment['id']
-        variation_id, reasons_received = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, decide_options)
+        variation_id, reasons_received = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, user_profile_tracker, decide_options)
         decide_reasons.push(*reasons_received)
 
         next unless variation_id
@@ -279,7 +280,7 @@ module Optimizely
       [nil, decide_reasons]
     end
 
-    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, options = [])
+    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, user_profile_tracker, options = [])
       # Determine which variation the user is in for a given rollout.
       # Returns the variation from experiment rules.
       #
@@ -297,7 +298,7 @@ module Optimizely
 
       return [variation['id'], reasons] if variation
 
-      variation_id, response_reasons = get_variation(project_config, rule['id'], user, options)
+      variation_id, response_reasons = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
       reasons.push(*response_reasons)
 
       [variation_id, reasons]

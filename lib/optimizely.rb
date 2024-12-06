@@ -245,7 +245,7 @@ module Optimizely
       # Generate all variables map if decide options doesn't include excludeVariables
       unless decide_options.include? OptimizelyDecideOption::EXCLUDE_VARIABLES
         feature_flag['variables'].each do |variable|
-          variable_value = get_feature_variable_for_variation(key, feature_enabled, variation, variable, user_id)
+          variable_value = get_feature_variable_for_variation(flag_key, feature_enabled, variation, variable, user_id)
           all_variables[variable['key']] = Helpers::VariableType.cast_value_to_type(variable_value, variable['type'], @logger)
         end
       end
@@ -294,7 +294,7 @@ module Optimizely
       decide_for_keys(user_context, keys, decide_options)
     end
 
-    def decide_for_keys(user_context, keys, decide_options = [], ignore_default_options: false)
+    def decide_for_keys(user_context, keys, decide_options = [], ignore_default_options = false) # rubocop:disable Style/OptionalBooleanParameter
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
 
@@ -348,11 +348,7 @@ module Optimizely
           flag_decisions[key] = decision
         else
           flags_without_forced_decision.push(feature_flag)
-          # decision, reasons_received = @decision_service.get_variation_for_feature(config, feature_flag, user_context, decide_options)
-          # reasons.push(*reasons_received)
         end
-        # decision = decide(user_context, key, decide_options)
-        # decisions[key] = decision unless enabled_flags_only && !decision.enabled
       end
 
       decision_list = @decision_service.get_variations_for_feature_list(config, flags_without_forced_decision, user_context, decide_options)
@@ -360,7 +356,7 @@ module Optimizely
       flags_without_forced_decision.each_with_index do |flag, i|
         decision = decision_list[i][0]
         reasons = decision_list[i][1]
-        flag_key = flag.key
+        flag_key = flag['key']
         flag_decisions[flag_key] = decision
         decision_reasons_dict[flag_key] ||= []
         decision_reasons_dict[flag_key] += reasons
