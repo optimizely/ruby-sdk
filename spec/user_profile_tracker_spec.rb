@@ -26,7 +26,7 @@ RSpec.describe Optimizely::UserProfileTracker do
     it 'loads the user profile from the service if provided' do
       expected_profile = {
         user_id: user_id,
-        experiment_bucket_map: { '111127' => { variation_id: '111128' } }
+        experiment_bucket_map: {'111127' => {variation_id: '111128'}}
       }
       allow(mock_user_profile_service).to receive(:lookup).with(user_id).and_return(expected_profile)
       user_profile_tracker.load_user_profile
