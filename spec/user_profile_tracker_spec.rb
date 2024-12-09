@@ -39,9 +39,8 @@ RSpec.describe Optimizely::UserProfileTracker do
 
       reasons = []
       user_profile_tracker.load_user_profile(reasons)
-
-      expect(reasons).to include('lookup error')
-      expect(mock_logger).to have_received(:log).with(Logger::ERROR, "Error while loading user profile in user profile tracker for user ID 'test_user': lookup error.")
+      expect(reasons).to include("Error while looking up user profile for user ID 'test_user': lookup error.")
+      expect(mock_logger).to have_received(:log).with(Logger::ERROR, "Error while looking up user profile for user ID 'test_user': lookup error.")
     end
 
     it 'does nothing if reasons array is nil' do
