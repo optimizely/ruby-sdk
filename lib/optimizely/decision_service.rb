@@ -94,7 +94,6 @@ module Optimizely
       return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
-      # user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger) if user_profile_tracker.nil?
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
       unless should_ignore_user_profile_service && user_profile_tracker
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile_tracker.user_profile)
