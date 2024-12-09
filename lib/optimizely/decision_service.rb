@@ -170,9 +170,8 @@ module Optimizely
         decide_reasons = []
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
         decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+        decide_reasons.push(*reasons_received)
         if decision
-          # Push the decision and reasons to decisions if the decision is not nil
-          decide_reasons.push(*reasons_received)
           decisions << [decision, decide_reasons]
         else
           # Proceed to rollout if the decision is nil

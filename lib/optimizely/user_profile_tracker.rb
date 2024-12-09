@@ -21,7 +21,7 @@ module Optimizely
       return if reasons.nil?
 
       begin
-        @user_profile = @user_profile_service.lookup(@user_id) || @user_profile
+        @user_profile = @user_profile_service.lookup(@user_id) if @user_profile_service
       rescue => e
         message = "Error while loading user profile in user profile tracker for user ID '#{@user_id}': #{e}."
         reasons << e.message

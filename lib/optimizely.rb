@@ -173,48 +173,6 @@ module Optimizely
       OptimizelyUserContext.new(self, user_id, attributes)
     end
 
-    def decide(user_context, key, decide_options = [])
-      # raising on user context as it is internal and not provided directly by the user.
-      raise if user_context.class != OptimizelyUserContext
-
-      reasons = []
-
-      # check if SDK is ready
-      unless is_valid
-        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide').message)
-        reasons.push(OptimizelyDecisionMessage::SDK_NOT_READY)
-        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
-      end
-
-      # validate that key is a string
-      unless key.is_a?(String)
-        @logger.log(Logger::ERROR, 'Provided key is invalid')
-        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
-        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
-      end
-
-      # validate that key maps to a feature flag
-      config = project_config
-      feature_flag = config.get_feature_flag_from_key(key)
-      unless feature_flag
-        @logger.log(Logger::ERROR, "No feature flag was found for key '#{key}'.")
-        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
-        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
-      end
-
-      # merge decide_options and default_decide_options
-      if decide_options.is_a? Array
-        decide_options += @default_decide_options
-      else
-        @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
-        decide_options = @default_decide_options
-      end
-
-      decide_options.delete(OptimizelyDecideOption::ENABLED_FLAGS_ONLY) if decide_options.include?(OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
-
-      decide_for_keys(user_context, [key], decide_options, true)[key]
-    end
-
     def create_optimizely_decision(user_context, flag_key, decision, reasons, decide_options, config)
       # Create Optimizely Decision Result.
       user_id = user_context.user_id
@@ -277,6 +235,47 @@ module Optimizely
       )
     end
 
+    def decide(user_context, key, decide_options = [])
+      # raising on user context as it is internal and not provided directly by the user.
+      raise if user_context.class != OptimizelyUserContext
+
+      reasons = []
+
+      # check if SDK is ready
+      unless is_valid
+        @logger.log(Logger::ERROR, InvalidProjectConfigError.new('decide').message)
+        reasons.push(OptimizelyDecisionMessage::SDK_NOT_READY)
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key is a string
+      unless key.is_a?(String)
+        @logger.log(Logger::ERROR, 'Provided key is invalid')
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # validate that key maps to a feature flag
+      config = project_config
+      feature_flag = config.get_feature_flag_from_key(key)
+      unless feature_flag
+        @logger.log(Logger::ERROR, "No feature flag was found for key '#{key}'.")
+        reasons.push(format(OptimizelyDecisionMessage::FLAG_KEY_INVALID, key))
+        return OptimizelyDecision.new(flag_key: key, user_context: user_context, reasons: reasons)
+      end
+
+      # merge decide_options and default_decide_options
+      if decide_options.is_a? Array
+        decide_options += @default_decide_options
+      else
+        @logger.log(Logger::DEBUG, 'Provided decide options is not an array. Using default decide options.')
+        decide_options = @default_decide_options
+      end
+
+      decide_options.delete(OptimizelyDecideOption::ENABLED_FLAGS_ONLY) if decide_options.include?(OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
+      decide_for_keys(user_context, [key], decide_options, true)[key]
+    end
+
     def decide_all(user_context, decide_options = [])
       # raising on user context as it is internal and not provided directly by the user.
       raise if user_context.class != OptimizelyUserContext
@@ -322,8 +321,8 @@ module Optimizely
       config = project_config
       return decisions unless config
 
-      flags_without_forced_decision = [] #: list[entities.FeatureFlag]
-      flag_decisions = {} #: dict[str, Decision]
+      flags_without_forced_decision = []
+      flag_decisions = {}
 
       keys.each do |key|
         # Retrieve the feature flag from the project's feature flag key map
@@ -342,7 +341,6 @@ module Optimizely
         context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(key, nil)
         variation, reasons_received = @decision_service.validated_forced_decision(config, context, user_context)
         decision_reasons_dict[key].push(*reasons_received)
-
         if variation
           decision = Optimizely::DecisionService::Decision.new(nil, variation, Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'])
           flag_decisions[key] = decision
@@ -350,7 +348,6 @@ module Optimizely
           flags_without_forced_decision.push(feature_flag)
         end
       end
-
       decision_list = @decision_service.get_variations_for_feature_list(config, flags_without_forced_decision, user_context, decide_options)
 
       flags_without_forced_decision.each_with_index do |flag, i|
@@ -359,9 +356,8 @@ module Optimizely
         flag_key = flag['key']
         flag_decisions[flag_key] = decision
         decision_reasons_dict[flag_key] ||= []
-        decision_reasons_dict[flag_key] += reasons
+        decision_reasons_dict[flag_key].push(*reasons)
       end
-
       valid_keys.each do |key|
         flag_decision = flag_decisions[key]
         decision_reasons = decision_reasons_dict[key]
