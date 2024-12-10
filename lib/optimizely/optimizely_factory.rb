@@ -142,7 +142,6 @@ module Optimizely
       notification_center = nil,
       settings = nil
     )
-
       error_handler ||= NoOpErrorHandler.new
       logger ||= NoOpLogger.new
       notification_center = notification_center.is_a?(Optimizely::NotificationCenter) ? notification_center : NotificationCenter.new(logger, error_handler)
