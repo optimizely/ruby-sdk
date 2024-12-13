@@ -3766,7 +3766,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        decision_list_to_be_returned = []
+        decision_list_to_be_returned << [decision_to_return, []]
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
         expect(decision.as_json).to include(
@@ -3807,7 +3809,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         )
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        decision_list_to_be_returned = []
+        decision_list_to_be_returned << [decision_to_return, []]
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
 
@@ -3888,7 +3892,8 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         )
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        decision_list_to_return = [[decision_to_return, []]]
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
         expect(decision.as_json).to include(
@@ -4055,8 +4060,9 @@ describe 'Optimizely' do
             variation_to_return,
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
+          decision_list_to_be_returned = [[decision_to_return, []]]
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
           user_context = project_instance.create_user_context('user1')
           decision = project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES])
           expect(decision.as_json).to include(
@@ -4078,8 +4084,9 @@ describe 'Optimizely' do
             variation_to_return,
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
+          decision_list_to_return = [[decision_to_return, []]]
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
           user_context = project_instance.create_user_context('user1')
           decision = project_instance.decide(user_context, 'multi_variate_feature')
           expect(decision.as_json).to include(
@@ -4096,8 +4103,6 @@ describe 'Optimizely' do
 
       describe 'INCLUDE_REASONS' do
         it 'should include reasons when the option is set' do
-          expect(project_instance.notification_center).to receive(:send_notifications)
-            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
           expect(project_instance.notification_center).to receive(:send_notifications)
             .once.with(
               Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -4119,6 +4124,8 @@ describe 'Optimizely' do
               ],
               decision_event_dispatched: true
             )
+          expect(project_instance.notification_center).to receive(:send_notifications)
+            .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
           user_context = project_instance.create_user_context('user1')
           decision = project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
@@ -4180,23 +4187,23 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
+        decision_list_to_return = [[decision_to_return, []]]
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = project_instance.create_user_context('user1')
 
-        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+        expect(project_instance.decision_service).to receive(:get_variations_for_feature_list)
           .with(anything, anything, anything, []).once
         project_instance.decide(user_context, 'multi_variate_feature')
 
-        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+        expect(project_instance.decision_service).to receive(:get_variations_for_feature_list)
           .with(anything, anything, anything, [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]).once
         project_instance.decide(user_context, 'multi_variate_feature', [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT])
 
-        expect(project_instance.decision_service).to receive(:get_variation_for_feature)
+        expect(project_instance.decision_service).to receive(:get_variations_for_feature_list)
           .with(anything, anything, anything, [
                   Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT,
                   Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES,
-                  Optimizely::Decide::OptimizelyDecideOption::ENABLED_FLAGS_ONLY,
                   Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE,
                   Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
                   Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
@@ -4400,8 +4407,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
+        decision_list_to_return = [[decision_to_return, []]]
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(custom_project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = custom_project_instance.create_user_context('user1')
         decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
         expect(decision.as_json).to include(
@@ -4428,8 +4436,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
+        decision_list_to_return = [[decision_to_return, []]]
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-        allow(custom_project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(custom_project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = custom_project_instance.create_user_context('user1')
         decision = custom_project_instance.decide(user_context, 'multi_variate_feature')
         expect(decision.as_json).to include(

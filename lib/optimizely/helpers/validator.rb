@@ -122,11 +122,11 @@ module Optimizely
 
         return false unless variables.respond_to?(:each) && !variables.empty?
 
-        is_valid = true
+        is_valid = true # rubocop:disable Lint/UselessAssignment
         if variables.include? :user_id
           # Empty str is a valid user ID.
           unless variables[:user_id].is_a?(String)
-            is_valid = false
+            is_valid = false # rubocop:disable Lint/UselessAssignment
             logger.log(level, "#{Constants::INPUT_VARIABLES['USER_ID']} is invalid")
           end
           variables.delete :user_id
