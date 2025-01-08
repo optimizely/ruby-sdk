@@ -192,7 +192,6 @@ If you enable event batching, make sure that you call the `close` method, `optim
 
 For Further details see the Optimizely [Feature Experimentation documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/welcome)
 to learn how to set up your first Ruby project and use the SDK.
-This is a test line.
 
 ## SDK Development
 
