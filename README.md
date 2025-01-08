@@ -103,7 +103,7 @@ The `HTTPConfigManager` asynchronously polls for datafiles from a specified URL 
         proxy_config: nil
       )
 ```
-**Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence.
+**Note:** You must provide either the `sdk_key` or URL. If you provide both, the URL takes precedence. (This is a test sentence.)
 
 **sdk_key**
 The `sdk_key` is used to compose the outbound HTTP request to the default datafile location on the Optimizely CDN.
