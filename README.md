@@ -14,7 +14,6 @@ Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feat
 ## Get Started
 
 Refer to the [Ruby SDK's developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/ruby-sdk) for detailed instructions on getting started with using the SDK.
-This is a test line.
 
 ### Requirements
 
