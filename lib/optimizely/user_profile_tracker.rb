@@ -22,6 +22,12 @@ module Optimizely
 
       begin
         @user_profile = @user_profile_service.lookup(@user_id) if @user_profile_service
+        if @user_profile.nil?
+          @user_profile = {
+            user_id: @user_id,
+            experiment_bucket_map: {}
+          }
+        end
       rescue => e
         message = "Error while looking up user profile for user ID '#{@user_id}': #{e}."
         reasons << message
