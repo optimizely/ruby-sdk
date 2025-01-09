@@ -179,7 +179,7 @@ module Optimizely
           decisions << [rollout_decision, decide_reasons]
         end
       end
-      user_profile_tracker.save_user_profile unless user_profile_tracker
+      user_profile_tracker&.save_user_profile
       decisions
     end
 
