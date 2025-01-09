@@ -63,7 +63,7 @@ module Optimizely
       #
       # Returns variation ID where visitor will be bucketed
       #   (nil if experiment is inactive or user does not meet audience conditions)
-      user_profile_tracker = nil unless user_profile_tracker.is_a?(Optimizely::UserProfileTracker)
+      user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger) unless user_profile_tracker.is_a?(Optimizely::UserProfileTracker)
       decide_reasons = []
       decide_reasons.push(*reasons)
       user_id = user_context.user_id
