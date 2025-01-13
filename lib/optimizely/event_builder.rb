@@ -78,7 +78,7 @@ module Optimizely
         )
       end
       # Append Bot Filtering Attribute
-      if project_config.bot_filtering == true || project_config.bot_filtering == false
+      if [true, false].include?(project_config.bot_filtering)
         visitor_attributes.push(
           entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
           key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BOT_FILTERING'],
