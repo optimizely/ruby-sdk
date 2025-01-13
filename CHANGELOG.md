@@ -1,5 +1,10 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.1.0
+January 10th, 2025
+
+Added support for batch processing in DecideAll and DecideForKeys, enabling more efficient handling of multiple decisions in the User Profile Service.([#353](https://github.com/optimizely/ruby-sdk/pull/353))
+
 ## 5.0.1
 February 8th, 2024
 
