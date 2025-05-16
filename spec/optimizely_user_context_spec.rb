@@ -251,7 +251,9 @@ describe 'Optimizely' do
           variation_key: '3324490562',
           rule_key: nil,
           reasons: [],
-          decision_event_dispatched: true
+          decision_event_dispatched: true,
+          experiment_id: nil,
+          variation_id: '3324490562'
         )
       user_context_obj = forced_decision_project_instance.create_user_context(user_id)
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, nil)
@@ -347,7 +349,9 @@ describe 'Optimizely' do
           variation_key: 'b',
           rule_key: 'exp_with_audience',
           reasons: ['Variation (b) is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.'],
-          decision_event_dispatched: true
+          decision_event_dispatched: true,
+          experiment_id: '10390977673',
+          variation_id: '10416523121'
         )
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, 'exp_with_audience')
@@ -464,7 +468,9 @@ describe 'Optimizely' do
           variation_key: '3324490562',
           rule_key: nil,
           reasons: [],
-          decision_event_dispatched: true
+          decision_event_dispatched: true,
+          experiment_id: nil,
+          variation_id: '3324490562'
         )
       user_context_obj = forced_decision_project_instance.create_user_context(user_id)
       context_with_flag = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(feature_key, nil)

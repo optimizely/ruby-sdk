@@ -185,12 +185,17 @@ module Optimizely
       feature_flag = config.get_feature_flag_from_key(flag_key)
       experiment = nil
       decision_source = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+      experiment_id = nil
+      variation_id = nil
+
       # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
       if decision.is_a?(Optimizely::DecisionService::Decision)
         experiment = decision.experiment
         rule_key = experiment ? experiment['key'] : nil
+        experiment_id = experiment ? experiment['id'] : nil
         variation = decision['variation']
         variation_key = variation ? variation['key'] : nil
+        variation_id = variation ? variation['id'] : nil
         feature_enabled = variation ? variation['featureEnabled'] : false
         decision_source = decision.source
       end
@@ -214,14 +219,16 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FLAG'],
-        user_id, (attributes || {}),
+        user_id, attributes || {},
         flag_key: flag_key,
         enabled: feature_enabled,
         variables: all_variables,
         variation_key: variation_key,
         rule_key: rule_key,
         reasons: should_include_reasons ? reasons : [],
-        decision_event_dispatched: decision_event_dispatched
+        decision_event_dispatched: decision_event_dispatched,
+        experiment_id: experiment_id,
+        variation_id: variation_id
       )
 
       OptimizelyDecision.new(
@@ -625,7 +632,7 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE'],
-        user_id, (attributes || {}),
+        user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,
@@ -853,7 +860,7 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, (attributes || {}),
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,
@@ -1033,7 +1040,7 @@ module Optimizely
                                    end
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        decision_notification_type, user_id, (attributes || {}),
+        decision_notification_type, user_id, attributes || {},
         experiment_key: experiment_key,
         variation_key: variation_key
       )
@@ -1108,7 +1115,7 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,

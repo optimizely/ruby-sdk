@@ -2079,7 +2079,7 @@ describe 'Optimizely' do
     it 'should return only enabled feature flags keys' do
       # Sets all feature-flags keys with randomly assigned status
       features_keys = project_config.feature_flags.map do |item|
-        {key: (item['key']).to_s, value: [true, false].sample} # '[true, false].sample' generates random boolean
+        {key: item['key'].to_s, value: [true, false].sample} # '[true, false].sample' generates random boolean
       end
 
       enabled_features = features_keys.map { |x| x[:key] if x[:value] == true }.compact
@@ -3758,7 +3758,9 @@ describe 'Optimizely' do
             variation_key: 'Fred',
             rule_key: 'test_experiment_multivariate',
             reasons: [],
-            decision_event_dispatched: true
+            decision_event_dispatched: true,
+            experiment_id: experiment_to_return['id'],
+            variation_id: variation_to_return['id']
           )
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -3801,7 +3803,9 @@ describe 'Optimizely' do
             variation_key: 'Fred',
             rule_key: 'test_experiment_multivariate',
             reasons: [],
-            decision_event_dispatched: true
+            decision_event_dispatched: true,
+            experiment_id: experiment_to_return['id'],
+            variation_id: variation_to_return['id']
           )
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         decision_to_return = Optimizely::DecisionService::Decision.new(
@@ -3883,7 +3887,9 @@ describe 'Optimizely' do
             variation_key: 'Fred',
             rule_key: 'test_experiment_multivariate',
             reasons: [],
-            decision_event_dispatched: false
+            decision_event_dispatched: false,
+            experiment_id: experiment_to_return['id'],
+            variation_id: variation_to_return['id']
           )
         allow(project_config).to receive(:send_flag_decisions).and_return(false)
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -3921,7 +3927,9 @@ describe 'Optimizely' do
             variation_key: nil,
             rule_key: nil,
             reasons: [],
-            decision_event_dispatched: false
+            decision_event_dispatched: false,
+            experiment_id: nil,
+            variation_id: nil
           )
         allow(project_config).to receive(:send_flag_decisions).and_return(false)
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
@@ -3958,7 +3966,9 @@ describe 'Optimizely' do
             variation_key: nil,
             rule_key: nil,
             reasons: [],
-            decision_event_dispatched: true
+            decision_event_dispatched: true,
+            experiment_id: nil,
+            variation_id: nil
           )
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         decision_to_return = nil
@@ -4122,7 +4132,9 @@ describe 'Optimizely' do
                 "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
                 "Feature flag 'multi_variate_feature' is not used in a rollout."
               ],
-              decision_event_dispatched: true
+              decision_event_dispatched: true,
+              experiment_id: nil,
+              variation_id: nil
             )
           expect(project_instance.notification_center).to receive(:send_notifications)
             .once.with(Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args)
@@ -4162,7 +4174,9 @@ describe 'Optimizely' do
               variation_key: nil,
               rule_key: nil,
               reasons: [],
-              decision_event_dispatched: true
+              decision_event_dispatched: true,
+              experiment_id: nil,
+              variation_id: nil
             )
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
           user_context = project_instance.create_user_context('user1')
@@ -4481,7 +4495,9 @@ describe 'Optimizely' do
               "The user 'user1' is not bucketed into any of the experiments on the feature 'multi_variate_feature'.",
               "Feature flag 'multi_variate_feature' is not used in a rollout."
             ],
-            decision_event_dispatched: true
+            decision_event_dispatched: true,
+            experiment_id: nil,
+            variation_id: nil
           )
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         user_context = custom_project_instance.create_user_context('user1')
@@ -4521,7 +4537,9 @@ describe 'Optimizely' do
             variation_key: nil,
             rule_key: nil,
             reasons: [],
-            decision_event_dispatched: true
+            decision_event_dispatched: true,
+            experiment_id: nil,
+            variation_id: nil
           )
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         user_context = custom_project_instance.create_user_context('user1')
