@@ -219,7 +219,7 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FLAG'],
-        user_id, (attributes || {}),
+        user_id, attributes || {},
         flag_key: flag_key,
         enabled: feature_enabled,
         variables: all_variables,
@@ -632,7 +632,7 @@ module Optimizely
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
         Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE'],
-        user_id, (attributes || {}),
+        user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,
@@ -860,7 +860,7 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, (attributes || {}),
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['ALL_FEATURE_VARIABLES'], user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,
@@ -1040,7 +1040,7 @@ module Optimizely
                                    end
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        decision_notification_type, user_id, (attributes || {}),
+        decision_notification_type, user_id, attributes || {},
         experiment_key: experiment_key,
         variation_key: variation_key
       )
@@ -1115,7 +1115,7 @@ module Optimizely
 
       @notification_center.send_notifications(
         NotificationCenter::NOTIFICATION_TYPES[:DECISION],
-        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, (attributes || {}),
+        Helpers::Constants::DECISION_NOTIFICATION_TYPES['FEATURE_VARIABLE'], user_id, attributes || {},
         feature_key: feature_flag_key,
         feature_enabled: feature_enabled,
         source: source_string,
