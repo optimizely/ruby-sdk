@@ -453,7 +453,7 @@ module Optimizely
       # Returns:
       #   Attribute corresponding to the provided attribute key.
       attribute = @attribute_key_map[attribute_key]
-      if attribute_key in @attribute_key_map
+      if @attribute_key_map.key?(attribute_key)
         return attribute
       end
 
@@ -472,7 +472,7 @@ module Optimizely
       # Returns:
       #   Attribute key corresponding to the provided attribute ID.
       attribute = @attribute_id_to_key_map[attribute_id]
-      if attribute_id in @attribute_id_to_key_map
+      if @attribute_id_to_key_map.key?(attribute_id)
         return attribute
       end
 

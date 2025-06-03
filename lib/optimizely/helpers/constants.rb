@@ -203,7 +203,7 @@ module Optimizely
                   'type' => 'object'
                 },
                 'cmab' => {
-                  'type' => 'object',
+                  'type' => 'object'
                 }
               },
               'required' => %w[
@@ -313,10 +313,10 @@ module Optimizely
               'type' => 'object',
               'properties' => {
                 'attributeIds' => {
-                  'type' => 'array',
+                  'type' => 'array'
                 },
                 'trafficAllocation' => {
-                  'type' => 'integer',
+                  'type' => 'integer'
                 }
               }
             }

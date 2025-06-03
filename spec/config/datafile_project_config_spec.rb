@@ -1080,7 +1080,7 @@ describe Optimizely::DatafileProjectConfig do
 
   describe 'test_cmab_field_population' do
     config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
-    config_dict['experiments'][0]['cmab'] = { 'attributeIds' => ['808797688', '808797689'], 'trafficAllocation' => 4000 }
+    config_dict['experiments'][0]['cmab'] = {'attributeIds' => %w[808797688 808797689], 'trafficAllocation' => 4000}
     config_dict['experiments'][0]['trafficAllocation'] = []
 
     config_json = JSON.dump(config_dict)
@@ -1088,7 +1088,7 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'Should return CMAB details' do
       experiment = project_config.get_experiment_from_key('test_experiment')
-      expect(experiment['cmab']).to eq({'attributeIds' => ['808797688', '808797689'], 'trafficAllocation' => 4000})
+      expect(experiment['cmab']).to eq({'attributeIds' => %w[808797688 808797689], 'trafficAllocation' => 4000})
 
       experiment2 = project_config.get_experiment_from_key('test_experiment_2')
       expect(experiment2['cmab']).to eq(nil)
