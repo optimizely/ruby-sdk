@@ -27,7 +27,7 @@ module Optimizely
     attr_reader :datafile, :account_id, :attributes, :audiences, :typed_audiences, :events,
                 :experiments, :feature_flags, :groups, :project_id, :bot_filtering, :revision,
                 :sdk_key, :environment_key, :rollouts, :version, :send_flag_decisions,
-                :attribute_key_map, :audience_id_map, :event_key_map, :experiment_feature_map,
+                :attribute_key_map, :attribute_id_to_key_map, :audience_id_map, :event_key_map, :experiment_feature_map,
                 :experiment_id_map, :experiment_key_map, :feature_flag_key_map, :feature_variable_key_map,
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
@@ -82,6 +82,10 @@ module Optimizely
 
       # Utility maps for quick lookup
       @attribute_key_map = generate_key_map(@attributes, 'key')
+      @attribute_id_to_key_map = {}
+      for attribute in @attributes
+        @attribute_id_to_key_map[attribute['id']] = attribute['key']
+      end 
       @event_key_map = generate_key_map(@events, 'key')
       @group_id_map = generate_key_map(@groups, 'id')
       @group_id_map.each do |key, group|
@@ -435,6 +439,44 @@ module Optimizely
       return attribute_key if has_reserved_prefix
 
       invalid_attribute_error = InvalidAttributeError.new(attribute_key)
+      @logger.log Logger::ERROR, invalid_attribute_error.message
+      @error_handler.handle_error invalid_attribute_error
+      nil
+    end
+
+    def get_attribute_by_key(attribute_key)
+      # Get attribute for the provided attribute key.
+      #
+      # Args:
+      #   Attribute key for which attribute is to be fetched.
+      #
+      # Returns:
+      #   Attribute corresponding to the provided attribute key.
+      attribute = @attribute_key_map[attribute_key]
+      if attribute_key in @attribute_key_map
+        return attribute
+      end
+
+      invalid_attribute_error = InvalidAttributeError.new(attribute_key)
+      @logger.log Logger::ERROR, invalid_attribute_error.message
+      @error_handler.handle_error invalid_attribute_error
+      nil
+    end
+
+    def get_attribute_key_by_id(attribute_id)
+      # Get attribute key for the provided attribute ID.
+      #
+      # Args:
+      #   Attribute ID for which attribute is to be fetched.
+      #
+      # Returns:
+      #   Attribute key corresponding to the provided attribute ID.
+      attribute = @attribute_id_to_key_map[attribute_id]
+      if attribute_id in @attribute_id_to_key_map
+        return attribute
+      end
+
+      invalid_attribute_error = InvalidAttributeError.new(attribute_id)
       @logger.log Logger::ERROR, invalid_attribute_error.message
       @error_handler.handle_error invalid_attribute_error
       nil
