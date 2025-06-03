@@ -1087,10 +1087,10 @@ describe Optimizely::DatafileProjectConfig do
       config_json = JSON.dump(config_dict)
       project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
 
-      experiment = project_config.get_experiment_from_key('test_experiment_with_audience')
+      experiment = project_config.get_experiment_from_key('test_experiment')
       expect(experiment['cmab']).to eq({'attributeIds' => %w[808797688 808797689], 'trafficAllocation' => 4000})
 
-      experiment2 = project_config.get_experiment_from_key('test_experiment')
+      experiment2 = project_config.get_experiment_from_key('test_experiment_with_audience')
       expect(experiment2['cmab']).to eq(nil)
     end
   end
