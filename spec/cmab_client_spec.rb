@@ -35,7 +35,7 @@ describe Optimizely::CmabClient do
         experimentId: rule_id,
         attributes: [
           {id: 'attr1', value: 'value1', type: 'custom_attribute'},
-          {id: 'attr2', value: 'value2', type: 'custom_attribute'},
+          {id: 'attr2', value: 'value2', type: 'custom_attribute'}
         ],
         cmabUUID: cmab_uuid
       }]
