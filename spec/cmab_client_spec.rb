@@ -18,7 +18,7 @@
 require 'spec_helper'
 require 'optimizely/cmab/cmab_client'
 
-describe Optimizely::CmabClient do
+describe Optimizely::DefaultCmabClient do
   let(:mock_http_client) { double('http_client') }
   let(:mock_logger) { double('logger') }
   let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, initial_backoff: 0.01, max_backoff: 1, backoff_multiplier: 2) }
