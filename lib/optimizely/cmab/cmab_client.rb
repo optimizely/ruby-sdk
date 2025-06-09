@@ -72,10 +72,11 @@ module Optimizely
         }]
       }
 
-      variation_id = @retry_config ?
-        _do_fetch_with_retry(url, request_body, @retry_config, timeout) :
+      if @retry_config
+        _do_fetch_with_retry(url, request_body, @retry_config, timeout)
+      else
         _do_fetch(url, request_body, timeout)
-      variation_id
+      end
     end
 
     def _do_fetch(url, request_body, timeout)
