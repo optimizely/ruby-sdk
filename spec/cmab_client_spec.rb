@@ -40,6 +40,7 @@ describe Optimizely::CmabClient do
                 cmabUUID: cmab_uuid
             }]
         }
+    end
     let(:expected_headers) { {'Content-Type' => 'application/json'} }
 
     it 'should return the variation id on success without retrying' do
