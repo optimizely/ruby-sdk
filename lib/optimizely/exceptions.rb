@@ -193,7 +193,7 @@ module Optimizely
 
   class CmabError < Error
     # Base exception for CMAB errors
-    
+
     def initialize(msg = 'CMAB error occurred.')
       super
     end
@@ -201,7 +201,7 @@ module Optimizely
 
   class CmabFetchError < CmabError
     # Exception raised when CMAB fetch fails
-    
+
     def initialize(msg = 'CMAB decision fetch failed with status:')
       super
     end
@@ -209,7 +209,7 @@ module Optimizely
 
   class CmabInvalidResponseError < CmabError
     # Exception raised when CMAB fetch returns an invalid response
-    
+
     def initialize(msg = 'Invalid CMAB fetch response')
       super
     end

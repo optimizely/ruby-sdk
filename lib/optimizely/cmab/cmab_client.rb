@@ -23,7 +23,7 @@ module Optimizely
   DEFAULT_BACKOFF_MULTIPLIER = 2.0
   MAX_WAIT_TIME = 10.0
 
-  class CmabRetryConfig:
+  class CmabRetryConfig
     # Configuration for retrying CMAB requests.
     # Contains parameters for maximum retries, backoff intervals, and multipliers.
 
@@ -35,7 +35,7 @@ module Optimizely
     end
   end
 
-  class DefaultCmabClient:
+  class DefaultCmabClient
     # Client for interacting with the CMAB service.
     # Provides methods to fetch decisions with optional retry logic.
 
