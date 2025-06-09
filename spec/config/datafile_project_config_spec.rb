@@ -1093,6 +1093,50 @@ describe Optimizely::DatafileProjectConfig do
       experiment2 = project_config.get_experiment_from_key('test_experiment_with_audience')
       expect(experiment2['cmab']).to eq(nil)
     end
+    it 'should return nil if cmab field is missing' do
+      config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
+      config_dict['experiments'][0].delete('cmab')
+      config_json = JSON.dump(config_dict)
+      project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      experiment = project_config.get_experiment_from_key('test_experiment')
+      expect(experiment['cmab']).to eq(nil)
+    end
+
+    it 'should handle empty cmab object' do
+      config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
+      config_dict['experiments'][0]['cmab'] = {}
+      config_json = JSON.dump(config_dict)
+      project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      experiment = project_config.get_experiment_from_key('test_experiment')
+      expect(experiment['cmab']).to eq({})
+    end
+
+    it 'should handle cmab with only attributeIds' do
+      config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
+      config_dict['experiments'][0]['cmab'] = {'attributeIds' => %w[808797688]}
+      config_json = JSON.dump(config_dict)
+      project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      experiment = project_config.get_experiment_from_key('test_experiment')
+      expect(experiment['cmab']).to eq({'attributeIds' => %w[808797688]})
+    end
+
+    it 'should handle cmab with only trafficAllocation' do
+      config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
+      config_dict['experiments'][0]['cmab'] = {'trafficAllocation' => 1234}
+      config_json = JSON.dump(config_dict)
+      project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      experiment = project_config.get_experiment_from_key('test_experiment')
+      expect(experiment['cmab']).to eq({'trafficAllocation' => 1234})
+    end
+
+    it 'should not affect other experiments when cmab is set' do
+      config_dict = Marshal.load(Marshal.dump(OptimizelySpec::VALID_CONFIG_BODY))
+      config_dict['experiments'][0]['cmab'] = {'attributeIds' => %w[808797688 808797689], 'trafficAllocation' => 4000}
+      config_json = JSON.dump(config_dict)
+      project_config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      experiment2 = project_config.get_experiment_from_key('test_experiment_with_audience')
+      expect(experiment2['cmab']).to eq(nil)
+    end
   end
 
   describe '#feature_experiment' do
