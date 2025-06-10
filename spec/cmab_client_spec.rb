@@ -49,7 +49,7 @@ describe Optimizely::DefaultCmabClient do
 
   after do
     RSpec::Mocks.space.proxy_for(spy_logger).reset
-    RSpec::Mocks.space.proxy_for(mock_http_client).reset_mock
+    RSpec::Mocks.space.proxy_for(mock_http_client).reset
   end
 
   it 'should return the variation id on success without retrying' do
