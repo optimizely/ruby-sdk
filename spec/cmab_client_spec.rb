@@ -16,6 +16,7 @@
 #    limitations under the License.
 #
 require 'spec_helper'
+require 'optimizely/logger'
 require 'optimizely/cmab/cmab_client'
 
 describe Optimizely::DefaultCmabClient do
@@ -127,11 +128,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   it 'should return the variation id on first try with retry config but no retry needed' do
-    client_with_retry = described_class.new(
-      http_client: mock_http_client,
-      logger: spy_logger,
-      retry_config: retry_config
-    )
+    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
 
     # Mock successful response
     mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
@@ -153,11 +150,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   it 'should return the variation id on third try with retry config' do
-    client_with_retry = described_class.new(
-      http_client: mock_http_client,
-      logger: spy_logger,
-      retry_config: retry_config
-    )
+    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
 
     # Create failure and success responses
     failure_response = double('response', status_code: 500)
@@ -194,11 +187,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   it 'should exhausts all retry attempts' do
-    client_with_retry = described_class.new(
-      http_client: mock_http_client,
-      logger: spy_logger,
-      retry_config: retry_config
-    )
+    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
 
     # Create failure response
     failure_response = double('response', status_code: 500)
