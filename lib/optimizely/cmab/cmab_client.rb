@@ -150,14 +150,12 @@ module Optimizely
       backoff = retry_config.retry_delay
 
       (0..retry_config.max_retries).each do |attempt|
-        begin
-          return _do_fetch(url, request_body, timeout)
-        rescue
-          if attempt < retry_config.max_retries
-            @logger.info("Retrying CMAB request (attempt: #{attempt + 1} after #{backoff} seconds)...")
-            sleep(backoff)
-            backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
-          end
+        return _do_fetch(url, request_body, timeout)
+      rescue
+        if attempt < retry_config.max_retries
+          @logger.info("Retrying CMAB request (attempt: #{attempt + 1} after #{backoff} seconds)...")
+          sleep(backoff)
+          backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
         end
       end
 
