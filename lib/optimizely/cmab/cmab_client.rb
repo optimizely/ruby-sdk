@@ -146,7 +146,7 @@ module Optimizely
       # Returns:
       #   The variation ID from the response.
 
-      backoff = retry_config.initial_backoff
+      backoff = retry_config.retry_delay
 
       (0..retry_config.max_retries).each do |attempt|
         variation_id = _do_fetch(url, request_body, timeout)
