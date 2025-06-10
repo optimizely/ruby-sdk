@@ -26,6 +26,7 @@ module Optimizely
   class CmabRetryConfig
     # Configuration for retrying CMAB requests.
     # Contains parameters for maximum retries, backoff intervals, and multipliers.
+    attr_reader :max_retries, :retry_delay, :max_backoff, :backoff_multiplier
 
     def initialize(max_retries: DEFAULT_MAX_RETRIES, retry_delay: DEFAULT_INITIAL_BACKOFF, max_backoff: DEFAULT_BACKOFF_MULTIPLIER, backoff_multiplier: DEFAULT_BACKOFF_MULTIPLIER)
       @max_retries = max_retries
