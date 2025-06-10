@@ -150,7 +150,7 @@ module Optimizely
       backoff = retry_config.retry_delay
       last_error = nil
 
-      0..retry_config.max_retries).each do |attempt|
+      (0..retry_config.max_retries).each do |attempt|
         begin
           return _do_fetch(url, request_body, timeout)
         rescue Optimizely::CmabInvalidResponseError
