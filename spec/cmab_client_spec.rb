@@ -49,13 +49,16 @@ describe Optimizely::DefaultCmabClient do
 
   after do
     RSpec::Mocks.space.proxy_for(spy_logger).reset
+    RSpec::Mocks.space.proxy_for(mock_http_client).reset_mock
   end
 
   it 'should return the variation id on success without retrying' do
     client = described_class.new(mock_http_client, nil, spy_logger)
     mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
     allow(mock_http_client).to receive(:post).and_return(mock_response)
+
     result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+
     expect(result).to eq('abc123')
     expect(mock_http_client).to have_received(:post).with(
       expected_url,
@@ -75,6 +78,7 @@ describe Optimizely::DefaultCmabClient do
     expect do
       client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
     end.to raise_error(Optimizely::CmabFetchError, /Connection error/)
+
     expect(mock_http_client).to have_received(:post).once
     expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Connection error'))
     expect(Kernel).not_to have_received(:sleep)
@@ -183,6 +187,7 @@ describe Optimizely::DefaultCmabClient do
     # Verify retry logging
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
+    expect(spy_logger).not_to have_received(:log).with(Logger::INFO, a_string_including('Retrying CMAB request (attempt 3)'))
 
     # Verify sleep was called with correct backoff times
     expect(Kernel).to have_received(:sleep).with(0.01).once
@@ -197,7 +202,7 @@ describe Optimizely::DefaultCmabClient do
     failure_response = double('response', status_code: 500)
 
     # All attempts fail
-    allow(mock_http_client).to receive(:post).and_return(failure_response)
+    allow(mock_http_client).to receive(:post).and_return(failure_response, failure_response, failure_response, failure_response)
 
     expect do
       client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
