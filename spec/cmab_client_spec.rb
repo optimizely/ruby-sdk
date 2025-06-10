@@ -21,7 +21,7 @@ require 'optimizely/cmab/cmab_client'
 describe Optimizely::DefaultCmabClient do
   let(:mock_http_client) { double('http_client') }
   let(:mock_logger) { double('logger') }
-  let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, initial_backoff: 0.01, max_backoff: 1, backoff_multiplier: 2) }
+  let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
   let(:client) { described_class.new(http_client: mock_http_client, logger: mock_logger, retry_config: nil) }
   let(:rule_id) { 'test_rule' }
   let(:user_id) { 'user123' }
