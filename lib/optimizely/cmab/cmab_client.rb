@@ -94,13 +94,13 @@ module Optimizely
       begin
         response = @http_client.post(url, json: request_body, headers: headers, timeout: timeout)
       rescue StandardError => e
-        error_message = Errors::CMAB_FETCH_FAILED % e.message
+        error_message = Optimizely::Helpers::Constants::CMAB_FETCH_FAILED % e.message
         @logger.error(error_message)
         raise CmabFetchError, error_message
       end
 
       unless (200..299).include?(response.status_code)
-        error_message = Errors::CMAB_FETCH_FAILED % response.status_code
+        error_message = Optimizely::Helpers::Constants::CMAB_FETCH_FAILED % response.status_code
         @logger.error(error_message)
         raise CmabFetchError, error_message
       end
@@ -108,13 +108,13 @@ module Optimizely
       begin
         body = response.json
       rescue JSON::ParserError
-        error_message = Errors::INVALID_CMAB_FETCH_RESPONSE
+        error_message = Optimizely::Helpers::Constants::INVALID_CMAB_FETCH_RESPONSE
         @logger.error(error_message)
         raise CmabInvalidResponseError, error_message
       end
 
       unless validate_response(body)
-        error_message = Errors::INVALID_CMAB_FETCH_RESPONSE
+        error_message = Optimizely::Helpers::Constants::INVALID_CMAB_FETCH_RESPONSE
         @logger.error(error_message)
         raise CmabInvalidResponseError, error_message
       end
@@ -160,7 +160,7 @@ module Optimizely
         end
       end
 
-      error_message = Errors::CMAB_FETCH_FAILED % 'Max retries exceeded for CMAB request.'
+      error_message = Optimizely::Helpers::Constants::CMAB_FETCH_FAILED % 'Max retries exceeded for CMAB request.'
       @logger.error(error_message)
       raise CmabFetchError, error_message
     end
