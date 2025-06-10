@@ -62,7 +62,7 @@ module Optimizely
       # Returns:
       #   The variation ID.
       url = "https://prediction.cmab.optimizely.com/predict/#{rule_id}"
-      cmab_attributes = attributes.map { |key, value| {id: key, value: value} }
+      cmab_attributes = attributes.map { |key, value| {id: key, value: value, type: 'custom_attribute'} }
 
       request_body = {
         instances: [{
