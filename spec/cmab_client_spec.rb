@@ -20,8 +20,8 @@ require 'optimizely/logger'
 require 'optimizely/cmab/cmab_client'
 
 describe Optimizely::DefaultCmabClient do
-  let(:mock_http_client) { double('http_client') }
-  let(:spy_logger) { spy('logger') }
+  let!(:mock_http_client) { double('http_client') }
+  let!(:spy_logger) { spy('logger') }
   let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
   let(:client) { described_class.new(mock_http_client, nil, spy_logger) }
   let(:client_with_retry) { described_class.new(mock_http_client, retry_config, spy_logger) }
@@ -47,6 +47,8 @@ describe Optimizely::DefaultCmabClient do
 
   before do
     allow(Kernel).to receive(:sleep)
+    RSpec::Mocks.space.proxy_for(mock_http_client).reset
+    RSpec::Mocks.space.proxy_for(spy_logger).reset
   end
 
   it 'should return the variation id on success without retrying' do
