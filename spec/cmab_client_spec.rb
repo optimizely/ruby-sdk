@@ -47,7 +47,6 @@ describe Optimizely::DefaultCmabClient do
 
   before do
     allow(Kernel).to receive(:sleep)
-    allow(mock_http_client).to receive(:post).and_call_original
     allow(spy_logger).to receive(:log).and_call_original
   end
 
