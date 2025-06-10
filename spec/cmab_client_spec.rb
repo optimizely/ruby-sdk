@@ -22,7 +22,7 @@ describe Optimizely::DefaultCmabClient do
   let(:mock_http_client) { double('http_client') }
   let(:spy_logger) { spy('logger') }
   let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
-  let(:client) { described_class.new(mock_http_client, retry_config, spy_logger) }
+  let(:client) { described_class.new(mock_http_client, nil, spy_logger) }
   let(:rule_id) { 'test_rule' }
   let(:user_id) { 'user123' }
   let(:attributes) { {'attr1': 'value1', 'attr2': 'value2'} }
