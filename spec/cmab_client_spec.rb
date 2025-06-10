@@ -66,7 +66,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(result).to eq('abc123')
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(Kernel).not_to have_received(:sleep)
     end
 
@@ -80,7 +80,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabFetchError, /Connection error/)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Connection error'))
       expect(Kernel).not_to have_received(:sleep)
     end
@@ -95,7 +95,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabFetchError, /500/)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('500'))
       expect(Kernel).not_to have_received(:sleep)
     end
@@ -110,7 +110,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
       expect(Kernel).not_to have_received(:sleep)
     end
@@ -125,7 +125,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
       expect(Kernel).not_to have_received(:sleep)
     end
@@ -143,7 +143,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(result).to eq('abc123')
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).once
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
       expect(Kernel).not_to have_received(:sleep)
     end
 
@@ -158,7 +158,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(result).to eq('xyz456')
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).exactly(3).times
+                     .with(body: expected_body_for_webmock, headers: expected_headers).exactly(3).times
 
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
@@ -182,7 +182,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabFetchError)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                             .with(body: expected_body_for_webmock, headers: expected_headers).exactly(4).times
+                     .with(body: expected_body_for_webmock, headers: expected_headers).exactly(4).times
 
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
