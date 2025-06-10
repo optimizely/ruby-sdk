@@ -21,7 +21,7 @@ module Optimizely
   DEFAULT_INITIAL_BACKOFF = 0.1 # in seconds (100 ms)
   DEFAULT_MAX_BACKOFF = 10 # in seconds
   DEFAULT_BACKOFF_MULTIPLIER = 2.0
-  MAX_WAIT_TIME = 10.0
+  MAX_WAIT_TIME = 10
 
   class CmabRetryConfig
     # Configuration for retrying CMAB requests.
@@ -62,7 +62,7 @@ module Optimizely
       # Returns:
       #   The variation ID.
       url = "https://prediction.cmab.optimizely.com/predict/#{rule_id}"
-      cmab_attributes = attributes.map { |key, value| {id: key.to_s, value: value, type: 'custom_attribute'} }
+      cmab_attributes = attributes.map { |key, value| {'id' => key.to_s, 'value' => value, 'type' => 'custom_attribute'} }
 
       request_body = {
         instances: [{
