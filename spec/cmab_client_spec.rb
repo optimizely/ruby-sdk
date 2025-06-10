@@ -44,7 +44,7 @@ describe Optimizely::DefaultCmabClient do
   let(:expected_headers) { {'Content-Type' => 'application/json'} }
 
   it 'should return the variation id on success without retrying' do
-    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId': 'abc123'}]})
+    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
     allow(mock_http_client).to receive(:post).and_return(mock_response)
     result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
     expect(result).to eq('abc123')
@@ -134,7 +134,7 @@ describe Optimizely::DefaultCmabClient do
     )
 
     # Mock successful response
-    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId': 'abc123'}]})
+    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
     allow(mock_http_client).to receive(:post).and_return(mock_response)
     allow_any_instance_of(Object).to receive(:sleep)
 
@@ -161,7 +161,7 @@ describe Optimizely::DefaultCmabClient do
 
     # Create failure and success responses
     failure_response = double('response', status_code: 500)
-    success_response = double('response', status_code: 200, json: {'predictions' => [{'variationId': 'xyz456'}]})
+    success_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'xyz456'}]})
 
     # First two calls fail, third succeeds
     call_sequence = [failure_response, failure_response, success_response]
