@@ -54,7 +54,7 @@ describe Optimizely::DefaultCmabClient do
   it 'should return the variation id on success without retrying' do
     client = described_class.new(mock_http_client, nil, spy_logger)
     mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
-    allow(mock_http_client).to receive(:post).and_return(mock_response) 
+    allow(mock_http_client).to receive(:post).and_return(mock_response)
     result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
     expect(result).to eq('abc123')
     expect(mock_http_client).to have_received(:post).with(
