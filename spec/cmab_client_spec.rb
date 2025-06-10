@@ -20,9 +20,7 @@ require 'optimizely/logger'
 require 'optimizely/cmab/cmab_client'
 
 describe Optimizely::DefaultCmabClient do
-  let(:mock_http_client) { double('http_client') }
   let(:spy_logger) { spy('logger') }
-  let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
   let(:rule_id) { 'test_rule' }
   let(:user_id) { 'user123' }
   let(:attributes) { {'attr1': 'value1', 'attr2': 'value2'} }
@@ -49,179 +47,170 @@ describe Optimizely::DefaultCmabClient do
 
   after do
     RSpec::Mocks.space.proxy_for(spy_logger).reset
-    RSpec::Mocks.space.proxy_for(mock_http_client).reset
   end
 
-  it 'should return the variation id on success without retrying' do
-    client = described_class.new(mock_http_client, nil, spy_logger)
-    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
-    allow(mock_http_client).to receive(:post).and_return(mock_response)
+  context 'when client is configured without retries' do
+    let(:mock_http_client) { double('http_client') }
+    let(:client) { described_class.new(mock_http_client, nil, spy_logger) }
 
-    result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+    it 'should return the variation id on success' do
+      mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
+      allow(mock_http_client).to receive(:post).and_return(mock_response)
 
-    expect(result).to eq('abc123')
-    expect(mock_http_client).to have_received(:post).with(
-      expected_url,
-      hash_including(
-        json: expected_body,
-        headers: expected_headers,
-        timeout: 10
-      )
-    ).once
-    expect(Kernel).not_to have_received(:sleep)
+      result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+
+      expect(result).to eq('abc123')
+      expect(mock_http_client).to have_received(:post).with(
+        expected_url,
+        hash_including(
+          json: expected_body,
+          headers: expected_headers,
+          timeout: 10
+        )
+      ).once
+      expect(Kernel).not_to have_received(:sleep)
+    end
+
+    it 'should return HTTP exception' do
+      allow(mock_http_client).to receive(:post).and_raise(StandardError.new('Connection error'))
+
+      expect do
+        client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      end.to raise_error(Optimizely::CmabFetchError, /Connection error/)
+
+      expect(mock_http_client).to have_received(:post).once
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Connection error'))
+      expect(Kernel).not_to have_received(:sleep)
+    end
+
+    it 'should not return 200 status' do
+      mock_response = double('response', status_code: 500, json: nil)
+      allow(mock_http_client).to receive(:post).and_return(mock_response)
+
+      expect do
+        client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      end.to raise_error(Optimizely::CmabFetchError, /500/)
+
+      expect(mock_http_client).to have_received(:post).with(
+        expected_url,
+        hash_including(
+          json: expected_body,
+          headers: expected_headers,
+          timeout: 10
+        )
+      ).once
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('500'))
+      expect(Kernel).not_to have_received(:sleep)
+    end
+
+    it 'should return invalid json' do
+      mock_response = double('response', status_code: 200)
+      allow(mock_response).to receive(:json).and_raise(JSON::ParserError.new('Expecting value'))
+      allow(mock_http_client).to receive(:post).and_return(mock_response)
+
+      expect do
+        client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
+
+      expect(mock_http_client).to have_received(:post).with(
+        expected_url,
+        hash_including(
+          json: expected_body,
+          headers: expected_headers,
+          timeout: 10
+        )
+      ).once
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
+      expect(Kernel).not_to have_received(:sleep)
+    end
+
+    it 'should return invalid response structure' do
+      mock_response = double('response', status_code: 200, json: {'no_predictions' => []})
+      allow(mock_http_client).to receive(:post).and_return(mock_response)
+
+      expect do
+        client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
+
+      expect(mock_http_client).to have_received(:post).with(
+        expected_url,
+        hash_including(
+          json: expected_body,
+          headers: expected_headers,
+          timeout: 10
+        )
+      ).once
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
+      expect(Kernel).not_to have_received(:sleep)
+    end
   end
 
-  it 'should return HTTP exception without retrying' do
-    client = described_class.new(mock_http_client, nil, spy_logger)
-    allow(mock_http_client).to receive(:post).and_raise(StandardError.new('Connection error'))
+  context 'when client is configured with retries' do
+    let(:mock_http_client) { double('http_client') } # Fresh double for this context
+    let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
+    let(:client_with_retry) { described_class.new(mock_http_client, retry_config, spy_logger) }
 
-    expect do
-      client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-    end.to raise_error(Optimizely::CmabFetchError, /Connection error/)
+    it 'should return the variation id on first try with retry config but no retry needed' do
+      mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
+      allow(mock_http_client).to receive(:post).and_return(mock_response)
 
-    expect(mock_http_client).to have_received(:post).once
-    expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Connection error'))
-    expect(Kernel).not_to have_received(:sleep)
-  end
+      result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
-  it 'should not return 200 status without retrying' do
-    client = described_class.new(mock_http_client, nil, spy_logger)
-    mock_response = double('response', status_code: 500, json: nil)
-    allow(mock_http_client).to receive(:post).and_return(mock_response)
+      expect(result).to eq('abc123')
+      expect(mock_http_client).to have_received(:post).with(
+        expected_url,
+        hash_including(
+          json: expected_body,
+          headers: expected_headers,
+          timeout: 10
+        )
+      ).once
+      expect(Kernel).not_to have_received(:sleep)
+    end
 
-    expect do
-      client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-    end.to raise_error(Optimizely::CmabFetchError, /500/)
+    it 'should return the variation id on third try' do
+      failure_response = double('response', status_code: 500)
+      success_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'xyz456'}]})
 
-    expect(mock_http_client).to have_received(:post).with(
-      expected_url,
-      hash_including(
-        json: expected_body,
-        headers: expected_headers,
-        timeout: 10
-      )
-    ).once
-    expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('500'))
-    expect(Kernel).not_to have_received(:sleep)
-  end
+      # Use a sequence to control responses
+      allow(mock_http_client).to receive(:post).and_return(failure_response, failure_response, success_response)
 
-  it 'should return invalid json without retrying' do
-    client = described_class.new(mock_http_client, nil, spy_logger)
-    mock_response = double('response', status_code: 200)
-    allow(mock_response).to receive(:json).and_raise(JSON::ParserError.new('Expecting value'))
-    allow(mock_http_client).to receive(:post).and_return(mock_response)
+      result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
-    expect do
-      client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-    end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
+      expect(result).to eq('xyz456')
+      expect(mock_http_client).to have_received(:post).exactly(3).times
 
-    expect(mock_http_client).to have_received(:post).with(
-      expected_url,
-      hash_including(
-        json: expected_body,
-        headers: expected_headers,
-        timeout: 10
-      )
-    ).once
-    expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
-    expect(Kernel).not_to have_received(:sleep)
-  end
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
+      expect(spy_logger).not_to have_received(:log).with(Logger::INFO, a_string_including('Retrying CMAB request (attempt 3)'))
 
-  it 'should return invalid response structure without retrying' do
-    client = described_class.new(mock_http_client, nil, spy_logger)
-    mock_response = double('response', status_code: 200, json: {'no_predictions' => []})
-    allow(mock_http_client).to receive(:post).and_return(mock_response)
+      expect(Kernel).to have_received(:sleep).with(0.01).once
+      expect(Kernel).to have_received(:sleep).with(0.02).once
+      expect(Kernel).not_to have_received(:sleep).with(0.04)
+      expect(Kernel).not_to have_received(:sleep).with(0.08)
+    end
 
-    expect do
-      client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-    end.to raise_error(Optimizely::CmabInvalidResponseError, /Invalid CMAB fetch response/)
+    it 'should exhaust all retry attempts' do
+      failure_response = double('response', status_code: 500)
 
-    expect(mock_http_client).to have_received(:post).with(
-      expected_url,
-      hash_including(
-        json: expected_body,
-        headers: expected_headers,
-        timeout: 10
-      )
-    ).once
-    expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
-    expect(Kernel).not_to have_received(:sleep)
-  end
+      # All attempts fail
+      allow(mock_http_client).to receive(:post).and_return(failure_response, failure_response, failure_response, failure_response)
 
-  it 'should return the variation id on first try with retry config but no retry needed' do
-    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
+      expect do
+        client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      end.to raise_error(Optimizely::CmabFetchError)
 
-    # Mock successful response
-    mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
-    allow(mock_http_client).to receive(:post).and_return(mock_response)
+      expect(mock_http_client).to have_received(:post).exactly(4).times
 
-    result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 3) after 0.08 seconds...').once
 
-    expect(result).to eq('abc123')
-    expect(mock_http_client).to have_received(:post).with(
-      expected_url,
-      hash_including(
-        json: expected_body,
-        headers: expected_headers,
-        timeout: 10
-      )
-    ).once
-    expect(Kernel).not_to have_received(:sleep)
-  end
+      expect(Kernel).to have_received(:sleep).with(0.01).once
+      expect(Kernel).to have_received(:sleep).with(0.02).once
+      expect(Kernel).to have_received(:sleep).with(0.08).once
 
-  it 'should return the variation id on third try with retry config' do
-    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
-
-    # Create failure and success responses
-    failure_response = double('response', status_code: 500)
-    success_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'xyz456'}]})
-
-    # First two calls fail, third succeeds
-    allow(mock_http_client).to receive(:post).and_return(failure_response, failure_response, success_response)
-
-    result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-
-    expect(result).to eq('xyz456')
-    expect(mock_http_client).to have_received(:post).exactly(3).times
-
-    # Verify retry logging
-    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
-    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
-    expect(spy_logger).not_to have_received(:log).with(Logger::INFO, a_string_including('Retrying CMAB request (attempt 3)'))
-
-    # Verify sleep was called with correct backoff times
-    expect(Kernel).to have_received(:sleep).with(0.01).once
-    expect(Kernel).to have_received(:sleep).with(0.02).once
-    expect(Kernel).not_to have_received(:sleep).with(0.08)
-  end
-
-  it 'should exhausts all retry attempts' do
-    client_with_retry = described_class.new(mock_http_client, retry_config, spy_logger)
-
-    # Create failure response
-    failure_response = double('response', status_code: 500)
-
-    # All attempts fail
-    allow(mock_http_client).to receive(:post).and_return(failure_response, failure_response, failure_response, failure_response)
-
-    expect do
-      client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
-    end.to raise_error(Optimizely::CmabFetchError)
-
-    # Verify all attempts were made (1 initial + 3 retries = 4 calls)
-    expect(mock_http_client).to have_received(:post).exactly(4).times
-
-    # Verify retry logging
-    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
-    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
-    expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 3) after 0.08 seconds...').once
-
-    # Verify sleep was called for each retry
-    expect(Kernel).to have_received(:sleep).with(0.01).once
-    expect(Kernel).to have_received(:sleep).with(0.02).once
-    expect(Kernel).to have_received(:sleep).with(0.08).once
-
-    # Verify final error logging
-    expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Max retries exceeded for CMAB request'))
+      expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Max retries exceeded for CMAB request'))
+    end
   end
 end
