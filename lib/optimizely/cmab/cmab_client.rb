@@ -73,7 +73,7 @@ module Optimizely
         }]
       }
 
-      if @retry_config && @retry_config.max_retries.to_i > 0
+      if @retry_config && @retry_config.max_retries.to_i.positive?
         _do_fetch_with_retry(url, request_body, @retry_config, timeout)
       else
         _do_fetch(url, request_body, timeout)
