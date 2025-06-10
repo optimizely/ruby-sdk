@@ -47,7 +47,6 @@ describe Optimizely::DefaultCmabClient do
 
   before do
     allow(Kernel).to receive(:sleep)
-    allow(spy_logger).to receive(:log).and_call_original
   end
 
   it 'should return the variation id on success without retrying' do
