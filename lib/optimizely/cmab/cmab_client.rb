@@ -158,7 +158,7 @@ module Optimizely
       rescue => e
         last_error = e
         if attempt < retry_config.max_retries
-          @logger.log(Logger::INFO, "Retrying CMAB request (attempt: #{attempt + 1} after #{backoff} seconds)...")
+          @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1} after #{backoff} seconds)...")
           sleep(backoff)
           backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
         end
