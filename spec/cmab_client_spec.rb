@@ -54,7 +54,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     )
   end
@@ -82,7 +82,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     )
     expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('500'))
@@ -102,7 +102,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     )
     expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
@@ -121,7 +121,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     )
     expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Invalid CMAB fetch response'))
@@ -143,7 +143,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     ).once
     expect_any_instance_of(Object).not_to have_received(:sleep)
@@ -173,7 +173,7 @@ describe Optimizely::DefaultCmabClient do
       hash_including(
         json: expected_body,
         headers: expected_headers,
-        timeout: 10
+        timeout: 10.0
       )
     )
 
