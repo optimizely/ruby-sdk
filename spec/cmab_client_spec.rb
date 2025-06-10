@@ -133,7 +133,7 @@ describe Optimizely::DefaultCmabClient do
     # Mock successful response
     mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
     allow(mock_http_client).to receive(:post).and_return(mock_response)
-    allow_any_instance_of(Object).to receive(:sleep)
+    allow(Kernel).to receive(:sleep)
 
     result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
@@ -146,7 +146,7 @@ describe Optimizely::DefaultCmabClient do
         timeout: 10
       )
     ).once
-    expect_any_instance_of(Object).not_to have_received(:sleep)
+    expect(Kernel).not_to have_received(:sleep)
   end
 
   it 'should return the variation id on third try with retry config' do
@@ -160,7 +160,7 @@ describe Optimizely::DefaultCmabClient do
     call_sequence = [failure_response, failure_response, success_response]
     allow(mock_http_client).to receive(:post) { call_sequence.shift }
 
-    allow_any_instance_of(Object).to receive(:sleep)
+    allow(Kernel).to receive(:sleep)
 
     result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
@@ -182,8 +182,8 @@ describe Optimizely::DefaultCmabClient do
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...')
 
     # Verify sleep was called with correct backoff times
-    expect_any_instance_of(Object).to have_received(:sleep).with(0.01)
-    expect_any_instance_of(Object).to have_received(:sleep).with(0.02)
+    expect(Kernel).to have_received(:sleep).with(0.01)
+    expect(Kernel).to have_received(:sleep).with(0.02)
   end
 
   it 'should exhausts all retry attempts' do
@@ -194,7 +194,7 @@ describe Optimizely::DefaultCmabClient do
 
     # All attempts fail
     allow(mock_http_client).to receive(:post).and_return(failure_response)
-    allow_any_instance_of(Object).to receive(:sleep)
+    allow(Kernel).to receive(:sleep)
 
     expect do
       client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
@@ -209,9 +209,9 @@ describe Optimizely::DefaultCmabClient do
     expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 3) after 0.08 seconds...')
 
     # Verify sleep was called for each retry
-    expect_any_instance_of(Object).to have_received(:sleep).with(0.01)
-    expect_any_instance_of(Object).to have_received(:sleep).with(0.02)
-    expect_any_instance_of(Object).to have_received(:sleep).with(0.08)
+    expect(Kernel).to have_received(:sleep).with(0.01)
+    expect(Kernel).to have_received(:sleep).with(0.02)
+    expect(Kernel).to have_received(:sleep).with(0.08)
 
     # Verify final error logging
     expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Max retries exceeded for CMAB request'))
