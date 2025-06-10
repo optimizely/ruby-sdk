@@ -24,6 +24,7 @@ describe Optimizely::DefaultCmabClient do
   let(:spy_logger) { spy('logger') }
   let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
   let(:client) { described_class.new(mock_http_client, nil, spy_logger) }
+  let(:client_with_retry) { described_class.new(mock_http_client, retry_config, spy_logger) }
   let(:rule_id) { 'test_rule' }
   let(:user_id) { 'user123' }
   let(:attributes) { {'attr1': 'value1', 'attr2': 'value2'} }
@@ -43,6 +44,12 @@ describe Optimizely::DefaultCmabClient do
     }
   end
   let(:expected_headers) { {'Content-Type' => 'application/json'} }
+
+  before do
+    allow(Kernel).to receive(:sleep)
+    allow(mock_http_client).to receive(:post).and_call_original
+    allow(spy_logger).to receive(:log).and_call_original
+  end
 
   it 'should return the variation id on success without retrying' do
     mock_response = double('response', status_code: 200, json: {'predictions' => [{'variationId' => 'abc123'}]})
