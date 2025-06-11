@@ -159,6 +159,8 @@ module Optimizely
           backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
           @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1}) after #{backoff} seconds...")
           Kernel.sleep(backoff)
+          attempt += 1
+          retry
         else
           @logger.log(Logger::ERROR, "Max retries exceeded for CMAB request: #{e.message}")
           raise Optimizely::CmabFetchError, "CMAB decision fetch failed (#{e.message})."
