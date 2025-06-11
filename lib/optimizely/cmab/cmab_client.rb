@@ -49,7 +49,7 @@ module Optimizely
       #   http_client: HTTP client for making requests.
       #   retry_config: Configuration for retry settings.
       #   logger: Logger for logging errors and info.
-      @http_client = http_client || Optimizely::Helpers::HttpUtils
+      @http_client = http_client || DefaultHttpClient.new
       @retry_config = retry_config || CmabRetryConfig.new
       @logger = logger || NoOpLogger.new
     end
@@ -171,5 +171,54 @@ module Optimizely
       @logger.log(Logger::ERROR, error_message)
       raise CmabFetchError, error_message
     end
+  end
+
+  class DefaultHttpClient
+    # Default HTTP client for making requests.
+    # Uses Optimizely::Helpers::HttpUtils to make requests.
+
+    def post(url, json: nil, headers: {}, timeout: nil)
+      # Makes a POST request to the specified URL with JSON body and headers.
+      # Args:
+      #   url: The endpoint URL.
+      #   json: The JSON payload to send in the request body.
+      #   headers: Additional headers for the request.
+      #   timeout: Maximum wait time for the request to respond in seconds.
+      # Returns:
+      #   The response object.
+
+      response = Optimizely::Helpers::HttpUtils.make_request(url, :post, json.to_json, headers, timeout)
+
+      HttpResponseAdapter.new(response)
+    end
+
+    class HttpResponseAdapter
+      # Adapter for HTTP response to provide a consistent interface.
+      # Args:
+      #   response: The raw HTTP response object.
+
+      def initialize(response)
+        @response = response
+      end
+
+      def status_code
+        @response.code.to_i
+      end
+
+      def json
+        JSON.parse(@response.body)
+      rescue JSON::ParserError
+        raise Optimizely::CmabInvalidResponseError, 'Invalid JSON response from CMAB service.'
+      end
+
+      def body
+        @response.body
+      end
+    end
+  end
+
+  class NoOpLogger
+    # A no-operation logger that does nothing.
+    def log(_level, _message); end
   end
 end
