@@ -153,13 +153,13 @@ module Optimizely
       attempt = 0
       backoff = retry_config.initial_backoff
       begin
-        return _do_fetch(url, request_body, timeout)
+        _do_fetch(url, request_body, timeout)
       rescue => e
         if attempt < retry_config.max_retries
           @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1}) after #{backoff} seconds...")
           Kernel.sleep(backoff)
           attempt += 1
-          backoff = [retry_config.initial_backoff * (retry_config.backoff_multiplier ** attempt), retry_config.max_backoff].min
+          backoff = [retry_config.initial_backoff * (retry_config.backoff_multiplier**attempt), retry_config.max_backoff].min
           retry
         else
           @logger.log(Logger::ERROR, "Max retries exceeded for CMAB request: #{e.message}")
