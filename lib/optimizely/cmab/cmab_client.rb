@@ -151,7 +151,7 @@ module Optimizely
       #   The variation ID from the response.
 
       backoff = retry_config.initial_backoff
-      (0..retry_config.max_retries).each do |attempt|
+      begin
         _do_fetch(url, request_body, timeout)
       rescue StandardError => e
         if attempt < retry_config.max_retries
