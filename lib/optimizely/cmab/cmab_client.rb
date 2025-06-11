@@ -110,7 +110,7 @@ module Optimizely
 
       begin
         body = response.json
-      rescue JSON::ParserError, Optimizely::CmabInvalidResponseError => e
+      rescue JSON::ParserError, Optimizely::CmabInvalidResponseError
         error_message = Optimizely::Helpers::Constants::INVALID_CMAB_FETCH_RESPONSE
         @logger.log(Logger::ERROR, error_message)
         raise CmabInvalidResponseError, error_message
