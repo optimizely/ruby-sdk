@@ -155,9 +155,9 @@ module Optimizely
         _do_fetch(url, request_body, timeout)
       rescue StandardError => e
         if attempt < retry_config.max_retries
+          backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
           @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1}) after #{backoff} seconds...")
           Kernel.sleep(backoff)
-          backoff = [backoff * (retry_config.backoff_multiplier**(attempt + 1)), retry_config.max_backoff].min
         else
           @logger.log(Logger::ERROR, "Max retries exceeded for CMAB request: #{e.message}")
           raise Optimizely::CmabFetchError, "CMAB decision fetch failed (#{e.message})."
