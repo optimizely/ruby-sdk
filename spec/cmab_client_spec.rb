@@ -22,7 +22,7 @@ require 'webmock/rspec'
 
 describe Optimizely::DefaultCmabClient do
   let(:spy_logger) { spy('logger') }
-  let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, retry_delay: 0.01, max_backoff: 1, backoff_multiplier: 2) }
+  let(:retry_config) { Optimizely::CmabRetryConfig.new(max_retries: 3, initial_backoff: 0.01, max_backoff: 1, backoff_multiplier: 2) }
   let(:rule_id) { 'test_rule' }
   let(:user_id) { 'user123' }
   let(:attributes) { {'attr1': 'value1', 'attr2': 'value2'} }

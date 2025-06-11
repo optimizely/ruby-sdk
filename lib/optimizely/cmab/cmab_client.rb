@@ -29,11 +29,11 @@ module Optimizely
   class CmabRetryConfig
     # Configuration for retrying CMAB requests.
     # Contains parameters for maximum retries, backoff intervals, and multipliers.
-    attr_reader :max_retries, :retry_delay, :max_backoff, :backoff_multiplier
+    attr_reader :max_retries, :initial_backoff, :max_backoff, :backoff_multiplier
 
-    def initialize(max_retries: DEFAULT_MAX_RETRIES, retry_delay: DEFAULT_INITIAL_BACKOFF, max_backoff: DEFAULT_BACKOFF_MULTIPLIER, backoff_multiplier: DEFAULT_BACKOFF_MULTIPLIER)
+    def initialize(max_retries: DEFAULT_MAX_RETRIES, initial_backoff: DEFAULT_INITIAL_BACKOFF, max_backoff: DEFAULT_BACKOFF_MULTIPLIER, backoff_multiplier: DEFAULT_BACKOFF_MULTIPLIER)
       @max_retries = max_retries
-      @retry_delay = retry_delay
+      @initial_backoff = initial_backoff
       @max_backoff = max_backoff
       @backoff_multiplier = backoff_multiplier
     end
@@ -151,15 +151,15 @@ module Optimizely
       #   The variation ID from the response.
 
       attempt = 0
-      backoff = retry_config.retry_delay
+      backoff = retry_config.initial_backoff
       begin
-        _do_fetch(url, request_body, timeout)
+        return _do_fetch(url, request_body, timeout)
       rescue => e
         if attempt < retry_config.max_retries
           @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1}) after #{backoff} seconds...")
           Kernel.sleep(backoff)
           attempt += 1
-          backoff = [backoff * retry_config.backoff_multiplier, retry_config.max_backoff].min
+          backoff = [retry_config.initial_backoff * (retry_config.backoff_multiplier ** attempt), retry_config.max_backoff].min
           retry
         else
           @logger.log(Logger::ERROR, "Max retries exceeded for CMAB request: #{e.message}")
