@@ -55,7 +55,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when client is configured without retries' do
-    let(:client) { described_class.new(nil, nil, spy_logger) }
+    let(:client) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger) }
 
     it 'should return the variation id on success' do
       WebMock.stub_request(:post, expected_url)
@@ -158,7 +158,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(result).to eq('xyz456')
       expect(WebMock).to have_requested(:post, expected_url)
-                     .with(body: expected_body_for_webmock, headers: expected_headers).exactly(3).times
+                     .with(body: expected_body_for_webmock, headers: expected_headers).times(3)
 
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
@@ -182,7 +182,7 @@ describe Optimizely::DefaultCmabClient do
       end.to raise_error(Optimizely::CmabFetchError)
 
       expect(WebMock).to have_requested(:post, expected_url)
-                     .with(body: expected_body_for_webmock, headers: expected_headers).exactly(4).times
+                     .with(body: expected_body_for_webmock, headers: expected_headers).times(4)
 
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once

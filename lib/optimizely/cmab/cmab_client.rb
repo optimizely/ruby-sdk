@@ -208,7 +208,7 @@ module Optimizely
       def json
         JSON.parse(@response.body)
       rescue JSON::ParserError
-        raise Optimizely::CmabInvalidResponseError, 'Invalid JSON response from CMAB service.'
+        raise Optimizely::CmabInvalidResponseError, Optimizely::Helpers::Constants::INVALID_CMAB_FETCH_RESPONSE
       end
 
       def body
