@@ -156,7 +156,7 @@ module Optimizely
       attempt = 0
       backoff = @retry_config.retry_delay
       begin
-        return _do_fetch(...)
+        return _do_fetch(url, request_body, timeout)
       rescue => e
         if attempt < @retry_config.max_retries
           @logger.log(Logger::INFO, "Retrying CMAB request (attempt #{attempt + 1}) after #{backoff} seconds...")
