@@ -15,6 +15,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require 'optimizely/helpers/http_utils'
+require 'optimizely/helpers/constants'
+
 module Optimizely
   # Default constants for CMAB requests
   DEFAULT_MAX_RETRIES = 3
@@ -46,7 +49,7 @@ module Optimizely
       #   http_client: HTTP client for making requests.
       #   retry_config: Configuration for retry settings.
       #   logger: Logger for logging errors and info.
-      @http_client = http_client || DefaultHttpClient.new
+      @http_client = http_client || Optimizely::Helpers::HttpUtils
       @retry_config = retry_config || CmabRetryConfig.new
       @logger = logger || NoOpLogger.new
     end
