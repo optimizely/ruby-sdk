@@ -166,7 +166,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(Kernel).to have_received(:sleep).with(0.01).once
       expect(Kernel).to have_received(:sleep).with(0.02).once
-      expect(Kernel).not_to have_received(:sleep).with(0.08)
+      expect(Kernel).not_to have_received(:sleep).with(0.04)
     end
 
     it 'should exhaust all retry attempts' do
@@ -190,7 +190,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(Kernel).to have_received(:sleep).with(0.01).once
       expect(Kernel).to have_received(:sleep).with(0.02).once
-      expect(Kernel).to have_received(:sleep).with(0.08).once
+      expect(Kernel).to have_received(:sleep).with(0.04).once
 
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Max retries exceeded for CMAB request'))
     end
