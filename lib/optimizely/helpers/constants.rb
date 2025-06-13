@@ -312,7 +312,7 @@ module Optimizely
             'properties' => {
               'attributeIds' => {
                 'type' => 'array',
-                'items' => { 'type' => 'string' }
+                'items' => {'type' => 'string'}
               },
               'trafficAllocation' => {
                 'type' => 'integer'
