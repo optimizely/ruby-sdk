@@ -100,7 +100,7 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).not_to have_received(:sleep)
     end
 
-    it 'should return invalid json' do
+    it 'should raise error on invalid json response' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_return(status: 200, body: 'this is not json', headers: {'Content-Type' => 'text/plain'})
@@ -115,7 +115,7 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).not_to have_received(:sleep)
     end
 
-    it 'should raise error on invalid structure' do
+    it 'should raise error on invalid response structure' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_return(status: 200, body: {'no_predictions' => []}.to_json, headers: {'Content-Type' => 'application/json'})
