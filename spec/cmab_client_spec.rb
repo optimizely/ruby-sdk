@@ -70,7 +70,7 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).not_to have_received(:sleep)
     end
 
-    it 'should return HTTP exception' do
+    it 'should raise error on http client exception' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_raise(StandardError.new('Connection error'))
@@ -85,7 +85,7 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).not_to have_received(:sleep)
     end
 
-    it 'should not return 200 status' do
+    it 'should raise error on non success status' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_return(status: 500)
@@ -115,7 +115,7 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).not_to have_received(:sleep)
     end
 
-    it 'should return invalid response structure' do
+    it 'should raise error on invalid structure' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_return(status: 200, body: {'no_predictions' => []}.to_json, headers: {'Content-Type' => 'application/json'})

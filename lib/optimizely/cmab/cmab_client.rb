@@ -161,7 +161,7 @@ module Optimizely
           Kernel.sleep(backoff)
 
           backoff = [
-            backoff * (retry_config.backoff_multiplier**(attempt + 1)),
+            backoff * retry_config.backoff_multiplier,
             retry_config.max_backoff
           ].min
         else
