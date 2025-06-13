@@ -309,15 +309,12 @@ module Optimizely
           },
           'cmab' => {
             'type' => 'object',
-            'items' => {
-              'type' => 'object',
-              'properties' => {
-                'attributeIds' => {
-                  'type' => 'array'
-                },
-                'trafficAllocation' => {
-                  'type' => 'integer'
-                }
+            'properties' => {
+              'attributeIds' => {
+                'type' => 'array'
+              },
+              'trafficAllocation' => {
+                'type' => 'integer'
               }
             }
           }

@@ -453,7 +453,7 @@ module Optimizely
       # Returns:
       #   Attribute corresponding to the provided attribute key.
       attribute = @attribute_key_map[attribute_key]
-      return attribute if @attribute_key_map.key?(attribute_key)
+      return attribute if attribute
 
       invalid_attribute_error = InvalidAttributeError.new(attribute_key)
       @logger.log Logger::ERROR, invalid_attribute_error.message
@@ -470,7 +470,7 @@ module Optimizely
       # Returns:
       #   Attribute key corresponding to the provided attribute ID.
       attribute = @attribute_id_to_key_map[attribute_id]
-      return attribute if @attribute_id_to_key_map.key?(attribute_id)
+      return attribute if attribute
 
       invalid_attribute_error = InvalidAttributeError.new(attribute_id)
       @logger.log Logger::ERROR, invalid_attribute_error.message
