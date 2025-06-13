@@ -31,7 +31,7 @@ module Optimizely
     # Contains parameters for maximum retries, backoff intervals, and multipliers.
     attr_reader :max_retries, :initial_backoff, :max_backoff, :backoff_multiplier
 
-    def initialize(max_retries: DEFAULT_MAX_RETRIES, initial_backoff: DEFAULT_INITIAL_BACKOFF, max_backoff: DEFAULT_BACKOFF_MULTIPLIER, backoff_multiplier: DEFAULT_BACKOFF_MULTIPLIER)
+    def initialize(max_retries: DEFAULT_MAX_RETRIES, initial_backoff: DEFAULT_INITIAL_BACKOFF, max_backoff: DEFAULT_MAX_BACKOFF, backoff_multiplier: DEFAULT_BACKOFF_MULTIPLIER)
       @max_retries = max_retries
       @initial_backoff = initial_backoff
       @max_backoff = max_backoff
@@ -169,10 +169,6 @@ module Optimizely
           raise Optimizely::CmabFetchError, "CMAB decision fetch failed (#{e.message})."
         end
       end
-
-      error_message = Optimizely::Helpers::Constants::CMAB_FETCH_FAILED % 'Exhausted all retries for CMAB request.'
-      @logger.log(Logger::ERROR, error_message)
-      raise Optimizely::CmabFetchError, error_message
     end
   end
 
