@@ -201,6 +201,9 @@ module Optimizely
                 },
                 'forcedVariations' => {
                   'type' => 'object'
+                },
+                'cmab' => {
+                  'type' => 'object'
                 }
               },
               'required' => %w[
@@ -302,6 +305,18 @@ module Optimizely
                 }
               },
               'required' => %w[key]
+            }
+          },
+          'cmab' => {
+            'type' => 'object',
+            'properties' => {
+              'attributeIds' => {
+                'type' => 'array',
+                'items' => {'type' => 'string'}
+              },
+              'trafficAllocation' => {
+                'type' => 'integer'
+              }
             }
           }
         },

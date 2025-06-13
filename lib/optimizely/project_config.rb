@@ -86,6 +86,10 @@ module Optimizely
 
     def get_attribute_id(attribute_key); end
 
+    def get_attribute_by_key(attribute_key); end
+
+    def get_attribute_key_by_id(attribute_id); end
+
     def variation_id_exists?(experiment_id, variation_id); end
 
     def get_feature_flag_from_key(feature_flag_key); end
