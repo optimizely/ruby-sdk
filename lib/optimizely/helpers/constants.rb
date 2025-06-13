@@ -469,6 +469,9 @@ module Optimizely
         'IF_MODIFIED_SINCE' => 'If-Modified-Since',
         'LAST_MODIFIED' => 'Last-Modified'
       }.freeze
+
+      CMAB_FETCH_FAILED = 'CMAB decision fetch failed (%s).'
+      INVALID_CMAB_FETCH_RESPONSE = 'Invalid CMAB fetch response'
     end
   end
 end
