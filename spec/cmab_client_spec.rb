@@ -186,7 +186,7 @@ describe Optimizely::DefaultCmabClient do
 
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 1) after 0.01 seconds...').once
       expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 2) after 0.02 seconds...').once
-      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 3) after 0.08 seconds...').once
+      expect(spy_logger).to have_received(:log).with(Logger::INFO, 'Retrying CMAB request (attempt 3) after 0.04 seconds...').once
 
       expect(Kernel).to have_received(:sleep).with(0.01).once
       expect(Kernel).to have_received(:sleep).with(0.02).once
