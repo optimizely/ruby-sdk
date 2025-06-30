@@ -29,13 +29,14 @@ module Optimizely
         client_version: @client_version,
         anonymize_ip: @anonymize_ip,
         enrich_decisions: @enrich_decisions,
-        visitors: @visitors
+        visitors: @visitors,
+        region: @region
       }
     end
 
     class Builder
       attr_reader :account_id, :project_id, :revision, :client_name, :client_version,
-                  :anonymize_ip, :enrich_decisions, :visitors
+                  :anonymize_ip, :enrich_decisions, :visitors, :region
 
       def build
         event_batch = EventBatch.new
@@ -47,6 +48,7 @@ module Optimizely
         event_batch.anonymize_ip = @anonymize_ip
         event_batch.enrich_decisions = @enrich_decisions
         event_batch.visitors = @visitors
+        event_batch.region = @region
         event_batch
       end
 
@@ -60,6 +62,10 @@ module Optimizely
 
       def with_revision(revision)
         @revision = revision
+      end
+
+      def region(region)
+        @region = region
       end
 
       def with_client_name(client_name)
