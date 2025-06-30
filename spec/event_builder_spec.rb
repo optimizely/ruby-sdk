@@ -215,7 +215,7 @@ describe Optimizely::EventBuilder do
     impression_event = @event_builder.create_impression_event(config, experiment, '111128', 'test_user',
                                                               'browser_type' => false)
     expect(impression_event.params).to eq(@expected_impression_params)
-    expect(impression_event.url).to eq(@expected_endpoins[:US])
+    expect(impression_event.url).to eq(@expected_endpoints[:US])
     expect(impression_event.http_verb).to eq(:post)
   end
 
