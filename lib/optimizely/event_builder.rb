@@ -131,7 +131,7 @@ module Optimizely
       impression_params = get_impression_params(project_config, experiment, variation_id)
       event_params[:visitors][0][:snapshots].push(impression_params)
 
-      endpoint = ENDPOINTS[region.to_sym]
+      endpoint = ENDPOINTS[region.to_s.upcase.to_sym]
 
       Event.new(:post, endpoint, event_params, POST_HEADERS)
     end
@@ -152,7 +152,7 @@ module Optimizely
       conversion_params = get_conversion_params(event, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
 
-      endpoint = ENDPOINTS[region.to_sym]
+      endpoint = ENDPOINTS[region.to_s.upcase.to_sym]
 
       Event.new(:post, endpoint, event_params, POST_HEADERS)
     end

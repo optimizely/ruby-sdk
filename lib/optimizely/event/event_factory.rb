@@ -72,7 +72,7 @@ module Optimizely
         builder.with_visitors(visitors)
         event_batch = builder.build
 
-        endpoint = ENDPOINTS[user_context[:region].to_sym] || ENDPOINTS[:US]
+        endpoint = ENDPOINTS[user_context[:region].to_s.upcase.to_sym] || ENDPOINTS[:US]
 
         Event.new(:post, endpoint, event_batch.as_json, POST_HEADERS)
       end
