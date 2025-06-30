@@ -64,7 +64,7 @@ module Optimizely
         @revision = revision
       end
 
-      def region(region)
+      def with_region(region)
         @region = region
       end
 
