@@ -110,7 +110,7 @@ module Optimizely
     ENDPOINTS = {
       US: 'https://logx.optimizely.com/v1/events',
       EU: 'https://eu.logx.optimizely.com/v1/events'
-    }
+    }.freeze
     POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
