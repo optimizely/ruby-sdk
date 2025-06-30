@@ -18,7 +18,7 @@
 module Optimizely
   class EventBatch
     attr_accessor :account_id, :project_id, :revision, :client_name, :client_version,
-                  :anonymize_ip, :enrich_decisions, :visitors
+                  :anonymize_ip, :enrich_decisions, :visitors, :region
 
     def as_json
       {
