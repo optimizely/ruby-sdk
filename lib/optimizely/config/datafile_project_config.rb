@@ -69,7 +69,7 @@ module Optimizely
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
       @integrations = config.fetch('integrations', [])
       @region = config.fetch('region', 'US')
-      
+
       # Default to US region if not specified
       @region = 'US' if @region.nil? || @region.empty?
 
