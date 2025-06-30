@@ -34,7 +34,7 @@ describe Optimizely::EventFactory do
     allow(Time).to receive(:now).and_return(time_now)
     allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
 
-    @expected_endpoints[:US] = {
+    @expected_endpoints = {
       US: 'https://logx.optimizely.com/v1/events',
       EU: 'https://eu.logx.optimizely.com/v1/events'
     }
