@@ -62,6 +62,8 @@ module Optimizely
 
     def all_segments; end
 
+    def region; end
+
     def experiment_running?(experiment); end
 
     def get_experiment_from_key(experiment_key); end

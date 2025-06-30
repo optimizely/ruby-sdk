@@ -57,6 +57,7 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.sdk_key).to eq(config_body['sdkKey'])
       expect(project_config.environment_key).to eq(config_body['environmentKey'])
       expect(project_config.send_flag_decisions).to eq(config_body['sendFlagDecisions'])
+      expect(project_config.region).to eq(config_body['region'])
 
       expected_attribute_key_map = {
         'browser_type' => config_body['attributes'][0],
@@ -754,6 +755,23 @@ describe Optimizely::DatafileProjectConfig do
       expect(project_config.variation_id_to_variable_usage_map).to eq(expected_variation_id_to_variable_usage_map)
       expect(project_config.rollout_id_map).to eq(expected_rollout_id_map)
       expect(project_config.rollout_experiment_id_map).to eq(expected_rollout_experiment_id_map)
+    end
+
+    it 'should use US region when no region is specified in datafile' do
+      project_config = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
+      expect(project_config.region).to eq('US')
+    end
+
+    it 'should parse region specified in datafile correctly' do
+      project_configUS = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
+      expect(project_config.region).to eq('US')
+
+      config_bodyEU = config_body.dup
+      config_bodyEU['region'] = 'EU'
+      config_body_JSON = JSON.dump(config_bodyEU)
+      project_configEU = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
+
+      expect(project_config.region).to eq('EU')
     end
 
     it 'should initialize properties correctly upon creating project with typed audience dict' do

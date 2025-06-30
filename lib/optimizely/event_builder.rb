@@ -107,7 +107,10 @@ module Optimizely
   end
 
   class EventBuilder < BaseEventBuilder
-    ENDPOINT = 'https://logx.optimizely.com/v1/events'
+    ENDPOINTS = {
+      US: 'https://logx.optimizely.com/v1/events',
+      EU: 'https://eu.logx.optimizely.com/v1/events'
+    }
     POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
@@ -122,9 +125,12 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the impression event.
 
+      region = project_config.region || 'US'
       event_params = get_common_params(project_config, user_id, attributes)
       impression_params = get_impression_params(project_config, experiment, variation_id)
       event_params[:visitors][0][:snapshots].push(impression_params)
+
+      ENDPOINT = ENDPOINTS[region]
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end
@@ -140,9 +146,12 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the conversion event.
 
+      region = project_config.region || 'US'
       event_params = get_common_params(project_config, user_id, attributes)
       conversion_params = get_conversion_params(event, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
+
+      ENDPOINT = ENDPOINTS[region]
 
       Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
     end

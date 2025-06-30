@@ -33,6 +33,7 @@ module Optimizely
       #
       # Returns Event encapsulating the impression event.
       event_context = Optimizely::EventContext.new(
+        region: project_config.region,
         account_id: project_config.account_id,
         project_id: project_config.project_id,
         anonymize_ip: project_config.anonymize_ip,
@@ -67,6 +68,7 @@ module Optimizely
       # Returns Event encapsulating the conversion event.
 
       event_context = Optimizely::EventContext.new(
+        region: project_config.region,
         account_id: project_config.account_id,
         project_id: project_config.project_id,
         anonymize_ip: project_config.anonymize_ip,
