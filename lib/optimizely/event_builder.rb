@@ -101,7 +101,8 @@ module Optimizely
         revision: project_config.revision,
         client_name: CLIENT_ENGINE,
         enrich_decisions: true,
-        client_version: VERSION
+        client_version: VERSION,
+        region: project_config.region || 'US'
       }
     end
   end
