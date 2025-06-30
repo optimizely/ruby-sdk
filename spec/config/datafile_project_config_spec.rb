@@ -763,15 +763,15 @@ describe Optimizely::DatafileProjectConfig do
     end
 
     it 'should parse region specified in datafile correctly' do
-      project_configUS = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
-      expect(project_config.region).to eq('US')
+      project_config_us = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
+      expect(project_config_us.region).to eq('US')
 
-      config_bodyEU = config_body.dup
-      config_bodyEU['region'] = 'EU'
-      config_body_JSON = JSON.dump(config_bodyEU)
-      project_configEU = Optimizely::DatafileProjectConfig.new(config_body_JSON, logger, error_handler)
+      config_body_eu = config_body.dup
+      config_body_eu['region'] = 'EU'
+      config_body_json = JSON.dump(config_body_eu)
+      project_config_eu = Optimizely::DatafileProjectConfig.new(config_body_json, logger, error_handler)
 
-      expect(project_config.region).to eq('EU')
+      expect(project_config_eu.region).to eq('EU')
     end
 
     it 'should initialize properties correctly upon creating project with typed audience dict' do
