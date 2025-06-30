@@ -68,7 +68,7 @@ module Optimizely
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
       @integrations = config.fetch('integrations', [])
-      @region = config.fetch('region', 'US')
+      @region = 'US' if @region.nil? || @region.empty?
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config
