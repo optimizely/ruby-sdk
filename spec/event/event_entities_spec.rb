@@ -69,7 +69,8 @@ describe Optimizely::EventBatch do
       revision: '42',
       client_name: Optimizely::CLIENT_ENGINE,
       enrich_decisions: true,
-      client_version: Optimizely::VERSION
+      client_version: Optimizely::VERSION,
+      region: 'US'
     }
 
     @expected_conversion_payload = {
@@ -103,7 +104,8 @@ describe Optimizely::EventBatch do
       revision: '42',
       client_name: Optimizely::CLIENT_ENGINE,
       enrich_decisions: true,
-      client_version: Optimizely::VERSION
+      client_version: Optimizely::VERSION,
+      region: 'US'
     }
   end
 

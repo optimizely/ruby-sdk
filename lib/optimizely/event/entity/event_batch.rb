@@ -48,7 +48,7 @@ module Optimizely
         event_batch.anonymize_ip = @anonymize_ip
         event_batch.enrich_decisions = @enrich_decisions
         event_batch.visitors = @visitors
-        event_batch.region = @region
+        event_batch.region = @region || 'US'
         event_batch
       end
 
@@ -65,7 +65,7 @@ module Optimizely
       end
 
       def with_region(region)
-        @region = region
+        @region = region || 'US'
       end
 
       def with_client_name(client_name)
