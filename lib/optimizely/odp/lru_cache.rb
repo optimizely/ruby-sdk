@@ -91,7 +91,7 @@ module Optimizely
 
       @cache_mutex.synchronize { @map[key]&.value }
     end
-  
+
     # Remove the element associated with the provided key from the cache
     #
     # @param key - The key to remove

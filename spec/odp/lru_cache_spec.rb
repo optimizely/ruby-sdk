@@ -173,7 +173,7 @@ describe Optimizely::LRUCache do
     cache.save('1', 100)
     cache.save('2', 200)
 
-    cache.remove('3')  # Doesn't exist
+    cache.remove('3') # Doesn't exist
 
     expect(cache.lookup('1')).to eq 100
     expect(cache.lookup('2')).to eq 200
