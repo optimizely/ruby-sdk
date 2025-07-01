@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2022, Optimizely and contributors
+#    Copyright 2022-2025, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -90,6 +90,19 @@ module Optimizely
       return nil if @capacity <= 0
 
       @cache_mutex.synchronize { @map[key]&.value }
+    end
+  
+    # Remove the element associated with the provided key from the cache
+    #
+    # @param key - The key to remove
+
+    def remove(key)
+      return if @capacity <= 0
+
+      @cache_mutex.synchronize do
+        @map.delete(key)
+      end
+      nil
     end
   end
 
