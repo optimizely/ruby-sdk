@@ -22,8 +22,8 @@ require 'json'
 require 'securerandom'
 
 module Optimizely
-  CmabDecision = Struct.new(:variation_id, :cmab_uuid)
-  CmabCacheValue = Struct.new(:attributes_hash, :variation_id, :cmab_uuid)
+  CmabDecision = Struct.new(:variation_id, :cmab_uuid, keyword_init: true)
+  CmabCacheValue = Struct.new(:attributes_hash, :variation_id, :cmab_uuid, keyword_init: true)
 
   # Default CMAB service implementation
   class DefaultCmabService
