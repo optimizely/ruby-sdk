@@ -44,6 +44,25 @@ module Optimizely
       # user_id - String ID for user.
       #
       # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.
+
+      variation_id, decide_reasons = bucket_to_entity_id(project_config, experiment, bucketing_id, user_id)
+      if variation_id && variation_id != ''
+        experiment_id = experiment['id']
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+        return variation, decide_reasons
+      end
+
+      # Handle the case when the traffic range is empty due to sticky bucketing
+      if variation_id == ''
+        message = 'Bucketed into an empty traffic range. Returning nil.'
+        @logger.log(Logger::DEBUG, message)
+        decide_reasons.push(message)
+      end
+
+      [nil, decide_reasons]
+    end
+
+    def bucket_to_entity_id(project_config, experiment, bucketing_id, user_id)
       return nil, [] if experiment.nil?
 
       decide_reasons = []
@@ -87,19 +106,7 @@ module Optimizely
       variation_id, find_bucket_reasons = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
       decide_reasons.push(*find_bucket_reasons)
 
-      if variation_id && variation_id != ''
-        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
-        return variation, decide_reasons
-      end
-
-      # Handle the case when the traffic range is empty due to sticky bucketing
-      if variation_id == ''
-        message = 'Bucketed into an empty traffic range. Returning nil.'
-        @logger.log(Logger::DEBUG, message)
-        decide_reasons.push(message)
-      end
-
-      [nil, decide_reasons]
+      [variation_id, decide_reasons]
     end
 
     def find_bucket(bucketing_id, user_id, parent_id, traffic_allocations)
