@@ -103,6 +103,14 @@ module Optimizely
       end
 
       traffic_allocations = experiment['trafficAllocation']
+      if experiment['cmab']
+        traffic_allocations = [
+          {
+            entityId: '$',
+            endOfRange: experiment['cmab']['trafficAllocation']
+          }
+        ]
+      end
       variation_id, find_bucket_reasons = find_bucket(bucketing_id, user_id, experiment_id, traffic_allocations)
       decide_reasons.push(*find_bucket_reasons)
 
