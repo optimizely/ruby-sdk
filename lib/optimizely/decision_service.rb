@@ -37,7 +37,10 @@ module Optimizely
     # This contains all the forced variations set by the user by calling setForcedVariation.
     attr_reader :forced_variation_map
 
-    Decision = Struct.new(:experiment, :variation, :source)
+    Decision = Struct.new(:experiment, :variation, :source, :cmab_uuid)
+    CmabDecisionResult = Struct.new(:error, :result, :reasons)
+    VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation)
+    DecisionResult = Struct.new(:decision, :error, :reasons)
 
     DECISION_SOURCES = {
       'EXPERIMENT' => 'experiment',
@@ -45,11 +48,12 @@ module Optimizely
       'ROLLOUT' => 'rollout'
     }.freeze
 
-    def initialize(logger, user_profile_service = nil)
+    def initialize(logger, cmab_service, user_profile_service = nil)
       @logger = logger
       @user_profile_service = user_profile_service
       @bucketer = Bucketer.new(logger)
       @forced_variation_map = {}
+      @cmab_service = cmab_service
     end
 
     def get_variation(project_config, experiment_id, user_context, user_profile_tracker = nil, decide_options = [], reasons = [])
@@ -466,6 +470,50 @@ module Optimizely
     end
 
     private
+
+    def get_decision_for_cmab_experiment(project_config, experiment, user_context, bucketing_id, decide_options = [])
+      # Determines the CMAB (Contextual Multi-Armed Bandit) decision for a given experiment and user context.
+      #
+      # This method first checks if the user is bucketed into the CMAB experiment based on traffic allocation.
+      # If the user is not bucketed, it returns a CmabDecisionResult indicating exclusion.
+      # If the user is bucketed, it attempts to fetch a CMAB decision using the CMAB service.
+      # In case of errors during CMAB decision retrieval, it logs the error and returns a result indicating failure.
+      #
+      # @param project_config [ProjectConfig] The current project configuration.
+      # @param experiment [Hash] The experiment configuration hash.
+      # @param user_context [OptimizelyUserContext] The user context object containing user information.
+      # @param bucketing_id [String] The bucketing ID used for traffic allocation.
+      # @param decide_options [Array] Optional array of decision options.
+      #
+      # @return [CmabDecisionResult] The result of the CMAB decision process, including decision error status, decision data, and reasons.
+      decide_reasons = []
+      user_id = user_context.user_id
+
+      # Check if user is in CMAB traffic allocation
+      bucketed_entity_id, bucket_reasons = @bucketer.bucket_to_entity_id(
+        project_config, experiment, user_id, bucketing_id
+      )
+      decide_reasons.extend(bucket_reasons)
+      unless bucketed_entity_id
+        message = "User \"#{user_context.user_id}\" not in CMAB experiment \"#{experiment['key']}\" due to traffic allocation."
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
+        CmabDecisionResult.new(false, nil, decide_reasons)
+      end
+
+      # User is in CMAB allocation, proceed to CMAB decision
+      begin
+        cmab_decision = @cmab_service.get_decision(
+          project_config, user_context, experiment['id'], decide_options
+        )
+        CmabDecisionResult.new(false, cmab_decision, decide_reasons)
+      rescue StandardError => e
+        error_message = "Failed to fetch CMAB decision for experiment '#{experiment['key']}'"
+        decide_reasons.push(error_message)
+        @logger&.log(Logger::ERROR, "#{error_message} #{e}")
+        CmabDecisionResult.new(true, nil, decide_reasons)
+      end
+    end
 
     def get_whitelisted_variation_id(project_config, experiment_id, user_id)
       # Determine if a user is whitelisted into a variation for the given experiment and return the ID of that variation
