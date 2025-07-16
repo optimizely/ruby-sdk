@@ -26,8 +26,9 @@ describe Optimizely::DecisionService do
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:spy_user_profile_service) { spy('user_profile_service') }
+  let(:spy_cmab_service) { spy('cmab_service') }
   let(:config) { Optimizely::DatafileProjectConfig.new(config_body_JSON, spy_logger, error_handler) }
-  let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_user_profile_service) }
+  let(:decision_service) { Optimizely::DecisionService.new(spy_logger, spy_cmab_service, spy_user_profile_service) }
   let(:project_instance) { Optimizely::Project.new(datafile: config_body_JSON, logger: spy_logger, error_handler: error_handler) }
   let(:user_context) { project_instance.create_user_context('some-user', {}) }
   after(:example) { project_instance.close }
@@ -46,9 +47,9 @@ describe Optimizely::DecisionService do
     it 'should return the correct variation ID for a given user for whom a variation has been forced' do
       decision_service.set_forced_variation(config, 'test_experiment', 'test_user', 'variation')
       user_context = project_instance.create_user_context('test_user')
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
-      expect(variation_received).to eq('111129')
-      expect(reasons).to eq(["Variation 'variation' is mapped to experiment '111127' and user 'test_user' in the forced variation map"])
+      variation_result = decision_service.get_variation(config, '111127', user_context)
+      expect(variation_result.variation_id).to eq('111129')
+      expect(variation_result.reasons).to eq(["Variation 'variation' is mapped to experiment '111127' and user 'test_user' in the forced variation map"])
       # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       expect(decision_service.bucketer).not_to have_received(:bucket)
@@ -62,9 +63,9 @@ describe Optimizely::DecisionService do
       }
       decision_service.set_forced_variation(config, 'test_experiment_with_audience', 'test_user', 'control_with_audience')
       user_context = project_instance.create_user_context('test_user', user_attributes)
-      variation_received, reasons = decision_service.get_variation(config, '122227', user_context)
-      expect(variation_received).to eq('122228')
-      expect(reasons).to eq(["Variation 'control_with_audience' is mapped to experiment '122227' and user 'test_user' in the forced variation map"])
+      variation_result = decision_service.get_variation(config, '122227', user_context)
+      expect(variation_result.variation_id).to eq('122228')
+      expect(variation_result.reasons).to eq(["Variation 'control_with_audience' is mapped to experiment '122227' and user 'test_user' in the forced variation map"])
       # Setting forced variation should short circuit whitelist check, bucketing and audience evaluation
       expect(decision_service).not_to have_received(:get_whitelisted_variation_id)
       expect(decision_service.bucketer).not_to have_received(:bucket)
@@ -74,13 +75,13 @@ describe Optimizely::DecisionService do
     it 'should return the correct variation ID for a given user ID and key of a running experiment' do
       user_context = project_instance.create_user_context('test_user')
       user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-      expect(variation_received).to eq('111128')
+      variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+      expect(variation_result.variation_id).to eq('111128')
 
-      expect(reasons).to eq([
-                              "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                              "User 'test_user' is in variation 'control' of experiment '111127'."
-                            ])
+      expect(variation_result.reasons).to eq([
+                                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                               "User 'test_user' is in variation 'control' of experiment '111127'."
+                                             ])
 
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'test_user' is in variation 'control' of experiment '111127'.")
@@ -92,12 +93,12 @@ describe Optimizely::DecisionService do
       allow(decision_service.bucketer).to receive(:bucket).and_return(nil)
       user_context = project_instance.create_user_context('test_user')
       user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-      expect(variation_received).to eq(nil)
-      expect(reasons).to eq([
-                              "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                              "User 'test_user' is in no variation."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+      expect(variation_result.variation_id).to eq(nil)
+      expect(variation_result.reasons).to eq([
+                                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                               "User 'test_user' is in no variation."
+                                             ])
 
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'test_user' is in no variation.")
@@ -105,20 +106,20 @@ describe Optimizely::DecisionService do
 
     it 'should return correct variation ID if user ID is in whitelisted Variations and variation is valid' do
       user_context = project_instance.create_user_context('forced_user1')
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
-      expect(variation_received).to eq('111128')
-      expect(reasons).to eq([
-                              "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context)
+      expect(variation_result.variation_id).to eq('111128')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'.")
 
       user_context = project_instance.create_user_context('forced_user2')
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
-      expect(variation_received).to eq('111129')
-      expect(reasons).to eq([
-                              "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context)
+      expect(variation_result.variation_id).to eq('111129')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'.")
 
@@ -135,20 +136,20 @@ describe Optimizely::DecisionService do
       }
 
       user_context = project_instance.create_user_context('forced_user1', user_attributes)
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
-      expect(variation_received).to eq('111128')
-      expect(reasons).to eq([
-                              "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context)
+      expect(variation_result.variation_id).to eq('111128')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user1' is whitelisted into variation 'control' of experiment '111127'.")
 
       user_context = project_instance.create_user_context('forced_user2', user_attributes)
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context)
-      expect(variation_received).to eq('111129')
-      expect(reasons).to eq([
-                              "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context)
+      expect(variation_result.variation_id).to eq('111129')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_user2' is whitelisted into variation 'variation' of experiment '111127'.")
 
@@ -161,11 +162,11 @@ describe Optimizely::DecisionService do
     it 'should return the correct variation ID for a user in a whitelisted variation (even when audience conditions do not match)' do
       user_attributes = {'browser_type' => 'wrong_browser'}
       user_context = project_instance.create_user_context('forced_audience_user', user_attributes)
-      variation_received, reasons = decision_service.get_variation(config, '122227', user_context)
-      expect(variation_received).to eq('122229')
-      expect(reasons).to eq([
-                              "User 'forced_audience_user' is whitelisted into variation 'variation_with_audience' of experiment '122227'."
-                            ])
+      variation_result = decision_service.get_variation(config, '122227', user_context)
+      expect(variation_result.variation_id).to eq('122229')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_audience_user' is whitelisted into variation 'variation_with_audience' of experiment '122227'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(
           Logger::INFO,
@@ -180,9 +181,9 @@ describe Optimizely::DecisionService do
 
     it 'should return nil if the experiment key is invalid' do
       user_context = project_instance.create_user_context('test_user', {})
-      variation_received, reasons = decision_service.get_variation(config, 'totally_invalid_experiment', user_context)
-      expect(variation_received).to eq(nil)
-      expect(reasons).to eq([])
+      variation_result = decision_service.get_variation(config, 'totally_invalid_experiment', user_context)
+      expect(variation_result.variation_id).to eq(nil)
+      expect(variation_result.reasons).to eq([])
 
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::ERROR, "Experiment id 'totally_invalid_experiment' is not in datafile.")
@@ -192,14 +193,14 @@ describe Optimizely::DecisionService do
       user_attributes = {'browser_type' => 'chrome'}
       user_context = project_instance.create_user_context('test_user', user_attributes)
       user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)
-      variation_received, reasons = decision_service.get_variation(config, '122227', user_context, user_profile_tracker)
-      expect(variation_received).to eq(nil)
-      expect(reasons).to eq([
-                              "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
-                              "Audience '11154' evaluated to FALSE.",
-                              "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE.",
-                              "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'."
-                            ])
+      variation_result = decision_service.get_variation(config, '122227', user_context, user_profile_tracker)
+      expect(variation_result.variation_id).to eq(nil)
+      expect(variation_result.reasons).to eq([
+                                               "Starting to evaluate audience '11154' with conditions: [\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", \"type\": \"custom_attribute\", \"value\": \"firefox\"}]]].",
+                                               "Audience '11154' evaluated to FALSE.",
+                                               "Audiences for experiment 'test_experiment_with_audience' collectively evaluated to FALSE.",
+                                               "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'test_user' does not meet the conditions to be in experiment 'test_experiment_with_audience'.")
 
@@ -211,9 +212,9 @@ describe Optimizely::DecisionService do
 
     it 'should return nil if the given experiment is not running' do
       user_context = project_instance.create_user_context('test_user')
-      variation_received, reasons = decision_service.get_variation(config, '100027', user_context)
-      expect(variation_received).to eq(nil)
-      expect(reasons).to eq(["Experiment 'test_experiment_not_started' is not running."])
+      variation_result = decision_service.get_variation(config, '100027', user_context)
+      expect(variation_result.variation_id).to eq(nil)
+      expect(variation_result.reasons).to eq(["Experiment 'test_experiment_not_started' is not running."])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "Experiment 'test_experiment_not_started' is not running.")
 
@@ -227,11 +228,11 @@ describe Optimizely::DecisionService do
 
     it 'should respect forced variations within mutually exclusive grouped experiments' do
       user_context = project_instance.create_user_context('forced_group_user1')
-      variation_received, reasons = decision_service.get_variation(config, '133332', user_context)
-      expect(variation_received).to eq('130004')
-      expect(reasons).to eq([
-                              "User 'forced_group_user1' is whitelisted into variation 'g1_e2_v2' of experiment '133332'."
-                            ])
+      variation_result = decision_service.get_variation(config, '133332', user_context)
+      expect(variation_result.variation_id).to eq('130004')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_group_user1' is whitelisted into variation 'g1_e2_v2' of experiment '133332'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(Logger::INFO, "User 'forced_group_user1' is whitelisted into variation 'g1_e2_v2' of experiment '133332'.")
 
@@ -244,13 +245,13 @@ describe Optimizely::DecisionService do
     it 'should bucket normally if user is whitelisted into a forced variation that is not in the datafile' do
       user_context = project_instance.create_user_context('forced_user_with_invalid_variation')
       user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)
-      variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-      expect(variation_received).to eq('111128')
-      expect(reasons).to eq([
-                              "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile.",
-                              "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                              "User 'forced_user_with_invalid_variation' is in variation 'control' of experiment '111127'."
-                            ])
+      variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+      expect(variation_result.variation_id).to eq('111128')
+      expect(variation_result.reasons).to eq([
+                                               "User 'forced_user_with_invalid_variation' is whitelisted into variation 'invalid_variation', which is not in the datafile.",
+                                               "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                               "User 'forced_user_with_invalid_variation' is in variation 'control' of experiment '111127'."
+                                             ])
       expect(spy_logger).to have_received(:log)
         .once.with(
           Logger::INFO,
@@ -270,12 +271,12 @@ describe Optimizely::DecisionService do
         }
         user_context = project_instance.create_user_context('test_user', user_attributes)
         user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
-        variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-        expect(variation_received).to eq('111129')
-        expect(reasons).to eq([
-                                "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "User 'test_user' is in variation 'variation' of experiment '111127'."
-                              ])
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+        expect(variation_result.variation_id).to eq('111129')
+        expect(variation_result.reasons).to eq([
+                                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                                 "User 'test_user' is in variation 'variation' of experiment '111127'."
+                                               ])
 
         # bucketing should have occurred
         expect(decision_service.bucketer).to have_received(:bucket).once
@@ -296,11 +297,11 @@ describe Optimizely::DecisionService do
         user_context = project_instance.create_user_context('test_user')
         user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
         user_profile_tracker.load_user_profile
-        variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-        expect(variation_received).to eq('111129')
-        expect(reasons).to eq([
-                                "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile."
-                              ])
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+        expect(variation_result.variation_id).to eq('111129')
+        expect(variation_result.reasons).to eq([
+                                                 "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile."
+                                               ])
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::INFO, "Returning previously activated variation ID 111129 of experiment 'test_experiment' for user 'test_user' from user profile.")
 
@@ -328,12 +329,12 @@ describe Optimizely::DecisionService do
         user_context = project_instance.create_user_context('test_user')
         user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
         user_profile_tracker.load_user_profile
-        variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-        expect(variation_received).to eq('111128')
-        expect(reasons).to eq([
-                                "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "User 'test_user' is in variation 'control' of experiment '111127'."
-                              ])
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+        expect(variation_result.variation_id).to eq('111128')
+        expect(variation_result.reasons).to eq([
+                                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                                 "User 'test_user' is in variation 'control' of experiment '111127'."
+                                               ])
 
         # bucketing should have occurred
         expect(decision_service.bucketer).to have_received(:bucket).once
@@ -355,13 +356,13 @@ describe Optimizely::DecisionService do
         user_context = project_instance.create_user_context('test_user')
         user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
         user_profile_tracker.load_user_profile
-        variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
-        expect(variation_received).to eq('111128')
-        expect(reasons).to eq([
-                                "User 'test_user' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
-                                "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "User 'test_user' is in variation 'control' of experiment '111127'."
-                              ])
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+        expect(variation_result.variation_id).to eq('111128')
+        expect(variation_result.reasons).to eq([
+                                                 "User 'test_user' was previously bucketed into variation ID '111111' for experiment '111127', but no matching variation was found. Re-bucketing user.",
+                                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                                 "User 'test_user' is in variation 'control' of experiment '111127'."
+                                               ])
 
         # bucketing should have occurred
         expect(decision_service.bucketer).to have_received(:bucket).once
@@ -373,13 +374,13 @@ describe Optimizely::DecisionService do
         user_context = project_instance.create_user_context('test_user')
         user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
         user_profile_tracker.load_user_profile
-        variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
         user_profile_tracker.save_user_profile
-        expect(variation_received).to eq('111128')
-        expect(reasons).to eq([
-                                "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                "User 'test_user' is in variation 'control' of experiment '111127'."
-                              ])
+        expect(variation_result.variation_id).to eq('111128')
+        expect(variation_result.reasons).to eq([
+                                                 "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                                 "User 'test_user' is in variation 'control' of experiment '111127'."
+                                               ])
 
         expect(spy_logger).to have_received(:log).once
                                                  .with(Logger::ERROR, "Error while looking up user profile for user ID 'test_user': uncaught throw :LookupError.")
@@ -395,12 +396,12 @@ describe Optimizely::DecisionService do
           user_context = project_instance.create_user_context('test_user', nil)
           user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
           user_profile_tracker.load_user_profile
-          variation_received, reasons = decision_service.get_variation(config, '111127', user_context, user_profile_tracker, [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
-          expect(variation_received).to eq('111128')
-          expect(reasons).to eq([
-                                  "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
-                                  "User 'test_user' is in variation 'control' of experiment '111127'."
-                                ])
+          variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker, [Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE])
+          expect(variation_result.variation_id).to eq('111128')
+          expect(variation_result.reasons).to eq([
+                                                   "Audiences for experiment 'test_experiment' collectively evaluated to TRUE.",
+                                                   "User 'test_user' is in variation 'control' of experiment '111127'."
+                                                 ])
 
           expect(decision_service.bucketer).to have_received(:bucket)
           expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?)

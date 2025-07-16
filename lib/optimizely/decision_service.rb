@@ -29,7 +29,8 @@ module Optimizely
     # 3. Check whitelisting
     # 4. Check user profile service for past bucketing decisions (sticky bucketing)
     # 5. Check audience targeting
-    # 6. Use Murmurhash3 to bucket the user
+    # 6. Check cmab service
+    # 7. Use Murmurhash3 to bucket the user
 
     attr_reader :bucketer
 
@@ -39,7 +40,7 @@ module Optimizely
 
     Decision = Struct.new(:experiment, :variation, :source, :cmab_uuid)
     CmabDecisionResult = Struct.new(:error, :result, :reasons)
-    VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation)
+    VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation_id)
     DecisionResult = Struct.new(:decision, :error, :reasons)
 
     DECISION_SOURCES = {
@@ -77,25 +78,25 @@ module Optimizely
       decide_reasons.push(*bucketing_id_reasons)
       # Check to make sure experiment is active
       experiment = project_config.get_experiment_from_id(experiment_id)
-      return nil, decide_reasons if experiment.nil?
+      return VariationResult.new(nil, false, decide_reasons, nil) if experiment.nil?
 
       experiment_key = experiment['key']
       unless project_config.experiment_running?(experiment)
         message = "Experiment '#{experiment_key}' is not running."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
-        return nil, decide_reasons
+        return VariationResult.new(nil, false, decide_reasons, nil)
       end
 
       # Check if a forced variation is set for the user
       forced_variation, reasons_received = get_forced_variation(project_config, experiment['key'], user_id)
       decide_reasons.push(*reasons_received)
-      return forced_variation['id'], decide_reasons if forced_variation
+      return VariationResult.new(nil, false, decide_reasons, forced_variation['id']) if forced_variation
 
       # Check if user is in a white-listed variation
       whitelisted_variation_id, reasons_received = get_whitelisted_variation_id(project_config, experiment_id, user_id)
       decide_reasons.push(*reasons_received)
-      return whitelisted_variation_id, decide_reasons if whitelisted_variation_id
+      return VariationResult.new(nil, false, decide_reasons, whitelisted_variation_id) if whitelisted_variation_id
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
@@ -106,7 +107,7 @@ module Optimizely
           message = "Returning previously activated variation ID #{saved_variation_id} of experiment '#{experiment_key}' for user '#{user_id}' from user profile."
           @logger.log(Logger::INFO, message)
           decide_reasons.push(message)
-          return saved_variation_id, decide_reasons
+          return VariationResult.new(nil, false, decide_reasons, saved_variation_id)
         end
       end
 
@@ -117,27 +118,43 @@ module Optimizely
         message = "User '#{user_id}' does not meet the conditions to be in experiment '#{experiment_key}'."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
-        return nil, decide_reasons
+        return VariationResult.new(nil, false, decide_reasons, nil)
       end
 
-      # Bucket normally
-      variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
-      decide_reasons.push(*bucket_reasons)
-      variation_id = variation ? variation['id'] : nil
+      # Check if this is a CMAB experiment
+      # If so, handle CMAB-specific traffic allocation and decision logic.
+      # Otherwise, proceed with standard bucketing logic for non-CMAB experiments.
+      if experiment.key?('cmab')
+        cmab_decision_result = get_decision_for_cmab_experiment(project_config, experiment, user_context, bucketing_id, decide_options)
+        decide_reasons.push(*cmab_decision_result.reasons)
+        if cmab_decision_result.error
+          # CMAB decision failed, return error
+          return VariationResult.new(nil, true, decide_reasons, nil)
+        end
 
-      message = ''
-      if variation_id
-        variation_key = variation['key']
-        message = "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_id}'."
+        cmab_decision = cmab_decision_result.result
+        variation_id = cmab_decision&.variation_id
+        cmab_uuid = cmab_decision&.cmab_uuid
       else
-        message = "User '#{user_id}' is in no variation."
+        # Bucket normally
+        variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
+        decide_reasons.push(*bucket_reasons)
+        variation_id = variation ? variation['id'] : nil
+        cmab_uuid = nil
+        message = ''
+        if variation_id
+          variation_key = variation['key']
+          message = "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_id}'."
+        else
+          message = "User '#{user_id}' is in no variation."
+        end
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
       end
-      @logger.log(Logger::INFO, message)
-      decide_reasons.push(message)
 
       # Persist bucketing decision
       user_profile_tracker.update_user_profile(experiment_id, variation_id) unless should_ignore_user_profile_service && user_profile_tracker
-      [variation_id, decide_reasons]
+      VariationResult.new(cmab_uuid, false, decide_reasons, variation_id)
     end
 
     def get_variation_for_feature(project_config, feature_flag, user_context, decide_options = [])
@@ -203,7 +220,7 @@ module Optimizely
         message = "The feature flag '#{feature_flag_key}' is not used in any experiments."
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)
-        return nil, decide_reasons
+        return DecisionResult.new(nil, false, decide_reasons)
       end
 
       # Evaluate each experiment and return the first bucketed experiment variation
@@ -213,11 +230,15 @@ module Optimizely
           message = "Feature flag experiment with ID '#{experiment_id}' is not in the datafile."
           @logger.log(Logger::DEBUG, message)
           decide_reasons.push(message)
-          return nil, decide_reasons
+          return DecisionResult.new(nil, false, decide_reasons)
         end
 
         experiment_id = experiment['id']
-        variation_id, reasons_received = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, user_profile_tracker, decide_options)
+        variation_result = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, user_profile_tracker, decide_options)
+        error = variation_result.error
+        reasons_received = variation_result.reasons
+        variation_id = variation_result.variation_id
+        cmab_uuid = variation_result.cmab_uuid
         decide_reasons.push(*reasons_received)
 
         next unless variation_id
@@ -225,14 +246,15 @@ module Optimizely
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
         variation = project_config.get_variation_from_flag(feature_flag['key'], variation_id, 'id') if variation.nil?
 
-        return Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST']), decide_reasons
+        decision = Decision.new(experiment, variation, DECISION_SOURCES['FEATURE_TEST'], cmab_uuid)
+        return DecisionResult.new(decision, error, decide_reasons)
       end
 
       message = "The user '#{user_id}' is not bucketed into any of the experiments on the feature '#{feature_flag_key}'."
       @logger.log(Logger::INFO, message)
       decide_reasons.push(message)
 
-      [nil, decide_reasons]
+      DecisionResult.new(nil, false, decide_reasons)
     end
 
     def get_variation_for_feature_rollout(project_config, feature_flag, user_context)
@@ -298,12 +320,9 @@ module Optimizely
       variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
 
-      return [variation['id'], reasons] if variation
+      return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
-      variation_id, response_reasons = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
-      reasons.push(*response_reasons)
-
-      [variation_id, reasons]
+      get_variation(project_config, rule['id'], user, user_profile_tracker, options)
     end
 
     def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context)
@@ -493,7 +512,7 @@ module Optimizely
       bucketed_entity_id, bucket_reasons = @bucketer.bucket_to_entity_id(
         project_config, experiment, user_id, bucketing_id
       )
-      decide_reasons.extend(bucket_reasons)
+      decide_reasons.push(*bucket_reasons)
       unless bucketed_entity_id
         message = "User \"#{user_context.user_id}\" not in CMAB experiment \"#{experiment['key']}\" due to traffic allocation."
         @logger.log(Logger::INFO, message)
