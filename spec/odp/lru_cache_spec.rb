@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2022, Optimizely and contributors
+#    Copyright 2022-2025, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -148,5 +148,85 @@ describe Optimizely::LRUCache do
 
     cache.save('cow', 'crate')
     expect(cache.lookup('cow')).to eq 'crate'
+  end
+
+  it 'should remove existing key' do
+    cache = Optimizely::LRUCache.new(3, 1000)
+
+    cache.save('1', 100)
+    cache.save('2', 200)
+    cache.save('3', 300)
+
+    expect(cache.lookup('1')).to eq 100
+    expect(cache.lookup('2')).to eq 200
+    expect(cache.lookup('3')).to eq 300
+
+    cache.remove('2')
+
+    expect(cache.lookup('1')).to eq 100
+    expect(cache.lookup('2')).to be_nil
+    expect(cache.lookup('3')).to eq 300
+  end
+
+  it 'should handle removing non-existent key' do
+    cache = Optimizely::LRUCache.new(3, 1000)
+    cache.save('1', 100)
+    cache.save('2', 200)
+
+    cache.remove('3') # Doesn't exist
+
+    expect(cache.lookup('1')).to eq 100
+    expect(cache.lookup('2')).to eq 200
+  end
+
+  it 'should handle removing from zero sized cache' do
+    cache = Optimizely::LRUCache.new(0, 1000)
+    cache.save('1', 100)
+    cache.remove('1')
+
+    expect(cache.lookup('1')).to be_nil
+  end
+
+  it 'should handle removing and adding back a key' do
+    cache = Optimizely::LRUCache.new(3, 1000)
+    cache.save('1', 100)
+    cache.save('2', 200)
+    cache.save('3', 300)
+
+    cache.remove('2')
+    cache.save('2', 201)
+
+    expect(cache.lookup('1')).to eq 100
+    expect(cache.lookup('2')).to eq 201
+    expect(cache.lookup('3')).to eq 300
+  end
+
+  it 'should handle thread safety' do
+    max_size = 100
+    cache = Optimizely::LRUCache.new(max_size, 1000)
+
+    (1..max_size).each do |i|
+      cache.save(i.to_s, i * 100)
+    end
+
+    threads = []
+    (1..(max_size / 2)).each do |i|
+      thread = Thread.new do
+        cache.remove(i.to_s)
+      end
+      threads << thread
+    end
+
+    threads.each(&:join)
+
+    (1..max_size).each do |i|
+      if i <= max_size / 2
+        expect(cache.lookup(i.to_s)).to be_nil
+      else
+        expect(cache.lookup(i.to_s)).to eq(i * 100)
+      end
+    end
+
+    expect(cache.instance_variable_get('@map').size).to eq(max_size / 2)
   end
 end
