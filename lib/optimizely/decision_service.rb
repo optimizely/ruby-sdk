@@ -164,7 +164,7 @@ module Optimizely
       # feature_flag - The feature flag the user wants to access
       # user_context - Optimizely user context instance
       #
-      # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
+      # Returns DecisionResult struct.
       get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
     end
 
@@ -178,7 +178,7 @@ module Optimizely
       #   decide_options: Decide options.
       #
       # Returns:
-      #   Array of Decision struct.
+      #   Array of DecisionResult struct.
       ignore_ups = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       user_profile_tracker = nil
       unless ignore_ups && @user_profile_service
@@ -187,18 +187,10 @@ module Optimizely
       end
       decisions = []
       feature_flags.each do |feature_flag|
-        decide_reasons = []
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
-        decision, reasons_received = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
-        decide_reasons.push(*reasons_received)
-        if decision
-          decisions << [decision, decide_reasons]
-        else
-          # Proceed to rollout if the decision is nil
-          rollout_decision, reasons_received = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
-          decide_reasons.push(*reasons_received)
-          decisions << [rollout_decision, decide_reasons]
-        end
+        decision_result = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+        decision_result = get_variation_for_feature_rollout(project_config, feature_flag, user_context) unless decision_result.decision
+        decisions << decision_result
       end
       user_profile_tracker&.save_user_profile
       decisions
@@ -211,8 +203,8 @@ module Optimizely
       # feature_flag - The feature flag the user wants to access
       # user_context - Optimizely user context instance
       #
-      # Returns Decision struct (nil if the user is not bucketed into any of the experiments on the feature)
-      # or nil if the user is not bucketed into any of the experiments on the feature
+      # Returns a DecisionResult containing the decision (or nil if not bucketed),
+      # an error flag, and an array of decision reasons.
       decide_reasons = []
       user_id = user_context.user_id
       feature_flag_key = feature_flag['key']
@@ -265,7 +257,8 @@ module Optimizely
       # feature_flag - The feature flag the user wants to access
       # user_context - Optimizely user context instance
       #
-      # Returns the Decision struct or nil if not bucketed into any of the targeting rules
+      # Returns a DecisionResult containing the decision (or nil if not bucketed),
+      # an error flag, and an array of decision reasons.
       decide_reasons = []
 
       rollout_id = feature_flag['rolloutId']
@@ -274,7 +267,7 @@ module Optimizely
         message = "Feature flag '#{feature_flag_key}' is not used in a rollout."
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)
-        return nil, decide_reasons
+        return DecisionResult.new(nil, false, decide_reasons)
       end
 
       rollout = project_config.get_rollout_from_id(rollout_id)
@@ -282,10 +275,10 @@ module Optimizely
         message = "Rollout with ID '#{rollout_id}' is not in the datafile '#{feature_flag['key']}'"
         @logger.log(Logger::DEBUG, message)
         decide_reasons.push(message)
-        return nil, decide_reasons
+        return DecisionResult.new(nil, false, decide_reasons)
       end
 
-      return nil, decide_reasons if rollout['experiments'].empty?
+      return DecisionResult.new(nil, false, decide_reasons) if rollout['experiments'].empty?
 
       index = 0
       rollout_rules = rollout['experiments']
@@ -294,14 +287,14 @@ module Optimizely
         decide_reasons.push(*reasons_received)
         if variation
           rule = rollout_rules[index]
-          feature_decision = Decision.new(rule, variation, DECISION_SOURCES['ROLLOUT'])
-          return [feature_decision, decide_reasons]
+          feature_decision = Decision.new(rule, variation, DECISION_SOURCES['ROLLOUT'], nil)
+          return DecisionResult.new(feature_decision, false, decide_reasons)
         end
 
         index = skip_to_everyone_else ? (rollout_rules.length - 1) : (index + 1)
       end
 
-      [nil, decide_reasons]
+      DecisionResult.new(nil, false, decide_reasons)
     end
 
     def get_variation_from_experiment_rule(project_config, flag_key, rule, user, user_profile_tracker, options = [])
