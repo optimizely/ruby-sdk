@@ -29,7 +29,7 @@ module Optimizely
         client_version: @client_version,
         anonymize_ip: @anonymize_ip,
         enrich_decisions: @enrich_decisions,
-        visitors: @visitors,
+        visitors: @visitors
       }
     end
 
