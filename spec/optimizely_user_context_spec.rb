@@ -224,8 +224,7 @@ describe 'Optimizely' do
             type: 'custom',
             value: true
           }]
-        }],
-        region: 'US'
+        }]
       }
       stub_request(:post, impression_log_url)
       expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
@@ -324,8 +323,7 @@ describe 'Optimizely' do
             type: 'custom',
             value: true
           }]
-        }],
-        region: 'US'
+        }]
       }
 
       expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)
@@ -444,8 +442,7 @@ describe 'Optimizely' do
             type: 'custom',
             value: true
           }]
-        }],
-        region: 'US'
+        }]
       }
       stub_request(:post, impression_log_url)
       expect(forced_decision_project_instance.notification_center).to receive(:send_notifications)

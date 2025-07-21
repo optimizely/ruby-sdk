@@ -64,8 +64,7 @@ describe Optimizely::ForwardingEventProcessor do
       revision: '42',
       client_name: Optimizely::CLIENT_ENGINE,
       enrich_decisions: true,
-      client_version: Optimizely::VERSION,
-      region: 'US'
+      client_version: Optimizely::VERSION
     }
   end
 

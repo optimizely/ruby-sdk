@@ -274,8 +274,7 @@ describe 'Optimizely' do
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         enrich_decisions: true,
-        client_version: Optimizely::VERSION,
-        region: 'US'
+        client_version: Optimizely::VERSION
       }
     end
 
@@ -394,8 +393,7 @@ describe 'Optimizely' do
           revision: '3',
           client_name: Optimizely::CLIENT_ENGINE,
           enrich_decisions: true,
-          client_version: Optimizely::VERSION,
-          region: 'US'
+          client_version: Optimizely::VERSION
         }
       end
 
@@ -1081,8 +1079,7 @@ describe 'Optimizely' do
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         enrich_decisions: true,
-        client_version: Optimizely::VERSION,
-        region: 'US'
+        client_version: Optimizely::VERSION
       }
     end
 
@@ -1254,8 +1251,7 @@ describe 'Optimizely' do
           revision: '3',
           client_name: Optimizely::CLIENT_ENGINE,
           enrich_decisions: true,
-          client_version: Optimizely::VERSION,
-          region: 'US'
+          client_version: Optimizely::VERSION
         }
       end
       after(:example) do
@@ -1619,8 +1615,7 @@ describe 'Optimizely' do
         revision: '42',
         client_name: Optimizely::CLIENT_ENGINE,
         enrich_decisions: true,
-        client_version: Optimizely::VERSION,
-        region: 'US'
+        client_version: Optimizely::VERSION
       }
     end
 
@@ -3872,8 +3867,7 @@ describe 'Optimizely' do
               type: 'custom',
               value: true
             }]
-          }],
-          region: 'US'
+          }]
         }
         expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       end
@@ -4030,8 +4024,7 @@ describe 'Optimizely' do
               type: 'custom',
               value: true
             }]
-          }],
-          region: 'US'
+          }]
         }
         expect(project_instance.event_dispatcher).to have_received(:dispatch_event).with(Optimizely::Event.new(:post, impression_log_url, expected_params, post_headers))
       end
