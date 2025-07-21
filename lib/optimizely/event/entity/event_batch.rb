@@ -30,7 +30,6 @@ module Optimizely
         anonymize_ip: @anonymize_ip,
         enrich_decisions: @enrich_decisions,
         visitors: @visitors,
-        region: @region
       }
     end
 

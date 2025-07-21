@@ -120,6 +120,22 @@ describe Optimizely::EventFactory do
     expect(log_event.http_verb).to eq(:post)
   end
 
+  it 'should create valid Event when create_impression_event is called without attributes and with EU' do
+    @expected_impression_params[:region] = 'EU'
+    experiment = project_config.get_experiment_from_key('test_experiment')
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
+    log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
+    expect(log_event.params).to eq(@expected_impression_params)
+    expect(log_event.url).to eq(@expected_endpoints[:EU])
+    expect(log_event.http_verb).to eq(:post)
+  end
+
   it 'should create a valid Event when create_impression_event is called with attributes as a string value' do
     @expected_impression_params[:visitors][0][:attributes].unshift(
       entity_id: '111094',
@@ -626,6 +642,33 @@ describe Optimizely::EventFactory do
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
     expect(log_event.url).to eq(@expected_endpoints[:US])
+    expect(log_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event when create_conversion_event is called with Bucketing ID attribute and with EU' do
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      type: 'custom',
+      value: 'variation'
+    )
+
+    @expected_conversion_params[:region] = 'EU'
+
+    user_attributes = {
+      'browser_type' => 'firefox',
+      '$opt_bucketing_id' => 'variation'
+    }
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+    expect(log_event.params).to eq(@expected_conversion_params)
+    expect(log_event.url).to eq(@expected_endpoints[:EU])
     expect(log_event.http_verb).to eq(:post)
   end
 
