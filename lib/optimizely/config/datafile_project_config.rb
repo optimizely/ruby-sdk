@@ -27,7 +27,8 @@ module Optimizely
     attr_reader :datafile, :account_id, :attributes, :audiences, :typed_audiences, :events,
                 :experiments, :feature_flags, :groups, :project_id, :bot_filtering, :revision,
                 :sdk_key, :environment_key, :rollouts, :version, :send_flag_decisions,
-                :attribute_key_map, :attribute_id_to_key_map, :audience_id_map, :event_key_map, :experiment_feature_map,
+                :attribute_key_map, :attribute_id_to_key_map, :attribute_id_map,
+                :audience_id_map, :event_key_map, :experiment_feature_map,
                 :experiment_id_map, :experiment_key_map, :feature_flag_key_map, :feature_variable_key_map,
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
@@ -86,6 +87,7 @@ module Optimizely
 
       # Utility maps for quick lookup
       @attribute_key_map = generate_key_map(@attributes, 'key')
+      @attribute_id_map = generate_key_map(@attributes, 'id')
       @attribute_id_to_key_map = {}
       @attributes.each do |attribute|
         @attribute_id_to_key_map[attribute['id']] = attribute['key']
