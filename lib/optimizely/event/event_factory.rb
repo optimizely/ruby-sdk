@@ -67,6 +67,7 @@ module Optimizely
         builder.with_client_name(user_context[:client_name])
         builder.with_anonymize_ip(user_context[:anonymize_ip])
         builder.with_enrich_decisions(true)
+        builder.with_region(user_context[:region])
 
         builder.with_visitors(visitors)
         event_batch = builder.build
