@@ -119,7 +119,6 @@ describe Optimizely::EventFactory do
   end
 
   it 'should create valid Event when create_impression_event is called without attributes and with EU' do
-    @expected_impression_params[:region] = 'EU'
     experiment = project_config.get_experiment_from_key('test_experiment')
     metadata = {
       flag_key: '',
@@ -127,6 +126,9 @@ describe Optimizely::EventFactory do
       rule_type: 'experiment',
       variation_key: '111128'
     }
+    allow_any_instance_of(Optimizely::ImpressionEvent).to receive(:event_context).and_return(
+      project_config.get_event_context.merge(region: 'EU')
+    )
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
@@ -657,12 +659,15 @@ describe Optimizely::EventFactory do
       value: 'variation'
     )
 
-    @expected_conversion_params[:region] = 'EU'
-
     user_attributes = {
       'browser_type' => 'firefox',
       '$opt_bucketing_id' => 'variation'
     }
+
+    allow_any_instance_of(Optimizely::ConversionEvent).to receive(:event_context).and_return(
+      project_config.get_event_context.merge(region: 'EU')
+    )
+
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
