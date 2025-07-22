@@ -18,7 +18,7 @@
 module Optimizely
   class EventBatch
     attr_accessor :account_id, :project_id, :revision, :client_name, :client_version,
-                  :anonymize_ip, :enrich_decisions, :visitors, :region
+                  :anonymize_ip, :enrich_decisions, :visitors
 
     def as_json
       {
@@ -29,14 +29,13 @@ module Optimizely
         client_version: @client_version,
         anonymize_ip: @anonymize_ip,
         enrich_decisions: @enrich_decisions,
-        visitors: @visitors,
-        region: @region
+        visitors: @visitors
       }
     end
 
     class Builder
       attr_reader :account_id, :project_id, :revision, :client_name, :client_version,
-                  :anonymize_ip, :enrich_decisions, :visitors, :region
+                  :anonymize_ip, :enrich_decisions, :visitors
 
       def build
         event_batch = EventBatch.new
@@ -48,7 +47,6 @@ module Optimizely
         event_batch.anonymize_ip = @anonymize_ip
         event_batch.enrich_decisions = @enrich_decisions
         event_batch.visitors = @visitors
-        event_batch.region = @region || 'US'
         event_batch
       end
 
@@ -62,10 +60,6 @@ module Optimizely
 
       def with_revision(revision)
         @revision = revision
-      end
-
-      def with_region(region)
-        @region = region || 'US'
       end
 
       def with_client_name(client_name)
