@@ -219,7 +219,7 @@ module Optimizely
       end
 
       if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions)
-        send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes)
+        send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes, decision&.cmab_uuid)
         decision_event_dispatched = true
       end
 
@@ -1244,7 +1244,7 @@ module Optimizely
       raise InvalidInputError, 'event_dispatcher'
     end
 
-    def send_impression(config, experiment, variation_key, flag_key, rule_key, enabled, rule_type, user_id, attributes = nil)
+    def send_impression(config, experiment, variation_key, flag_key, rule_key, enabled, rule_type, user_id, attributes = nil, cmab_uuid = nil)
       if experiment.nil?
         experiment = {
           'id' => '',
@@ -1276,6 +1276,7 @@ module Optimizely
         variation_key: variation_key,
         enabled: enabled
       }
+      metadata[:cmab_uuid] = cmab_uuid unless cmab_uuid.nil?
 
       user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, attributes)
       @event_processor.process(user_event)

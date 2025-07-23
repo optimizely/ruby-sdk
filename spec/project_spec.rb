@@ -4308,6 +4308,103 @@ describe 'Optimizely' do
         expect(decision.reasons).to include('CMAB service failed to fetch decision')
       end
     end
+    describe 'CMAB experiments' do
+      it 'should include CMAB UUID in dispatched event when decision service returns CMAB result' do
+        # Use an existing feature flag from the test config
+        feature_flag_key = 'boolean_single_variable_feature'
+
+        # Get an existing experiment that actually exists in the datafile
+        # Looking at the test config, let's use experiment ID '122230' which exists
+        existing_experiment = project_config.get_experiment_from_id('122230')
+
+        # Modify the existing experiment to be a CMAB experiment
+        cmab_experiment = existing_experiment.dup
+        cmab_experiment['trafficAllocation'] = [] # Empty for CMAB
+        cmab_experiment['cmab'] = {'attributeIds' => %w[808797688 808797689], 'trafficAllocation' => 4000}
+
+        # Mock the config to return our modified CMAB experiment
+        allow(project_instance.config_manager.config).to receive(:get_experiment_from_id)
+          .with('122230')
+          .and_return(cmab_experiment)
+
+        allow(project_instance.config_manager.config).to receive(:experiment_running?)
+          .with(cmab_experiment)
+          .and_return(true)
+
+        # Get the feature flag and update it to reference our CMAB experiment
+        feature_flag = project_instance.config_manager.config.get_feature_flag_from_key(feature_flag_key)
+        feature_flag['experimentIds'] = ['122230']
+
+        # Use existing variations from the original experiment
+        variation_to_use = existing_experiment['variations'][0]
+
+        # Create a decision with CMAB UUID
+        expected_cmab_uuid = 'uuid-cmab'
+        decision_with_cmab = Optimizely::DecisionService::Decision.new(
+          cmab_experiment,
+          variation_to_use,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'],
+          expected_cmab_uuid
+        )
+
+        decision_result_with_cmab = Optimizely::DecisionService::DecisionResult.new(
+          decision_with_cmab,
+          false,
+          []
+        )
+
+        # Mock get_variations_for_feature_list to return CMAB result
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list)
+          .and_return([decision_result_with_cmab])
+
+        # Set up time and UUID mocks for consistent event data
+        allow(Time).to receive(:now).and_return(time_now)
+        allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+
+        # Create array to capture dispatched events
+        dispatched_events = []
+        allow(project_instance.event_dispatcher).to receive(:dispatch_event) do |event|
+          dispatched_events << event
+        end
+
+        user_context = project_instance.create_user_context('test_user')
+        decision = user_context.decide(feature_flag_key)
+
+        # Wait for batch processing thread to send event
+        sleep 0.1 until project_instance.event_processor.event_queue.empty?
+
+        # Verify the decision contains expected information
+        expect(decision.enabled).to eq(true)
+        expect(decision.variation_key).to eq(variation_to_use['key'])
+        expect(decision.rule_key).to eq(existing_experiment['key'])
+        expect(decision.flag_key).to eq(feature_flag_key)
+
+        # Verify an event was dispatched
+        expect(dispatched_events.length).to eq(1)
+
+        dispatched_event = dispatched_events[0]
+
+        # Remove the puts statement and verify the event structure and CMAB UUID
+        expect(dispatched_event.params).to have_key(:visitors)
+        expect(dispatched_event.params[:visitors].length).to be > 0
+        expect(dispatched_event.params[:visitors][0]).to have_key(:snapshots)
+        expect(dispatched_event.params[:visitors][0][:snapshots].length).to be > 0
+        expect(dispatched_event.params[:visitors][0][:snapshots][0]).to have_key(:decisions)
+        expect(dispatched_event.params[:visitors][0][:snapshots][0][:decisions].length).to be > 0
+
+        # Get the metadata and assert CMAB UUID
+        metadata = dispatched_event.params[:visitors][0][:snapshots][0][:decisions][0][:metadata]
+        expect(metadata).to have_key(:cmab_uuid)
+        expect(metadata[:cmab_uuid]).to eq(expected_cmab_uuid)
+
+        # Also verify other expected metadata fields
+        expect(metadata[:flag_key]).to eq(feature_flag_key)
+        expect(metadata[:rule_key]).to eq('test_experiment_multivariate')
+        expect(metadata[:rule_type]).to eq('feature-test')
+        expect(metadata[:variation_key]).to eq('Fred')
+        expect(metadata[:enabled]).to eq(true)
+      end
+    end
   end
 
   describe '#decide_all' do
