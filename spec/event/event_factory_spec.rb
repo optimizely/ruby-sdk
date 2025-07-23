@@ -127,7 +127,15 @@ describe Optimizely::EventFactory do
       variation_key: '111128'
     }
     allow_any_instance_of(Optimizely::ImpressionEvent).to receive(:event_context).and_return(
-      project_config.get_event_context.merge(region: 'EU')
+      {
+        account_id: '12001',
+        project_id: '111001',
+        client_version: Optimizely::VERSION,
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        anonymize_ip: false,
+        region: 'EU'
+      }
     )
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
@@ -665,7 +673,15 @@ describe Optimizely::EventFactory do
     }
 
     allow_any_instance_of(Optimizely::ConversionEvent).to receive(:event_context).and_return(
-      project_config.get_event_context.merge(region: 'EU')
+      {
+        account_id: '12001',
+        project_id: '111001',
+        client_version: Optimizely::VERSION,
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        anonymize_ip: false,
+        region: 'EU'
+      }
     )
 
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
