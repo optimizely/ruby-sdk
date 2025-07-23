@@ -355,7 +355,7 @@ module Optimizely
 
         # If the feature flag is nil, create a default OptimizelyDecision and move to the next key
         if feature_flag.nil?
-          decisions[key] = OptimizelyDecision.new(nil, false, nil, nil, key, user_context, [])
+          decisions[key] = OptimizelyDecision.new(variation_key: nil, enabled: false, variables: nil, rule_key: nil, flag_key: key, user_context: user_context, reasons: [])
           next
         end
         valid_keys.push(key)
