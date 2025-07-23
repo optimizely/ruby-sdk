@@ -55,6 +55,25 @@ module Optimizely
       def to_json(*args)
         as_json.to_json(*args)
       end
+
+      # Create a new OptimizelyDecision representing an error state.
+      #
+      # @param key [String] The flag key
+      # @param user [OptimizelyUserContext] The user context
+      # @param reasons [Array<String>] List of reasons explaining the error
+      #
+      # @return [OptimizelyDecision] OptimizelyDecision with error state values
+      def self.new_error_decision(key, user, reasons = [])
+        new(
+          variation_key: nil,
+          enabled: false,
+          variables: {},
+          rule_key: nil,
+          flag_key: key,
+          user_context: user,
+          reasons: reasons
+        )
+      end
     end
   end
 end

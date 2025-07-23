@@ -66,8 +66,7 @@ module Optimizely
       # user_profile_tracker: Tracker for reading and updating user profile of the user.
       # reasons: Decision reasons.
       #
-      # Returns variation ID where visitor will be bucketed
-      #   (nil if experiment is inactive or user does not meet audience conditions)
+      # Returns VariationResult struct
       user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger) unless user_profile_tracker.is_a?(Optimizely::UserProfileTracker)
       decide_reasons = []
       decide_reasons.push(*reasons)
@@ -189,7 +188,12 @@ module Optimizely
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
         decision_result = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
-        decision_result = get_variation_for_feature_rollout(project_config, feature_flag, user_context) unless decision_result.decision
+        # Only process rollout if no experiment decision was found and no error
+        if decision_result.decision.nil? && !decision_result.error
+          decision_result_rollout = get_variation_for_feature_rollout(project_config, feature_flag, user_context) unless decision_result.decision
+          decision_result.decision = decision_result_rollout.decision
+          decision_result.reasons.push(*decision_result_rollout.reasons)
+        end
         decisions << decision_result
       end
       user_profile_tracker&.save_user_profile
@@ -232,7 +236,8 @@ module Optimizely
         variation_id = variation_result.variation_id
         cmab_uuid = variation_result.cmab_uuid
         decide_reasons.push(*reasons_received)
-
+        puts 'final reasons'
+        puts decide_reasons
         next unless variation_id
 
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
@@ -312,10 +317,11 @@ module Optimizely
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
       variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
-
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
-      get_variation(project_config, rule['id'], user, user_profile_tracker, options)
+      variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
+      variation_result.reasons = reasons + variation_result.reasons
+      variation_result
     end
 
     def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context)
