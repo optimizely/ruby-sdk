@@ -134,22 +134,24 @@ module Optimizely
         cmab_decision = cmab_decision_result.result
         variation_id = cmab_decision&.variation_id
         cmab_uuid = cmab_decision&.cmab_uuid
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
       else
         # Bucket normally
         variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
         decide_reasons.push(*bucket_reasons)
         variation_id = variation ? variation['id'] : nil
         cmab_uuid = nil
-        message = ''
-        if variation_id
-          variation_key = variation['key']
-          message = "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_id}'."
-        else
-          message = "User '#{user_id}' is in no variation."
-        end
-        @logger.log(Logger::INFO, message)
-        decide_reasons.push(message)
       end
+
+      variation_key = variation['key'] if variation
+      message = if variation_id
+                  "User '#{user_id}' is in variation '#{variation_key}' of experiment '#{experiment_id}'."
+                else
+                  "User '#{user_id}' is in no variation."
+                end
+
+      @logger.log(Logger::INFO, message)
+      decide_reasons.push(message) if message
 
       # Persist bucketing decision
       user_profile_tracker.update_user_profile(experiment_id, variation_id) unless should_ignore_user_profile_service && user_profile_tracker
@@ -236,8 +238,6 @@ module Optimizely
         variation_id = variation_result.variation_id
         cmab_uuid = variation_result.cmab_uuid
         decide_reasons.push(*reasons_received)
-        puts 'final reasons'
-        puts decide_reasons
         next unless variation_id
 
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
@@ -516,7 +516,7 @@ module Optimizely
         message = "User \"#{user_context.user_id}\" not in CMAB experiment \"#{experiment['key']}\" due to traffic allocation."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)
-        CmabDecisionResult.new(false, nil, decide_reasons)
+        return CmabDecisionResult.new(false, nil, decide_reasons)
       end
 
       # User is in CMAB allocation, proceed to CMAB decision

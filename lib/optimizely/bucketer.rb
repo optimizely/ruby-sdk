@@ -106,8 +106,8 @@ module Optimizely
       if experiment['cmab']
         traffic_allocations = [
           {
-            entityId: '$',
-            endOfRange: experiment['cmab']['trafficAllocation']
+            'entityId' => '$',
+            'endOfRange' => experiment['cmab']['trafficAllocation']
           }
         ]
       end

@@ -1992,9 +1992,9 @@ describe 'Optimizely' do
         )
         # Ensure featureEnabled is false for this test
         expect(variation_to_return['featureEnabled']).to be false
-  
+
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
-        
+
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
         ).ordered
@@ -4279,6 +4279,33 @@ describe 'Optimizely' do
                     Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
                     Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
                   ])
+      end
+    end
+    describe 'when decision service fails with CMAB error' do
+      it 'should return error decision when CMAB decision service fails' do
+        # Add the HTTP stub to prevent real requests
+        stub_request(:post, 'https://logx.optimizely.com/v1/events')
+          .to_return(status: 200, body: '', headers: {})
+
+        feature_flag_key = 'boolean_single_variable_feature'
+
+        # Mock the decision service to return an error result
+        error_decision_result = double('DecisionResult')
+        allow(error_decision_result).to receive(:decision).and_return(nil)
+        allow(error_decision_result).to receive(:error).and_return(true)
+        allow(error_decision_result).to receive(:reasons).and_return(['CMAB service failed to fetch decision'])
+
+        # Mock get_variations_for_feature_list instead of get_variation_for_feature
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list)
+          .and_return([error_decision_result])
+
+        user_context = project_instance.create_user_context('test_user')
+        decision = user_context.decide(feature_flag_key)
+
+        expect(decision.enabled).to eq(false)
+        expect(decision.variation_key).to be_nil
+        expect(decision.flag_key).to eq(feature_flag_key)
+        expect(decision.reasons).to include('CMAB service failed to fetch decision')
       end
     end
   end

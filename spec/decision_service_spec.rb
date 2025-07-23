@@ -714,10 +714,10 @@ describe Optimizely::DecisionService do
         decision_result = decision_service.get_variation_for_feature_rollout(config, feature_flag, user_context)
         expect(decision_result.decision).to eq(nil)
         expect(decision_result.reasons).to eq([
-                                "User 'user_1' does not meet the conditions for targeting rule '1'.",
-                                "User 'user_1' does not meet the conditions for targeting rule '2'.",
-                                "User 'user_1' does not meet the conditions for targeting rule 'Everyone Else'."
-                              ])
+                                                "User 'user_1' does not meet the conditions for targeting rule '1'.",
+                                                "User 'user_1' does not meet the conditions for targeting rule '2'.",
+                                                "User 'user_1' does not meet the conditions for targeting rule 'Everyone Else'."
+                                              ])
 
         # verify we tried to bucket in all targeting rules and the everyone else rule
         expect(Optimizely::Audience).to have_received(:user_meets_audience_conditions?).once
@@ -935,6 +935,236 @@ describe Optimizely::DecisionService do
       expect(variation['id']).to eq(valid_variation[:id])
       expect(variation['key']).to eq(valid_variation[:key])
       expect(reasons).to eq(["Variation 'control' is mapped to experiment '111127' and user 'test_user_2' in the forced variation map"])
+    end
+  end
+  describe 'CMAB experiments' do
+    describe 'when user is in traffic allocation' do
+      it 'should return correct variation and CMAB UUID from CMAB service' do
+        # Create a CMAB experiment configuration
+        cmab_experiment = {
+          'id' => '111150',
+          'key' => 'cmab_experiment',
+          'status' => 'Running',
+          'layerId' => '111150',
+          'audienceIds' => [],
+          'forcedVariations' => {},
+          'variations' => [
+            {'id' => '111151', 'key' => 'variation_1'},
+            {'id' => '111152', 'key' => 'variation_2'}
+          ],
+          'trafficAllocation' => [
+            {'entityId' => '111151', 'endOfRange' => 5000},
+            {'entityId' => '111152', 'endOfRange' => 10_000}
+          ],
+          'cmab' => {'trafficAllocation' => 5000}
+        }
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Mock experiment lookup to return our CMAB experiment
+        allow(config).to receive(:get_experiment_from_id).with('111150').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Mock audience evaluation to pass
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return([true, []])
+
+        # Mock bucketer to return a valid entity ID (user is in traffic allocation)
+        allow(decision_service.bucketer).to receive(:bucket_to_entity_id)
+          .with(config, cmab_experiment, 'test_user', 'test_user')
+          .and_return(['$', []])
+
+        # Mock CMAB service to return a decision
+        allow(spy_cmab_service).to receive(:get_decision)
+          .with(config, user_context, '111150', [])
+          .and_return(Optimizely::CmabDecision.new(variation_id: '111151', cmab_uuid: 'test-cmab-uuid-123'))
+
+        # Mock variation lookup
+        allow(config).to receive(:get_variation_from_id_by_experiment_id)
+          .with('111150', '111151')
+          .and_return({'id' => '111151', 'key' => 'variation_1'})
+
+        variation_result = decision_service.get_variation(config, '111150', user_context)
+
+        expect(variation_result.variation_id).to eq('111151')
+        expect(variation_result.cmab_uuid).to eq('test-cmab-uuid-123')
+        expect(variation_result.error).to eq(false)
+        expect(variation_result.reasons).to include(
+          "User 'test_user' is in variation 'variation_1' of experiment '111150'."
+        )
+
+        # Verify CMAB service was called
+        expect(spy_cmab_service).to have_received(:get_decision).once
+      end
+    end
+
+    describe 'when user is not in traffic allocation' do
+      it 'should return nil variation and log traffic allocation message' do
+        cmab_experiment = {
+          'id' => '111150',
+          'key' => 'cmab_experiment',
+          'status' => 'Running',
+          'layerId' => '111150',
+          'audienceIds' => [],
+          'forcedVariations' => {},
+          'variations' => [
+            {'id' => '111151', 'key' => 'variation_1'}
+          ],
+          'trafficAllocation' => [
+            {'entityId' => '111151', 'endOfRange' => 10_000}
+          ],
+          'cmab' => {'trafficAllocation' => 1000}
+        }
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Mock experiment lookup to return our CMAB experiment
+        allow(config).to receive(:get_experiment_from_id).with('111150').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Mock audience evaluation to pass
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return([true, []])
+
+        variation_result = decision_service.get_variation(config, '111150', user_context)
+
+        expect(variation_result.variation_id).to eq(nil)
+        expect(variation_result.cmab_uuid).to eq(nil)
+        expect(variation_result.error).to eq(false)
+        expect(variation_result.reasons).to include(
+          'User "test_user" not in CMAB experiment "cmab_experiment" due to traffic allocation.'
+        )
+
+        # Verify CMAB service was not called since user is not in traffic allocation
+        expect(spy_cmab_service).not_to have_received(:get_decision)
+      end
+    end
+
+    describe 'when CMAB service returns an error' do
+      it 'should return nil variation and include error in reasons' do
+        cmab_experiment = {
+          'id' => '111150',
+          'key' => 'cmab_experiment',
+          'status' => 'Running',
+          'layerId' => '111150',
+          'audienceIds' => [],
+          'forcedVariations' => {},
+          'variations' => [
+            {'id' => '111151', 'key' => 'variation_1'}
+          ],
+          'trafficAllocation' => [
+            {'entityId' => '111151', 'endOfRange' => 10_000}
+          ],
+          'cmab' => {'trafficAllocation' => 5000}
+        }
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Mock experiment lookup to return our CMAB experiment
+        allow(config).to receive(:get_experiment_from_id).with('111150').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Mock audience evaluation to pass
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return([true, []])
+
+        # Mock bucketer to return a valid entity ID (user is in traffic allocation)
+        allow(decision_service.bucketer).to receive(:bucket_to_entity_id)
+          .with(config, cmab_experiment, 'test_user', 'test_user')
+          .and_return(['$', []])
+
+        # Mock CMAB service to return an error
+        allow(spy_cmab_service).to receive(:get_decision)
+          .with(config, user_context, '111150', [])
+          .and_raise(StandardError.new('CMAB service error'))
+
+        variation_result = decision_service.get_variation(config, '111150', user_context)
+
+        expect(variation_result.variation_id).to be_nil
+        expect(variation_result.cmab_uuid).to be_nil
+        expect(variation_result.error).to eq(true)
+        expect(variation_result.reasons).to include(
+          "Failed to fetch CMAB decision for experiment 'cmab_experiment'"
+        )
+
+        # Verify CMAB service was called but errored
+        expect(spy_cmab_service).to have_received(:get_decision).once
+      end
+    end
+
+    describe 'when user has forced variation' do
+      it 'should return forced variation and skip CMAB service call' do
+        # Use a real experiment from the datafile and modify it to be a CMAB experiment
+        real_experiment = config.get_experiment_from_key('test_experiment')
+        cmab_experiment = real_experiment.dup
+        cmab_experiment['cmab'] = {'trafficAllocation' => 5000}
+
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Set up forced variation first (using real experiment that exists in datafile)
+        decision_service.set_forced_variation(config, 'test_experiment', 'test_user', 'variation')
+
+        # Mock the experiment to be a CMAB experiment after setting forced variation
+        allow(config).to receive(:get_experiment_from_id).with('111127').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Add spy for bucket_to_entity_id method
+        allow(decision_service.bucketer).to receive(:bucket_to_entity_id).and_call_original
+
+        variation_result = decision_service.get_variation(config, '111127', user_context)
+
+        expect(variation_result.variation_id).to eq('111129')
+        expect(variation_result.cmab_uuid).to be_nil
+        expect(variation_result.error).to eq(false)
+        expect(variation_result.reasons).to include(
+          "Variation 'variation' is mapped to experiment '111127' and user 'test_user' in the forced variation map"
+        )
+
+        # Verify CMAB service was not called since user has forced variation
+        expect(spy_cmab_service).not_to have_received(:get_decision)
+        # Verify bucketer was not called since forced variations short-circuit bucketing
+        expect(decision_service.bucketer).not_to have_received(:bucket_to_entity_id)
+      end
+    end
+
+    describe 'when user has whitelisted variation' do
+      it 'should return whitelisted variation and skip CMAB service call' do
+        # Create a CMAB experiment with whitelisted users
+        cmab_experiment = {
+          'id' => '111150',
+          'key' => 'cmab_experiment',
+          'status' => 'Running',
+          'layerId' => '111150',
+          'audienceIds' => [],
+          'forcedVariations' => {
+            'whitelisted_user' => '111151' # User is whitelisted to variation_1
+          },
+          'variations' => [
+            {'id' => '111151', 'key' => 'variation_1'},
+            {'id' => '111152', 'key' => 'variation_2'}
+          ],
+          'trafficAllocation' => [
+            {'entityId' => '111151', 'endOfRange' => 5000},
+            {'entityId' => '111152', 'endOfRange' => 10_000}
+          ],
+          'cmab' => {'trafficAllocation' => 5000}
+        }
+        user_context = project_instance.create_user_context('whitelisted_user', {})
+
+        # Mock experiment lookup to return our CMAB experiment
+        allow(config).to receive(:get_experiment_from_id).with('111150').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Mock the get_whitelisted_variation_id method directly
+        allow(decision_service).to receive(:get_whitelisted_variation_id)
+          .with(config, '111150', 'whitelisted_user')
+          .and_return(['111151', "User 'whitelisted_user' is whitelisted into variation 'variation_1' of experiment '111150'."])
+
+        variation_result = decision_service.get_variation(config, '111150', user_context)
+
+        expect(variation_result.variation_id).to eq('111151')
+        expect(variation_result.cmab_uuid).to be_nil
+        expect(variation_result.error).to eq(false)
+        expect(variation_result.reasons).to include(
+          "User 'whitelisted_user' is whitelisted into variation 'variation_1' of experiment '111150'."
+        )
+        # Verify CMAB service was not called since user is whitelisted
+        expect(spy_cmab_service).not_to have_received(:get_decision)
+      end
     end
   end
 end
