@@ -556,7 +556,6 @@ describe 'Optimizely' do
       decision = user_context_obj.decide(feature_key, [Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS])
       expect(decision.variation_key).to eq('18257766532')
       expect(decision.rule_key).to eq('18322080788')
-      # puts decision.reasons
       expect(decision.reasons).to include('Invalid variation is mapped to flag (feature_1), rule (exp_with_audience) and user (tester) in the forced decision map.')
 
       # delivery-rule-to-decision
