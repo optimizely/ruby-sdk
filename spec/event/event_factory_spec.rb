@@ -34,7 +34,10 @@ describe Optimizely::EventFactory do
     allow(Time).to receive(:now).and_return(time_now)
     allow(SecureRandom).to receive(:uuid).and_return('a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
 
-    @expected_endpoint = 'https://logx.optimizely.com/v1/events'
+    @expected_endpoints = {
+      US: 'https://logx.optimizely.com/v1/events',
+      EU: 'https://eu.logx.optimizely.com/v1/events'
+    }
     @expected_impression_params = {
       account_id: '12001',
       project_id: '111001',
@@ -111,7 +114,33 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
+    expect(log_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event when create_impression_event is called without attributes and with EU' do
+    experiment = project_config.get_experiment_from_key('test_experiment')
+    metadata = {
+      flag_key: '',
+      rule_key: 'test_experiment',
+      rule_type: 'experiment',
+      variation_key: '111128'
+    }
+    allow_any_instance_of(Optimizely::ImpressionEvent).to receive(:event_context).and_return(
+      {
+        account_id: '12001',
+        project_id: '111001',
+        client_version: Optimizely::VERSION,
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        anonymize_ip: false,
+        region: 'EU'
+      }
+    )
+    impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', nil)
+    log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
+    expect(log_event.params).to eq(@expected_impression_params)
+    expect(log_event.url).to eq(@expected_endpoints[:EU])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -134,7 +163,7 @@ describe Optimizely::EventFactory do
                                                                             'browser_type' => 'firefox')
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -184,7 +213,7 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -225,7 +254,7 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -248,7 +277,7 @@ describe Optimizely::EventFactory do
                                                                             'browser_type' => false)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -270,7 +299,7 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', 'browser_type' => 0)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -286,7 +315,7 @@ describe Optimizely::EventFactory do
                                                                             invalid_attribute: 'sorry_not_sorry')
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -294,7 +323,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -309,7 +338,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', {'browser_type' => 'firefox'}, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -322,7 +351,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -335,7 +364,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -347,7 +376,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -359,7 +388,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -375,7 +404,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -390,7 +419,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -404,7 +433,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -418,7 +447,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -432,7 +461,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -447,7 +476,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -461,7 +490,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -487,7 +516,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', {'browser_type' => 'firefox'}, event_tags)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -520,7 +549,7 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', user_attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -556,7 +585,7 @@ describe Optimizely::EventFactory do
     impression_event = Optimizely::UserEventFactory.create_impression_event(project_config, experiment, '111128', metadata, 'test_user', user_attributes)
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -594,7 +623,7 @@ describe Optimizely::EventFactory do
     )
     log_event = Optimizely::EventFactory.create_log_event(impression_event, spy_logger)
     expect(log_event.params).to eq(@expected_impression_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -620,7 +649,45 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
+    expect(log_event.http_verb).to eq(:post)
+  end
+
+  it 'should create valid Event when create_conversion_event is called with Bucketing ID attribute and with EU' do
+    @expected_conversion_params[:visitors][0][:attributes].unshift(
+      {
+        entity_id: '111094',
+        key: 'browser_type',
+        type: 'custom',
+        value: 'firefox'
+      },
+      entity_id: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      key: Optimizely::Helpers::Constants::CONTROL_ATTRIBUTES['BUCKETING_ID'],
+      type: 'custom',
+      value: 'variation'
+    )
+
+    user_attributes = {
+      'browser_type' => 'firefox',
+      '$opt_bucketing_id' => 'variation'
+    }
+
+    allow_any_instance_of(Optimizely::ConversionEvent).to receive(:event_context).and_return(
+      {
+        account_id: '12001',
+        project_id: '111001',
+        client_version: Optimizely::VERSION,
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        anonymize_ip: false,
+        region: 'EU'
+      }
+    )
+
+    conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
+    log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+    expect(log_event.params).to eq(@expected_conversion_params)
+    expect(log_event.url).to eq(@expected_endpoints[:EU])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -642,7 +709,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 
@@ -671,7 +738,7 @@ describe Optimizely::EventFactory do
     conversion_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', user_attributes, nil)
     log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
     expect(log_event.params).to eq(@expected_conversion_params)
-    expect(log_event.url).to eq(@expected_endpoint)
+    expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
 end

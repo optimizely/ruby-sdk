@@ -19,6 +19,7 @@ require 'json'
 
 module OptimizelySpec
   VALID_CONFIG_BODY = {
+    'region' => 'US',
     'accountId' => '12001',
     'projectId' => '111001',
     'anonymizeIP' => false,
