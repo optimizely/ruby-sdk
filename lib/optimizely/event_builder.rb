@@ -101,13 +101,17 @@ module Optimizely
         revision: project_config.revision,
         client_name: CLIENT_ENGINE,
         enrich_decisions: true,
-        client_version: VERSION
+        client_version: VERSION,
+        region: project_config.region || 'US'
       }
     end
   end
 
   class EventBuilder < BaseEventBuilder
-    ENDPOINT = 'https://logx.optimizely.com/v1/events'
+    ENDPOINTS = {
+      US: 'https://logx.optimizely.com/v1/events',
+      EU: 'https://eu.logx.optimizely.com/v1/events'
+    }.freeze
     POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
@@ -122,11 +126,14 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the impression event.
 
+      region = project_config.region || 'US'
       event_params = get_common_params(project_config, user_id, attributes)
       impression_params = get_impression_params(project_config, experiment, variation_id)
       event_params[:visitors][0][:snapshots].push(impression_params)
 
-      Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
+      endpoint = ENDPOINTS[region.to_s.upcase.to_sym]
+
+      Event.new(:post, endpoint, event_params, POST_HEADERS)
     end
 
     def create_conversion_event(project_config, event, user_id, attributes, event_tags)
@@ -140,11 +147,14 @@ module Optimizely
       #
       # Returns +Event+ encapsulating the conversion event.
 
+      region = project_config.region || 'US'
       event_params = get_common_params(project_config, user_id, attributes)
       conversion_params = get_conversion_params(event, event_tags)
       event_params[:visitors][0][:snapshots] = [conversion_params]
 
-      Event.new(:post, ENDPOINT, event_params, POST_HEADERS)
+      endpoint = ENDPOINTS[region.to_s.upcase.to_sym]
+
+      Event.new(:post, endpoint, event_params, POST_HEADERS)
     end
 
     private
