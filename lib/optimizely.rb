@@ -43,10 +43,16 @@ require_relative 'optimizely/odp/lru_cache'
 require_relative 'optimizely/odp/odp_manager'
 require_relative 'optimizely/helpers/sdk_settings'
 require_relative 'optimizely/user_profile_tracker'
+require_relative 'optimizely/cmab/cmab_client'
+require_relative 'optimizely/cmab/cmab_service'
 
 module Optimizely
   class Project
     include Optimizely::Decide
+
+    # CMAB Constants
+    DEFAULT_CMAB_CACHE_TIMEOUT = (30 * 60 * 1000)
+    DEFAULT_CMAB_CACHE_SIZE = 1000
 
     attr_reader :notification_center
     # @api no-doc
@@ -131,7 +137,19 @@ module Optimizely
 
       setup_odp!(@config_manager.sdk_key)
 
-      @decision_service = DecisionService.new(@logger, @user_profile_service)
+      # Initialize CMAB components
+      @cmab_client = DefaultCmabClient.new(
+        retry_config: CmabRetryConfig.new,
+        logger: @logger
+      )
+      @cmab_cache = LRUCache.new(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
+      @cmab_service = DefaultCmabService.new(
+        @cmab_cache,
+        @cmab_client,
+        @logger
+      )
+
+      @decision_service = DecisionService.new(@logger, @cmab_service, @user_profile_service)
 
       @event_processor = if event_processor.respond_to?(:process)
                            event_processor
@@ -337,7 +355,7 @@ module Optimizely
 
         # If the feature flag is nil, create a default OptimizelyDecision and move to the next key
         if feature_flag.nil?
-          decisions[key] = OptimizelyDecision.new(nil, false, nil, nil, key, user_context, [])
+          decisions[key] = OptimizelyDecision.new(variation_key: nil, enabled: false, variables: nil, rule_key: nil, flag_key: key, user_context: user_context, reasons: [])
           next
         end
         valid_keys.push(key)
@@ -358,9 +376,17 @@ module Optimizely
       decision_list = @decision_service.get_variations_for_feature_list(config, flags_without_forced_decision, user_context, decide_options)
 
       flags_without_forced_decision.each_with_index do |flag, i|
-        decision = decision_list[i][0]
-        reasons = decision_list[i][1]
+        decision = decision_list[i].decision
+        reasons = decision_list[i].reasons
+        error = decision_list[i].error
         flag_key = flag['key']
+        # store error decision against key and remove key from valid keys
+        if error
+          optimizely_decision = OptimizelyDecision.new_error_decision(flag_key, user_context, reasons)
+          decisions[flag_key] = optimizely_decision
+          valid_keys.delete(flag_key) if valid_keys.include?(flag_key)
+          next
+        end
         flag_decisions[flag_key] = decision
         decision_reasons_dict[flag_key] ||= []
         decision_reasons_dict[flag_key].push(*reasons)
@@ -599,8 +625,8 @@ module Optimizely
       end
 
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
-      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
-
+      decision_result = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
+      decision = decision_result.decision
       feature_enabled = false
       source_string = Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       if decision.is_a?(Optimizely::DecisionService::Decision)
@@ -839,7 +865,8 @@ module Optimizely
       end
 
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
-      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
+      decision_result = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
+      decision = decision_result.decision
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
       all_variables = {}
@@ -1029,7 +1056,8 @@ module Optimizely
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
       user_profile_tracker = UserProfileTracker.new(user_id, @user_profile_service, @logger)
       user_profile_tracker.load_user_profile
-      variation_id, = @decision_service.get_variation(config, experiment_id, user_context, user_profile_tracker)
+      variation_result = @decision_service.get_variation(config, experiment_id, user_context, user_profile_tracker)
+      variation_id = variation_result.variation_id
       user_profile_tracker.save_user_profile
       variation = config.get_variation_from_id(experiment_key, variation_id) unless variation_id.nil?
       variation_key = variation['key'] if variation
@@ -1097,7 +1125,8 @@ module Optimizely
       end
 
       user_context = OptimizelyUserContext.new(self, user_id, attributes, identify: false)
-      decision, = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
+      decision_result = @decision_service.get_variation_for_feature(config, feature_flag, user_context)
+      decision = decision_result.decision
       variation = decision ? decision['variation'] : nil
       feature_enabled = variation ? variation['featureEnabled'] : false
 

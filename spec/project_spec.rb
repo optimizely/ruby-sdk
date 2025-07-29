@@ -1681,7 +1681,7 @@ describe 'Optimizely' do
 
     it 'should return false and send an impression when the user is not bucketed into any variation' do
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be(false)
 
@@ -1703,7 +1703,7 @@ describe 'Optimizely' do
       )
 
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
 
@@ -1723,7 +1723,7 @@ describe 'Optimizely' do
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
       expect(variation_to_return['featureEnabled']).to be false
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be false
@@ -1744,7 +1744,7 @@ describe 'Optimizely' do
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
       allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
       expect(variation_to_return['featureEnabled']).to be true
 
       expect(project_instance.is_feature_enabled('boolean_single_variable_feature', 'test_user')).to be true
@@ -1841,7 +1841,7 @@ describe 'Optimizely' do
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION], any_args
         ).ordered
 
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be true
 
@@ -1862,7 +1862,7 @@ describe 'Optimizely' do
         Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
       )
       expect(variation_to_return['featureEnabled']).to be false
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
       expect(project_instance.is_feature_enabled('multi_variate_feature', 'test_user')).to be false
 
@@ -1888,7 +1888,7 @@ describe 'Optimizely' do
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
 
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
         # Activate listener
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
@@ -1925,7 +1925,7 @@ describe 'Optimizely' do
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
 
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
@@ -1959,7 +1959,7 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         )
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
 
         # DECISION listener called when the user is in rollout with variation feature true.
         expect(variation_to_return['featureEnabled']).to be true
@@ -1983,8 +1983,21 @@ describe 'Optimizely' do
       end
 
       it 'should call decision listener when user is bucketed into rollout with featureEnabled property is false' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::Decision)
+        experiment_to_return = config_body['rollouts'][0]['experiments'][1]
+        variation_to_return = experiment_to_return['variations'][0]
+        decision_to_return = Optimizely::DecisionService::Decision.new(
+          experiment_to_return,
+          variation_to_return,
+          Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+        )
+        # Ensure featureEnabled is false for this test
+        expect(variation_to_return['featureEnabled']).to be false
 
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, []))
+
+        expect(project_instance.notification_center).to receive(:send_notifications).once.with(
+          Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
+        ).ordered
         # DECISION listener called when the user is in rollout with variation feature off.
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -1999,7 +2012,7 @@ describe 'Optimizely' do
       end
 
       it 'call decision listener when the user is not bucketed into any experiment or rollout' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], any_args
         ).ordered
@@ -2113,26 +2126,42 @@ describe 'Optimizely' do
         rollout_to_return = config_body['rollouts'][0]['experiments'][0]
 
         allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(
-          Optimizely::DecisionService::Decision.new(
-            experiment_to_return,
-            experiment_to_return['variations'][0],
-            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          Optimizely::DecisionService::DecisionResult.new(
+            Optimizely::DecisionService::Decision.new(
+              experiment_to_return,
+              experiment_to_return['variations'][0],
+              Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+            ), false, []
           ),
-          nil,
-          Optimizely::DecisionService::Decision.new(
-            rollout_to_return,
-            rollout_to_return['variations'][0],
-            Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+          Optimizely::DecisionService::DecisionResult.new(
+            nil, false, []
           ),
-          Optimizely::DecisionService::Decision.new(
-            experiment_to_return,
-            experiment_to_return['variations'][1],
-            Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+          Optimizely::DecisionService::DecisionResult.new(
+            Optimizely::DecisionService::Decision.new(
+              rollout_to_return,
+              rollout_to_return['variations'][0],
+              Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
+            ), false, []
           ),
-          nil,
-          nil,
-          nil,
-          nil
+          Optimizely::DecisionService::DecisionResult.new(
+            Optimizely::DecisionService::Decision.new(
+              experiment_to_return,
+              experiment_to_return['variations'][1],
+              Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+            ), false, []
+          ),
+          Optimizely::DecisionService::DecisionResult.new(
+            nil, false, []
+          ),
+          Optimizely::DecisionService::DecisionResult.new(
+            nil, false, []
+          ),
+          Optimizely::DecisionService::DecisionResult.new(
+            nil, false, []
+          ),
+          Optimizely::DecisionService::DecisionResult.new(
+            nil, false, []
+          )
         )
 
         expect(project_instance.notification_center).to receive(:send_notifications).exactly(10).times.with(
@@ -2274,7 +2303,8 @@ describe 'Optimizely' do
             'experiment' => nil,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('wingardium leviosa')
@@ -2294,7 +2324,8 @@ describe 'Optimizely' do
               'experiment' => nil,
               'variation' => variation_to_return
             }
-            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+            decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
             expect(project_instance.get_feature_variable_string('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
               .to eq(nil)
@@ -2315,7 +2346,8 @@ describe 'Optimizely' do
               'experiment' => experiment_to_return,
               'variation' => variation_to_return
             }
-            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+            decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+            allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
             expect(project_instance.get_feature_variable_string('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
               .to eq(nil)
@@ -2334,7 +2366,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('cta_1')
@@ -2351,7 +2384,7 @@ describe 'Optimizely' do
 
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
         expect(project_instance.get_feature_variable_string('string_single_variable_feature', 'string_variable', user_id, user_attributes))
           .to eq('wingardium leviosa')
@@ -2424,7 +2457,8 @@ describe 'Optimizely' do
             'experiment' => nil,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.notification_center).to receive(:send_notifications).once.with(
             Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -2496,7 +2530,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.notification_center).to receive(:send_notifications).once.with(
             Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -2525,7 +2560,7 @@ describe 'Optimizely' do
 
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -2608,7 +2643,8 @@ describe 'Optimizely' do
         'experiment' => nil,
         'variation' => variation_to_return
       }
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       expect(project_instance.get_feature_variable_boolean('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
         .to eq(true)
@@ -2652,8 +2688,8 @@ describe 'Optimizely' do
         'experiment' => experiment_to_return,
         'variation' => variation_to_return
       }
-
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       expect(project_instance.get_feature_variable_double('double_single_variable_feature', 'double_variable', user_id, user_attributes))
         .to eq(42.42)
@@ -2698,8 +2734,8 @@ describe 'Optimizely' do
         'experiment' => experiment_to_return,
         'variation' => variation_to_return
       }
-
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       expect(project_instance.get_feature_variable_integer('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
         .to eq(42)
@@ -2741,7 +2777,8 @@ describe 'Optimizely' do
           Decision = Struct.new(:experiment, :variation, :source) # rubocop:disable Lint/ConstantDefinitionInBlock
           variation_to_return = project_config.rollout_id_map['166661']['experiments'][0]['variations'][0]
           decision_to_return = Decision.new({'key' => 'test-exp'}, variation_to_return, 'feature-test')
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decisiont_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decisiont_result_to_return)
 
           expect(project_instance.notification_center).to receive(:send_notifications).once.with(
             Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -2814,7 +2851,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decisiont_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decisiont_result_to_return)
           allow(project_config).to receive(:variation_id_to_variable_usage_map).and_return(variation_id_to_variable_usage_map)
 
           expect(project_instance.notification_center).to receive(:send_notifications).once.with(
@@ -2873,7 +2911,7 @@ describe 'Optimizely' do
 
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
         expect(project_instance.notification_center).to receive(:send_notifications).once.with(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -2976,7 +3014,8 @@ describe 'Optimizely' do
             'experiment' => nil,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('wingardium leviosa')
@@ -2996,7 +3035,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
             .to eq('cta_1')
@@ -3017,7 +3057,8 @@ describe 'Optimizely' do
             'experiment' => nil,
             'variation' => variation_to_return
           }
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable('boolean_single_variable_feature', 'boolean_variable', user_id, user_attributes))
             .to eq(true)
@@ -3038,8 +3079,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable('double_single_variable_feature', 'double_variable', user_id, user_attributes))
             .to eq(42.42)
@@ -3060,8 +3101,8 @@ describe 'Optimizely' do
             'experiment' => experiment_to_return,
             'variation' => variation_to_return
           }
-
-          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
           expect(project_instance.get_feature_variable('integer_single_variable_feature', 'integer_variable', user_id, user_attributes))
             .to eq(42)
@@ -3078,7 +3119,7 @@ describe 'Optimizely' do
 
     describe 'when the feature flag is not enabled for the user' do
       it 'should return the default variable value' do
-        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+        allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
         expect(project_instance.get_feature_variable('string_single_variable_feature', 'string_variable', user_id, user_attributes))
           .to eq('wingardium leviosa')
@@ -3243,8 +3284,8 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
       )
-
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       # DECISION listener called when the user is in experiment with variation feature off.
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
@@ -3287,8 +3328,8 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
       )
-
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       # DECISION listener called when the user is in experiment with variation feature on.
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
@@ -3325,8 +3366,8 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
-
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       # DECISION listener called when the user is in rollout with variation feature on.
       expect(variation_to_return['featureEnabled']).to be true
@@ -3360,7 +3401,8 @@ describe 'Optimizely' do
         variation_to_return,
         Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
       )
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_to_return)
+      decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(decision_result_to_return)
 
       # DECISION listener called when the user is in rollout with variation feature on.
       expect(variation_to_return['featureEnabled']).to be false
@@ -3392,7 +3434,7 @@ describe 'Optimizely' do
     end
 
     it 'should call listener with default variable type and value, when user neither in experiment nor in rollout' do
-      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(nil)
+      allow(project_instance.decision_service).to receive(:get_variation_for_feature).and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
 
       expect(project_instance.notification_center).to receive(:send_notifications).once.with(
         Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
@@ -3768,8 +3810,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
         decision_list_to_be_returned = []
-        decision_list_to_be_returned << [decision_to_return, []]
+        decision_list_to_be_returned << decision_result_to_return
         allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
@@ -3813,8 +3856,9 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         )
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
         decision_list_to_be_returned = []
-        decision_list_to_be_returned << [decision_to_return, []]
+        decision_list_to_be_returned << decision_result_to_return
         allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
@@ -3898,7 +3942,8 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['ROLLOUT']
         )
-        decision_list_to_return = [[decision_to_return, []]]
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+        decision_list_to_return = [decision_result_to_return]
         allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = project_instance.create_user_context('user1')
         decision = project_instance.decide(user_context, 'multi_variate_feature')
@@ -4070,7 +4115,8 @@ describe 'Optimizely' do
             variation_to_return,
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
-          decision_list_to_be_returned = [[decision_to_return, []]]
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          decision_list_to_be_returned = [decision_result_to_return]
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
           allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_be_returned)
           user_context = project_instance.create_user_context('user1')
@@ -4094,7 +4140,8 @@ describe 'Optimizely' do
             variation_to_return,
             Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           )
-          decision_list_to_return = [[decision_to_return, []]]
+          decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+          decision_list_to_return = [decision_result_to_return]
           allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
           allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
           user_context = project_instance.create_user_context('user1')
@@ -4201,7 +4248,8 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
-        decision_list_to_return = [[decision_to_return, []]]
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+        decision_list_to_return = [decision_result_to_return]
         allow(project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         allow(project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = project_instance.create_user_context('user1')
@@ -4231,6 +4279,33 @@ describe 'Optimizely' do
                     Optimizely::Decide::OptimizelyDecideOption::INCLUDE_REASONS,
                     Optimizely::Decide::OptimizelyDecideOption::EXCLUDE_VARIABLES
                   ])
+      end
+    end
+    describe 'when decision service fails with CMAB error' do
+      it 'should return error decision when CMAB decision service fails' do
+        # Add the HTTP stub to prevent real requests
+        stub_request(:post, 'https://logx.optimizely.com/v1/events')
+          .to_return(status: 200, body: '', headers: {})
+
+        feature_flag_key = 'boolean_single_variable_feature'
+
+        # Mock the decision service to return an error result
+        error_decision_result = double('DecisionResult')
+        allow(error_decision_result).to receive(:decision).and_return(nil)
+        allow(error_decision_result).to receive(:error).and_return(true)
+        allow(error_decision_result).to receive(:reasons).and_return(['CMAB service failed to fetch decision'])
+
+        # Mock get_variations_for_feature_list instead of get_variation_for_feature
+        allow(project_instance.decision_service).to receive(:get_variations_for_feature_list)
+          .and_return([error_decision_result])
+
+        user_context = project_instance.create_user_context('test_user')
+        decision = user_context.decide(feature_flag_key)
+
+        expect(decision.enabled).to eq(false)
+        expect(decision.variation_key).to be_nil
+        expect(decision.flag_key).to eq(feature_flag_key)
+        expect(decision.reasons).to include('CMAB service failed to fetch decision')
       end
     end
   end
@@ -4421,7 +4496,8 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
-        decision_list_to_return = [[decision_to_return, []]]
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+        decision_list_to_return = [decision_result_to_return]
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         allow(custom_project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = custom_project_instance.create_user_context('user1')
@@ -4450,7 +4526,8 @@ describe 'Optimizely' do
           variation_to_return,
           Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
         )
-        decision_list_to_return = [[decision_to_return, []]]
+        decision_result_to_return = Optimizely::DecisionService::DecisionResult.new(decision_to_return, false, [])
+        decision_list_to_return = [decision_result_to_return]
         allow(custom_project_instance.event_dispatcher).to receive(:dispatch_event).with(instance_of(Optimizely::Event))
         allow(custom_project_instance.decision_service).to receive(:get_variations_for_feature_list).and_return(decision_list_to_return)
         user_context = custom_project_instance.create_user_context('user1')
