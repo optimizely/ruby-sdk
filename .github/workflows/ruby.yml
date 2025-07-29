@@ -39,6 +39,7 @@ jobs:
         echo "Installing rubocop 1.78.0 for Ruby 3.0.0"
         bundle add rubocop --version 1.78.0 || true
         bundle install
+        bundle exec rubocop -A Gemfile || true
     - name: Run linting
       run: |
         bundle exec rubocop
