@@ -26,7 +26,8 @@ module Optimizely
       anonymize_ip:,
       revision:,
       client_name:,
-      client_version:
+      client_version:,
+      region:
     )
       @account_id = account_id
       @project_id = project_id
@@ -34,6 +35,7 @@ module Optimizely
       @revision = revision
       @client_name = client_name
       @client_version = client_version
+      @region = region
     end
 
     def as_json
@@ -43,7 +45,8 @@ module Optimizely
         anonymize_ip: @anonymize_ip,
         revision: @revision,
         client_name: @client_name,
-        client_version: @client_version
+        client_version: @client_version,
+        region: @region
       }
     end
   end

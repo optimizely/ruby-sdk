@@ -28,7 +28,10 @@ module Optimizely
     # EventFactory builds LogEvent objects from a given user_event.
     class << self
       CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
-      ENDPOINT = 'https://logx.optimizely.com/v1/events'
+      ENDPOINTS = {
+        US: 'https://logx.optimizely.com/v1/events',
+        EU: 'https://eu.logx.optimizely.com/v1/events'
+      }.freeze
       POST_HEADERS = {'Content-Type' => 'application/json'}.freeze
       ACTIVATE_EVENT_KEY = 'campaign_activated'
 
@@ -67,7 +70,10 @@ module Optimizely
 
         builder.with_visitors(visitors)
         event_batch = builder.build
-        Event.new(:post, ENDPOINT, event_batch.as_json, POST_HEADERS)
+
+        endpoint = ENDPOINTS[user_context[:region].to_s.upcase.to_sym] || ENDPOINTS[:US]
+
+        Event.new(:post, endpoint, event_batch.as_json, POST_HEADERS)
       end
 
       def build_attribute_list(user_attributes, project_config)

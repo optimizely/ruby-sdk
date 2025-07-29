@@ -33,7 +33,7 @@ module Optimizely
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
-                :public_key_for_odp, :host_for_odp, :all_segments
+                :public_key_for_odp, :host_for_odp, :all_segments, :region
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -69,6 +69,10 @@ module Optimizely
       @rollouts = config.fetch('rollouts', [])
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
       @integrations = config.fetch('integrations', [])
+      @region = config.fetch('region', 'US')
+
+      # Default to US region if not specified
+      @region = 'US' if @region.nil? || @region.empty?
 
       # Json type is represented in datafile as a subtype of string for the sake of backwards compatibility.
       # Converting it to a first-class json type while creating Project Config
