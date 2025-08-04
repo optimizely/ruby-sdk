@@ -530,7 +530,7 @@ module Optimizely
         )
         CmabDecisionResult.new(false, cmab_decision, decide_reasons)
       rescue StandardError => e
-        error_message = "Failed to fetch CMAB decision for experiment #{experiment['key']}"
+        error_message = "Failed to fetch CMAB data for experiment #{experiment['key']}"
         decide_reasons.push(error_message)
         @logger&.log(Logger::ERROR, "#{error_message} #{e}")
         CmabDecisionResult.new(true, nil, decide_reasons)
