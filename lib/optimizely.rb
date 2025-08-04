@@ -139,8 +139,9 @@ module Optimizely
 
       # Initialize CMAB components
       @cmab_client = DefaultCmabClient.new(
-        retry_config: CmabRetryConfig.new,
-        logger: @logger
+        nil,
+        CmabRetryConfig.new,
+        @logger
       )
       @cmab_cache = LRUCache.new(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
       @cmab_service = DefaultCmabService.new(

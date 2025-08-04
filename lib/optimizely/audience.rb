@@ -72,6 +72,20 @@ module Optimizely
         decide_reasons.push(message)
 
         audience_conditions = JSON.parse(audience_conditions) if audience_conditions.is_a?(String)
+        # Convert all symbol keys to string keys in the parsed conditions
+        stringify_keys = lambda do |obj|
+          case obj
+          when Hash
+            obj.transform_keys(&:to_s).transform_values { |v| stringify_keys.call(v) }
+          when Array
+            obj.map { |item| stringify_keys.call(item) }
+          else
+            obj
+          end
+        end
+
+        audience_conditions = stringify_keys.call(audience_conditions)
+
         result = ConditionTreeEvaluator.evaluate(audience_conditions, evaluate_user_conditions)
         result_str = result.nil? ? 'UNKNOWN' : result.to_s.upcase
         message = format(logs_hash['AUDIENCE_EVALUATION_RESULT'], audience_id, result_str)
