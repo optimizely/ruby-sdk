@@ -1078,7 +1078,7 @@ describe Optimizely::DecisionService do
         expect(variation_result.cmab_uuid).to be_nil
         expect(variation_result.error).to eq(true)
         expect(variation_result.reasons).to include(
-          'Failed to fetch CMAB data for experiment cmab_experiment'
+          'Failed to fetch CMAB data for experiment cmab_experiment.'
         )
 
         # Verify CMAB service was called but errored
