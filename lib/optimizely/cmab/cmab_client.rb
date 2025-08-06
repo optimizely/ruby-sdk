@@ -122,7 +122,7 @@ module Optimizely
         raise CmabInvalidResponseError, error_message
       end
 
-      body['predictions'][0]['variationId']
+      body['predictions'][0]['variation_id']
     end
 
     def validate_response(body)
@@ -137,7 +137,7 @@ module Optimizely
         body['predictions'].is_a?(Array) &&
         !body['predictions'].empty? &&
         body['predictions'][0].is_a?(Hash) &&
-        body['predictions'][0].key?('variationId')
+        body['predictions'][0].key?('variation_id')
     end
 
     def _do_fetch_with_retry(url, request_body, retry_config, timeout)
