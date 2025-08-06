@@ -134,7 +134,7 @@ module Optimizely
         cmab_decision = cmab_decision_result.result
         variation_id = cmab_decision&.variation_id
         cmab_uuid = cmab_decision&.cmab_uuid
-        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+        variation = variation_id ? project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id) : nil
       else
         # Bucket normally
         variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
