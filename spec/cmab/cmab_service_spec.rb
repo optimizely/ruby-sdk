@@ -19,8 +19,8 @@ describe Optimizely::DefaultCmabService do
   let(:user_attributes) { {'age' => 25, 'location' => 'USA'} }
 
   let(:mock_experiment) { {'cmab' => {'attributeIds' => %w[66 77]}} }
-  let(:mock_attr1) { double('attribute', key: 'age') }
-  let(:mock_attr2) { double('attribute', key: 'location') }
+  let(:mock_attr1) { {'key' => 'age'} }
+  let(:mock_attr2) { {'key' => 'location'} }
 
   before do
     allow(mock_user_context).to receive(:user_id).and_return(user_id)

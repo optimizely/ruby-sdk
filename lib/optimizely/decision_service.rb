@@ -134,7 +134,7 @@ module Optimizely
         cmab_decision = cmab_decision_result.result
         variation_id = cmab_decision&.variation_id
         cmab_uuid = cmab_decision&.cmab_uuid
-        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+        variation = variation_id ? project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id) : nil
       else
         # Bucket normally
         variation, bucket_reasons = @bucketer.bucket(project_config, experiment, bucketing_id, user_id)
@@ -238,6 +238,10 @@ module Optimizely
         variation_id = variation_result.variation_id
         cmab_uuid = variation_result.cmab_uuid
         decide_reasons.push(*reasons_received)
+
+        # If there's an error, return immediately instead of falling back to next experiment
+        return DecisionResult.new(nil, error, decide_reasons) if error
+
         next unless variation_id
 
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
@@ -509,7 +513,7 @@ module Optimizely
 
       # Check if user is in CMAB traffic allocation
       bucketed_entity_id, bucket_reasons = @bucketer.bucket_to_entity_id(
-        project_config, experiment, user_id, bucketing_id
+        project_config, experiment, bucketing_id, user_id
       )
       decide_reasons.push(*bucket_reasons)
       unless bucketed_entity_id
@@ -526,7 +530,7 @@ module Optimizely
         )
         CmabDecisionResult.new(false, cmab_decision, decide_reasons)
       rescue StandardError => e
-        error_message = "Failed to fetch CMAB decision for experiment '#{experiment['key']}'"
+        error_message = "Failed to fetch CMAB data for experiment #{experiment['key']}."
         decide_reasons.push(error_message)
         @logger&.log(Logger::ERROR, "#{error_message} #{e}")
         CmabDecisionResult.new(true, nil, decide_reasons)
