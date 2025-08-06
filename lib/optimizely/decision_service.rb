@@ -513,7 +513,7 @@ module Optimizely
 
       # Check if user is in CMAB traffic allocation
       bucketed_entity_id, bucket_reasons = @bucketer.bucket_to_entity_id(
-        project_config, experiment, user_id, bucketing_id
+        project_config, experiment, bucketing_id, user_id
       )
       decide_reasons.push(*bucket_reasons)
       unless bucketed_entity_id
