@@ -60,7 +60,7 @@ describe Optimizely::DefaultCmabClient do
     it 'should return the variation id on success' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
-             .to_return(status: 200, body: {'predictions' => [{'variationId' => 'abc123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
+             .to_return(status: 200, body: {'predictions' => [{'variation_id' => 'abc123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
 
       result = client.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
@@ -137,7 +137,7 @@ describe Optimizely::DefaultCmabClient do
     it 'should return the variation id on first try' do
       WebMock.stub_request(:post, expected_url)
              .with(body: expected_body_for_webmock, headers: expected_headers)
-             .to_return(status: 200, body: {'predictions' => [{'variationId' => 'abc123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
+             .to_return(status: 200, body: {'predictions' => [{'variation_id' => 'abc123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
 
       result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
@@ -152,7 +152,7 @@ describe Optimizely::DefaultCmabClient do
              .with(body: expected_body_for_webmock, headers: expected_headers)
              .to_return({status: 500},
                         {status: 500},
-                        {status: 200, body: {'predictions' => [{'variationId' => 'xyz456'}]}.to_json, headers: {'Content-Type' => 'application/json'}})
+                        {status: 200, body: {'predictions' => [{'variation_id' => 'xyz456'}]}.to_json, headers: {'Content-Type' => 'application/json'}})
 
       result = client_with_retry.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
 
