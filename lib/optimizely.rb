@@ -212,7 +212,7 @@ module Optimizely
         experiment = decision.experiment
         rule_key = experiment ? experiment['key'] : nil
         experiment_id = experiment ? experiment['id'] : nil
-        variation = decision['variation']
+        variation = decision.variation
         variation_key = variation ? variation['key'] : nil
         variation_id = variation ? variation['id'] : nil
         feature_enabled = variation ? variation['featureEnabled'] : false
