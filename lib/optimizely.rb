@@ -70,7 +70,7 @@ module Optimizely
     # Get or create a cached Project instance for static datafile configurations
     # This prevents memory leaks when the same datafile is used repeatedly
     #
-    # @param datafile - JSON string representing the project
+    # @param datafile [String] JSON string representing the project
     # @param options - Hash of initialization options (optional)
     # @return [Project] Cached or new Project instance
     def self.get_or_create_instance(datafile: nil, **options)
