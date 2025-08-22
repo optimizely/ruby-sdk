@@ -55,8 +55,12 @@ module Optimizely
     DEFAULT_CMAB_CACHE_SIZE = 1000
 
     # Class-level instance cache to prevent memory leaks from repeated initialization
-    @@instance_cache = {}
-    @@cache_mutex = Mutex.new
+    @instance_cache = {}
+    @cache_mutex = Mutex.new
+
+    class << self
+      attr_accessor :instance_cache, :cache_mutex
+    end
 
     attr_reader :notification_center
     # @api no-doc
@@ -74,53 +78,51 @@ module Optimizely
       return new(datafile: datafile, **options) if should_skip_cache?(datafile, options)
 
       cache_key = generate_cache_key(datafile, options)
-      
-      @@cache_mutex.synchronize do
+
+      cache_mutex.synchronize do
         # Return existing instance if available and not stopped
-        if @@instance_cache[cache_key] && !@@instance_cache[cache_key].stopped
-          return @@instance_cache[cache_key]
-        end
+        return instance_cache[cache_key] if instance_cache[cache_key] && !instance_cache[cache_key].stopped
 
         # Create new instance and cache it
         instance = new(datafile: datafile, **options)
-        @@instance_cache[cache_key] = instance
+        instance_cache[cache_key] = instance
         instance
       end
     end
 
     # Clear all cached instances and properly close them
     def self.clear_instance_cache!
-      @@cache_mutex.synchronize do
+      cache_mutex.synchronize do
         # First stop all instances without removing them from cache to avoid deadlock
-        @@instance_cache.each_value do |instance|
+        instance_cache.each_value do |instance|
           next if instance.stopped
-          
+
           instance.instance_variable_set(:@stopped, true)
           instance.config_manager.stop! if instance.config_manager.respond_to?(:stop!)
           instance.event_processor.stop! if instance.event_processor.respond_to?(:stop!)
           instance.odp_manager.stop!
         end
         # Then clear the cache
-        @@instance_cache.clear
+        instance_cache.clear
       end
     end
 
     # Get count of cached instances (for testing/monitoring)
     def self.cached_instance_count
-      @@cache_mutex.synchronize { @@instance_cache.size }
+      cache_mutex.synchronize { instance_cache.size }
     end
 
     private_class_method def self.should_skip_cache?(datafile, options)
       # Don't cache if using dynamic features that would make sharing unsafe
-      return true if options[:sdk_key] || 
-        options[:config_manager] || 
-        options[:event_processor] ||
-        options[:user_profile_service] ||
-        datafile.nil? || datafile.empty?
-      
+      return true if options[:sdk_key] ||
+                     options[:config_manager] ||
+                     options[:event_processor] ||
+                     options[:user_profile_service] ||
+                     datafile.nil? || datafile.empty?
+
       # Also don't cache if custom loggers or error handlers that might have state
       return true if options[:logger] || options[:error_handler] || options[:event_dispatcher]
-      
+
       false
     end
 
@@ -240,7 +242,7 @@ module Optimizely
                              flush_interval: event_processor_options[:flush_interval] || BatchEventProcessor::DEFAULT_BATCH_INTERVAL
                            )
                          end
-      
+
       # Set up finalizer to ensure cleanup if close() is not called explicitly
       ObjectSpace.define_finalizer(self, self.class.create_finalizer(@config_manager, @event_processor, @odp_manager))
     end
@@ -249,13 +251,11 @@ module Optimizely
     # This ensures cleanup even if close() is not explicitly called
     def self.create_finalizer(config_manager, event_processor, odp_manager)
       proc do
-        begin
-          config_manager.stop! if config_manager.respond_to?(:stop!)
-          event_processor.stop! if event_processor.respond_to?(:stop!)
-          odp_manager.stop! if odp_manager.respond_to?(:stop!)
-        rescue
-          # Suppress errors during finalization to avoid issues during GC
-        end
+        config_manager.stop! if config_manager.respond_to?(:stop!)
+        event_processor.stop! if event_processor.respond_to?(:stop!)
+        odp_manager.stop! if odp_manager.respond_to?(:stop!)
+      rescue
+        # Suppress errors during finalization to avoid issues during GC
       end
     end
 
@@ -1030,14 +1030,14 @@ module Optimizely
       @config_manager.stop! if @config_manager.respond_to?(:stop!)
       @event_processor.stop! if @event_processor.respond_to?(:stop!)
       @odp_manager.stop!
-      
+
       # Remove this instance from the cache if it exists
       # Note: we don't synchronize here to avoid deadlock when called from clear_instance_cache!
       self.class.send(:remove_from_cache_unsafe, self)
     end
 
     private_class_method def self.remove_from_cache_unsafe(instance)
-      @@instance_cache.delete_if { |_key, cached_instance| cached_instance == instance }
+      instance_cache.delete_if { |_key, cached_instance| cached_instance == instance }
     end
 
     def get_optimizely_config
