@@ -1298,7 +1298,7 @@ describe Optimizely::DatafileProjectConfig do
       holdout = config_with_holdouts.get_holdout('holdout_1')
       expect(holdout).not_to be_nil
       expect(holdout['id']).to eq('holdout_1')
-      expect(holdout['key']).to eq('test_holdout')
+      expect(holdout['key']).to eq('global_holdout')
       expect(holdout['status']).to eq('Running')
     end
 
@@ -1306,8 +1306,8 @@ describe Optimizely::DatafileProjectConfig do
       holdout = config_with_holdouts.get_holdout('holdout_2')
       expect(holdout).not_to be_nil
       expect(holdout['id']).to eq('holdout_2')
-      expect(holdout['key']).to eq('another_holdout')
-      expect(holdout['status']).to eq('Inactive')
+      expect(holdout['key']).to eq('specific_holdout')
+      expect(holdout['status']).to eq('Running')
     end
 
     it 'should return nil for non-existent holdout ID' do
@@ -1363,20 +1363,20 @@ describe Optimizely::DatafileProjectConfig do
           'key' => 'global',
           'status' => 'Running',
           'includedFlags' => [],
-          'excludedFlags' => %w[boolean_feature string_single_variable_feature]
+          'excludedFlags' => ['553339214', '594060']
         },
         {
           'id' => 'specific_holdout',
           'key' => 'specific',
           'status' => 'Running',
-          'includedFlags' => %w[multi_variate_feature empty_feature],
+          'includedFlags' => ['594089', '594032'],
           'excludedFlags' => []
         },
         {
           'id' => 'inactive_holdout',
           'key' => 'inactive',
           'status' => 'Inactive',
-          'includedFlags' => ['boolean_feature'],
+          'includedFlags' => ['553339214'],
           'excludedFlags' => []
         }
       ]

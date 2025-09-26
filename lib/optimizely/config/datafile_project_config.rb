@@ -120,9 +120,10 @@ module Optimizely
       @excluded_holdouts = {}
       @flag_holdouts_map = {}
 
-      @holdout_id_map = generate_key_map(@holdouts, 'id')
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
+
+        @holdout_id_map[holdout['id']] = holdout
 
         if holdout['includedFlags'].nil? || holdout['includedFlags'].empty?
           @global_holdouts[holdout['id']] = holdout
