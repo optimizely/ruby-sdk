@@ -1363,13 +1363,13 @@ describe Optimizely::DatafileProjectConfig do
           'key' => 'global',
           'status' => 'Running',
           'includedFlags' => [],
-          'excludedFlags' => ['553339214', '594060']
+          'excludedFlags' => %w[553339214 594060]
         },
         {
           'id' => 'specific_holdout',
           'key' => 'specific',
           'status' => 'Running',
-          'includedFlags' => ['594089', '594032'],
+          'includedFlags' => %w[594089 594032],
           'excludedFlags' => []
         },
         {
