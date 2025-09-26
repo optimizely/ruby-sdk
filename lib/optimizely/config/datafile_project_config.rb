@@ -130,7 +130,6 @@ module Optimizely
           holdout['excludedFlags']&.each do |flag_id|
               @excluded_holdouts[flag_id] ||= []
               @excluded_holdouts[flag_id] << holdout
-            end
           end
         else
           holdout['includedFlags'].each do |flag_id|
