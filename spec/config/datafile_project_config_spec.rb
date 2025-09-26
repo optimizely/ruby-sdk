@@ -1290,7 +1290,7 @@ describe Optimizely::DatafileProjectConfig do
       puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
       puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
       puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
-      
+
       # Check feature flag IDs
       puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
       puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
@@ -1333,7 +1333,7 @@ describe Optimizely::DatafileProjectConfig do
       puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
       puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
       puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
-      
+
       # Check feature flag IDs
       puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
       puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
@@ -1383,7 +1383,7 @@ describe Optimizely::DatafileProjectConfig do
       puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
       puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
       puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
-      
+
       # Check feature flag IDs
       puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
       puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
@@ -1457,7 +1457,7 @@ describe Optimizely::DatafileProjectConfig do
       puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
       puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
       puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
-      
+
       # Check feature flag IDs
       puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
       puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
