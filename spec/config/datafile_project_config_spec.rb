@@ -1286,7 +1286,7 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'debug test data' do
       puts '=== DEBUG INFO ==='
-      puts 'Holdouts: #{config_with_holdouts.holdouts.inspect}'
+      puts "Holdouts: #{config_with_holdouts.holdouts.inspect}"
       puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
       puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
       puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
