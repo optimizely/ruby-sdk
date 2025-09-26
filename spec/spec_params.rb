@@ -1940,30 +1940,30 @@ module OptimizelySpec
   CONFIG_DICT_WITH_INTEGRATIONS_JSON = JSON.dump(CONFIG_DICT_WITH_INTEGRATIONS)
 
   CONFIG_BODY_WITH_HOLDOUTS = VALID_CONFIG_BODY.merge({
-    'holdouts' => [
-      {
-        'id' => 'holdout_1',
-        'key' => 'global_holdout',
-        'status' => 'Running',
-        'includedFlags' => [],
-        'excludedFlags' => ['553339214']
-      },
-      {
-        'id' => 'holdout_2', 
-        'key' => 'specific_holdout',
-        'status' => 'Running',
-        'includedFlags' => ['594089'],
-        'excludedFlags' => []
-      },
-      {
-        'id' => 'holdout_3',
-        'key' => 'inactive_holdout',
-        'status' => 'Inactive',
-        'includedFlags' => ['553339214'],
-        'excludedFlags' => []
-      }
-    ]
-  }).freeze
+      'holdouts' => [
+        {
+          'id' => 'holdout_1',
+          'key' => 'global_holdout',
+          'status' => 'Running',
+          'includedFlags' => [],
+          'excludedFlags' => ['553339214']
+        },
+        {
+          'id' => 'holdout_2',
+          'key' => 'specific_holdout',
+          'status' => 'Running',
+          'includedFlags' => ['594089'],
+          'excludedFlags' => []
+        },
+        {
+          'id' => 'holdout_3',
+          'key' => 'inactive_holdout',
+          'status' => 'Inactive',
+          'includedFlags' => ['553339214'],
+          'excludedFlags' => []
+        }
+      ]
+    }).freeze
 
   CONFIG_BODY_WITH_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_HOLDOUTS).freeze
 

@@ -1238,8 +1238,8 @@ describe Optimizely::DatafileProjectConfig do
   describe '#get_holdouts_for_flag' do
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
-        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON, 
-        logger, 
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger,
         error_handler
       )
     end
@@ -1288,8 +1288,8 @@ describe Optimizely::DatafileProjectConfig do
   describe '#get_holdout' do
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
-        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON, 
-        logger, 
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger,
         error_handler
       )
     end
@@ -1338,7 +1338,7 @@ describe Optimizely::DatafileProjectConfig do
 
       expect(result).to be_nil
       expect(spy_logger).to have_received(:log).with(
-        Logger::ERROR, 
+        Logger::ERROR,
         "Holdout with ID 'invalid_holdout_id' not found."
       )
     end
@@ -1348,7 +1348,7 @@ describe Optimizely::DatafileProjectConfig do
 
       expect(result).not_to be_nil
       expect(spy_logger).not_to have_received(:log).with(
-        Logger::ERROR, 
+        Logger::ERROR,
         anything
       )
     end
@@ -1363,13 +1363,13 @@ describe Optimizely::DatafileProjectConfig do
           'key' => 'global',
           'status' => 'Running',
           'includedFlags' => [],
-          'excludedFlags' => ['boolean_feature', 'string_single_variable_feature']
+          'excludedFlags' => %w[boolean_feature string_single_variable_feature]
         },
         {
           'id' => 'specific_holdout',
           'key' => 'specific',
-          'status' => 'Running', 
-          'includedFlags' => ['multi_variate_feature', 'empty_feature'],
+          'status' => 'Running',
+          'includedFlags' => %w[multi_variate_feature empty_feature],
           'excludedFlags' => []
         },
         {

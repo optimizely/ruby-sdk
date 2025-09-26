@@ -33,7 +33,7 @@ module Optimizely
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
-                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map, 
+                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
                 :global_holdouts, :included_holdouts, :excluded_holdouts, :flag_holdouts_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
@@ -127,8 +127,7 @@ module Optimizely
         if holdout['includedFlags'].nil? || holdout['includedFlags'].empty?
           @global_holdouts[holdout['id']] = holdout
 
-          if holdout['excludedFlags']
-            holdout['excludedFlags'].each do |flag_id|
+          holdout['excludedFlags']&.each do |flag_id|
               @excluded_holdouts[flag_id] ||= []
               @excluded_holdouts[flag_id] << holdout
             end
@@ -631,7 +630,7 @@ module Optimizely
       # Helper method to get holdouts from an applied feature flag
       #
       # flag_key - Key of the feature flag
-      # 
+      #
       # Returns the holdouts that apply for a specific flag
 
       feature_flag = @feature_flag_key_map[flag_key]
@@ -659,30 +658,26 @@ module Optimizely
       end
 
       # Add holdouts that specifically include this flag
-      if @included_holdouts.key?(flag_id)
-        holdouts.concat(@included_holdouts[flag_id])
-      end
+      holdouts.concat(@included_holdouts[flag_id]) if @included_holdouts.key?(flag_id)
 
       # Cache the result
       @flag_holdouts_map[flag_id] = holdouts
 
-      return holdouts
+      holdouts
     end
 
     def get_holdout(holdout_id)
       # Helper method to get holdout from holdout ID
       #
       # holdout_id - ID of the holdout
-      # 
+      #
       # Returns the holdout
 
       holdout = @holdout_id_map[holdout_id]
-      if holdout
-        return holdout
-      else
-        @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
-        return nil
-      end
+      return holdout if holdout
+
+      @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
+      nil
     end
   end
 end
