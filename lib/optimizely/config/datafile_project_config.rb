@@ -594,37 +594,6 @@ module Optimizely
       @rollout_experiment_id_map.key?(experiment_id)
     end
 
-    private
-
-    def generate_feature_variation_map(feature_flags)
-      flag_variation_map = {}
-      feature_flags.each do |flag|
-        variations = []
-        get_rules_for_flag(flag).each do |rule|
-          rule['variations'].each do |rule_variation|
-            variations.push(rule_variation) if variations.select { |variation| variation['id'] == rule_variation['id'] }.empty?
-          end
-        end
-        flag_variation_map[flag['key']] = variations
-      end
-      flag_variation_map
-    end
-
-    def generate_key_map(array, key, first_value: false)
-      # Helper method to generate map from key to hash in array of hashes
-      #
-      # array - Array consisting of hash
-      # key - Key in each hash which will be key in the map
-      # first_value - Determines which value to save if there are duplicate keys. By default the last instance of the key
-      #               will be saved. Set to true to save the first key/value encountered.
-      #
-      # Returns map mapping key to hash
-
-      array
-        .group_by { |obj| obj[key] }
-        .transform_values { |group| first_value ? group.first : group.last }
-    end
-
     def get_holdouts_for_flag(flag_key)
       # Helper method to get holdouts from an applied feature flag
       #
@@ -677,6 +646,37 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
       nil
+    end
+
+    private
+
+    def generate_feature_variation_map(feature_flags)
+      flag_variation_map = {}
+      feature_flags.each do |flag|
+        variations = []
+        get_rules_for_flag(flag).each do |rule|
+          rule['variations'].each do |rule_variation|
+            variations.push(rule_variation) if variations.select { |variation| variation['id'] == rule_variation['id'] }.empty?
+          end
+        end
+        flag_variation_map[flag['key']] = variations
+      end
+      flag_variation_map
+    end
+
+    def generate_key_map(array, key, first_value: false)
+      # Helper method to generate map from key to hash in array of hashes
+      #
+      # array - Array consisting of hash
+      # key - Key in each hash which will be key in the map
+      # first_value - Determines which value to save if there are duplicate keys. By default the last instance of the key
+      #               will be saved. Set to true to save the first key/value encountered.
+      #
+      # Returns map mapping key to hash
+
+      array
+        .group_by { |obj| obj[key] }
+        .transform_values { |group| first_value ? group.first : group.last }
     end
   end
 end
