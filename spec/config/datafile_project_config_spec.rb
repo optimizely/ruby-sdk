@@ -1283,6 +1283,18 @@ describe Optimizely::DatafileProjectConfig do
       expect(holdouts.length).to eq(1)
       expect(holdouts.first['key']).to eq('global_holdout')
     end
+
+    it 'debug test data' do
+      puts "=== DEBUG INFO ==="
+      puts "Holdouts: #{config_with_holdouts.holdouts.inspect}"
+      puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
+      puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
+      puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
+      
+      # Check feature flag IDs
+      puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
+      puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
+    end
   end
 
   describe '#get_holdout' do
@@ -1313,6 +1325,18 @@ describe Optimizely::DatafileProjectConfig do
     it 'should return nil for non-existent holdout ID' do
       holdout = config_with_holdouts.get_holdout('non_existent_holdout')
       expect(holdout).to be_nil
+    end
+
+    it 'debug test data' do
+      puts "=== DEBUG INFO ==="
+      puts "Holdouts: #{config_with_holdouts.holdouts.inspect}"
+      puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
+      puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
+      puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
+      
+      # Check feature flag IDs
+      puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
+      puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
     end
   end
 
@@ -1351,6 +1375,18 @@ describe Optimizely::DatafileProjectConfig do
         Logger::ERROR,
         anything
       )
+    end
+
+    it 'debug test data' do
+      puts "=== DEBUG INFO ==="
+      puts "Holdouts: #{config_with_holdouts.holdouts.inspect}"
+      puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
+      puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
+      puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
+      
+      # Check feature flag IDs
+      puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
+      puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
     end
   end
 
@@ -1392,13 +1428,17 @@ describe Optimizely::DatafileProjectConfig do
       multi_variate_feature_id = config_body['featureFlags'].find { |f| f['key'] == 'multi_variate_feature' }['id']
       empty_feature_id = config_body['featureFlags'].find { |f| f['key'] == 'empty_feature' }['id']
 
+      expect(config_with_complex_holdouts.included_holdouts[multi_variate_feature_id]).not_to be_nil
       expect(config_with_complex_holdouts.included_holdouts[multi_variate_feature_id]).not_to be_empty
+      expect(config_with_complex_holdouts.included_holdouts[empty_feature_id]).not_to be_nil
       expect(config_with_complex_holdouts.included_holdouts[empty_feature_id]).not_to be_empty
       expect(config_with_complex_holdouts.included_holdouts[boolean_feature_id]).to be_nil
 
       string_feature_id = config_body['featureFlags'].find { |f| f['key'] == 'string_single_variable_feature' }['id']
 
+      expect(config_with_complex_holdouts.excluded_holdouts[boolean_feature_id]).not_to be_nil
       expect(config_with_complex_holdouts.excluded_holdouts[boolean_feature_id]).not_to be_empty
+      expect(config_with_complex_holdouts.excluded_holdouts[string_feature_id]).not_to be_nil
       expect(config_with_complex_holdouts.excluded_holdouts[string_feature_id]).not_to be_empty
     end
 
@@ -1408,7 +1448,19 @@ describe Optimizely::DatafileProjectConfig do
 
       boolean_feature_id = config_body['featureFlags'].find { |f| f['key'] == 'boolean_feature' }['id']
       included_for_boolean = config_with_complex_holdouts.included_holdouts[boolean_feature_id]
-      expect(included_for_boolean).to be_nil_or_empty
+      expect(included_for_boolean).to be_nil
+    end
+
+    it 'debug test data' do
+      puts "=== DEBUG INFO ==="
+      puts "Holdouts: #{config_with_holdouts.holdouts.inspect}"
+      puts "Global holdouts: #{config_with_holdouts.global_holdouts.inspect}"
+      puts "Included holdouts: #{config_with_holdouts.included_holdouts.inspect}"
+      puts "Excluded holdouts: #{config_with_holdouts.excluded_holdouts.inspect}"
+      
+      # Check feature flag IDs
+      puts "Multi variate feature: #{config_with_holdouts.feature_flag_key_map['multi_variate_feature'].inspect}"
+      puts "Boolean feature: #{config_with_holdouts.feature_flag_key_map['boolean_single_variable_feature'].inspect}"
     end
   end
 end
