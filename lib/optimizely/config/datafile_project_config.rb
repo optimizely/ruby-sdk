@@ -128,9 +128,12 @@ module Optimizely
         if holdout['includedFlags'].nil? || holdout['includedFlags'].empty?
           @global_holdouts[holdout['id']] = holdout
 
-          holdout['excludedFlags']&.each do |flag_id|
-            @excluded_holdouts[flag_id] ||= []
-            @excluded_holdouts[flag_id] << holdout
+          excluded_flags = holdout['excludedFlags']
+          if excluded_flags && !excluded_flags.empty?
+            excluded_flags.each do |flag_id|
+              @excluded_holdouts[flag_id] ||= []
+              @excluded_holdouts[flag_id] << holdout
+            end
           end
         else
           holdout['includedFlags'].each do |flag_id|
@@ -615,8 +618,9 @@ module Optimizely
       # Add global holdouts that don't exclude this flag
       @global_holdouts.each_value do |holdout|
         is_excluded = false
-        if holdout.key?('excludedFlags')
-          holdout['excludedFlags'].each do |excluded_flag_id|
+        excluded_flags = holdout['excludedFlags']
+        if excluded_flags && !excluded_flags.empty?
+          excluded_flags.each do |excluded_flag_id|
             if excluded_flag_id == flag_id
               is_excluded = true
               break
