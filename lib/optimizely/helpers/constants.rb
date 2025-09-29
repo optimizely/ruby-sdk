@@ -205,8 +205,8 @@ module Optimizely
                 'cmab' => {
                   'type' => 'object'
                 },
-                'holdout' => {
-                  'type' => 'object'
+                'holdouts' => {
+                  'type' => 'array'
                 }
               },
               'required' => %w[
@@ -322,25 +322,28 @@ module Optimizely
               }
             }
           },
-          'holdout' => {
-            'type' => 'object',
-            'properties' => {
-              'id' => {
-                'type' => 'string'
-              },
-              'key' => {
-                'type' => 'string'
-              },
-              'status' => {
-                'type' => 'string'
-              },
-              'includedFlags' => {
-                'type' => 'array',
-                'items' => {'type' => 'string'}
-              },
-              'excludedFlags' => {
-                'type' => 'array',
-                'items' => {'type' => 'string'}
+          'holdouts' => {
+            'type' => 'array',
+            'items' => {
+              'type' => 'object',
+              'properties' => {
+                'id' => {
+                  'type' => 'string'
+                },
+                'key' => {
+                  'type' => 'string'
+                },
+                'status' => {
+                  'type' => 'string'
+                },
+                'includedFlags' => {
+                  'type' => 'array',
+                  'items' => {'type' => 'string'}
+                },
+                'excludedFlags' => {
+                  'type' => 'array',
+                  'items' => {'type' => 'string'}
+                }
               }
             }
           }
