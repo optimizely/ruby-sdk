@@ -326,7 +326,7 @@ module Optimizely
       unless url
         url_template ||= @access_token.nil? ? Helpers::Constants::CONFIG_MANAGER['DATAFILE_URL_TEMPLATE'] : Helpers::Constants::CONFIG_MANAGER['AUTHENTICATED_DATAFILE_URL_TEMPLATE']
         begin
-          return (url_template % sdk_key)
+          return url_template % sdk_key
         rescue
           error_msg = "Invalid url_template #{url_template} provided."
           @logger.log(Logger::ERROR, error_msg)

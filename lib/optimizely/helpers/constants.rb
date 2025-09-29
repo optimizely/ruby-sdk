@@ -204,6 +204,9 @@ module Optimizely
                 },
                 'cmab' => {
                   'type' => 'object'
+                },
+                'holdouts' => {
+                  'type' => 'array'
                 }
               },
               'required' => %w[
@@ -316,6 +319,31 @@ module Optimizely
               },
               'trafficAllocation' => {
                 'type' => 'integer'
+              }
+            }
+          },
+          'holdouts' => {
+            'type' => 'array',
+            'items' => {
+              'type' => 'object',
+              'properties' => {
+                'id' => {
+                  'type' => 'string'
+                },
+                'key' => {
+                  'type' => 'string'
+                },
+                'status' => {
+                  'type' => 'string'
+                },
+                'includedFlags' => {
+                  'type' => 'array',
+                  'items' => {'type' => 'string'}
+                },
+                'excludedFlags' => {
+                  'type' => 'array',
+                  'items' => {'type' => 'string'}
+                }
               }
             }
           }

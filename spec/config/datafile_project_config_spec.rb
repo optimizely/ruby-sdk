@@ -1234,4 +1234,193 @@ describe Optimizely::DatafileProjectConfig do
       expect(config.send(:generate_feature_variation_map, config.feature_flags)).to eq(expected_feature_variation_map)
     end
   end
+
+  describe '#get_holdouts_for_flag' do
+    let(:config_with_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger,
+        error_handler
+      )
+    end
+
+    it 'should return empty array for non-existent flag' do
+      holdouts = config_with_holdouts.get_holdouts_for_flag('non_existent_flag')
+      expect(holdouts).to eq([])
+    end
+
+    it 'should return global holdouts that do not exclude the flag' do
+      holdouts = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
+      expect(holdouts.length).to eq(2)
+
+      global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
+      expect(global_holdout).not_to be_nil
+      expect(global_holdout['id']).to eq('holdout_1')
+
+      specific_holdout = holdouts.find { |h| h['key'] == 'specific_holdout' }
+      expect(specific_holdout).not_to be_nil
+      expect(specific_holdout['id']).to eq('holdout_2')
+    end
+
+    it 'should not return global holdouts that exclude the flag' do
+      holdouts = config_with_holdouts.get_holdouts_for_flag('boolean_single_variable_feature')
+      expect(holdouts.length).to eq(0)
+
+      global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
+      expect(global_holdout).to be_nil
+    end
+
+    it 'should cache results for subsequent calls' do
+      holdouts1 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
+      holdouts2 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
+      expect(holdouts1).to equal(holdouts2)
+      expect(holdouts1.length).to eq(2)
+    end
+
+    it 'should return only global holdouts for flags not specifically targeted' do
+      holdouts = config_with_holdouts.get_holdouts_for_flag('string_single_variable_feature')
+
+      # Should only include global holdout (not excluded and no specific targeting)
+      expect(holdouts.length).to eq(1)
+      expect(holdouts.first['key']).to eq('global_holdout')
+    end
+  end
+
+  describe '#get_holdout' do
+    let(:config_with_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger,
+        error_handler
+      )
+    end
+
+    it 'should return holdout when valid ID is provided' do
+      holdout = config_with_holdouts.get_holdout('holdout_1')
+      expect(holdout).not_to be_nil
+      expect(holdout['id']).to eq('holdout_1')
+      expect(holdout['key']).to eq('global_holdout')
+      expect(holdout['status']).to eq('Running')
+    end
+
+    it 'should return holdout regardless of status when valid ID is provided' do
+      holdout = config_with_holdouts.get_holdout('holdout_2')
+      expect(holdout).not_to be_nil
+      expect(holdout['id']).to eq('holdout_2')
+      expect(holdout['key']).to eq('specific_holdout')
+      expect(holdout['status']).to eq('Running')
+    end
+
+    it 'should return nil for non-existent holdout ID' do
+      holdout = config_with_holdouts.get_holdout('non_existent_holdout')
+      expect(holdout).to be_nil
+    end
+  end
+
+  describe '#get_holdout with logging' do
+    let(:spy_logger) { spy('logger') }
+    let(:config_with_holdouts) do
+      config_body_with_holdouts = config_body.dup
+      config_body_with_holdouts['holdouts'] = [
+        {
+          'id' => 'holdout_1',
+          'key' => 'test_holdout',
+          'status' => 'Running',
+          'includedFlags' => [],
+          'excludedFlags' => []
+        }
+      ]
+      config_json = JSON.dump(config_body_with_holdouts)
+      Optimizely::DatafileProjectConfig.new(config_json, spy_logger, error_handler)
+    end
+
+    it 'should log error when holdout is not found' do
+      result = config_with_holdouts.get_holdout('invalid_holdout_id')
+
+      expect(result).to be_nil
+      expect(spy_logger).to have_received(:log).with(
+        Logger::ERROR,
+        "Holdout with ID 'invalid_holdout_id' not found."
+      )
+    end
+
+    it 'should not log when holdout is found' do
+      result = config_with_holdouts.get_holdout('holdout_1')
+
+      expect(result).not_to be_nil
+      expect(spy_logger).not_to have_received(:log).with(
+        Logger::ERROR,
+        anything
+      )
+    end
+  end
+
+  describe 'holdout initialization' do
+    let(:config_with_complex_holdouts) do
+      config_body_with_holdouts = config_body.dup
+
+      # Use the correct feature flag IDs from the debug output
+      boolean_feature_id = '155554'
+      multi_variate_feature_id = '155559'
+      empty_feature_id = '594032'
+      string_feature_id = '594060'
+
+      config_body_with_holdouts['holdouts'] = [
+        {
+          'id' => 'global_holdout',
+          'key' => 'global',
+          'status' => 'Running',
+          'includedFlags' => [],
+          'excludedFlags' => [boolean_feature_id, string_feature_id]
+        },
+        {
+          'id' => 'specific_holdout',
+          'key' => 'specific',
+          'status' => 'Running',
+          'includedFlags' => [multi_variate_feature_id, empty_feature_id],
+          'excludedFlags' => []
+        },
+        {
+          'id' => 'inactive_holdout',
+          'key' => 'inactive',
+          'status' => 'Inactive',
+          'includedFlags' => [boolean_feature_id],
+          'excludedFlags' => []
+        }
+      ]
+      config_json = JSON.dump(config_body_with_holdouts)
+      Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+    end
+
+    it 'should properly categorize holdouts during initialization' do
+      expect(config_with_complex_holdouts.holdout_id_map.keys).to contain_exactly('global_holdout', 'specific_holdout')
+      expect(config_with_complex_holdouts.global_holdouts.keys).to contain_exactly('global_holdout')
+
+      # Use the correct feature flag IDs
+      boolean_feature_id = '155554'
+      multi_variate_feature_id = '155559'
+      empty_feature_id = '594032'
+      string_feature_id = '594060'
+
+      expect(config_with_complex_holdouts.included_holdouts[multi_variate_feature_id]).not_to be_nil
+      expect(config_with_complex_holdouts.included_holdouts[multi_variate_feature_id]).not_to be_empty
+      expect(config_with_complex_holdouts.included_holdouts[empty_feature_id]).not_to be_nil
+      expect(config_with_complex_holdouts.included_holdouts[empty_feature_id]).not_to be_empty
+      expect(config_with_complex_holdouts.included_holdouts[boolean_feature_id]).to be_nil
+
+      expect(config_with_complex_holdouts.excluded_holdouts[boolean_feature_id]).not_to be_nil
+      expect(config_with_complex_holdouts.excluded_holdouts[boolean_feature_id]).not_to be_empty
+      expect(config_with_complex_holdouts.excluded_holdouts[string_feature_id]).not_to be_nil
+      expect(config_with_complex_holdouts.excluded_holdouts[string_feature_id]).not_to be_empty
+    end
+
+    it 'should only process running holdouts during initialization' do
+      expect(config_with_complex_holdouts.holdout_id_map['inactive_holdout']).to be_nil
+      expect(config_with_complex_holdouts.global_holdouts['inactive_holdout']).to be_nil
+
+      boolean_feature_id = '155554'
+      included_for_boolean = config_with_complex_holdouts.included_holdouts[boolean_feature_id]
+      expect(included_for_boolean).to be_nil
+    end
+  end
 end
