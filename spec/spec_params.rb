@@ -1947,20 +1947,20 @@ module OptimizelySpec
           'key' => 'global_holdout',
           'status' => 'Running',
           'includedFlags' => [],
-          'excludedFlags' => ['553339214']
+          'excludedFlags' => ['155554']
         },
         {
           'id' => 'holdout_2',
           'key' => 'specific_holdout',
           'status' => 'Running',
-          'includedFlags' => ['594089'],
+          'includedFlags' => ['155559'],
           'excludedFlags' => []
         },
         {
           'id' => 'holdout_3',
           'key' => 'inactive_holdout',
           'status' => 'Inactive',
-          'includedFlags' => ['553339214'],
+          'includedFlags' => ['155554'],
           'excludedFlags' => []
         }
       ]
