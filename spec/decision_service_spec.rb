@@ -1508,7 +1508,7 @@ describe Optimizely::DecisionService do
           h['includedFlags'].nil? || h['includedFlags'].empty?
         end
 
-        if !global_holdouts.empty?
+        unless global_holdouts.empty?
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
           _result = decision_service_with_holdouts.get_variations_for_feature_list(

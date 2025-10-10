@@ -209,8 +209,8 @@ module Optimizely
       end
 
       # Adding Holdout variations in variation id and key maps
-      return [] unless @holdouts && !@holdouts.empty?
-        
+      return unless @holdouts && !@holdouts.empty?
+
       @holdouts.each do |holdout|
         holdout_key = holdout['key']
         holdout_id = holdout['id']
