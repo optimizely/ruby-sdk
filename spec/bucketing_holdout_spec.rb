@@ -20,6 +20,28 @@ require 'optimizely/bucketer'
 require 'optimizely/error_handler'
 require 'optimizely/logger'
 
+# Helper class for testing with controlled bucket values
+class TestBucketer < Optimizely::Bucketer
+  def initialize(logger)
+    super(logger)
+    @bucket_values = []
+    @bucket_index = 0
+  end
+
+  def set_bucket_values(values)
+    @bucket_values = values
+    @bucket_index = 0
+  end
+
+  def generate_bucket_value(bucketing_id)
+    return super(bucketing_id) if @bucket_values.empty?
+
+    value = @bucket_values[@bucket_index]
+    @bucket_index = (@bucket_index + 1) % @bucket_values.length
+    value
+  end
+end
+
 describe 'Optimizely::Bucketer - Holdout Tests' do
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
@@ -269,32 +291,11 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout).not_to be_nil
 
       test_bucketer.set_bucket_values([5000])
-      _variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      _variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(reasons).not_to be_nil
       # Decision reasons should be populated from the bucketing process
       # The exact content depends on whether the user was bucketed or not
     end
-  end
-end
-
-# Helper class for testing with controlled bucket values
-class TestBucketer < Optimizely::Bucketer
-  def initialize(logger)
-    super(logger)
-    @bucket_values = []
-    @bucket_index = 0
-  end
-
-  def bucket_values(values)
-    @bucket_values = values
-  end
-
-  def generate_bucket_value(bucketing_id)
-    return super(bucketing_id) if @bucket_values.empty?
-
-    value = @bucket_values[@bucket_index]
-    @bucket_index = (@bucket_index + 1) % @bucket_values.length
-    value
   end
 end
