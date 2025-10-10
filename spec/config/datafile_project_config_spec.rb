@@ -1602,21 +1602,9 @@ describe Optimizely::DatafileProjectConfig do
   end
 
   describe 'Holdout Decision Reasons' do
-    let(:holdout_test_data_path) do
-      File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
-    end
-
-    let(:holdout_test_data) do
-      JSON.parse(File.read(holdout_test_data_path))
-    end
-
-    let(:datafile_with_holdouts) do
-      holdout_test_data['datafileWithHoldouts']
-    end
-
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
-        datafile_with_holdouts,
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
         logger,
         error_handler
       )
@@ -1624,7 +1612,7 @@ describe Optimizely::DatafileProjectConfig do
 
     describe 'decision reasons structure' do
       it 'should support decision reasons for holdout decisions' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Verify the feature flag has proper structure for decision reasons
@@ -1710,10 +1698,10 @@ describe Optimizely::DatafileProjectConfig do
 
     describe 'holdout evaluation reasoning' do
       it 'should provide holdout configuration for evaluation' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
-        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
 
         holdouts_for_flag.each do |holdout|
           # Each holdout should have necessary info for decision reasoning

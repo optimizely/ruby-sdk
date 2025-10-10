@@ -1169,21 +1169,9 @@ describe Optimizely::DecisionService do
   end
 
   describe 'Holdout Decision Service Tests' do
-    let(:holdout_test_data_path) do
-      File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
-    end
-
-    let(:holdout_test_data) do
-      JSON.parse(File.read(holdout_test_data_path))
-    end
-
-    let(:datafile_with_holdouts) do
-      holdout_test_data['datafileWithHoldouts']
-    end
-
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
-        datafile_with_holdouts,
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
         spy_logger,
         error_handler
       )
@@ -1191,7 +1179,7 @@ describe Optimizely::DecisionService do
 
     let(:project_with_holdouts) do
       Optimizely::Project.new(
-        datafile: datafile_with_holdouts,
+        datafile: OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
         logger: spy_logger,
         error_handler: error_handler
       )
@@ -1208,10 +1196,10 @@ describe Optimizely::DecisionService do
     describe '#get_variations_for_feature_list with holdouts' do
       describe 'when holdout is active and user is bucketed' do
         it 'should return holdout decision with variation' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          holdout = config_with_holdouts.get_holdout('holdout_included_1')
+          holdout = config_with_holdouts.holdouts.first
           expect(holdout).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1243,10 +1231,10 @@ describe Optimizely::DecisionService do
 
       describe 'when holdout is inactive' do
         it 'should not bucket users and log appropriate message' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          holdout = config_with_holdouts.get_holdout('holdout_global_1')
+          holdout = config_with_holdouts.holdouts.first
           expect(holdout).not_to be_nil
 
           # Mock holdout as inactive
@@ -1275,10 +1263,10 @@ describe Optimizely::DecisionService do
 
       describe 'when user is not bucketed into holdout' do
         it 'should execute successfully with valid result structure' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          holdout = config_with_holdouts.get_holdout('holdout_included_1')
+          holdout = config_with_holdouts.holdouts.first
           expect(holdout).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1299,10 +1287,10 @@ describe Optimizely::DecisionService do
 
       describe 'with user attributes for audience targeting' do
         it 'should evaluate holdout with user attributes' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          holdout = config_with_holdouts.get_holdout('holdout_included_1')
+          holdout = config_with_holdouts.holdouts.first
           expect(holdout).not_to be_nil
 
           user_attributes = {
@@ -1329,7 +1317,7 @@ describe Optimizely::DecisionService do
 
       describe 'with multiple holdouts' do
         it 'should handle multiple holdouts for a single feature flag' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1351,7 +1339,7 @@ describe Optimizely::DecisionService do
 
       describe 'with empty user ID' do
         it 'should allow holdout bucketing with empty user ID' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
           # Empty user ID should still be valid for bucketing
@@ -1376,10 +1364,10 @@ describe Optimizely::DecisionService do
 
       describe 'with decision reasons' do
         it 'should populate decision reasons for holdouts' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          holdout = config_with_holdouts.get_holdout('holdout_included_1')
+          holdout = config_with_holdouts.holdouts.first
           expect(holdout).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1407,7 +1395,7 @@ describe Optimizely::DecisionService do
     describe '#get_variation_for_feature with holdouts' do
       describe 'when user is bucketed into holdout' do
         it 'should return holdout decision before checking experiments or rollouts' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1432,7 +1420,7 @@ describe Optimizely::DecisionService do
 
       describe 'when holdout returns no decision' do
         it 'should fall through to experiment and rollout evaluation' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
           # Use a user ID that won't be bucketed into holdout
@@ -1453,7 +1441,7 @@ describe Optimizely::DecisionService do
 
       describe 'with decision options' do
         it 'should respect decision options when evaluating holdouts' do
-          feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+          feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1474,7 +1462,7 @@ describe Optimizely::DecisionService do
 
     describe 'holdout priority and evaluation order' do
       it 'should evaluate holdouts before experiments' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1500,7 +1488,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should evaluate global holdouts for all flags' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Get global holdouts
@@ -1525,11 +1513,11 @@ describe Optimizely::DecisionService do
 
       it 'should respect included and excluded flags configuration' do
         # Test that flags in excludedFlags are not affected by that holdout
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_3']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
 
         if feature_flag
           # Get holdouts for this flag
-          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_3')
+          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
 
           # Should not include holdouts that exclude this flag
           excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
@@ -1540,7 +1528,7 @@ describe Optimizely::DecisionService do
 
     describe 'holdout logging and error handling' do
       it 'should log when holdout evaluation starts' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1558,7 +1546,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should handle missing holdout configuration gracefully' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Temporarily remove holdouts
@@ -1581,7 +1569,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should handle invalid holdout data gracefully' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1601,7 +1589,7 @@ describe Optimizely::DecisionService do
 
     describe 'holdout bucketing behavior' do
       it 'should use consistent bucketing for the same user' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_id = 'consistent_user'
@@ -1640,7 +1628,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should use bucketing ID when provided' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_attributes = {
@@ -1663,7 +1651,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should handle different traffic allocations' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Test with multiple users to see varying bucketing results
@@ -1691,7 +1679,7 @@ describe Optimizely::DecisionService do
 
     describe 'holdout integration with feature experiments' do
       it 'should check holdouts before feature experiments' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -1713,7 +1701,7 @@ describe Optimizely::DecisionService do
       end
 
       it 'should fall back to experiments if no holdout decision' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         user_context = project_with_holdouts.create_user_context('non_holdout_user_123', {})
