@@ -1216,7 +1216,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1228,7 +1228,7 @@ describe Optimizely::DecisionService do
           expect(result.length).to be > 0
 
           # Check if any decision is from holdout source
-          holdout_decision = result.find do |decision_result|
+          _holdout_decision = result.find do |decision_result|
             decision_result.decision&.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
           end
 
@@ -1255,7 +1255,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1283,7 +1283,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1312,7 +1312,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', user_attributes)
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1334,7 +1334,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1357,7 +1357,7 @@ describe Optimizely::DecisionService do
           # Empty user ID should still be valid for bucketing
           user_context = project_with_holdouts.create_user_context('', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1384,7 +1384,7 @@ describe Optimizely::DecisionService do
 
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1396,12 +1396,12 @@ describe Optimizely::DecisionService do
           # With real bucketer, we expect proper decision reasons to be generated
           # Find any decision with reasons
           decision_with_reasons = result.find do |decision_result|
-            decision_result.reasons && decision_result.reasons.length > 0
+            if decision_result.reasons && !decision_result.reasons.empty?
+              true
+            end
           end
 
-          if decision_with_reasons
-            expect(decision_with_reasons.reasons.length).to be > 0
-          end
+          expect(decision_with_reasons.reasons).not_to be_empty if decision_with_reasons
         end
       end
     end
@@ -1513,7 +1513,7 @@ describe Optimizely::DecisionService do
         if global_holdouts.length > 0
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,
@@ -1569,7 +1569,7 @@ describe Optimizely::DecisionService do
 
         user_context = project_with_holdouts.create_user_context('testUserId', {})
 
-        result = decision_service_with_holdouts.get_variations_for_feature_list(
+        _result = decision_service_with_holdouts.get_variations_for_feature_list(
           [feature_flag],
           user_context,
           config_with_holdouts,
@@ -1589,7 +1589,7 @@ describe Optimizely::DecisionService do
         user_context = project_with_holdouts.create_user_context('testUserId', {})
 
         # The method should handle invalid holdout data without crashing
-        result = decision_service_with_holdouts.get_variations_for_feature_list(
+        _result = decision_service_with_holdouts.get_variations_for_feature_list(
           [feature_flag],
           user_context,
           config_with_holdouts,
@@ -1651,7 +1651,7 @@ describe Optimizely::DecisionService do
 
         user_context = project_with_holdouts.create_user_context('testUserId', user_attributes)
 
-        result = decision_service_with_holdouts.get_variations_for_feature_list(
+        _result = decision_service_with_holdouts.get_variations_for_feature_list(
           [feature_flag],
           user_context,
           config_with_holdouts,
@@ -1669,12 +1669,12 @@ describe Optimizely::DecisionService do
         expect(feature_flag).not_to be_nil
 
         # Test with multiple users to see varying bucketing results
-        users = ['user1', 'user2', 'user3', 'user4', 'user5']
+        users = %w[user1 user2 user3 user4 user5]
         results = []
 
         users.each do |user_id|
           user_context = project_with_holdouts.create_user_context(user_id, {})
-          result = decision_service_with_holdouts.get_variations_for_feature_list(
+          _result = decision_service_with_holdouts.get_variations_for_feature_list(
             [feature_flag],
             user_context,
             config_with_holdouts,

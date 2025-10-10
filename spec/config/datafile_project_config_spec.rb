@@ -1512,7 +1512,7 @@ describe Optimizely::DatafileProjectConfig do
 
     describe '#decide with multiple holdouts' do
       it 'should handle multiple holdouts for different flags' do
-        flag_keys = ['test_flag_1', 'test_flag_2', 'test_flag_3', 'test_flag_4']
+        flag_keys = %w[test_flag_1 test_flag_2 test_flag_3 test_flag_4]
         
         flag_keys.each do |flag_key|
           feature_flag = config_with_holdouts.feature_flag_key_map[flag_key]
@@ -1667,7 +1667,7 @@ describe Optimizely::DatafileProjectConfig do
     describe 'holdout status messages' do
       it 'should differentiate between running and non-running holdouts' do
         running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
-        non_running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] != 'Running' }
+        non_running_holdouts = config_with_holdouts.holdouts.reject { |h| h['status'] == 'Running' }
         
         # Only running holdouts should be in the holdout_id_map
         running_holdouts.each do |holdout|

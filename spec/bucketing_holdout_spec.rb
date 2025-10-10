@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 #    Copyright 2025 Optimizely and contributors
 #
@@ -46,7 +48,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       # Set bucket value to be within first variation's traffic allocation (0-5000 range)
       test_bucketer.set_bucket_values([2500])
 
-      variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
       expect(variation['id']).to eq('var_1')
@@ -70,7 +72,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       # Set bucket value outside traffic allocation range
       test_bucketer.set_bucket_values([1500])
 
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
 
@@ -91,7 +93,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       test_bucketer.set_bucket_values([5000])
 
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
 
@@ -112,7 +114,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       test_bucketer.set_bucket_values([5000])
 
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
 
@@ -130,7 +132,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       test_bucketer.set_bucket_values([5000])
 
-      variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
 
@@ -151,7 +153,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       test_bucketer.set_bucket_values([5000])
 
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       # Should return nil for invalid experiment key
       expect(variation).to be_nil
@@ -167,7 +169,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       test_bucketer.set_bucket_values([5000])
 
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       # Should return nil for null experiment key
       expect(variation).to be_nil
@@ -182,7 +184,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Test user buckets into first variation
       test_bucketer.set_bucket_values([2500])
-      variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
       expect(variation['id']).to eq('var_1')
@@ -200,7 +202,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Test user buckets into second variation (bucket value 7500 should be in 5000-10000 range)
       test_bucketer.set_bucket_values([7500])
-      variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
       expect(variation['id']).to eq('var_2')
@@ -217,14 +219,14 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Test exact boundary value (should be included)
       test_bucketer.set_bucket_values([4999])
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
       expect(variation['id']).to eq('var_1')
 
       # Test value just outside boundary (should not be included)
       test_bucketer.set_bucket_values([5000])
-      variation, reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
     end
@@ -235,8 +237,8 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Create a real bucketer (not test bucketer) for consistent hashing
       real_bucketer = Optimizely::Bucketer.new(spy_logger)
-      variation1, reasons1 = real_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
-      variation2, reasons2 = real_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation1, _reasons1 = real_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation2, _reasons2 = real_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       # Results should be identical
       if variation1
@@ -267,7 +269,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout).not_to be_nil
 
       test_bucketer.set_bucket_values([5000])
-      variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(reasons).not_to be_nil
       # Decision reasons should be populated from the bucketing process
@@ -284,9 +286,8 @@ class TestBucketer < Optimizely::Bucketer
     @bucket_index = 0
   end
 
-  def set_bucket_values(values)
+  def bucket_values(values)
     @bucket_values = values
-    @bucket_index = 0
   end
 
   def generate_bucket_value(bucketing_id)

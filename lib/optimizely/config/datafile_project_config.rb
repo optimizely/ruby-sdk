@@ -198,9 +198,7 @@ module Optimizely
         flag_id = feature_flag['id']
         applicable_holdouts = []
 
-        if @included_holdouts[flag_id]
-          applicable_holdouts.concat(@included_holdouts[flag_id])
-        end
+        applicable_holdouts.concat(@included_holdouts[flag_id]) if @included_holdouts[flag_id]
 
         @global_holdouts.each_value do |holdout|
           excluded_flag_ids = holdout['excludedFlags'] || []
@@ -215,20 +213,20 @@ module Optimizely
         @holdouts.each do |holdout|
           holdout_key = holdout['key']
           holdout_id = holdout['id']
-          
+
           @variation_key_map[holdout_key] = {}
           @variation_id_map[holdout_key] = {}
           @variation_id_map_by_experiment_id[holdout_id] = {}
           @variation_key_map_by_experiment_id[holdout_id] = {}
 
           variations = holdout['variations']
-          if variations && !variations.empty?
-            variations.each do |variation|
-              @variation_key_map[holdout_key][variation['key']] = variation
-              @variation_id_map[holdout_key][variation['id']] = variation
-              @variation_key_map_by_experiment_id[holdout_id][variation['key']] = variation
-              @variation_id_map_by_experiment_id[holdout_id][variation['id']] = variation
-            end
+          next unless variations && !variations.empty?
+
+          variations.each do |variation|
+            @variation_key_map[holdout_key][variation['key']] = variation
+            @variation_id_map[holdout_key][variation['id']] = variation
+            @variation_key_map_by_experiment_id[holdout_id][variation['key']] = variation
+            @variation_id_map_by_experiment_id[holdout_id][variation['id']] = variation
           end
         end
       end
