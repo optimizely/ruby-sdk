@@ -168,7 +168,7 @@ module Optimizely
       #
       # Returns DecisionResult struct.
       holdouts = project_config.get_holdouts_for_flag(feature_flag['key'])
-  
+
       if holdouts && !holdouts.empty?
         # Has holdouts - use get_decision_for_flag which checks holdouts first
         get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
@@ -220,14 +220,14 @@ module Optimizely
       if rollout_decision.decision
         # Check if this was a forced decision (last reason contains "forced decision map")
         is_forced_decision = reasons.last&.include?('forced decision map')
-        
+
         unless is_forced_decision
           # Only add the "bucketed into rollout" message for normal bucketing
           message = "The user '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag['key']}'."
           @logger.log(Logger::INFO, message)
           reasons.push(message)
         end
-        
+
         DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons)
       else
         message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
