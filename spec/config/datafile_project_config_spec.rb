@@ -1425,21 +1425,9 @@ describe Optimizely::DatafileProjectConfig do
   end
 
   describe 'Holdout Decision Functionality' do
-    let(:holdout_test_data_path) do
-      File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
-    end
-
-    let(:holdout_test_data) do
-      JSON.parse(File.read(holdout_test_data_path))
-    end
-
-    let(:datafile_with_holdouts) do
-      holdout_test_data['datafileWithHoldouts']
-    end
-
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
-        datafile_with_holdouts,
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
         logger,
         error_handler
       )
@@ -1447,7 +1435,7 @@ describe Optimizely::DatafileProjectConfig do
 
     describe '#decide with global holdout' do
       it 'should return valid decision for global holdout' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Verify holdouts are loaded
@@ -1456,7 +1444,7 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'should handle decision with global holdout configuration' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
         expect(feature_flag['id']).not_to be_empty
       end
@@ -1464,7 +1452,7 @@ describe Optimizely::DatafileProjectConfig do
 
     describe '#decide with included flags holdout' do
       it 'should return valid decision for included flags' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Check if there's a holdout that includes this flag
@@ -1479,21 +1467,21 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'should properly filter holdouts based on includedFlags' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
-        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
         expect(holdouts_for_flag).to be_an(Array)
       end
     end
 
     describe '#decide with excluded flags holdout' do
       it 'should not return excluded holdout for excluded flag' do
-        # test_flag_3 is excluded by holdout_excluded_1
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_3']
+        # boolean_feature is excluded by holdout_excluded_1
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
 
         if feature_flag
-          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_3')
+          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
 
           # Should not include holdouts that exclude this flag
           excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
@@ -1502,17 +1490,17 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'should return holdouts for non-excluded flag' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
-        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
         expect(holdouts_for_flag).to be_an(Array)
       end
     end
 
     describe '#decide with multiple holdouts' do
       it 'should handle multiple holdouts for different flags' do
-        flag_keys = %w[test_flag_1 test_flag_2 test_flag_3 test_flag_4]
+        flag_keys = %w[boolean_feature multi_variate_feature string_single_variable_feature empty_feature]
 
         flag_keys.each do |flag_key|
           feature_flag = config_with_holdouts.feature_flag_key_map[flag_key]
@@ -1531,8 +1519,8 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'should properly cache holdout lookups' do
-        holdouts_1 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
-        holdouts_2 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        holdouts_1 = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
+        holdouts_2 = config_with_holdouts.get_holdouts_for_flag('boolean_feature')
 
         expect(holdouts_1).to equal(holdouts_2)
       end
@@ -1566,18 +1554,18 @@ describe Optimizely::DatafileProjectConfig do
 
     describe '#decide with empty user id' do
       it 'should handle empty user id without error' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         # Empty user ID should be valid for bucketing
         # This test verifies the config structure supports this
-        expect(feature_flag['key']).to eq('test_flag_1')
+        expect(feature_flag['key']).to eq('boolean_feature')
       end
     end
 
     describe '#holdout priority evaluation' do
       it 'should evaluate global holdouts for flags without specific targeting' do
-        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
 
         global_holdouts = config_with_holdouts.holdouts.select do |h|
