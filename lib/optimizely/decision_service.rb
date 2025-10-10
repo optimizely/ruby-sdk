@@ -296,11 +296,6 @@ module Optimizely
         user_profile_tracker.load_user_profile
       end
 
-      if project_config.respond_to?(:each) && feature_flags.respond_to?(:user_id) &&
-         user_context.respond_to?(:get_experiment_from_id)
-        project_config, feature_flags, user_context = user_context, project_config, feature_flags
-      end
-
       decisions = []
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
