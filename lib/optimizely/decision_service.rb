@@ -193,6 +193,7 @@ module Optimizely
         reasons.push(*holdout_decision.reasons)
 
         next unless holdout_decision.decision
+
         message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         reasons.push(message)
@@ -218,7 +219,6 @@ module Optimizely
         message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         reasons.push(message)
-        default_decision = Decision.new(nil, nil, DECISION_SOURCES['ROLLOUT'], nil)
         DecisionResult.new(nil, false, reasons)
       end
     end

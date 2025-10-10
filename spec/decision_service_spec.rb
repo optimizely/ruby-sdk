@@ -1396,9 +1396,7 @@ describe Optimizely::DecisionService do
           # With real bucketer, we expect proper decision reasons to be generated
           # Find any decision with reasons
           decision_with_reasons = result.find do |decision_result|
-            if decision_result.reasons && !decision_result.reasons.empty?
-              true
-            end
+            decision_result.reasons && !decision_result.reasons.empty?
           end
 
           expect(decision_with_reasons.reasons).not_to be_empty if decision_with_reasons
@@ -1510,7 +1508,7 @@ describe Optimizely::DecisionService do
           h['includedFlags'].nil? || h['includedFlags'].empty?
         end
 
-        if global_holdouts.length > 0
+        if !global_holdouts.empty?
           user_context = project_with_holdouts.create_user_context('testUserId', {})
 
           _result = decision_service_with_holdouts.get_variations_for_feature_list(
@@ -1528,11 +1526,11 @@ describe Optimizely::DecisionService do
       it 'should respect included and excluded flags configuration' do
         # Test that flags in excludedFlags are not affected by that holdout
         feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_3']
-        
+
         if feature_flag
           # Get holdouts for this flag
           holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_3')
-          
+
           # Should not include holdouts that exclude this flag
           excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
           expect(excluded_holdout).to be_nil
@@ -1627,12 +1625,12 @@ describe Optimizely::DecisionService do
         # Same user should get consistent results
         expect(result1).not_to be_nil
         expect(result2).not_to be_nil
-        
-        if result1.length > 0 && result2.length > 0
+
+        if !result1.empty? && !result2.empty?
           # Compare the first decision from each result
           decision1 = result1[0].decision
           decision2 = result2[0].decision
-          
+
           # If both have decisions, they should match
           if decision1 && decision2
             expect(decision1.variation&.fetch('id', nil)).to eq(decision2.variation&.fetch('id', nil))

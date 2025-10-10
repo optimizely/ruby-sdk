@@ -256,7 +256,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Create a real bucketer (not test bucketer) for real hashing behavior
       real_bucketer = Optimizely::Bucketer.new(spy_logger)
-      
+
       # These calls should not raise exceptions
       expect do
         real_bucketer.bucket(config, holdout, 'bucketingId1', test_user_id)
@@ -269,7 +269,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout).not_to be_nil
 
       test_bucketer.set_bucket_values([5000])
-      variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
+      _variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(reasons).not_to be_nil
       # Decision reasons should be populated from the bucketing process

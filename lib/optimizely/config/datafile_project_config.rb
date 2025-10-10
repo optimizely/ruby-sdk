@@ -209,25 +209,25 @@ module Optimizely
       end
 
       # Adding Holdout variations in variation id and key maps
-      if @holdouts && !@holdouts.empty?
-        @holdouts.each do |holdout|
-          holdout_key = holdout['key']
-          holdout_id = holdout['id']
+      return [] unless @holdouts && !@holdouts.empty?
+        
+      @holdouts.each do |holdout|
+        holdout_key = holdout['key']
+        holdout_id = holdout['id']
 
-          @variation_key_map[holdout_key] = {}
-          @variation_id_map[holdout_key] = {}
-          @variation_id_map_by_experiment_id[holdout_id] = {}
-          @variation_key_map_by_experiment_id[holdout_id] = {}
+        @variation_key_map[holdout_key] = {}
+        @variation_id_map[holdout_key] = {}
+        @variation_id_map_by_experiment_id[holdout_id] = {}
+        @variation_key_map_by_experiment_id[holdout_id] = {}
 
-          variations = holdout['variations']
-          next unless variations && !variations.empty?
+        variations = holdout['variations']
+        next unless variations && !variations.empty?
 
-          variations.each do |variation|
-            @variation_key_map[holdout_key][variation['key']] = variation
-            @variation_id_map[holdout_key][variation['id']] = variation
-            @variation_key_map_by_experiment_id[holdout_id][variation['key']] = variation
-            @variation_id_map_by_experiment_id[holdout_id][variation['id']] = variation
-          end
+        variations.each do |variation|
+          @variation_key_map[holdout_key][variation['key']] = variation
+          @variation_id_map[holdout_key][variation['id']] = variation
+          @variation_key_map_by_experiment_id[holdout_id][variation['key']] = variation
+          @variation_id_map_by_experiment_id[holdout_id][variation['id']] = variation
         end
       end
     end

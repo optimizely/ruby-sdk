@@ -1491,10 +1491,10 @@ describe Optimizely::DatafileProjectConfig do
       it 'should not return excluded holdout for excluded flag' do
         # test_flag_3 is excluded by holdout_excluded_1
         feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_3']
-        
+
         if feature_flag
           holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_3')
-          
+
           # Should not include holdouts that exclude this flag
           excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
           expect(excluded_holdout).to be_nil
@@ -1513,14 +1513,14 @@ describe Optimizely::DatafileProjectConfig do
     describe '#decide with multiple holdouts' do
       it 'should handle multiple holdouts for different flags' do
         flag_keys = %w[test_flag_1 test_flag_2 test_flag_3 test_flag_4]
-        
+
         flag_keys.each do |flag_key|
           feature_flag = config_with_holdouts.feature_flag_key_map[flag_key]
           next unless feature_flag
 
           holdouts = config_with_holdouts.get_holdouts_for_flag(flag_key)
           expect(holdouts).to be_an(Array)
-          
+
           # Each holdout should have proper structure
           holdouts.each do |holdout|
             expect(holdout).to have_key('id')
@@ -1533,7 +1533,7 @@ describe Optimizely::DatafileProjectConfig do
       it 'should properly cache holdout lookups' do
         holdouts_1 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
         holdouts_2 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
-        
+
         expect(holdouts_1).to equal(holdouts_2)
       end
     end
@@ -1542,14 +1542,14 @@ describe Optimizely::DatafileProjectConfig do
       it 'should not include inactive holdouts in decision process' do
         # Find a holdout and verify status handling
         holdout = config_with_holdouts.holdouts.first
-        
+
         if holdout
           original_status = holdout['status']
           holdout['status'] = 'Paused'
-          
+
           # Should not be in active holdouts map
           expect(config_with_holdouts.holdout_id_map[holdout['id']]).to be_nil
-          
+
           # Restore original status
           holdout['status'] = original_status
         end
@@ -1557,7 +1557,7 @@ describe Optimizely::DatafileProjectConfig do
 
       it 'should only process running holdouts' do
         running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
-        
+
         running_holdouts.each do |holdout|
           expect(config_with_holdouts.holdout_id_map[holdout['id']]).not_to be_nil
         end
@@ -1568,7 +1568,7 @@ describe Optimizely::DatafileProjectConfig do
       it 'should handle empty user id without error' do
         feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
         expect(feature_flag).not_to be_nil
-        
+
         # Empty user ID should be valid for bucketing
         # This test verifies the config structure supports this
         expect(feature_flag['key']).to eq('test_flag_1')
@@ -1605,15 +1605,15 @@ describe Optimizely::DatafileProjectConfig do
     let(:holdout_test_data_path) do
       File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
     end
-    
+
     let(:holdout_test_data) do
       JSON.parse(File.read(holdout_test_data_path))
     end
-    
+
     let(:datafile_with_holdouts) do
       holdout_test_data['datafileWithHoldouts']
     end
-    
+
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
         datafile_with_holdouts,
@@ -1626,7 +1626,7 @@ describe Optimizely::DatafileProjectConfig do
       it 'should support decision reasons for holdout decisions' do
         feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
         expect(feature_flag).not_to be_nil
-        
+
         # Verify the feature flag has proper structure for decision reasons
         expect(feature_flag).to have_key('id')
         expect(feature_flag).to have_key('key')
@@ -1634,7 +1634,7 @@ describe Optimizely::DatafileProjectConfig do
 
       it 'should include holdout information in config' do
         expect(config_with_holdouts.holdouts).not_to be_empty
-        
+
         config_with_holdouts.holdouts.each do |holdout|
           expect(holdout).to have_key('id')
           expect(holdout).to have_key('key')
@@ -1646,7 +1646,7 @@ describe Optimizely::DatafileProjectConfig do
     describe 'holdout bucketing messages' do
       it 'should have holdout configuration for bucketing decisions' do
         holdout = config_with_holdouts.holdouts.first
-        
+
         if holdout
           expect(holdout['status']).to eq('Running')
           expect(holdout).to have_key('audiences')
@@ -1655,7 +1655,7 @@ describe Optimizely::DatafileProjectConfig do
 
       it 'should support audience evaluation for holdouts' do
         holdout = config_with_holdouts.holdouts.first
-        
+
         if holdout
           # Holdouts should have audience conditions (even if empty)
           expect(holdout).to have_key('audiences')
@@ -1668,12 +1668,12 @@ describe Optimizely::DatafileProjectConfig do
       it 'should differentiate between running and non-running holdouts' do
         running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
         non_running_holdouts = config_with_holdouts.holdouts.reject { |h| h['status'] == 'Running' }
-        
+
         # Only running holdouts should be in the holdout_id_map
         running_holdouts.each do |holdout|
           expect(config_with_holdouts.holdout_id_map[holdout['id']]).not_to be_nil
         end
-        
+
         non_running_holdouts.each do |holdout|
           expect(config_with_holdouts.holdout_id_map[holdout['id']]).to be_nil
         end
@@ -1683,10 +1683,10 @@ describe Optimizely::DatafileProjectConfig do
     describe 'audience condition evaluation' do
       it 'should support audience conditions in holdouts' do
         holdout = config_with_holdouts.holdouts.first
-        
+
         if holdout
           expect(holdout).to have_key('audiences')
-          
+
           # Empty audience array means it matches everyone (evaluates to TRUE)
           if holdout['audiences'].empty?
             # This is valid - empty audiences = no restrictions
@@ -1700,7 +1700,7 @@ describe Optimizely::DatafileProjectConfig do
         holdouts_with_empty_audiences = config_with_holdouts.holdouts.select do |h|
           h['audiences'].nil? || h['audiences'].empty?
         end
-        
+
         # These holdouts should match all users
         holdouts_with_empty_audiences.each do |holdout|
           expect(holdout['status']).to eq('Running')
@@ -1712,9 +1712,9 @@ describe Optimizely::DatafileProjectConfig do
       it 'should provide holdout configuration for evaluation' do
         feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
         expect(feature_flag).not_to be_nil
-        
+
         holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
-        
+
         holdouts_for_flag.each do |holdout|
           # Each holdout should have necessary info for decision reasoning
           expect(holdout['id']).not_to be_empty
@@ -1725,7 +1725,7 @@ describe Optimizely::DatafileProjectConfig do
 
       it 'should support relevant holdout decision information' do
         holdout = config_with_holdouts.holdouts.first
-        
+
         if holdout
           # Verify holdout has all necessary fields for decision reasoning
           expect(holdout).to have_key('id')
@@ -1770,7 +1770,7 @@ describe Optimizely::DatafileProjectConfig do
         logger,
         error_handler
       )
-      
+
       holdouts_for_flag = config_without_holdouts.get_holdouts_for_flag('boolean_feature')
       expect(holdouts_for_flag).to eq([])
     end
@@ -1789,7 +1789,7 @@ describe Optimizely::DatafileProjectConfig do
       ]
       config_json = JSON.dump(config_body_with_nil)
       config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
-      
+
       # Should treat as global holdout
       expect(config.global_holdouts['holdout_nil']).not_to be_nil
     end
@@ -1797,7 +1797,7 @@ describe Optimizely::DatafileProjectConfig do
     it 'should only include running holdouts in maps' do
       running_count = config_with_holdouts.holdout_id_map.length
       total_count = config_with_holdouts.holdouts.length
-      
+
       # Only running holdouts should be in the map
       expect(running_count).to be < total_count
       expect(config_with_holdouts.holdout_id_map['holdout_1']).not_to be_nil
@@ -1806,7 +1806,7 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'should handle mixed status holdouts correctly' do
       running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
-      
+
       running_holdouts.each do |holdout|
         expect(config_with_holdouts.get_holdout(holdout['id'])).not_to be_nil
       end
