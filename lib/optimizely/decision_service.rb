@@ -282,7 +282,7 @@ module Optimizely
       ignore_ups = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       user_profile_tracker = nil
       unless ignore_ups && @user_profile_service
-        user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger)
+        user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger) if user_context.respond_to?(:user_id)
         user_profile_tracker.load_user_profile
       end
       decisions = []

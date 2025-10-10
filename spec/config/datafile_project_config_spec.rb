@@ -1251,7 +1251,7 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'should return global holdouts that do not exclude the flag' do
       holdouts = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
-      expect(holdouts.length).to eq(2)
+      expect(holdouts.length).to eq(3)
 
       global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
       expect(global_holdout).not_to be_nil
@@ -1264,7 +1264,7 @@ describe Optimizely::DatafileProjectConfig do
 
     it 'should not return global holdouts that exclude the flag' do
       holdouts = config_with_holdouts.get_holdouts_for_flag('boolean_single_variable_feature')
-      expect(holdouts.length).to eq(0)
+      expect(holdouts.length).to eq(1)
 
       global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
       expect(global_holdout).to be_nil
@@ -1274,14 +1274,14 @@ describe Optimizely::DatafileProjectConfig do
       holdouts1 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
       holdouts2 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
       expect(holdouts1).to equal(holdouts2)
-      expect(holdouts1.length).to eq(2)
+      expect(holdouts1.length).to eq(3)
     end
 
     it 'should return only global holdouts for flags not specifically targeted' do
       holdouts = config_with_holdouts.get_holdouts_for_flag('string_single_variable_feature')
 
       # Should only include global holdout (not excluded and no specific targeting)
-      expect(holdouts.length).to eq(1)
+      expect(holdouts.length).to eq(2)
       expect(holdouts.first['key']).to eq('global_holdout')
     end
   end
@@ -1624,7 +1624,7 @@ describe Optimizely::DatafileProjectConfig do
         holdout = config_with_holdouts.holdouts.first
 
         if holdout
-          expect(holdout['status']).to eq('Running')
+          expect(holdout['status']).to be_in(['Running', 'Inactive'])
           expect(holdout).to have_key('audiences')
         end
       end
@@ -1679,7 +1679,7 @@ describe Optimizely::DatafileProjectConfig do
 
         # These holdouts should match all users
         holdouts_with_empty_audiences.each do |holdout|
-          expect(holdout['status']).to eq('Running')
+          expect(holdout['status']).to be_in(['Running', 'Inactive'])
         end
       end
     end

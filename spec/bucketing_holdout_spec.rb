@@ -27,7 +27,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
   let(:test_bucketing_id) { 'test_bucketing_id' }
   let(:config) do
     Optimizely::DatafileProjectConfig.new(
-      OptimizelySpec::DATAFILE_WITH_HOLDOUTS_JSON,
+      OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
       spy_logger,
       error_handler
     )
