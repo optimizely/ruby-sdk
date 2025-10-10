@@ -142,7 +142,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout['trafficAllocation'] = [
         {
           'entityId' => 'invalid_variation_id',
-          'endOfRange' => 10000
+          'endOfRange' => 10_000
         }
       ]
 
