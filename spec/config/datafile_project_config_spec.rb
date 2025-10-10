@@ -1624,7 +1624,7 @@ describe Optimizely::DatafileProjectConfig do
         holdout = config_with_holdouts.holdouts.first
 
         if holdout
-          expect(holdout['status']).to be_in(['Running', 'Inactive'])
+          expect(holdout['status']).to be_in(%w[Running Inactive])
           expect(holdout).to have_key('audiences')
         end
       end
@@ -1679,7 +1679,7 @@ describe Optimizely::DatafileProjectConfig do
 
         # These holdouts should match all users
         holdouts_with_empty_audiences.each do |holdout|
-          expect(holdout['status']).to be_in(['Running', 'Inactive'])
+          expect(holdout['status']).to be_in(%w[Running Inactive])
         end
       end
     end
