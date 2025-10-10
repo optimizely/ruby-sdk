@@ -43,6 +43,8 @@ class TestBucketer < Optimizely::Bucketer
 end
 
 describe 'Optimizely::Bucketer - Holdout Tests' do
+  let(:config_body) { OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS }
+  let(:config_body_JSON) { OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON }
   let(:error_handler) { Optimizely::NoOpErrorHandler.new }
   let(:spy_logger) { spy('logger') }
   let(:test_user_id) { 'test_user_id' }
@@ -68,7 +70,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout).not_to be_nil
 
       # Set bucket value to be within first variation's traffic allocation (0-5000 range)
-      test_bucketer.set_bucket_values([2500])
+      test_bucketer.bucket_values([2500])
 
       variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
@@ -92,7 +94,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout['trafficAllocation'][0]['endOfRange'] = 1000
 
       # Set bucket value outside traffic allocation range
-      test_bucketer.set_bucket_values([1500])
+      test_bucketer.bucket_values([1500])
 
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
@@ -113,13 +115,13 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout = OptimizelySpec.deep_clone(holdout)
       modified_holdout['trafficAllocation'] = []
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
 
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
 
-      # Verify bucket was assigned but no variation found
+      # Verify bucket was assigned
       expect(spy_logger).to have_received(:log).with(
         Logger::DEBUG,
         "Assigned bucket 5000 to user '#{test_user_id}' with bucketing ID: '#{test_bucketing_id}'."
@@ -134,7 +136,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout = OptimizelySpec.deep_clone(holdout)
       modified_holdout['trafficAllocation'][0]['entityId'] = 'invalid_variation_id'
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
 
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
@@ -152,7 +154,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout).not_to be_nil
       expect(holdout['variations']&.length || 0).to eq(0)
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
 
       variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
@@ -173,7 +175,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout = OptimizelySpec.deep_clone(holdout)
       modified_holdout['key'] = ''
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
 
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
@@ -189,7 +191,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout = OptimizelySpec.deep_clone(holdout)
       modified_holdout['key'] = nil
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
 
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
@@ -205,7 +207,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout['variations'].length).to be >= 2
 
       # Test user buckets into first variation
-      test_bucketer.set_bucket_values([2500])
+      test_bucketer.bucket_values([2500])
       variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
@@ -223,7 +225,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       expect(holdout['variations'][1]['id']).to eq('var_2')
 
       # Test user buckets into second variation (bucket value 7500 should be in 5000-10000 range)
-      test_bucketer.set_bucket_values([7500])
+      test_bucketer.bucket_values([7500])
       variation, _reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
@@ -240,14 +242,14 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       modified_holdout['trafficAllocation'][0]['endOfRange'] = 5000
 
       # Test exact boundary value (should be included)
-      test_bucketer.set_bucket_values([4999])
+      test_bucketer.bucket_values([4999])
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).not_to be_nil
       expect(variation['id']).to eq('var_1')
 
       # Test value just outside boundary (should not be included)
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
       variation, _reasons = test_bucketer.bucket(config, modified_holdout, test_bucketing_id, test_user_id)
 
       expect(variation).to be_nil
@@ -290,7 +292,7 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
       holdout = config.get_holdout('holdout_1')
       expect(holdout).not_to be_nil
 
-      test_bucketer.set_bucket_values([5000])
+      test_bucketer.bucket_values([5000])
       _variation, reasons = test_bucketer.bucket(config, holdout, test_bucketing_id, test_user_id)
 
       expect(reasons).not_to be_nil

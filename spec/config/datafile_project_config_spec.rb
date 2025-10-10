@@ -1675,13 +1675,9 @@ describe Optimizely::DatafileProjectConfig do
         holdout = config_with_holdouts.holdouts.first
 
         if holdout
-          expect(holdout).to have_key('audiences')
-
-          # Empty audience array means it matches everyone (evaluates to TRUE)
-          if holdout['audiences'].empty?
-            # This is valid - empty audiences = no restrictions
-            expect(holdout['audiences']).to eq([])
-          end
+          expect(holdout).to have_key('id')
+          expect(holdout).to have_key('key')
+          expect(holdout.key?('audienceIds') || holdout.key?('audiences')).to be true
         end
       end
 

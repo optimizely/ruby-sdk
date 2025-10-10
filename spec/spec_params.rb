@@ -1946,6 +1946,7 @@ module OptimizelySpec
           'id' => 'holdout_1',
           'key' => 'global_holdout',
           'status' => 'Running',
+          'audiences' => [],
           'includedFlags' => [],
           'excludedFlags' => ['155554'],
           'variations' => [
@@ -1975,6 +1976,7 @@ module OptimizelySpec
           'id' => 'holdout_empty_1',
           'key' => 'holdout_empty_1',
           'status' => 'Running',
+          'audiences' => [],
           'includedFlags' => [],
           'excludedFlags' => [],
           'variations' => [],
@@ -1984,6 +1986,7 @@ module OptimizelySpec
           'id' => 'holdout_2',
           'key' => 'specific_holdout',
           'status' => 'Running',
+          'audiences' => [],
           'includedFlags' => ['155559'],
           'excludedFlags' => [],
           'variations' => [
@@ -2004,6 +2007,7 @@ module OptimizelySpec
           'id' => 'holdout_3',
           'key' => 'inactive_holdout',
           'status' => 'Inactive',
+          'audiences' => [],
           'includedFlags' => ['155554'],
           'excludedFlags' => [],
           'variations' => [
