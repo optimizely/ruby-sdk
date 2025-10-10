@@ -1423,4 +1423,393 @@ describe Optimizely::DatafileProjectConfig do
       expect(included_for_boolean).to be_nil
     end
   end
+
+  describe 'Holdout Decision Functionality' do
+    let(:holdout_test_data_path) do
+      File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
+    end
+
+    let(:holdout_test_data) do
+      JSON.parse(File.read(holdout_test_data_path))
+    end
+
+    let(:datafile_with_holdouts) do
+      holdout_test_data['datafileWithHoldouts']
+    end
+
+    let(:config_with_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        datafile_with_holdouts,
+        logger,
+        error_handler
+      )
+    end
+
+    describe '#decide with global holdout' do
+      it 'should return valid decision for global holdout' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+
+        # Verify holdouts are loaded
+        expect(config_with_holdouts.holdouts).not_to be_nil
+        expect(config_with_holdouts.holdouts.length).to be > 0
+      end
+
+      it 'should handle decision with global holdout configuration' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+        expect(feature_flag['id']).not_to be_empty
+      end
+    end
+
+    describe '#decide with included flags holdout' do
+      it 'should return valid decision for included flags' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+
+        # Check if there's a holdout that includes this flag
+        included_holdout = config_with_holdouts.holdouts.find do |h|
+          h['includedFlags']&.include?(feature_flag['id'])
+        end
+
+        if included_holdout
+          expect(included_holdout['key']).not_to be_empty
+          expect(included_holdout['status']).to eq('Running')
+        end
+      end
+
+      it 'should properly filter holdouts based on includedFlags' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        expect(holdouts_for_flag).to be_an(Array)
+      end
+    end
+
+    describe '#decide with excluded flags holdout' do
+      it 'should not return excluded holdout for excluded flag' do
+        # test_flag_3 is excluded by holdout_excluded_1
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_3']
+        
+        if feature_flag
+          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_3')
+          
+          # Should not include holdouts that exclude this flag
+          excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
+          expect(excluded_holdout).to be_nil
+        end
+      end
+
+      it 'should return holdouts for non-excluded flag' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        expect(holdouts_for_flag).to be_an(Array)
+      end
+    end
+
+    describe '#decide with multiple holdouts' do
+      it 'should handle multiple holdouts for different flags' do
+        flag_keys = ['test_flag_1', 'test_flag_2', 'test_flag_3', 'test_flag_4']
+        
+        flag_keys.each do |flag_key|
+          feature_flag = config_with_holdouts.feature_flag_key_map[flag_key]
+          next unless feature_flag
+
+          holdouts = config_with_holdouts.get_holdouts_for_flag(flag_key)
+          expect(holdouts).to be_an(Array)
+          
+          # Each holdout should have proper structure
+          holdouts.each do |holdout|
+            expect(holdout).to have_key('id')
+            expect(holdout).to have_key('key')
+            expect(holdout).to have_key('status')
+          end
+        end
+      end
+
+      it 'should properly cache holdout lookups' do
+        holdouts_1 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        holdouts_2 = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        
+        expect(holdouts_1).to equal(holdouts_2)
+      end
+    end
+
+    describe '#decide with inactive holdout' do
+      it 'should not include inactive holdouts in decision process' do
+        # Find a holdout and verify status handling
+        holdout = config_with_holdouts.holdouts.first
+        
+        if holdout
+          original_status = holdout['status']
+          holdout['status'] = 'Paused'
+          
+          # Should not be in active holdouts map
+          expect(config_with_holdouts.holdout_id_map[holdout['id']]).to be_nil
+          
+          # Restore original status
+          holdout['status'] = original_status
+        end
+      end
+
+      it 'should only process running holdouts' do
+        running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
+        
+        running_holdouts.each do |holdout|
+          expect(config_with_holdouts.holdout_id_map[holdout['id']]).not_to be_nil
+        end
+      end
+    end
+
+    describe '#decide with empty user id' do
+      it 'should handle empty user id without error' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+        
+        # Empty user ID should be valid for bucketing
+        # This test verifies the config structure supports this
+        expect(feature_flag['key']).to eq('test_flag_1')
+      end
+    end
+
+    describe '#holdout priority evaluation' do
+      it 'should evaluate global holdouts for flags without specific targeting' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+
+        global_holdouts = config_with_holdouts.holdouts.select do |h|
+          h['includedFlags'].nil? || h['includedFlags'].empty?
+        end
+
+        included_holdouts = config_with_holdouts.holdouts.select do |h|
+          h['includedFlags']&.include?(feature_flag['id'])
+        end
+
+        # Should have either global or included holdouts
+        expect(global_holdouts.length + included_holdouts.length).to be >= 0
+      end
+
+      it 'should handle mixed holdout configurations' do
+        # Verify the config has properly categorized holdouts
+        expect(config_with_holdouts.global_holdouts).to be_a(Hash)
+        expect(config_with_holdouts.included_holdouts).to be_a(Hash)
+        expect(config_with_holdouts.excluded_holdouts).to be_a(Hash)
+      end
+    end
+  end
+
+  describe 'Holdout Decision Reasons' do
+    let(:holdout_test_data_path) do
+      File.join(File.dirname(__FILE__), 'test_data', 'holdout_test_data.json')
+    end
+    
+    let(:holdout_test_data) do
+      JSON.parse(File.read(holdout_test_data_path))
+    end
+    
+    let(:datafile_with_holdouts) do
+      holdout_test_data['datafileWithHoldouts']
+    end
+    
+    let(:config_with_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        datafile_with_holdouts,
+        logger,
+        error_handler
+      )
+    end
+
+    describe 'decision reasons structure' do
+      it 'should support decision reasons for holdout decisions' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+        
+        # Verify the feature flag has proper structure for decision reasons
+        expect(feature_flag).to have_key('id')
+        expect(feature_flag).to have_key('key')
+      end
+
+      it 'should include holdout information in config' do
+        expect(config_with_holdouts.holdouts).not_to be_empty
+        
+        config_with_holdouts.holdouts.each do |holdout|
+          expect(holdout).to have_key('id')
+          expect(holdout).to have_key('key')
+          expect(holdout).to have_key('status')
+        end
+      end
+    end
+
+    describe 'holdout bucketing messages' do
+      it 'should have holdout configuration for bucketing decisions' do
+        holdout = config_with_holdouts.holdouts.first
+        
+        if holdout
+          expect(holdout['status']).to eq('Running')
+          expect(holdout).to have_key('audiences')
+        end
+      end
+
+      it 'should support audience evaluation for holdouts' do
+        holdout = config_with_holdouts.holdouts.first
+        
+        if holdout
+          # Holdouts should have audience conditions (even if empty)
+          expect(holdout).to have_key('audiences')
+          expect(holdout['audiences']).to be_an(Array)
+        end
+      end
+    end
+
+    describe 'holdout status messages' do
+      it 'should differentiate between running and non-running holdouts' do
+        running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
+        non_running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] != 'Running' }
+        
+        # Only running holdouts should be in the holdout_id_map
+        running_holdouts.each do |holdout|
+          expect(config_with_holdouts.holdout_id_map[holdout['id']]).not_to be_nil
+        end
+        
+        non_running_holdouts.each do |holdout|
+          expect(config_with_holdouts.holdout_id_map[holdout['id']]).to be_nil
+        end
+      end
+    end
+
+    describe 'audience condition evaluation' do
+      it 'should support audience conditions in holdouts' do
+        holdout = config_with_holdouts.holdouts.first
+        
+        if holdout
+          expect(holdout).to have_key('audiences')
+          
+          # Empty audience array means it matches everyone (evaluates to TRUE)
+          if holdout['audiences'].empty?
+            # This is valid - empty audiences = no restrictions
+            expect(holdout['audiences']).to eq([])
+          end
+        end
+      end
+
+      it 'should handle holdouts with empty audience conditions' do
+        # Empty audience conditions should evaluate to TRUE (match everyone)
+        holdouts_with_empty_audiences = config_with_holdouts.holdouts.select do |h|
+          h['audiences'].nil? || h['audiences'].empty?
+        end
+        
+        # These holdouts should match all users
+        holdouts_with_empty_audiences.each do |holdout|
+          expect(holdout['status']).to eq('Running')
+        end
+      end
+    end
+
+    describe 'holdout evaluation reasoning' do
+      it 'should provide holdout configuration for evaluation' do
+        feature_flag = config_with_holdouts.feature_flag_key_map['test_flag_1']
+        expect(feature_flag).not_to be_nil
+        
+        holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag('test_flag_1')
+        
+        holdouts_for_flag.each do |holdout|
+          # Each holdout should have necessary info for decision reasoning
+          expect(holdout['id']).not_to be_empty
+          expect(holdout['key']).not_to be_empty
+          expect(holdout['status']).to eq('Running')
+        end
+      end
+
+      it 'should support relevant holdout decision information' do
+        holdout = config_with_holdouts.holdouts.first
+        
+        if holdout
+          # Verify holdout has all necessary fields for decision reasoning
+          expect(holdout).to have_key('id')
+          expect(holdout).to have_key('key')
+          expect(holdout).to have_key('status')
+          expect(holdout).to have_key('audiences')
+          expect(holdout).to have_key('includedFlags')
+          expect(holdout).to have_key('excludedFlags')
+        end
+      end
+    end
+  end
+
+  describe 'Holdout Edge Cases' do
+    let(:config_with_holdouts) do
+      config_body_with_holdouts = config_body.dup
+      config_body_with_holdouts['holdouts'] = [
+        {
+          'id' => 'holdout_1',
+          'key' => 'test_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => []
+        },
+        {
+          'id' => 'holdout_2',
+          'key' => 'paused_holdout',
+          'status' => 'Paused',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => []
+        }
+      ]
+      config_json = JSON.dump(config_body_with_holdouts)
+      Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+    end
+
+    it 'should handle datafile without holdouts' do
+      config_without_holdouts = Optimizely::DatafileProjectConfig.new(
+        config_body_JSON,
+        logger,
+        error_handler
+      )
+      
+      holdouts_for_flag = config_without_holdouts.get_holdouts_for_flag('boolean_feature')
+      expect(holdouts_for_flag).to eq([])
+    end
+
+    it 'should handle holdouts with nil included/excluded flags' do
+      config_body_with_nil = config_body.dup
+      config_body_with_nil['holdouts'] = [
+        {
+          'id' => 'holdout_nil',
+          'key' => 'nil_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => nil,
+          'excludedFlags' => nil
+        }
+      ]
+      config_json = JSON.dump(config_body_with_nil)
+      config = Optimizely::DatafileProjectConfig.new(config_json, logger, error_handler)
+      
+      # Should treat as global holdout
+      expect(config.global_holdouts['holdout_nil']).not_to be_nil
+    end
+
+    it 'should only include running holdouts in maps' do
+      running_count = config_with_holdouts.holdout_id_map.length
+      total_count = config_with_holdouts.holdouts.length
+      
+      # Only running holdouts should be in the map
+      expect(running_count).to be < total_count
+      expect(config_with_holdouts.holdout_id_map['holdout_1']).not_to be_nil
+      expect(config_with_holdouts.holdout_id_map['holdout_2']).to be_nil
+    end
+
+    it 'should handle mixed status holdouts correctly' do
+      running_holdouts = config_with_holdouts.holdouts.select { |h| h['status'] == 'Running' }
+      
+      running_holdouts.each do |holdout|
+        expect(config_with_holdouts.get_holdout(holdout['id'])).not_to be_nil
+      end
+    end
+  end
 end

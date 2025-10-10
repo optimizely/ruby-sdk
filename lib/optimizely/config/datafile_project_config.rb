@@ -194,6 +194,43 @@ module Optimizely
         feature_flag['experimentIds'].each do |experiment_id|
           @experiment_feature_map[experiment_id] = [feature_flag['id']]
         end
+
+        flag_id = feature_flag['id']
+        applicable_holdouts = []
+
+        if @included_holdouts[flag_id]
+          applicable_holdouts.concat(@included_holdouts[flag_id])
+        end
+
+        @global_holdouts.each_value do |holdout|
+          excluded_flag_ids = holdout['excludedFlags'] || []
+          applicable_holdouts << holdout unless excluded_flag_ids.include?(flag_id)
+        end
+
+        @flag_holdouts_map[key] = applicable_holdouts unless applicable_holdouts.empty?
+      end
+
+      # Adding Holdout variations in variation id and key maps
+      if @holdouts && !@holdouts.empty?
+        @holdouts.each do |holdout|
+          holdout_key = holdout['key']
+          holdout_id = holdout['id']
+          
+          @variation_key_map[holdout_key] = {}
+          @variation_id_map[holdout_key] = {}
+          @variation_id_map_by_experiment_id[holdout_id] = {}
+          @variation_key_map_by_experiment_id[holdout_id] = {}
+
+          variations = holdout['variations']
+          if variations && !variations.empty?
+            variations.each do |variation|
+              @variation_key_map[holdout_key][variation['key']] = variation
+              @variation_id_map[holdout_key][variation['id']] = variation
+              @variation_key_map_by_experiment_id[holdout_id][variation['key']] = variation
+              @variation_id_map_by_experiment_id[holdout_id][variation['id']] = variation
+            end
+          end
+        end
       end
     end
 
@@ -605,38 +642,9 @@ module Optimizely
       #
       # Returns the holdouts that apply for a specific flag
 
-      feature_flag = @feature_flag_key_map[flag_key]
-      return [] unless feature_flag
+      return [] if @holdouts.nil? || @holdouts.empty?
 
-      flag_id = feature_flag['id']
-
-      # Check catch first
-      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
-
-      holdouts = []
-
-      # Add global holdouts that don't exclude this flag
-      @global_holdouts.each_value do |holdout|
-        is_excluded = false
-        excluded_flags = holdout['excludedFlags']
-        if excluded_flags && !excluded_flags.empty?
-          excluded_flags.each do |excluded_flag_id|
-            if excluded_flag_id == flag_id
-              is_excluded = true
-              break
-            end
-          end
-        end
-        holdouts << holdout unless is_excluded
-      end
-
-      # Add holdouts that specifically include this flag
-      holdouts.concat(@included_holdouts[flag_id]) if @included_holdouts.key?(flag_id)
-
-      # Cache the result
-      @flag_holdouts_map[flag_id] = holdouts
-
-      holdouts
+      @flag_holdouts_map[flag_key] || []
     end
 
     def get_holdout(holdout_id)
