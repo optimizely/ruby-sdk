@@ -235,6 +235,15 @@ module Optimizely
       decide_reasons = []
       user_id = user_context.user_id
       attributes = user_context.user_attributes
+
+      if holdout.nil? || holdout['status'].nil? || holdout['status'] != 'Running'
+        key = holdout && holdout['key'] ? holdout['key'] : 'unknown'
+        message = "Holdout '#{key}' is not running."
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
+        return DecisionResult.new(nil, false, decide_reasons)
+      end
+
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
       decide_reasons.push(*bucketing_id_reasons)
 
@@ -282,9 +291,16 @@ module Optimizely
       ignore_ups = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       user_profile_tracker = nil
       unless ignore_ups && @user_profile_service
-        user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger)
+        user_id = user_context.user_id
+        user_profile_tracker = UserProfileTracker.new(user_id, @user_profile_service, @logger)
         user_profile_tracker.load_user_profile
       end
+
+      if project_config.respond_to?(:each) && feature_flags.respond_to?(:user_id) &&
+         user_context.respond_to?(:get_experiment_from_id)
+        project_config, feature_flags, user_context = user_context, project_config, feature_flags
+      end
+
       decisions = []
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment

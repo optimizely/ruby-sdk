@@ -45,6 +45,12 @@ module Optimizely
       #
       # Returns variation in which visitor with ID user_id has been placed. Nil if no variation.
 
+      if experiment.nil? || experiment['key'].to_s.strip.empty?
+        message = "Invalid entity key provided for bucketing. Returning nil."
+        @logger.log(Logger::DEBUG, message) if @logger
+        return nil, []
+      end
+
       variation_id, decide_reasons = bucket_to_entity_id(project_config, experiment, bucketing_id, user_id)
       if variation_id && variation_id != ''
         experiment_id = experiment['id']

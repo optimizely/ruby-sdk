@@ -91,7 +91,12 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Modify traffic allocation to be smaller by creating a modified holdout
       modified_holdout = OptimizelySpec.deep_clone(holdout)
-      modified_holdout['trafficAllocation'][0]['endOfRange'] = 1000
+      modified_holdout['trafficAllocation'] = [
+        {
+          'entityId' => 'var_1',
+          'endOfRange' => 1000
+        }
+      ]
 
       # Set bucket value outside traffic allocation range
       test_bucketer.bucket_values([1500])
@@ -134,7 +139,12 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Set traffic allocation to point to non-existent variation
       modified_holdout = OptimizelySpec.deep_clone(holdout)
-      modified_holdout['trafficAllocation'][0]['entityId'] = 'invalid_variation_id'
+      modified_holdout['trafficAllocation'] = [
+        {
+          'entityId' => 'invalid_variation_id',
+          'endOfRange' => 10000
+        }
+      ]
 
       test_bucketer.bucket_values([5000])
 
@@ -239,7 +249,12 @@ describe 'Optimizely::Bucketer - Holdout Tests' do
 
       # Modify traffic allocation to be 5000 (50%)
       modified_holdout = OptimizelySpec.deep_clone(holdout)
-      modified_holdout['trafficAllocation'][0]['endOfRange'] = 5000
+      modified_holdout['trafficAllocation'] = [
+        {
+          'entityId' => 'var_1',
+          'endOfRange' => 5000
+        }
+      ]
 
       # Test exact boundary value (should be included)
       test_bucketer.bucket_values([4999])
