@@ -28,7 +28,7 @@ class TestBucketer < Optimizely::Bucketer
     @bucket_index = 0
   end
 
-  def set_bucket_values(values)
+  def bucket_values(values)
     @bucket_values = values
     @bucket_index = 0
   end

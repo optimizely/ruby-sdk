@@ -1540,7 +1540,7 @@ describe Optimizely::DatafileProjectConfig do
           modified_config_body = OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS.dup
           modified_config_body['holdouts'] = config_with_holdouts.holdouts.map(&:dup)
           modified_config_body['holdouts'].first['status'] = 'Paused'
-          
+
           modified_config = Optimizely::DatafileProjectConfig.new(
             JSON.dump(modified_config_body),
             logger,
