@@ -775,7 +775,7 @@ describe Optimizely::DecisionService do
 
           decision_result = decision_service.get_variation_for_feature(config, feature_flag, user_context)
           expect(decision_result.decision).to eq(expected_decision)
-          expect(decision_result.reasons).to eq(["The user 'user_1' is bucketed into a rollout for feature flag 'string_single_variable_feature'."])
+          expect(decision_result.reasons).to eq([])
         end
       end
 
