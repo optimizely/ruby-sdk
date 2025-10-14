@@ -46,7 +46,8 @@ module Optimizely
     DECISION_SOURCES = {
       'EXPERIMENT' => 'experiment',
       'FEATURE_TEST' => 'feature-test',
-      'ROLLOUT' => 'rollout'
+      'ROLLOUT' => 'rollout',
+      'HOLDOUT' => 'holdout'
     }.freeze
 
     def initialize(logger, cmab_service, user_profile_service = nil)
@@ -166,7 +167,127 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
+      holdouts = project_config.get_holdouts_for_flag(feature_flag['key'])
+
+      if holdouts && !holdouts.empty?
+        # Has holdouts - use get_decision_for_flag which checks holdouts first
+        get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
+      else
+        get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
+      end
+    end
+
+    def get_decision_for_flag(feature_flag, user_context, project_config, decide_options = [], user_profile_tracker = nil, decide_reasons = nil)
+      # Get the decision for a single feature flag.
+      # Processes holdouts, experiments, and rollouts in that order.
+      #
+      # feature_flag - The feature flag to get a decision for
+      # user_context - The user context
+      # project_config - The project config
+      # decide_options - Array of decide options
+      # user_profile_tracker - The user profile tracker
+      # decide_reasons - Array of decision reasons to merge
+      #
+      # Returns a DecisionResult for the feature flag
+
+      reasons = decide_reasons ? decide_reasons.dup : []
+      user_id = user_context.user_id
+
+      # Check holdouts
+      holdouts = project_config.get_holdouts_for_flag(feature_flag['key'])
+      holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
+        reasons.push(*holdout_decision.reasons)
+
+        next unless holdout_decision.decision
+
+        message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
+        @logger.log(Logger::INFO, message)
+        reasons.push(message)
+        return DecisionResult.new(holdout_decision.decision, false, reasons)
+      end
+
+      # Check if the feature flag has an experiment and the user is bucketed into that experiment
+      experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+      reasons.push(*experiment_decision.reasons)
+
+      return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
+
+      # Check if the feature flag has a rollout and the user is bucketed into that rollout
+      rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
+      reasons.push(*rollout_decision.reasons)
+
+      if rollout_decision.decision
+        # Check if this was a forced decision (last reason contains "forced decision map")
+        is_forced_decision = reasons.last&.include?('forced decision map')
+
+        unless is_forced_decision
+          # Only add the "bucketed into rollout" message for normal bucketing
+          message = "The user '#{user_id}' is bucketed into a rollout for feature flag '#{feature_flag['key']}'."
+          @logger.log(Logger::INFO, message)
+          reasons.push(message)
+        end
+
+        DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons)
+      else
+        message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
+        @logger.log(Logger::INFO, message)
+        DecisionResult.new(nil, false, reasons)
+      end
+    end
+
+    def get_variation_for_holdout(holdout, user_context, project_config)
+      # Get the variation for holdout
+      #
+      # holdout - The holdout configuration
+      # user_context - The user context
+      # project_config - The project config
+      #
+      # Returns a DecisionResult for the holdout
+
+      decide_reasons = []
+      user_id = user_context.user_id
+      attributes = user_context.user_attributes
+
+      if holdout.nil? || holdout['status'].nil? || holdout['status'] != 'Running'
+        key = holdout && holdout['key'] ? holdout['key'] : 'unknown'
+        message = "Holdout '#{key}' is not running."
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
+        return DecisionResult.new(nil, false, decide_reasons)
+      end
+
+      bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
+      decide_reasons.push(*bucketing_id_reasons)
+
+      # Check audience conditions
+      user_meets_audience_conditions, reasons_received = Audience.user_meets_audience_conditions?(project_config, holdout, user_context, @logger)
+      decide_reasons.push(*reasons_received)
+
+      unless user_meets_audience_conditions
+        message = "User '#{user_id}' does not meet the conditions for holdout '#{holdout['key']}'."
+        @logger.log(Logger::DEBUG, message)
+        decide_reasons.push(message)
+        return DecisionResult.new(nil, false, decide_reasons)
+      end
+
+      # Bucket user into holdout variation
+      variation, bucket_reasons = @bucketer.bucket(project_config, holdout, bucketing_id, user_id)
+      decide_reasons.push(*bucket_reasons)
+
+      if variation
+        message = "The user '#{user_id}' is bucketed into variation '#{variation['key']}' of holdout '#{holdout['key']}'."
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
+
+        holdout_decision = Decision.new(holdout, variation, DECISION_SOURCES['HOLDOUT'], nil)
+        DecisionResult.new(holdout_decision, false, decide_reasons)
+      else
+        message = "The user '#{user_id}' is not bucketed into holdout '#{holdout['key']}'."
+        @logger.log(Logger::DEBUG, message)
+        decide_reasons.push(message)
+        DecisionResult.new(nil, false, decide_reasons)
+      end
     end
 
     def get_variations_for_feature_list(project_config, feature_flags, user_context, decide_options = [])
@@ -183,9 +304,11 @@ module Optimizely
       ignore_ups = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       user_profile_tracker = nil
       unless ignore_ups && @user_profile_service
-        user_profile_tracker = UserProfileTracker.new(user_context.user_id, @user_profile_service, @logger)
+        user_id = user_context.user_id
+        user_profile_tracker = UserProfileTracker.new(user_id, @user_profile_service, @logger)
         user_profile_tracker.load_user_profile
       end
+
       decisions = []
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment

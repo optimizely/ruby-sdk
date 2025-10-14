@@ -1946,22 +1946,83 @@ module OptimizelySpec
           'id' => 'holdout_1',
           'key' => 'global_holdout',
           'status' => 'Running',
+          'audiences' => [],
           'includedFlags' => [],
-          'excludedFlags' => ['155554']
+          'excludedFlags' => ['155554'],
+          'variations' => [
+            {
+              'id' => 'var_1',
+              'key' => 'control',
+              'featureEnabled' => true
+            },
+            {
+              'id' => 'var_2',
+              'key' => 'treatment',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_1',
+              'endOfRange' => 5000
+            },
+            {
+              'entityId' => 'var_2',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'holdout_empty_1',
+          'key' => 'holdout_empty_1',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => [],
+          'variations' => [],
+          'trafficAllocation' => []
         },
         {
           'id' => 'holdout_2',
           'key' => 'specific_holdout',
           'status' => 'Running',
+          'audiences' => [],
           'includedFlags' => ['155559'],
-          'excludedFlags' => []
+          'excludedFlags' => [],
+          'variations' => [
+            {
+              'id' => 'var_3',
+              'key' => 'control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_3',
+              'endOfRange' => 10_000
+            }
+          ]
         },
         {
           'id' => 'holdout_3',
           'key' => 'inactive_holdout',
           'status' => 'Inactive',
+          'audiences' => [],
           'includedFlags' => ['155554'],
-          'excludedFlags' => []
+          'excludedFlags' => [],
+          'variations' => [
+            {
+              'id' => 'var_4',
+              'key' => 'off',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_4',
+              'endOfRange' => 10_000
+            }
+          ]
         }
       ]
     }
