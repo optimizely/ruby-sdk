@@ -20,6 +20,7 @@ require 'optimizely/decide/optimizely_decide_option'
 require 'digest'
 require 'json'
 require 'securerandom'
+require 'murmurhash3'
 
 module Optimizely
   CmabDecision = Struct.new(:variation_id, :cmab_uuid, keyword_init: true)
@@ -58,8 +59,7 @@ module Optimizely
     def get_lock_index(user_id, rule_id)
       # Create a hash of user_id + rule_id for consistent lock selection
       hash_input = "#{user_id}#{rule_id}"
-      # Use Ruby's built-in hash method and ensure positive result
-      hash_value = hash_input.hash.abs
+      hash_value = MurmurHash3::V32.str_hash(hash_input, 1) & 0xFFFFFFFF # Convert to unsigned 32-bit equivalent
       hash_value % NUM_LOCK_STRIPES
     end
 
