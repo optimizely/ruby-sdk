@@ -110,11 +110,11 @@ describe Optimizely::DecisionService do
             applicable_holdout = config_with_holdouts.holdouts.find do |holdout|
               # Global holdout (empty/nil includedFlags) that doesn't exclude this flag
               (holdout['includedFlags'].nil? || holdout['includedFlags'].empty?) &&
-              !(holdout['excludedFlags']&.include?(feature_flag['id']))
+                !holdout['excludedFlags']&.include?(feature_flag['id'])
             end
           end
 
-          expect(applicable_holdout).not_to be_nil, "No applicable holdout found for boolean_feature"
+          expect(applicable_holdout).not_to be_nil, 'No applicable holdout found for boolean_feature'
 
           # Mock holdout as inactive
           original_status = applicable_holdout['status']
@@ -364,9 +364,8 @@ describe Optimizely::DecisionService do
 
         expect(decision_result).not_to be_nil
 
-        if decision_result.decision && decision_result.decision.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
-          expect(decision_service_with_holdouts).not_to have_received(:get_variation_for_feature_experiment)
-        end
+        decision_result.decision && decision_result.decision.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] && holdout_decisions << decision_result
+        expect(decision_service_with_holdouts).not_to have_received(:get_variation_for_feature_experiment)
       end
 
       it 'should evaluate global holdouts for all flags' do
@@ -611,7 +610,7 @@ describe Optimizely::DecisionService do
         error_handler
       )
     end
-    
+
     let(:optimizely_with_mocked_events) do
       Optimizely::Project.new(
         datafile: OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
@@ -630,10 +629,10 @@ describe Optimizely::DecisionService do
         # Use a specific user ID that will be bucketed into a holdout
         # This is deterministic based on the bucketing algorithm
         test_user_id = 'user_bucketed_into_holdout'
-        
+
         feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil, "Feature flag 'boolean_feature' should exist"
-        
+
         user_attributes = {}
 
         allow(spy_event_processor).to receive(:process)
@@ -641,7 +640,7 @@ describe Optimizely::DecisionService do
         user_context = optimizely_with_mocked_events.create_user_context(test_user_id, user_attributes)
         decision = user_context.decide(feature_flag['key'])
 
-        expect(decision).not_to be_nil, "Decision should not be nil"
+        expect(decision).not_to be_nil, 'Decision should not be nil'
 
         actual_holdout = config_with_holdouts.holdouts&.find { |h| h['key'] == decision.rule_key }
 
@@ -651,11 +650,9 @@ describe Optimizely::DecisionService do
 
           holdout_variation = actual_holdout['variations'].find { |v| v['key'] == decision.variation_key }
 
-          expect(holdout_variation).not_to be_nil,
-            "Variation '#{decision.variation_key}' should be from the chosen holdout '#{actual_holdout['key']}'"
+          expect(holdout_variation).not_to be_nil, "Variation '#{decision.variation_key}' should be from the chosen holdout '#{actual_holdout['key']}'"
 
-          expect(decision.enabled).to eq(holdout_variation['featureEnabled']),
-            "Enabled flag should match holdout variation's featureEnabled value"
+          expect(decision.enabled).to eq(holdout_variation['featureEnabled']), "Enabled flag should match holdout variation's featureEnabled value"
 
           expect(spy_event_processor).to have_received(:process)
             .with(instance_of(Optimizely::ImpressionEvent))
@@ -672,10 +669,10 @@ describe Optimizely::DecisionService do
 
       it 'should not send impression event when DISABLE_DECISION_EVENT option is used' do
         test_user_id = 'user_bucketed_into_holdout'
-        
+
         feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         expect(feature_flag).not_to be_nil
-        
+
         user_attributes = {}
 
         allow(spy_event_processor).to receive(:process)
@@ -686,7 +683,7 @@ describe Optimizely::DecisionService do
           [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]
         )
 
-        expect(decision).not_to be_nil, "Decision should not be nil"
+        expect(decision).not_to be_nil, 'Decision should not be nil'
 
         chosen_holdout = config_with_holdouts.holdouts&.find { |h| h['key'] == decision.rule_key }
 
@@ -703,95 +700,80 @@ describe Optimizely::DecisionService do
     describe '#decide with holdout notification content' do
       it 'should send correct notification content for holdout decision' do
         captured_notifications = []
-        
-        notification_callback = lambda do |notification_type, user_id, user_attributes, decision_info|
+
+        notification_callback = lambda do |_notification_type, _user_id, _user_attributes, decision_info|
           captured_notifications << decision_info.dup
         end
-        
+
         optimizely_with_mocked_events.notification_center.add_notification_listener(
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:DECISION],
           notification_callback
         )
-        
+
         # Mock the decision service to return a holdout decision
         holdout = config_with_holdouts.holdouts.first
-        expect(holdout).not_to be_nil, "Should have at least one holdout configured"
-        
+        expect(holdout).not_to be_nil, 'Should have at least one holdout configured'
+
         holdout_variation = holdout['variations'].first
-        expect(holdout_variation).not_to be_nil, "Holdout should have at least one variation"
-        
+        expect(holdout_variation).not_to be_nil, 'Holdout should have at least one variation'
+
         # Create a holdout decision
         holdout_decision = Optimizely::DecisionService::Decision.new(
           holdout,
           holdout_variation,
           Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
         )
-        
+
         holdout_decision_result = Optimizely::DecisionService::DecisionResult.new(
           holdout_decision,
           false,
           []
         )
-        
+
         # Mock get_variations_for_feature_list to return holdout decision
         allow_any_instance_of(Optimizely::DecisionService).to receive(:get_variations_for_feature_list)
           .and_return([holdout_decision_result])
-        
+
         test_user_id = 'test_user'
-        user_attributes = { 'country' => 'us' }
-        
+        user_attributes = {'country' => 'us'}
+
         user_context = optimizely_with_mocked_events.create_user_context(test_user_id, user_attributes)
-        decision = user_context.decide('boolean_feature')
-        
-        expect(captured_notifications.length).to eq(1),
-          "Should have captured exactly one decision notification"
-        
+
+        expect(captured_notifications.length).to eq(1), 'Should have captured exactly one decision notification'
+
         notification = captured_notifications.first
         rule_key = notification[:rule_key]
-        
-        expect(rule_key).to eq(holdout['key']), "RuleKey should match holdout key"
-        
+
+        expect(rule_key).to eq(holdout['key']), 'RuleKey should match holdout key'
+
         # Verify holdout notification structure
-        expect(notification).to have_key(:flag_key),
-          "Holdout notification should contain flag_key"
-        expect(notification).to have_key(:enabled),
-          "Holdout notification should contain enabled flag"
-        expect(notification).to have_key(:variation_key),
-          "Holdout notification should contain variation_key"
-        expect(notification).to have_key(:experiment_id),
-          "Holdout notification should contain experiment_id"
-        expect(notification).to have_key(:variation_id),
-          "Holdout notification should contain variation_id"
-        
+        expect(notification).to have_key(:flag_key), 'Holdout notification should contain flag_key'
+        expect(notification).to have_key(:enabled), 'Holdout notification should contain enabled flag'
+        expect(notification).to have_key(:variation_key), 'Holdout notification should contain variation_key'
+        expect(notification).to have_key(:experiment_id), 'Holdout notification should contain experiment_id'
+        expect(notification).to have_key(:variation_id), 'Holdout notification should contain variation_id'
+
         flag_key = notification[:flag_key]
-        expect(flag_key).to eq('boolean_feature'), "FlagKey should match the requested flag"
-        
+        expect(flag_key).to eq('boolean_feature'), 'FlagKey should match the requested flag'
+
         experiment_id = notification[:experiment_id]
-        expect(experiment_id).to eq(holdout['id']),
-          "ExperimentId in notification should match holdout ID"
+        expect(experiment_id).to eq(holdout['id']), 'ExperimentId in notification should match holdout ID'
         
         variation_id = notification[:variation_id]
-        expect(variation_id).to eq(holdout_variation['id']),
-          "VariationId should match holdout variation ID"
-        
+        expect(variation_id).to eq(holdout_variation['id']), 'VariationId should match holdout variation ID'
+
         variation_key = notification[:variation_key]
-        expect(variation_key).to eq(holdout_variation['key']),
-          "VariationKey in notification should match holdout variation key"
-        
+        expect(variation_key).to eq(holdout_variation['key']), 'VariationKey in notification should match holdout variation key'
+
         enabled = notification[:enabled]
-        expect(enabled).not_to be_nil, "Enabled flag should be present in notification"
-        expect(enabled).to eq(holdout_variation['featureEnabled']),
-          "Enabled flag should match holdout variation's featureEnabled value"
-        
-        expect(config_with_holdouts.feature_flag_key_map).to have_key(flag_key),
-          "FlagKey '#{flag_key}' should exist in config"
-        
-        expect(notification).to have_key(:variables),
-          "Notification should contain variables"
-        expect(notification).to have_key(:reasons),
-          "Notification should contain reasons"
-        expect(notification).to have_key(:decision_event_dispatched),
-          "Notification should contain decision_event_dispatched"
+        expect(enabled).not_to be_nil, 'Enabled flag should be present in notification'
+        expect(enabled).to eq(holdout_variation['featureEnabled']), "Enabled flag should match holdout variation's featureEnabled value"
+
+        expect(config_with_holdouts.feature_flag_key_map).to have_key(flag_key), "FlagKey '#{flag_key}' should exist in config"
+
+        expect(notification).to have_key(:variables), 'Notification should contain variables'
+        expect(notification).to have_key(:reasons), 'Notification should contain reasons'
+        expect(notification).to have_key(:decision_event_dispatched), 'Notification should contain decision_event_dispatched'
       end
     end
   end

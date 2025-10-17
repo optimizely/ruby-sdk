@@ -1956,7 +1956,7 @@ module OptimizelySpec
               'featureEnabled' => true
             },
             {
-              'id' => 'var_2', 
+              'id' => 'var_2',
               'key' => 'treatment',
               'featureEnabled' => true
             }
