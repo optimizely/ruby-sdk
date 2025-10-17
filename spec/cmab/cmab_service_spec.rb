@@ -230,4 +230,46 @@ describe Optimizely::DefaultCmabService do
       )
     end
   end
+
+  describe 'lock striping behavior' do
+    describe '#get_lock_index' do
+      it 'returns consistent lock index for same user/rule combination' do
+        user_id = 'test_user'
+        rule_id = 'test_rule'
+
+        # Get lock index multiple times
+        index1 = cmab_service.send(:get_lock_index, user_id, rule_id)
+        index2 = cmab_service.send(:get_lock_index, user_id, rule_id)
+        index3 = cmab_service.send(:get_lock_index, user_id, rule_id)
+
+        # All should be the same
+        expect(index1).to eq(index2), 'Same user/rule should always use same lock'
+        expect(index2).to eq(index3), 'Same user/rule should always use same lock'
+      end
+
+      it 'distributes different user/rule combinations across multiple locks' do
+        test_cases = [
+          %w[user1 rule1],
+          %w[user2 rule1],
+          %w[user1 rule2],
+          %w[user3 rule3],
+          %w[user4 rule4]
+        ]
+
+        lock_indices = Set.new
+        test_cases.each do |user_id, rule_id|
+          index = cmab_service.send(:get_lock_index, user_id, rule_id)
+
+          # Verify index is within expected range
+          expect(index).to be >= 0, 'Lock index should be non-negative'
+          expect(index).to be < Optimizely::DefaultCmabService::NUM_LOCK_STRIPES, 'Lock index should be less than NUM_LOCK_STRIPES'
+
+          lock_indices.add(index)
+        end
+
+        # We should have multiple different lock indices (though not necessarily all unique due to hash collisions)
+        expect(lock_indices.size).to be > 1, 'Different user/rule combinations should generally use different locks'
+      end
+    end
+  end
 end

@@ -20,6 +20,7 @@ require 'optimizely/decide/optimizely_decide_option'
 require 'digest'
 require 'json'
 require 'securerandom'
+require 'murmurhash3'
 
 module Optimizely
   CmabDecision = Struct.new(:variation_id, :cmab_uuid, keyword_init: true)
@@ -35,13 +36,34 @@ module Optimizely
     #
     # @raise [ArgumentError] If cmab_cache is not an instance of LRUCache.
     # @raise [ArgumentError] If cmab_client is not an instance of DefaultCmabClient.
+
+    NUM_LOCK_STRIPES = 1000
+
     def initialize(cmab_cache, cmab_client, logger = nil)
       @cmab_cache = cmab_cache
       @cmab_client = cmab_client
       @logger = logger
+      @locks = Array.new(NUM_LOCK_STRIPES) { Mutex.new }
     end
 
     def get_decision(project_config, user_context, rule_id, options)
+      lock_index = get_lock_index(user_context.user_id, rule_id)
+
+      @locks[lock_index].synchronize do
+        get_decision_impl(project_config, user_context, rule_id, options)
+      end
+    end
+
+    private
+
+    def get_lock_index(user_id, rule_id)
+      # Create a hash of user_id + rule_id for consistent lock selection
+      hash_input = "#{user_id}#{rule_id}"
+      hash_value = MurmurHash3::V32.str_hash(hash_input, 1) & 0xFFFFFFFF # Convert to unsigned 32-bit equivalent
+      hash_value % NUM_LOCK_STRIPES
+    end
+
+    def get_decision_impl(project_config, user_context, rule_id, options)
       # Retrieves a decision for a given user and rule, utilizing a cache for efficiency.
       #
       # This method filters user attributes, checks for various cache-related options,
@@ -84,8 +106,6 @@ module Optimizely
                        ))
       cmab_decision
     end
-
-    private
 
     def fetch_decision(rule_id, user_id, attributes)
       # Fetches a decision for a given rule and user, along with user attributes.
