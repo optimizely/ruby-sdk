@@ -167,7 +167,7 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      holdouts = project_config.get_holdouts_for_flag(feature_flag['key'])
+      holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
 
       if holdouts && !holdouts.empty?
         # Has holdouts - use get_decision_for_flag which checks holdouts first
@@ -194,7 +194,7 @@ module Optimizely
       user_id = user_context.user_id
 
       # Check holdouts
-      holdouts = project_config.get_holdouts_for_flag(feature_flag['key'])
+      holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
@@ -275,7 +275,7 @@ module Optimizely
       variation, bucket_reasons = @bucketer.bucket(project_config, holdout, bucketing_id, user_id)
       decide_reasons.push(*bucket_reasons)
 
-      if variation
+      if variation && !variation['key'].nil? && !variation['key'].empty?
         message = "The user '#{user_id}' is bucketed into variation '#{variation['key']}' of holdout '#{holdout['key']}'."
         @logger.log(Logger::INFO, message)
         decide_reasons.push(message)

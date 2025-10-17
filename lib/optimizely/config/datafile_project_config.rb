@@ -212,6 +212,8 @@ module Optimizely
       return unless @holdouts && !@holdouts.empty?
 
       @holdouts.each do |holdout|
+        next unless holdout['status'] == 'Running'
+
         holdout_key = holdout['key']
         holdout_id = holdout['id']
 
@@ -633,16 +635,16 @@ module Optimizely
       @rollout_experiment_id_map.key?(experiment_id)
     end
 
-    def get_holdouts_for_flag(flag_key)
+    def get_holdouts_for_flag(flag_id)
       # Helper method to get holdouts from an applied feature flag
       #
-      # flag_key - Key of the feature flag
+      # flag_id - ID of the feature flag
       #
       # Returns the holdouts that apply for a specific flag
 
       return [] if @holdouts.nil? || @holdouts.empty?
 
-      @flag_holdouts_map[flag_key] || []
+      @flag_holdouts_map[flag_id] || []
     end
 
     def get_holdout(holdout_id)

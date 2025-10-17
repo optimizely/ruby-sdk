@@ -1956,7 +1956,7 @@ module OptimizelySpec
               'featureEnabled' => true
             },
             {
-              'id' => 'var_2',
+              'id' => 'var_2', 
               'key' => 'treatment',
               'featureEnabled' => true
             }
@@ -1964,10 +1964,31 @@ module OptimizelySpec
           'trafficAllocation' => [
             {
               'entityId' => 'var_1',
-              'endOfRange' => 5000
+              'endOfRange' => 5_000
             },
             {
               'entityId' => 'var_2',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'holdout_boolean_feature',
+          'key' => 'boolean_feature_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => ['155549'],
+          'excludedFlags' => [],
+          'variations' => [
+            {
+              'id' => 'var_boolean',
+              'key' => 'control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_boolean',
               'endOfRange' => 10_000
             }
           ]
