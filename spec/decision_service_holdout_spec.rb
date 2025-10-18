@@ -737,7 +737,7 @@ describe Optimizely::DecisionService do
         test_user_id = 'test_user'
         user_attributes = {'country' => 'us'}
 
-        user_context = optimizely_with_mocked_events.create_user_context(test_user_id, user_attributes)
+        _user_context = optimizely_with_mocked_events.create_user_context(test_user_id, user_attributes)
 
         expect(captured_notifications.length).to eq(1), 'Should have captured exactly one decision notification'
 
@@ -758,7 +758,7 @@ describe Optimizely::DecisionService do
 
         experiment_id = notification[:experiment_id]
         expect(experiment_id).to eq(holdout['id']), 'ExperimentId in notification should match holdout ID'
-        
+
         variation_id = notification[:variation_id]
         expect(variation_id).to eq(holdout_variation['id']), 'VariationId should match holdout variation ID'
 
