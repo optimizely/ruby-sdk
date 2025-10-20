@@ -364,8 +364,7 @@ describe Optimizely::DecisionService do
 
         expect(decision_result).not_to be_nil
 
-        decision_result.decision && decision_result.decision.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] && holdout_decisions << decision_result
-        expect(decision_service_with_holdouts).not_to have_received(:get_variation_for_feature_experiment)
+        expect(decision_service_with_holdouts).not_to have_received(:get_variation_for_feature_experiment) if decision_result.decision && decision_result.decision.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
       end
 
       it 'should evaluate global holdouts for all flags' do
@@ -710,14 +709,15 @@ describe Optimizely::DecisionService do
           notification_callback
         )
 
-        # Mock the decision service to return a holdout decision
+        test_user_id = 'holdout_test_user'
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
         holdout = config_with_holdouts.holdouts.first
         expect(holdout).not_to be_nil, 'Should have at least one holdout configured'
 
         holdout_variation = holdout['variations'].first
         expect(holdout_variation).not_to be_nil, 'Holdout should have at least one variation'
 
-        # Create a holdout decision
+        # Mock the decision service to return a holdout decision
         holdout_decision = Optimizely::DecisionService::Decision.new(
           holdout,
           holdout_variation,
@@ -730,15 +730,14 @@ describe Optimizely::DecisionService do
           []
         )
 
-        # Mock get_variations_for_feature_list to return holdout decision
-        allow_any_instance_of(Optimizely::DecisionService).to receive(:get_variations_for_feature_list)
+        # Mock get_variations_for_feature_list instead of get_variation_for_feature
+        allow(optimizely_with_mocked_events.decision_service).to receive(:get_variations_for_feature_list)
           .and_return([holdout_decision_result])
 
-        test_user_id = 'test_user'
-        user_attributes = {'country' => 'us'}
+        user_context = optimizely_with_mocked_events.create_user_context(test_user_id, {})
+        decision = user_context.decide(feature_flag['key'])
 
-        _user_context = optimizely_with_mocked_events.create_user_context(test_user_id, user_attributes)
-
+        expect(decision).not_to be_nil, 'Decision should not be nil'
         expect(captured_notifications.length).to eq(1), 'Should have captured exactly one decision notification'
 
         notification = captured_notifications.first

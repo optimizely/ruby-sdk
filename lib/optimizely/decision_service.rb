@@ -195,6 +195,7 @@ module Optimizely
 
       # Check holdouts
       holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
+
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
