@@ -638,7 +638,8 @@ module Optimizely
     def get_holdouts_for_flag(flag_id)
       # Helper method to get holdouts from an applied feature flag
       #
-      # flag_id - ID of the feature flag
+      # flag_id - (REQUIRED) ID of the feature flag
+      #         This parameter is required and should not be null/nil
       #
       # Returns the holdouts that apply for a specific flag
 
