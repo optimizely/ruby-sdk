@@ -17,6 +17,7 @@
 #
 require 'optimizely/odp/lru_cache'
 require 'optimizely/decide/optimizely_decide_option'
+require 'optimizely/logger'
 require 'digest'
 require 'json'
 require 'securerandom'
@@ -25,6 +26,12 @@ require 'murmurhash3'
 module Optimizely
   CmabDecision = Struct.new(:variation_id, :cmab_uuid, keyword_init: true)
   CmabCacheValue = Struct.new(:attributes_hash, :variation_id, :cmab_uuid, keyword_init: true)
+
+  class DefaultCmabCacheOptions
+    # CMAB Constants
+    DEFAULT_CMAB_CACHE_TIMEOUT = (30 * 60) # in seconds
+    DEFAULT_CMAB_CACHE_SIZE = 1000
+  end
 
   # Default CMAB service implementation
   class DefaultCmabService
@@ -42,7 +49,7 @@ module Optimizely
     def initialize(cmab_cache, cmab_client, logger = nil)
       @cmab_cache = cmab_cache
       @cmab_client = cmab_client
-      @logger = logger
+      @logger = logger || NoOpLogger.new
       @locks = Array.new(NUM_LOCK_STRIPES) { Mutex.new }
     end
 
@@ -81,30 +88,65 @@ module Optimizely
       # @return [CmabDecision] The decision object containing variation_id and cmab_uuid.
 
       filtered_attributes = filter_attributes(project_config, user_context, rule_id)
+      reasons = []
 
-      return fetch_decision(rule_id, user_context.user_id, filtered_attributes) if options&.include?(Decide::OptimizelyDecideOption::IGNORE_CMAB_CACHE)
+      if options&.include?(Decide::OptimizelyDecideOption::IGNORE_CMAB_CACHE)
+        reason = "Ignoring CMAB cache for user '#{user_context.user_id}' and rule '#{rule_id}'"
+        @logger.log(Logger::DEBUG, reason)
+        reasons << reason
+        cmab_decision = fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+        return [cmab_decision, reasons]
+      end
 
-      @cmab_cache.reset if options&.include?(Decide::OptimizelyDecideOption::RESET_CMAB_CACHE)
+      if options&.include?(Decide::OptimizelyDecideOption::RESET_CMAB_CACHE)
+        reason = "Resetting CMAB cache for user '#{user_context.user_id}' and rule '#{rule_id}'"
+        @logger.log(Logger::DEBUG, reason)
+        reasons << reason
+        @cmab_cache.reset
+      end
 
       cache_key = get_cache_key(user_context.user_id, rule_id)
 
-      @cmab_cache.remove(cache_key) if options&.include?(Decide::OptimizelyDecideOption::INVALIDATE_USER_CMAB_CACHE)
+      if options&.include?(Decide::OptimizelyDecideOption::INVALIDATE_USER_CMAB_CACHE)
+        reason = "Invalidating CMAB cache for user '#{user_context.user_id}' and rule '#{rule_id}'"
+        @logger.log(Logger::DEBUG, reason)
+        reasons << reason
+        @cmab_cache.remove(cache_key)
+      end
+
       cached_value = @cmab_cache.lookup(cache_key)
       attributes_hash = hash_attributes(filtered_attributes)
 
       if cached_value
-        return CmabDecision.new(variation_id: cached_value.variation_id, cmab_uuid: cached_value.cmab_uuid) if cached_value.attributes_hash == attributes_hash
-
-        @cmab_cache.remove(cache_key)
+        if cached_value.attributes_hash == attributes_hash
+          reason = "CMAB cache hit for user '#{user_context.user_id}' and rule '#{rule_id}'"
+          @logger.log(Logger::DEBUG, reason)
+          reasons << reason
+          return [CmabDecision.new(variation_id: cached_value.variation_id, cmab_uuid: cached_value.cmab_uuid), reasons]
+        else
+          reason = "CMAB cache attributes mismatch for user '#{user_context.user_id}' and rule '#{rule_id}', fetching new decision."
+          @logger.log(Logger::DEBUG, reason)
+          reasons << reason
+          @cmab_cache.remove(cache_key)
+        end
+      else
+        reason = "CMAB cache miss for user '#{user_context.user_id}' and rule '#{rule_id}'"
+        @logger.log(Logger::DEBUG, reason)
+        reasons << reason
       end
+
       cmab_decision = fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+      reason = "CMAB decision is #{cmab_decision.to_h}"
+      @logger.log(Logger::DEBUG, reason)
+      reasons << reason
+
       @cmab_cache.save(cache_key,
                        CmabCacheValue.new(
                          attributes_hash: attributes_hash,
                          variation_id: cmab_decision.variation_id,
                          cmab_uuid: cmab_decision.cmab_uuid
                        ))
-      cmab_decision
+      [cmab_decision, reasons]
     end
 
     def fetch_decision(rule_id, user_id, attributes)

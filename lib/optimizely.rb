@@ -50,10 +50,6 @@ module Optimizely
   class Project
     include Optimizely::Decide
 
-    # CMAB Constants
-    DEFAULT_CMAB_CACHE_TIMEOUT = (30 * 60 * 1000)
-    DEFAULT_CMAB_CACHE_SIZE = 1000
-
     attr_reader :notification_center
     # @api no-doc
     attr_reader :config_manager, :decision_service, :error_handler, :event_dispatcher,
@@ -90,7 +86,8 @@ module Optimizely
       event_processor: nil,
       default_decide_options: [],
       event_processor_options: {},
-      settings: nil
+      settings: nil,
+      cmab_service: nil
     )
       @logger = logger || NoOpLogger.new
       @error_handler = error_handler || NoOpErrorHandler.new
@@ -137,18 +134,22 @@ module Optimizely
 
       setup_odp!(@config_manager.sdk_key)
 
-      # Initialize CMAB components
-      @cmab_client = DefaultCmabClient.new(
-        nil,
-        CmabRetryConfig.new,
-        @logger
-      )
-      @cmab_cache = LRUCache.new(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
-      @cmab_service = DefaultCmabService.new(
-        @cmab_cache,
-        @cmab_client,
-        @logger
-      )
+      # Initialize CMAB components if cmab service is nil
+      if cmab_service.nil?
+        @cmab_client = DefaultCmabClient.new(
+          nil,
+          CmabRetryConfig.new,
+          @logger
+        )
+        @cmab_cache = LRUCache.new(Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_SIZE, Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_TIMEOUT)
+        @cmab_service = DefaultCmabService.new(
+          @cmab_cache,
+          @cmab_client,
+          @logger
+        )
+      else
+        @cmab_service = cmab_service
+      end
 
       @decision_service = DecisionService.new(@logger, @cmab_service, @user_profile_service)
 

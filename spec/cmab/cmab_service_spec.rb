@@ -5,11 +5,12 @@ require 'optimizely/cmab/cmab_service'
 require 'optimizely/odp/lru_cache'
 require 'optimizely/cmab/cmab_client'
 require 'optimizely/decide/optimizely_decide_option'
+require 'optimizely/logger'
 
 describe Optimizely::DefaultCmabService do
   let(:mock_cmab_cache) { instance_double(Optimizely::LRUCache) }
   let(:mock_cmab_client) { instance_double(Optimizely::DefaultCmabClient) }
-  let(:mock_logger) { double('logger') }
+  let(:mock_logger) { Optimizely::NoOpLogger.new }
   let(:cmab_service) { described_class.new(mock_cmab_cache, mock_cmab_client, mock_logger) }
 
   let(:mock_project_config) { double('project_config') }
@@ -47,18 +48,19 @@ describe Optimizely::DefaultCmabService do
 
       allow(mock_cmab_cache).to receive(:lookup).with(expected_key).and_return(cached_value)
 
-      decision = cmab_service.get_decision(mock_project_config, mock_user_context, rule_id, [])
+      decision, reasons = cmab_service.get_decision(mock_project_config, mock_user_context, rule_id, [])
 
       expect(mock_cmab_cache).to have_received(:lookup).with(expected_key)
       expect(decision.variation_id).to eq('varA')
       expect(decision.cmab_uuid).to eq('uuid-123')
+      expect(reasons).to include(match(/CMAB cache hit for user '#{user_id}' and rule '#{rule_id}'/))
     end
 
     it 'ignores cache when option given' do
       allow(mock_cmab_client).to receive(:fetch_decision).and_return('varB')
       expected_attributes = {'age' => 25, 'location' => 'USA'}
 
-      decision = cmab_service.get_decision(
+      decision, reasons = cmab_service.get_decision(
         mock_project_config,
         mock_user_context,
         rule_id,
@@ -73,6 +75,7 @@ describe Optimizely::DefaultCmabService do
         expected_attributes,
         decision.cmab_uuid
       )
+      expect(reasons).to include(match(/Ignoring CMAB cache for user '#{user_id}' and rule '#{rule_id}'/))
     end
 
     it 'invalidates user cache when option given' do
@@ -98,7 +101,7 @@ describe Optimizely::DefaultCmabService do
       allow(mock_cmab_cache).to receive(:lookup).and_return(nil)
       allow(mock_cmab_cache).to receive(:save)
 
-      decision = cmab_service.get_decision(
+      decision, reasons = cmab_service.get_decision(
         mock_project_config,
         mock_user_context,
         rule_id,
@@ -108,6 +111,7 @@ describe Optimizely::DefaultCmabService do
       expect(mock_cmab_cache).to have_received(:reset)
       expect(decision.variation_id).to eq('varD')
       expect(decision.cmab_uuid).to be_a(String)
+      expect(reasons).to include(match(/Resetting CMAB cache for user '#{user_id}' and rule '#{rule_id}'/))
     end
 
     it 'fetches new decision when hash changes' do
@@ -126,7 +130,7 @@ describe Optimizely::DefaultCmabService do
       cmab_service.send(:hash_attributes, expected_attributes)
       expected_key = cmab_service.send(:get_cache_key, user_id, rule_id)
 
-      decision = cmab_service.get_decision(mock_project_config, mock_user_context, rule_id, [])
+      decision, reasons = cmab_service.get_decision(mock_project_config, mock_user_context, rule_id, [])
 
       expect(mock_cmab_cache).to have_received(:remove).with(expected_key)
       expect(mock_cmab_cache).to have_received(:save).with(
@@ -140,6 +144,7 @@ describe Optimizely::DefaultCmabService do
         expected_attributes,
         decision.cmab_uuid
       )
+      expect(reasons).to include(match(/CMAB cache attributes mismatch for user '#{user_id}' and rule '#{rule_id}', fetching new decision./))
     end
 
     it 'only passes cmab attributes to client' do
@@ -151,7 +156,7 @@ describe Optimizely::DefaultCmabService do
                                                                        })
       allow(mock_cmab_client).to receive(:fetch_decision).and_return('varF')
 
-      decision = cmab_service.get_decision(
+      decision, reasons = cmab_service.get_decision(
         mock_project_config,
         mock_user_context,
         rule_id,
@@ -165,6 +170,7 @@ describe Optimizely::DefaultCmabService do
         {'age' => 25, 'location' => 'USA'},
         decision.cmab_uuid
       )
+      expect(reasons).to include(match(/Ignoring CMAB cache for user '#{user_id}' and rule '#{rule_id}'/))
     end
   end
 
