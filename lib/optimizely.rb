@@ -633,7 +633,7 @@ module Optimizely
       if decision.is_a?(Optimizely::DecisionService::Decision)
         variation = decision['variation']
         feature_enabled = variation['featureEnabled']
-        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
+        if decision.source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || decision.source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
           source_string = Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST']
           source_info = {
             experiment_key: decision.experiment['key'],
