@@ -649,9 +649,10 @@ module Optimizely
 
       # User is in CMAB allocation, proceed to CMAB decision
       begin
-        cmab_decision = @cmab_service.get_decision(
+        cmab_decision, reasons = @cmab_service.get_decision(
           project_config, user_context, experiment['id'], decide_options
         )
+        decide_reasons.push(*reasons)
         CmabDecisionResult.new(false, cmab_decision, decide_reasons)
       rescue StandardError => e
         error_message = "Failed to fetch CMAB data for experiment #{experiment['key']}."

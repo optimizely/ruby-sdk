@@ -22,6 +22,8 @@ require 'optimizely/event_dispatcher'
 require 'optimizely/event/batch_event_processor'
 require 'optimizely/logger'
 require 'optimizely/notification_center'
+require 'optimizely/cmab/cmab_client'
+require 'optimizely/cmab/cmab_service'
 
 module Optimizely
   class OptimizelyFactory
@@ -81,6 +83,40 @@ module Optimizely
     # @param blocking_timeout Numeric - Time in seconds.
     def self.blocking_timeout(blocking_timeout)
       @blocking_timeout = blocking_timeout
+    end
+
+    # Convenience method for setting CMAB cache size.
+    # @param cache_size Integer - Maximum number of items in CMAB cache.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.cmab_cache_size(cache_size, logger = NoOpLogger.new)
+      unless cache_size.is_a?(Integer) && cache_size.positive?
+        logger.log(
+          Logger::ERROR,
+          "CMAB cache size is invalid, setting to default size #{Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_SIZE}."
+        )
+        return
+      end
+      @cmab_cache_size = cache_size
+    end
+
+    # Convenience method for setting CMAB cache TTL.
+    # @param cache_ttl Numeric - Time in seconds for cache entries to live.
+    # @param logger - Optional LoggerInterface Provides a log method to log messages.
+    def self.cmab_cache_ttl(cache_ttl, logger = NoOpLogger.new)
+      unless cache_ttl.is_a?(Numeric) && cache_ttl.positive?
+        logger.log(
+          Logger::ERROR,
+          "CMAB cache TTL is invalid, setting to default TTL #{Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_TIMEOUT}."
+        )
+        return
+      end
+      @cmab_cache_ttl = cache_ttl
+    end
+
+    # Convenience method for setting custom CMAB cache.
+    # @param custom_cache - Cache implementation responding to lookup, save, remove, and reset methods.
+    def self.cmab_custom_cache(custom_cache)
+      @cmab_custom_cache = custom_cache
     end
 
     # Returns a new optimizely instance.
@@ -165,6 +201,14 @@ module Optimizely
         notification_center: notification_center
       )
 
+      # Initialize CMAB components
+      cmab_client = DefaultCmabClient.new(logger: logger)
+      cmab_cache = @cmab_custom_cache || LRUCache.new(
+        @cmab_cache_size || Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_SIZE,
+        @cmab_cache_ttl || Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_TIMEOUT
+      )
+      cmab_service = DefaultCmabService.new(cmab_cache, cmab_client, logger)
+
       Optimizely::Project.new(
         datafile: datafile,
         event_dispatcher: event_dispatcher,
@@ -176,7 +220,8 @@ module Optimizely
         config_manager: config_manager,
         notification_center: notification_center,
         event_processor: event_processor,
-        settings: settings
+        settings: settings,
+        cmab_service: cmab_service
       )
     end
   end
