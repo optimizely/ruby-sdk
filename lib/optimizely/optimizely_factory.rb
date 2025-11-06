@@ -119,6 +119,12 @@ module Optimizely
       @cmab_custom_cache = custom_cache
     end
 
+    # Convenience method for setting custom CMAB prediction endpoint.
+    # @param prediction_endpoint String - Custom URL template for CMAB prediction API. Use %s as placeholder for rule_id.
+    def self.cmab_prediction_endpoint(prediction_endpoint)
+      @cmab_prediction_endpoint = prediction_endpoint
+    end
+
     # Returns a new optimizely instance.
     #
     # @params sdk_key - Required String uniquely identifying the fallback datafile corresponding to project.
@@ -202,7 +208,11 @@ module Optimizely
       )
 
       # Initialize CMAB components
-      cmab_client = DefaultCmabClient.new(logger: logger)
+      cmab_prediction_endpoint = nil
+      cmab_prediction_endpoint = settings.cmab_prediction_endpoint if settings&.cmab_prediction_endpoint
+      cmab_prediction_endpoint ||= @cmab_prediction_endpoint
+
+      cmab_client = DefaultCmabClient.new(logger: logger, prediction_endpoint: cmab_prediction_endpoint)
       cmab_cache = @cmab_custom_cache || LRUCache.new(
         @cmab_cache_size || Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_SIZE,
         @cmab_cache_ttl || Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_TIMEOUT

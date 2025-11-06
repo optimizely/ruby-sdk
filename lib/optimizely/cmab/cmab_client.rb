@@ -43,15 +43,22 @@ module Optimizely
     # Client for interacting with the CMAB service.
     # Provides methods to fetch decisions with optional retry logic.
 
-    def initialize(http_client = nil, retry_config = nil, logger = nil)
+    def initialize(http_client = nil, retry_config = nil, logger = nil, prediction_endpoint = nil)
       # Initialize the CMAB client.
       # Args:
       #   http_client: HTTP client for making requests.
       #   retry_config: Configuration for retry settings.
       #   logger: Logger for logging errors and info.
+      #   prediction_endpoint: Custom prediction endpoint URL template.
+      #                        Use #{rule_id} as placeholder for rule_id.
       @http_client = http_client || DefaultHttpClient.new
       @retry_config = retry_config || CmabRetryConfig.new
       @logger = logger || NoOpLogger.new
+      @prediction_endpoint = if prediction_endpoint.to_s.strip.empty?
+                               'https://prediction.cmab.optimizely.com/predict/%s'
+                             else
+                               prediction_endpoint
+                             end
     end
 
     def fetch_decision(rule_id, user_id, attributes, cmab_uuid, timeout: MAX_WAIT_TIME)
@@ -64,7 +71,7 @@ module Optimizely
       #   timeout: Maximum wait time for the request to respond in seconds. (default is 10 seconds).
       # Returns:
       #   The variation ID.
-      url = "https://prediction.cmab.optimizely.com/predict/#{rule_id}"
+      url = format(@prediction_endpoint, rule_id)
       cmab_attributes = attributes.map { |key, value| {'id' => key.to_s, 'value' => value, 'type' => 'custom_attribute'} }
 
       request_body = {

@@ -22,7 +22,7 @@ module Optimizely
   module Helpers
     class OptimizelySdkSettings
       attr_accessor :odp_disabled, :segments_cache_size, :segments_cache_timeout_in_secs, :odp_segments_cache, :odp_segment_manager,
-                    :odp_event_manager, :fetch_segments_timeout, :odp_event_timeout, :odp_flush_interval
+                    :odp_event_manager, :fetch_segments_timeout, :odp_event_timeout, :odp_flush_interval, :cmab_prediction_endpoint
 
       # Contains configuration used for Optimizely Project initialization.
       #
@@ -35,6 +35,7 @@ module Optimizely
       # @param odp_segment_request_timeout - Time to wait in seconds for fetch_qualified_segments (optional. default = 10).
       # @param odp_event_request_timeout - Time to wait in seconds for send_odp_events (optional. default = 10).
       # @param odp_event_flush_interval - Time to wait in seconds for odp events to accumulate before sending (optional. default = 1).
+      # @param cmab_prediction_endpoint - Custom CMAB prediction endpoint URL template (optional). Use %s as placeholder for rule_id. Defaults to production endpoint if not provided.
       def initialize(
         disable_odp: false,
         segments_cache_size: Constants::ODP_SEGMENTS_CACHE_CONFIG[:DEFAULT_CAPACITY],
@@ -44,7 +45,8 @@ module Optimizely
         odp_event_manager: nil,
         odp_segment_request_timeout: nil,
         odp_event_request_timeout: nil,
-        odp_event_flush_interval: nil
+        odp_event_flush_interval: nil,
+        cmab_prediction_endpoint: nil
       )
         @odp_disabled = disable_odp
         @segments_cache_size = segments_cache_size
@@ -55,6 +57,7 @@ module Optimizely
         @fetch_segments_timeout = odp_segment_request_timeout
         @odp_event_timeout = odp_event_request_timeout
         @odp_flush_interval = odp_event_flush_interval
+        @cmab_prediction_endpoint = cmab_prediction_endpoint
       end
     end
   end
