@@ -55,7 +55,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when client is configured without retries' do
-    let(:client) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger) }
+    let(:client) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger) }
 
     it 'should return the variation id on success' do
       WebMock.stub_request(:post, expected_url)
@@ -132,7 +132,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when client is configured with retries' do
-    let(:client_with_retry) { described_class.new(nil, retry_config, spy_logger) }
+    let(:client_with_retry) { described_class.new(http_client: nil, retry_config: retry_config, logger: spy_logger) }
 
     it 'should return the variation id on first try' do
       WebMock.stub_request(:post, expected_url)
@@ -199,7 +199,7 @@ describe Optimizely::DefaultCmabClient do
   context 'when custom prediction endpoint is configured' do
     let(:custom_endpoint) { 'https://custom.endpoint.com/predict/%s' }
     let(:custom_url) { 'https://custom.endpoint.com/predict/test_rule' }
-    let(:client_with_custom_endpoint) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger, custom_endpoint) }
+    let(:client_with_custom_endpoint) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: custom_endpoint) }
 
     it 'should use the custom prediction endpoint' do
       WebMock.stub_request(:post, custom_url)
@@ -215,7 +215,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when no prediction endpoint is provided' do
-    let(:client_with_default) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger, nil) }
+    let(:client_with_default) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: nil) }
 
     it 'should use the default prediction endpoint' do
       WebMock.stub_request(:post, expected_url)
@@ -231,7 +231,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when empty string prediction endpoint is provided' do
-    let(:client_with_empty_endpoint) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger, '') }
+    let(:client_with_empty_endpoint) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: '') }
 
     it 'should fall back to the default prediction endpoint' do
       WebMock.stub_request(:post, expected_url)

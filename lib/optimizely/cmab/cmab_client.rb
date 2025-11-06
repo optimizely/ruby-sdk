@@ -43,7 +43,7 @@ module Optimizely
     # Client for interacting with the CMAB service.
     # Provides methods to fetch decisions with optional retry logic.
 
-    def initialize(http_client = nil, retry_config = nil, logger = nil, prediction_endpoint = nil)
+    def initialize(http_client: nil, retry_config: nil, logger: nil, prediction_endpoint: nil)
       # Initialize the CMAB client.
       # Args:
       #   http_client: HTTP client for making requests.
