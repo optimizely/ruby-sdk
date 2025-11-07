@@ -55,7 +55,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when client is configured without retries' do
-    let(:client) { described_class.new(nil, Optimizely::CmabRetryConfig.new(max_retries: 0), spy_logger) }
+    let(:client) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger) }
 
     it 'should return the variation id on success' do
       WebMock.stub_request(:post, expected_url)
@@ -132,7 +132,7 @@ describe Optimizely::DefaultCmabClient do
   end
 
   context 'when client is configured with retries' do
-    let(:client_with_retry) { described_class.new(nil, retry_config, spy_logger) }
+    let(:client_with_retry) { described_class.new(http_client: nil, retry_config: retry_config, logger: spy_logger) }
 
     it 'should return the variation id on first try' do
       WebMock.stub_request(:post, expected_url)
@@ -193,6 +193,56 @@ describe Optimizely::DefaultCmabClient do
       expect(Kernel).to have_received(:sleep).with(0.04).once
 
       expect(spy_logger).to have_received(:log).with(Logger::ERROR, a_string_including('Max retries exceeded for CMAB request'))
+    end
+  end
+
+  context 'when custom prediction endpoint is configured' do
+    let(:custom_endpoint) { 'https://custom.endpoint.com/predict/%s' }
+    let(:custom_url) { 'https://custom.endpoint.com/predict/test_rule' }
+    let(:client_with_custom_endpoint) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: custom_endpoint) }
+
+    it 'should use the custom prediction endpoint' do
+      WebMock.stub_request(:post, custom_url)
+             .with(body: expected_body_for_webmock, headers: expected_headers)
+             .to_return(status: 200, body: {'predictions' => [{'variation_id' => 'custom123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
+
+      result = client_with_custom_endpoint.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+
+      expect(result).to eq('custom123')
+      expect(WebMock).to have_requested(:post, custom_url)
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
+    end
+  end
+
+  context 'when no prediction endpoint is provided' do
+    let(:client_with_default) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: nil) }
+
+    it 'should use the default prediction endpoint' do
+      WebMock.stub_request(:post, expected_url)
+             .with(body: expected_body_for_webmock, headers: expected_headers)
+             .to_return(status: 200, body: {'predictions' => [{'variation_id' => 'default123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
+
+      result = client_with_default.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+
+      expect(result).to eq('default123')
+      expect(WebMock).to have_requested(:post, expected_url)
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
+    end
+  end
+
+  context 'when empty string prediction endpoint is provided' do
+    let(:client_with_empty_endpoint) { described_class.new(http_client: nil, retry_config: Optimizely::CmabRetryConfig.new(max_retries: 0), logger: spy_logger, prediction_endpoint: '') }
+
+    it 'should fall back to the default prediction endpoint' do
+      WebMock.stub_request(:post, expected_url)
+             .with(body: expected_body_for_webmock, headers: expected_headers)
+             .to_return(status: 200, body: {'predictions' => [{'variation_id' => 'fallback123'}]}.to_json, headers: {'Content-Type' => 'application/json'})
+
+      result = client_with_empty_endpoint.fetch_decision(rule_id, user_id, attributes, cmab_uuid)
+
+      expect(result).to eq('fallback123')
+      expect(WebMock).to have_requested(:post, expected_url)
+                     .with(body: expected_body_for_webmock, headers: expected_headers).once
     end
   end
 end

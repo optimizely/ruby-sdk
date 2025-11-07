@@ -137,9 +137,9 @@ module Optimizely
       # Initialize CMAB components if cmab service is nil
       if cmab_service.nil?
         @cmab_client = DefaultCmabClient.new(
-          nil,
-          CmabRetryConfig.new,
-          @logger
+          http_client: nil,
+          retry_config: CmabRetryConfig.new,
+          logger: @logger
         )
         @cmab_cache = LRUCache.new(Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_SIZE, Optimizely::DefaultCmabCacheOptions::DEFAULT_CMAB_CACHE_TIMEOUT)
         @cmab_service = DefaultCmabService.new(
