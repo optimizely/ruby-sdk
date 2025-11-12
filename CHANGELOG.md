@@ -1,5 +1,27 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.2.0
+November 13th, 2025
+
+### New Features  
+- Added CMAB client implementation to support contextual multi-armed bandit decisioning. ([#364](https://github.com/optimizely/ruby-sdk/pull/364))  
+- Implemented CMAB service to manage contextual decision logic. ([#367](https://github.com/optimizely/ruby-sdk/pull/367))  
+- Added SDK multi-region support for data hosting. ([#365](https://github.com/optimizely/ruby-sdk/pull/365))  
+
+### Enhancements  
+- Added `experiment_id` and `variation_id` to event payloads. ([#361](https://github.com/optimizely/ruby-sdk/pull/361))  
+- Updated project config to track CMAB properties. ([#362](https://github.com/optimizely/ruby-sdk/pull/362))  
+- Added `remove` method in LRU Cache for CMAB service. ([#366](https://github.com/optimizely/ruby-sdk/pull/366))  
+- Implemented Decision Service methods to handle CMAB logic. ([#369](https://github.com/optimizely/ruby-sdk/pull/369))  
+- Updated impression events to include CMAB UUID. ([#370](https://github.com/optimizely/ruby-sdk/pull/370))  
+- Exposed CMAB prediction endpoint in URL template. ([#378](https://github.com/optimizely/ruby-sdk/pull/378))  
+
+### Bug Fixes  
+- Fixed Rubocop failures on Ruby 3.0.0. ([#371](https://github.com/optimizely/ruby-sdk/pull/371))  
+- Fixed concurrency issue in CMAB service. ([#375](https://github.com/optimizely/ruby-sdk/pull/375))  
+- Minor bugbash updates and stability improvements. ([#377](https://github.com/optimizely/ruby-sdk/pull/377))  
+
+
 ## 5.1.0
 January 10th, 2025
 
