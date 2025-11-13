@@ -30,7 +30,7 @@ module Optimizely
   class DefaultCmabCacheOptions
     # CMAB Constants
     DEFAULT_CMAB_CACHE_TIMEOUT = (30 * 60) # in seconds
-    DEFAULT_CMAB_CACHE_SIZE = 1000
+    DEFAULT_CMAB_CACHE_SIZE = 10_000
   end
 
   # Default CMAB service implementation
