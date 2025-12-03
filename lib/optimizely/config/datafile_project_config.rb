@@ -205,7 +205,7 @@ module Optimizely
           applicable_holdouts << holdout unless excluded_flag_ids.include?(flag_id)
         end
 
-        @flag_holdouts_map[key] = applicable_holdouts unless applicable_holdouts.empty?
+        @flag_holdouts_map[flag_id] = applicable_holdouts unless applicable_holdouts.empty?
       end
 
       # Adding Holdout variations in variation id and key maps
