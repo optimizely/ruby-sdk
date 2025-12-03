@@ -1275,13 +1275,12 @@ module Optimizely
         flag_key: flag_key,
         rule_key: rule_key,
         rule_type: rule_type,
-        variation_key: variation_key,
-        enabled: enabled
+        variation_key: variation_key
       }
+      metadata[:enabled] = enabled if rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
       metadata[:cmab_uuid] = cmab_uuid unless cmab_uuid.nil?
 
-      event_attributes = rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] ? nil : attributes
-      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, event_attributes)
+      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, nil)
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
