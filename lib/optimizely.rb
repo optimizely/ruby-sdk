@@ -1280,7 +1280,8 @@ module Optimizely
       }
       metadata[:cmab_uuid] = cmab_uuid unless cmab_uuid.nil?
 
-      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, attributes)
+      event_attributes = rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] ? nil : attributes
+      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, event_attributes)
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
