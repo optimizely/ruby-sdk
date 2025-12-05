@@ -196,13 +196,12 @@ module Optimizely
         end
 
         flag_id = feature_flag['id']
-        applicable_holdout = nil
 
         # Prefer explicit holdouts (includedFlags) over global holdouts
-        if @included_holdouts[flag_id] && !@included_holdouts[flag_id].empty?
-          applicable_holdout = @included_holdouts[flag_id].first
-        else
-          # Use first global holdout that doesn't exclude this flag
+        applicable_holdout = @included_holdouts[flag_id]&.first
+
+        # Use first global holdout that doesn't exclude this flag if no explicit holdout
+        unless applicable_holdout
           @global_holdouts.each_value do |holdout|
             excluded_flag_ids = holdout['excludedFlags'] || []
             unless excluded_flag_ids.include?(flag_id)
