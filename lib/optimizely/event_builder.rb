@@ -171,7 +171,7 @@ module Optimizely
       experiment_key = experiment['key']
       experiment_id = experiment['id']
 
-      campaign_id = experiment&.dig('campaignId') || experiment&.dig('layerId')
+      campaign_id = project_config.experiment_key_map[experiment_key]['layerId'] || project_config.experiment_key_map[experiment_key]['campaignId']
       if decision_source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
         campaign_id = ''
         entity_id = ''
