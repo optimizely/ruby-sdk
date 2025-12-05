@@ -1271,16 +1271,27 @@ module Optimizely
         variation_id = variation ? variation['id'] : ''
       end
 
+      # For holdout decisions, filter attributes to only include $opt_bot_filtering
+      filtered_attributes = attributes
+      if rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
+        filtered_attributes = {}
+        if attributes && attributes.is_a?(Hash)
+          filtered_attributes['$opt_bot_filtering'] = attributes['$opt_bot_filtering'] if attributes['$opt_bot_filtering']
+        end
+      end
+
       metadata = {
         flag_key: flag_key,
         rule_key: rule_key,
         rule_type: rule_type,
-        variation_key: variation_key,
-        enabled: enabled
+        variation_key: variation_key
       }
+      
+      # Only include enabled field for non-holdout rule types
+      metadata[:enabled] = enabled unless rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
       metadata[:cmab_uuid] = cmab_uuid unless cmab_uuid.nil?
 
-      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, attributes)
+      user_event = UserEventFactory.create_impression_event(config, experiment, variation_id, metadata, user_id, filtered_attributes)
       @event_processor.process(user_event)
       return unless @notification_center.notification_count(NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]).positive?
 
