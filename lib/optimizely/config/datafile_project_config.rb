@@ -198,6 +198,7 @@ module Optimizely
         flag_id = feature_flag['id']
 
         # Prefer explicit holdouts (includedFlags) over global holdouts
+        # If multiple explicit holdouts exist, use the first one (deterministic based on datafile order)
         applicable_holdout = @included_holdouts[flag_id]&.first
 
         # Use first global holdout that doesn't exclude this flag if no explicit holdout
