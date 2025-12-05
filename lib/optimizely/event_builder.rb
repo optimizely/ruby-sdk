@@ -181,7 +181,7 @@ module Optimizely
 
       {
         decisions: [{
-          campaign_id: campaign_id
+          campaign_id: campaign_id,
           experiment_id: experiment_id,
           variation_id: variation_id
         }],

@@ -1283,7 +1283,7 @@ module Optimizely
       filtered_attributes = attributes
       if rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
         bot_filtering = attributes&.dig('$opt_bot_filtering')
-        filtered_attributes = bot_filtering ? { '$opt_bot_filtering' => bot_filtering } : {}
+        filtered_attributes = bot_filtering ? {'$opt_bot_filtering' => bot_filtering} : {}
       end
 
       metadata = {
