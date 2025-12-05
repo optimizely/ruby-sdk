@@ -196,7 +196,13 @@ module Optimizely
       # Check holdouts
       holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
 
-      holdouts.each do |holdout|
+      # Sort holdouts: global holdouts (empty includedFlags) should be evaluated first
+      sorted_holdouts = holdouts.sort_by do |holdout|
+        included_flags = holdout['includedFlags'] || []
+        included_flags.empty? ? 0 : 1
+      end
+
+      sorted_holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
 
@@ -314,7 +320,7 @@ module Optimizely
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
         holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
-        
+
         if holdouts && !holdouts.empty?
           decision_result = get_decision_for_flag(feature_flag, user_context, project_config, decide_options, user_profile_tracker)
         else

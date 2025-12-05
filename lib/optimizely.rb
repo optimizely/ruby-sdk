@@ -220,8 +220,16 @@ module Optimizely
         decision_source = decision.source
       end
 
+      # For holdout decisions, ensure campaign_id is empty string, not nil
+      campaign_id = nil
+      if decision_source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
+        campaign_id = ''
+      elsif experiment
+        campaign_id = experiment['campaignId'] || experiment['layerId']
+      end
+
       if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || decision_source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] || config.send_flag_decisions)
-        send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes, decision&.cmab_uuid)
+        send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes, decision&.cmab_uuid, campaign_id)
         decision_event_dispatched = true
       end
 
@@ -1274,10 +1282,8 @@ module Optimizely
       # For holdout decisions, filter attributes to only include $opt_bot_filtering
       filtered_attributes = attributes
       if rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
-        filtered_attributes = {}
-        if attributes && attributes.is_a?(Hash)
-          filtered_attributes['$opt_bot_filtering'] = attributes['$opt_bot_filtering'] if attributes['$opt_bot_filtering']
-        end
+        bot_filtering = attributes&.dig('$opt_bot_filtering')
+        filtered_attributes = bot_filtering ? { '$opt_bot_filtering' => bot_filtering } : {}
       end
 
       metadata = {
@@ -1286,7 +1292,7 @@ module Optimizely
         rule_type: rule_type,
         variation_key: variation_key
       }
-      
+
       # Only include enabled field for non-holdout rule types
       metadata[:enabled] = enabled unless rule_type == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
       metadata[:cmab_uuid] = cmab_uuid unless cmab_uuid.nil?
