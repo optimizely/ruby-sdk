@@ -196,16 +196,23 @@ module Optimizely
         end
 
         flag_id = feature_flag['id']
-        applicable_holdouts = []
+        applicable_holdout = nil
 
-        applicable_holdouts.concat(@included_holdouts[flag_id]) if @included_holdouts[flag_id]
-
-        @global_holdouts.each_value do |holdout|
-          excluded_flag_ids = holdout['excludedFlags'] || []
-          applicable_holdouts << holdout unless excluded_flag_ids.include?(flag_id)
+        # Prefer explicit holdouts (includedFlags) over global holdouts
+        if @included_holdouts[flag_id] && !@included_holdouts[flag_id].empty?
+          applicable_holdout = @included_holdouts[flag_id].first
+        else
+          # Use first global holdout that doesn't exclude this flag
+          @global_holdouts.each_value do |holdout|
+            excluded_flag_ids = holdout['excludedFlags'] || []
+            unless excluded_flag_ids.include?(flag_id)
+              applicable_holdout = holdout
+              break
+            end
+          end
         end
 
-        @flag_holdouts_map[key] = applicable_holdouts unless applicable_holdouts.empty?
+        @flag_holdouts_map[key] = [applicable_holdout] if applicable_holdout
       end
 
       # Adding Holdout variations in variation id and key maps
