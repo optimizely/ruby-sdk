@@ -1249,17 +1249,18 @@ describe Optimizely::DatafileProjectConfig do
       expect(holdouts).to eq([])
     end
 
-    it 'should return global holdouts that do not exclude the flag' do
+    it 'should return only the most specific holdout for the flag' do
       holdouts = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
-      expect(holdouts.length).to eq(3)
+      expect(holdouts.length).to eq(1)
 
-      global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
-      expect(global_holdout).not_to be_nil
-      expect(global_holdout['id']).to eq('holdout_1')
-
+      # Should only return the explicit holdout (specific_holdout), not the global ones
       specific_holdout = holdouts.find { |h| h['key'] == 'specific_holdout' }
       expect(specific_holdout).not_to be_nil
       expect(specific_holdout['id']).to eq('holdout_2')
+
+      # Global holdout should NOT be included when explicit holdout exists
+      global_holdout = holdouts.find { |h| h['key'] == 'global_holdout' }
+      expect(global_holdout).to be_nil
     end
 
     it 'should not return global holdouts that exclude the flag' do
@@ -1274,14 +1275,14 @@ describe Optimizely::DatafileProjectConfig do
       holdouts1 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
       holdouts2 = config_with_holdouts.get_holdouts_for_flag('multi_variate_feature')
       expect(holdouts1).to equal(holdouts2)
-      expect(holdouts1.length).to eq(3)
+      expect(holdouts1.length).to eq(1)
     end
 
-    it 'should return only global holdouts for flags not specifically targeted' do
+    it 'should return only one global holdout for flags not specifically targeted' do
       holdouts = config_with_holdouts.get_holdouts_for_flag('string_single_variable_feature')
 
-      # Should only include global holdout (not excluded and no specific targeting)
-      expect(holdouts.length).to eq(2)
+      # Should only include one global holdout (not excluded and no specific targeting)
+      expect(holdouts.length).to eq(1)
       expect(holdouts.first['key']).to eq('global_holdout')
     end
   end
