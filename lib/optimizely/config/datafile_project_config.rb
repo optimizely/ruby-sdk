@@ -645,14 +645,12 @@ module Optimizely
       return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
 
       # Prioritize global holdouts first
-      active_holdouts = []
-
       excluded = @excluded_holdouts[flag_id] || []
 
       active_holdouts = if excluded.any?
-                          @global_holdouts.values.reject { |holdout| excluded.include?(holdout) }
+                          @global_holdouts.reject { |holdout| excluded.include?(holdout) }
                         else
-                          @global_holdouts.values.dup
+                          @global_holdouts.dup
                         end
 
       # Append included holdouts
