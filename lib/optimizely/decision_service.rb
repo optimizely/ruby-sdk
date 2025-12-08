@@ -327,7 +327,7 @@ module Optimizely
               break
             else
               # User didn't bucket into this holdout, try next or continue to experiments
-              decision_result = holdout_decision unless decision_result
+              decision_result ||= holdout_decision
             end
           end
         end
