@@ -645,6 +645,27 @@ module Optimizely
 
       return [] if @holdouts.nil? || @holdouts.empty?
 
+      # Check cache and return persistent holdouts
+      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
+
+      # Prioritize global holdouts first
+      active_holdouts = []
+
+      excluded = @excluded_holdouts[flag_id] || []
+
+      if excluded.any?
+        active_holdouts = @global_holdouts.values.reject { |holdout| excluded.include?(holdout) }
+      else
+        active_holdouts = @global_holdouts.values.dup
+      end
+
+      # Append included holdouts
+      included = @included_holdouts[flag_id] || []
+      active_holdouts.concat(included)
+
+      # Cache the result
+      @flag_holdouts_map[flag_id] = active_holdouts
+
       @flag_holdouts_map[flag_id] || []
     end
 
