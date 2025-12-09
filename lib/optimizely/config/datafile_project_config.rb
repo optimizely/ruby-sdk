@@ -123,6 +123,9 @@ module Optimizely
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
 
+        # Ensure holdout has layerId field (holdouts don't have campaigns)
+        holdout['layerId'] ||= ''
+
         @holdout_id_map[holdout['id']] = holdout
 
         included_flags = holdout['includedFlags'] || []
