@@ -644,6 +644,10 @@ module Optimizely
 
       return [] if @holdouts.nil? || @holdouts.empty?
 
+      # Validate that the flag exists in the datafile
+      flag_exists = @feature_flags.any? { |flag| flag['id'] == flag_id }
+      return [] unless flag_exists
+
       # Check cache and return persistent holdouts
       return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
 
