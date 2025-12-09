@@ -775,7 +775,8 @@ describe Optimizely::DecisionService do
 
           decision_result = decision_service.get_variation_for_feature(config, feature_flag, user_context)
           expect(decision_result.decision).to eq(expected_decision)
-          expect(decision_result.reasons).to eq([])
+          # Reasons now include rollout bucketing message from get_decision_for_flag
+          expect(decision_result.reasons).to include(a_string_matching(/is bucketed into a rollout/))
         end
       end
 
