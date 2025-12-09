@@ -167,14 +167,15 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
+      # holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
 
-      if holdouts && !holdouts.empty?
-        # Has holdouts - use get_decision_for_flag which checks holdouts first
-        get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
-      else
-        get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
-      end
+      # if holdouts && !holdouts.empty?
+      #   # Has holdouts - use get_decision_for_flag which checks holdouts first
+      #   get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
+      # else
+      #   get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
+      # end
+      get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
     end
 
     def get_decision_for_flag(feature_flag, user_context, project_config, decide_options = [], user_profile_tracker = nil, decide_reasons = nil)
@@ -313,13 +314,11 @@ module Optimizely
       decisions = []
       feature_flags.each do |feature_flag|
         # check if the feature is being experiment on and whether the user is bucketed into the experiment
-        decision_result = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
-        # Only process rollout if no experiment decision was found and no error
-        if decision_result.decision.nil? && !decision_result.error
-          decision_result_rollout = get_variation_for_feature_rollout(project_config, feature_flag, user_context) unless decision_result.decision
-          decision_result.decision = decision_result_rollout.decision
-          decision_result.reasons.push(*decision_result_rollout.reasons)
-        end
+        decision_result = get_decision_for_flag(project_config, feature_flag, user_context, decide_options, user_profile_tracker)
+        # # Only process rollout if no experiment decision was found and no error
+        # if decision_result.decision.nil? && !decision_result.error
+        #   decision_result.reasons.push(*decision_result.reasons)
+        # end
         decisions << decision_result
       end
       user_profile_tracker&.save_user_profile
