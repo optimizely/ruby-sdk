@@ -644,12 +644,16 @@ module Optimizely
 
       return [] if @holdouts.nil? || @holdouts.empty?
 
+      # Check cache first (before validation, so we cache the validation result too)
+      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
+
       # Validate that the flag exists in the datafile
       flag_exists = @feature_flags.any? { |flag| flag['id'] == flag_id }
-      return [] unless flag_exists
-
-      # Check cache and return persistent holdouts
-      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
+      unless flag_exists
+        # Cache the empty result for non-existent flags
+        @flag_holdouts_map[flag_id] = []
+        return []
+      end
 
       # Prioritize global holdouts first
       excluded = @excluded_holdouts[flag_id] || []
