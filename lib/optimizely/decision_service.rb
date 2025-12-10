@@ -214,6 +214,9 @@ module Optimizely
 
       return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
 
+      # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
+      return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
+
       # Check if the feature flag has a rollout and the user is bucketed into that rollout
       rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
       reasons.push(*rollout_decision.reasons)
