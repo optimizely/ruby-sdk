@@ -220,7 +220,7 @@ module Optimizely
         decision_source = decision.source
       end
 
-      if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || config.send_flag_decisions)
+      if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || decision_source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] || config.send_flag_decisions)
         send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes, decision&.cmab_uuid)
         decision_event_dispatched = true
       end
