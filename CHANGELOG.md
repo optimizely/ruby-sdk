@@ -1,5 +1,12 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.2.1
+December 17th, 2025
+
+### New Features  
+- Resolved issues with Holdout impression event handling and notification delivery. ([#382](https://github.com/optimizely/ruby-sdk/pull/382))  
+
+
 ## 5.2.0
 November 13th, 2025
 
