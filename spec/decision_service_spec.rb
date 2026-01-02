@@ -1236,7 +1236,7 @@ describe Optimizely::DecisionService do
 
       it 'should save user profile for standard (non-CMAB) experiments' do
         # Use a standard (non-CMAB) experiment
-        experiment = config.get_experiment_from_key('test_experiment')
+        config.get_experiment_from_key('test_experiment')
         user_context = project_instance.create_user_context('test_user', {})
 
         # Create a user profile tracker
