@@ -132,6 +132,8 @@ module Optimizely
           return VariationResult.new(nil, true, decide_reasons, nil)
         end
 
+        @logger.log(Logger::DEBUG, "Skipping user profile service for CMAB experiment '#{experiment_key}'. CMAB decisions are dynamic and not stored for sticky bucketing.")
+        should_ignore_user_profile_service = true
         cmab_decision = cmab_decision_result.result
         variation_id = cmab_decision&.variation_id
         cmab_uuid = cmab_decision&.cmab_uuid

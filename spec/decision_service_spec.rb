@@ -1166,5 +1166,101 @@ describe Optimizely::DecisionService do
         expect(spy_cmab_service).not_to have_received(:get_decision)
       end
     end
+
+    describe 'user profile service behavior' do
+      it 'should not save user profile for CMAB experiments' do
+        # Create a CMAB experiment configuration
+        cmab_experiment = {
+          'id' => '111150',
+          'key' => 'cmab_experiment',
+          'status' => 'Running',
+          'layerId' => '111150',
+          'audienceIds' => [],
+          'forcedVariations' => {},
+          'variations' => [
+            {'id' => '111151', 'key' => 'variation_1'},
+            {'id' => '111152', 'key' => 'variation_2'}
+          ],
+          'trafficAllocation' => [
+            {'entityId' => '111151', 'endOfRange' => 5000},
+            {'entityId' => '111152', 'endOfRange' => 10_000}
+          ],
+          'cmab' => {'trafficAllocation' => 5000}
+        }
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Create a user profile tracker
+        user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
+
+        # Mock experiment lookup to return our CMAB experiment
+        allow(config).to receive(:get_experiment_from_id).with('111150').and_return(cmab_experiment)
+        allow(config).to receive(:experiment_running?).with(cmab_experiment).and_return(true)
+
+        # Mock audience evaluation to pass
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return([true, []])
+
+        # Mock bucketer to return a valid entity ID (user is in traffic allocation)
+        allow(decision_service.bucketer).to receive(:bucket_to_entity_id)
+          .with(config, cmab_experiment, 'test_user', 'test_user')
+          .and_return(['$', []])
+
+        # Mock CMAB service to return a decision
+        allow(spy_cmab_service).to receive(:get_decision)
+          .with(config, user_context, '111150', [])
+          .and_return(Optimizely::CmabDecision.new(variation_id: '111151', cmab_uuid: 'test-cmab-uuid-123'))
+
+        # Mock variation lookup
+        allow(config).to receive(:get_variation_from_id_by_experiment_id)
+          .with('111150', '111151')
+          .and_return({'id' => '111151', 'key' => 'variation_1'})
+
+        # Spy on update_user_profile method
+        allow(user_profile_tracker).to receive(:update_user_profile).and_call_original
+
+        # Call get_variation with the CMAB experiment and user profile tracker
+        variation_result = decision_service.get_variation(config, '111150', user_context, user_profile_tracker)
+
+        # Verify the variation and cmab_uuid are returned
+        expect(variation_result.variation_id).to eq('111151')
+        expect(variation_result.cmab_uuid).to eq('test-cmab-uuid-123')
+
+        # Verify user profile was NOT updated for CMAB experiment
+        expect(user_profile_tracker).not_to have_received(:update_user_profile)
+
+        # Verify debug log was called to explain CMAB exclusion
+        expect(spy_logger).to have_received(:log).with(
+          Logger::DEBUG,
+          "Skipping user profile service for CMAB experiment 'cmab_experiment'. CMAB decisions are dynamic and not stored for sticky bucketing."
+        )
+      end
+
+      it 'should save user profile for standard (non-CMAB) experiments' do
+        # Use a standard (non-CMAB) experiment
+        experiment = config.get_experiment_from_key('test_experiment')
+        user_context = project_instance.create_user_context('test_user', {})
+
+        # Create a user profile tracker
+        user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id, spy_user_profile_service, spy_logger)
+
+        # Mock audience evaluation to pass
+        allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?).and_return([true, []])
+
+        # Mock bucketer to return a variation
+        allow(decision_service.bucketer).to receive(:bucket)
+          .and_return([{'id' => '111129', 'key' => 'variation'}, []])
+
+        # Spy on update_user_profile method
+        allow(user_profile_tracker).to receive(:update_user_profile).and_call_original
+
+        # Call get_variation with standard experiment and user profile tracker
+        variation_result = decision_service.get_variation(config, '111127', user_context, user_profile_tracker)
+
+        # Verify variation was returned
+        expect(variation_result.variation_id).to eq('111129')
+
+        # Verify user profile WAS updated for standard experiment
+        expect(user_profile_tracker).to have_received(:update_user_profile).with('111127', '111129')
+      end
+    end
   end
 end
