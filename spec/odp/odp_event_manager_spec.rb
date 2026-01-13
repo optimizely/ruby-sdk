@@ -260,16 +260,20 @@ describe Optimizely::OdpEventManager do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
       retry_count = event_manager.instance_variable_get('@retry_count')
-      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(retry_count + 1).times.with(api_key, api_host, odp_events).and_return(true)
+      allow(event_manager.api_manager).to receive(:send_odp_events).exactly(retry_count).times.with(api_key, api_host, odp_events).and_return(true)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
       event_manager.flush
-      sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
+      # Need to wait longer for retries with exponential backoff (200ms + 400ms = 600ms)
+      sleep(1) until event_manager.instance_variable_get('@event_queue').empty?
 
       expect(event_manager.instance_variable_get('@current_batch').length).to eq 0
-      expect(spy_logger).to have_received(:log).exactly(retry_count).times.with(Logger::DEBUG, 'Error dispatching ODP events, scheduled to retry.')
+      # Updated log message includes retry attempt and delay info
+      expect(spy_logger).to have_received(:log).with(
+        Logger::DEBUG, /Error dispatching ODP events, retrying/
+      ).exactly(retry_count - 1).times
       expect(spy_logger).to have_received(:log).once.with(Logger::ERROR, "ODP event send failed (Failed after 3 retries: #{processed_events.to_json}).")
 
       event_manager.stop!
@@ -278,16 +282,20 @@ describe Optimizely::OdpEventManager do
     it 'should retry on network failure' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
-      allow(event_manager.api_manager).to receive(:send_odp_events).once.with(api_key, api_host, odp_events).and_return(true, true, false)
+      allow(event_manager.api_manager).to receive(:send_odp_events).with(api_key, api_host, odp_events).and_return(true, true, false)
       event_manager.start!(odp_config)
 
       event_manager.send_event(**events[0])
       event_manager.send_event(**events[1])
       event_manager.flush
-      sleep(0.1) until event_manager.instance_variable_get('@event_queue').empty?
+      # Need to wait longer for retries with exponential backoff (200ms + 400ms = 600ms)
+      sleep(1) until event_manager.instance_variable_get('@event_queue').empty?
 
       expect(event_manager.instance_variable_get('@current_batch').length).to eq 0
-      expect(spy_logger).to have_received(:log).twice.with(Logger::DEBUG, 'Error dispatching ODP events, scheduled to retry.')
+      # Updated log message includes retry attempt and delay info
+      expect(spy_logger).to have_received(:log).with(
+        Logger::DEBUG, /Error dispatching ODP events, retrying/
+      ).twice
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
       expect(event_manager.running?).to be true
       event_manager.stop!
@@ -538,6 +546,53 @@ describe Optimizely::OdpEventManager do
 
       expect(spy_logger).to have_received(:log).once.with(Logger::DEBUG, 'ODP event queue: cannot send before config has been set.')
       expect(spy_logger).not_to have_received(:log).with(Logger::ERROR, anything)
+    end
+
+    it 'should use exponential backoff between retries' do
+      allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
+      event_manager = Optimizely::OdpEventManager.new(logger: spy_logger)
+
+      # All requests fail to trigger retries
+      allow(event_manager.api_manager).to receive(:send_odp_events).with(api_key, api_host, odp_events).and_return(true)
+      event_manager.start!(odp_config)
+
+      start_time = Time.now
+      event_manager.send_event(**events[0])
+      event_manager.send_event(**events[1])
+      event_manager.flush
+
+      # Wait for all retries to complete (need at least 600ms for 200ms + 400ms delays)
+      sleep(1) until event_manager.instance_variable_get('@event_queue').empty?
+      elapsed_time = Time.now - start_time
+
+      # Should have delays: 200ms + 400ms = 600ms minimum for 3 total attempts
+      expect(elapsed_time).to be >= 0.5 # Allow some tolerance
+
+      # Should log retry attempts with delay info
+      expect(spy_logger).to have_received(:log).with(
+        Logger::DEBUG, /retrying \(attempt \d+ of \d+\) after/
+      ).at_least(:once)
+
+      event_manager.stop!
+    end
+
+    it 'should calculate correct exponential backoff intervals' do
+      event_manager = Optimizely::OdpEventManager.new
+
+      # First retry: 200ms
+      expect(event_manager.send(:calculate_retry_interval, 0)).to eq(0.2)
+
+      # Second retry: 400ms
+      expect(event_manager.send(:calculate_retry_interval, 1)).to eq(0.4)
+
+      # Third retry: 800ms
+      expect(event_manager.send(:calculate_retry_interval, 2)).to eq(0.8)
+
+      # Fourth retry: capped at 1s
+      expect(event_manager.send(:calculate_retry_interval, 3)).to eq(1.0)
+
+      # Fifth retry: still capped at 1s
+      expect(event_manager.send(:calculate_retry_interval, 4)).to eq(1.0)
     end
   end
 end

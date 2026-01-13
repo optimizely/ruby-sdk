@@ -37,33 +37,74 @@ module Optimizely
     #
     # @param event - Event object
     def dispatch_event(event)
-      response = Helpers::HttpUtils.make_request(
-        event.url, event.http_verb, event.params.to_json, event.headers, Helpers::Constants::EVENT_DISPATCH_CONFIG[:REQUEST_TIMEOUT], @proxy_config
-      )
+      retry_count = 0
+      max_retries = Helpers::Constants::EVENT_DISPATCH_CONFIG[:MAX_RETRIES]
 
-      error_msg = "Event failed to dispatch with response code: #{response.code}"
+      while retry_count < max_retries
+        begin
+          response = Helpers::HttpUtils.make_request(
+            event.url, event.http_verb, event.params.to_json, event.headers, Helpers::Constants::EVENT_DISPATCH_CONFIG[:REQUEST_TIMEOUT], @proxy_config
+          )
 
-      case response.code.to_i
-      when 400...500
-        @logger.log(Logger::ERROR, error_msg)
-        @error_handler.handle_error(HTTPCallError.new("HTTP Client Error: #{response.code}"))
+          error_msg = "Event failed to dispatch with response code: #{response.code}"
 
-      when 500...600
-        @logger.log(Logger::ERROR, error_msg)
-        @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
-      else
-        @logger.log(Logger::DEBUG, "event successfully sent with response code #{response.code}")
+          case response.code.to_i
+          when 400...500
+            @logger.log(Logger::ERROR, error_msg)
+            @error_handler.handle_error(HTTPCallError.new("HTTP Client Error: #{response.code}"))
+            # Don't retry on 4xx client errors
+            return
+
+          when 500...600
+            @logger.log(Logger::ERROR, error_msg)
+            @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
+            # Retry on 5xx server errors
+            retry_count += 1
+            if retry_count < max_retries
+              delay = calculate_retry_interval(retry_count - 1)
+              @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count} of #{max_retries - 1}) after #{delay}s")
+              sleep(delay)
+            end
+          else
+            @logger.log(Logger::DEBUG, "event successfully sent with response code #{response.code}")
+            return
+          end
+        rescue Timeout::Error => e
+          @logger.log(Logger::ERROR, "Request Timed out. Error: #{e}")
+          @error_handler.handle_error(e)
+
+          retry_count += 1
+          # Returning Timeout error to retain existing behavior.
+          return e unless retry_count < max_retries
+
+          delay = calculate_retry_interval(retry_count - 1)
+          @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count} of #{max_retries - 1}) after #{delay}s")
+          sleep(delay)
+        rescue StandardError => e
+          @logger.log(Logger::ERROR, "Event failed to dispatch. Error: #{e}")
+          @error_handler.handle_error(e)
+
+          retry_count += 1
+          return nil unless retry_count < max_retries
+
+          delay = calculate_retry_interval(retry_count - 1)
+          @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count} of #{max_retries - 1}) after #{delay}s")
+          sleep(delay)
+        end
       end
-    rescue Timeout::Error => e
-      @logger.log(Logger::ERROR, "Request Timed out. Error: #{e}")
-      @error_handler.handle_error(e)
+    end
 
-      # Returning Timeout error to retain existing behavior.
-      e
-    rescue StandardError => e
-      @logger.log(Logger::ERROR, "Event failed to dispatch. Error: #{e}")
-      @error_handler.handle_error(e)
-      nil
+    private
+
+    # Calculate exponential backoff interval: 200ms, 400ms, 800ms, ... capped at 1s
+    #
+    # @param retry_count - Zero-based retry count
+    # @return [Float] - Delay in seconds
+    def calculate_retry_interval(retry_count)
+      initial_interval = Helpers::Constants::EVENT_DISPATCH_CONFIG[:INITIAL_RETRY_INTERVAL]
+      max_interval = Helpers::Constants::EVENT_DISPATCH_CONFIG[:MAX_RETRY_INTERVAL]
+      interval = initial_interval * (2**retry_count)
+      [interval, max_interval].min
     end
   end
 end
