@@ -172,20 +172,35 @@ module Optimizely
       return if @current_batch.empty?
 
       log_event = Optimizely::EventFactory.create_log_event(@current_batch, @logger)
-      begin
-        @logger.log(
-          Logger::INFO,
-          'Flushing Queue.'
-        )
+      @logger.log(
+        Logger::INFO,
+        'Flushing Queue.'
+      )
 
-        @event_dispatcher.dispatch_event(log_event)
-        @notification_center&.send_notifications(
-          NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
-          log_event
-        )
-      rescue StandardError => e
-        @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
+      retry_count = 0
+      max_retries = Optimizely::Helpers::Constants::EVENT_DISPATCH_CONFIG[:MAX_RETRIES]
+
+      while retry_count < max_retries
+        begin
+          @event_dispatcher.dispatch_event(log_event)
+          @notification_center&.send_notifications(
+            NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
+            log_event
+          )
+          # Success - break out of retry loop
+          break
+        rescue StandardError => e
+          @logger.log(Logger::ERROR, "Error dispatching event: #{log_event} #{e.message}.")
+          retry_count += 1
+
+          if retry_count < max_retries
+            delay = calculate_retry_interval(retry_count - 1)
+            @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count} of #{max_retries - 1}) after #{delay}s")
+            sleep(delay)
+          end
+        end
       end
+
       @current_batch = []
     end
 
@@ -230,6 +245,17 @@ module Optimizely
       # Returns true if the given value is positive finite number.
       #   false otherwise.
       Helpers::Validator.finite_number?(value) && value.positive?
+    end
+
+    # Calculate exponential backoff interval: 200ms, 400ms, 800ms, ... capped at 1s
+    #
+    # @param retry_count - Zero-based retry count
+    # @return [Float] - Delay in seconds
+    def calculate_retry_interval(retry_count)
+      initial_interval = Helpers::Constants::EVENT_DISPATCH_CONFIG[:INITIAL_RETRY_INTERVAL]
+      max_interval = Helpers::Constants::EVENT_DISPATCH_CONFIG[:MAX_RETRY_INTERVAL]
+      interval = initial_interval * (2**retry_count)
+      [interval, max_interval].min
     end
   end
 end

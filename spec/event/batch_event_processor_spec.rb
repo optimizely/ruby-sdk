@@ -293,9 +293,11 @@ describe Optimizely::BatchEventProcessor do
     @event_processor.flush
     # Wait until other thread has processed the event.
     sleep 0.1 until @event_processor.current_batch.empty?
+    sleep 0.7 # Wait for retries to complete (200ms + 400ms + processing time)
 
     expect(@notification_center).not_to have_received(:send_notifications)
-    expect(spy_logger).to have_received(:log).once.with(
+    # With retries, error will be logged 3 times (once per attempt)
+    expect(spy_logger).to have_received(:log).exactly(3).times.with(
       Logger::ERROR,
       "Error dispatching event: #{log_event} Timeout::Error."
     )
@@ -376,5 +378,94 @@ describe Optimizely::BatchEventProcessor do
     @event_processor.process(user_event)
     expect(@event_processor.event_queue.length).to eq(0)
     expect(spy_logger).to have_received(:log).with(Logger::WARN, 'Executor shutdown, not accepting tasks.').once
+  end
+
+  context 'retry logic with exponential backoff' do
+    it 'should retry on dispatch errors with exponential backoff' do
+      @event_processor = Optimizely::BatchEventProcessor.new(
+        event_dispatcher: @event_dispatcher,
+        batch_size: 1,
+        flush_interval: 10_000,
+        logger: spy_logger
+      )
+
+      user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+      log_event = Optimizely::EventFactory.create_log_event(user_event, spy_logger)
+
+      # Simulate dispatch failure twice, then success
+      call_count = 0
+      allow(@event_dispatcher).to receive(:dispatch_event) do
+        call_count += 1
+        raise StandardError, 'Network error' if call_count < 3
+      end
+
+      start_time = Time.now
+      @event_processor.process(user_event)
+
+      # Wait for processing to complete
+      sleep 0.1 until @event_processor.event_queue.empty?
+      sleep 0.7 # Wait for retries to complete (200ms + 400ms + processing time)
+
+      elapsed_time = Time.now - start_time
+
+      # Should make 3 attempts total (1 initial + 2 retries)
+      expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).exactly(3).times
+
+      # Should have delays: 200ms + 400ms = 600ms minimum
+      expect(elapsed_time).to be >= 0.6
+
+      # Should log retry attempts
+      expect(spy_logger).to have_received(:log).with(
+        Logger::DEBUG, /Retrying event dispatch/
+      ).at_least(:twice)
+    end
+
+    it 'should give up after max retries' do
+      @event_processor = Optimizely::BatchEventProcessor.new(
+        event_dispatcher: @event_dispatcher,
+        batch_size: 1,
+        flush_interval: 10_000,
+        logger: spy_logger
+      )
+
+      user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+      log_event = Optimizely::EventFactory.create_log_event(user_event, spy_logger)
+
+      # Simulate dispatch failure every time
+      allow(@event_dispatcher).to receive(:dispatch_event).and_raise(StandardError, 'Network error')
+
+      @event_processor.process(user_event)
+
+      # Wait for processing to complete
+      sleep 0.1 until @event_processor.event_queue.empty?
+      sleep 0.7 # Wait for all retries to complete
+
+      # Should make 3 attempts total (1 initial + 2 retries)
+      expect(@event_dispatcher).to have_received(:dispatch_event).with(log_event).exactly(3).times
+
+      # Should log error for each attempt
+      expect(spy_logger).to have_received(:log).with(
+        Logger::ERROR, /Error dispatching event/
+      ).exactly(3).times
+    end
+
+    it 'should calculate correct exponential backoff intervals' do
+      processor = Optimizely::BatchEventProcessor.new
+
+      # First retry: 200ms
+      expect(processor.send(:calculate_retry_interval, 0)).to eq(0.2)
+
+      # Second retry: 400ms
+      expect(processor.send(:calculate_retry_interval, 1)).to eq(0.4)
+
+      # Third retry: 800ms
+      expect(processor.send(:calculate_retry_interval, 2)).to eq(0.8)
+
+      # Fourth retry: capped at 1s
+      expect(processor.send(:calculate_retry_interval, 3)).to eq(1.0)
+
+      # Fifth retry: still capped at 1s
+      expect(processor.send(:calculate_retry_interval, 4)).to eq(1.0)
+    end
   end
 end
