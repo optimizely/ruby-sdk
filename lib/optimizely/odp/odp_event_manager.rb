@@ -242,7 +242,7 @@ module Optimizely
         if i < @retry_count - 1
           # Exponential backoff: 200ms, 400ms, 800ms, ... capped at 1s
           delay = calculate_retry_interval(i)
-          @logger.log(Logger::DEBUG, "Error dispatching ODP events, retrying (attempt #{i + 1} of #{@retry_count - 1}) after #{delay}s")
+          @logger.log(Logger::DEBUG, "Error dispatching ODP events, retrying (attempt #{i + 2} of #{@retry_count}) after #{delay}s")
           sleep(delay)
         end
         i += 1

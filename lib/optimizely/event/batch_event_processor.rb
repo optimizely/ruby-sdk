@@ -195,7 +195,7 @@ module Optimizely
 
           if retry_count < max_retries
             delay = calculate_retry_interval(retry_count - 1)
-            @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count} of #{max_retries - 1}) after #{delay}s")
+            @logger.log(Logger::DEBUG, "Retrying event dispatch (attempt #{retry_count + 1} of #{max_retries}) after #{delay}s")
             sleep(delay)
           end
         end
