@@ -239,7 +239,12 @@ module Optimizely
         end
         break unless should_retry
 
-        @logger.log(Logger::DEBUG, 'Error dispatching ODP events, scheduled to retry.') if i < @retry_count
+        if i < @retry_count - 1
+          # Exponential backoff: 200ms, 400ms, 800ms, ... capped at 1s
+          delay = calculate_retry_interval(i)
+          @logger.log(Logger::DEBUG, "Error dispatching ODP events, retrying (attempt #{i + 2} of #{@retry_count}) after #{delay}s")
+          sleep(delay)
+        end
         i += 1
       end
 
@@ -281,6 +286,17 @@ module Optimizely
 
       @api_key = @odp_config&.api_key
       @api_host = @odp_config&.api_host
+    end
+
+    # Calculate exponential backoff interval: 200ms, 400ms, 800ms, ... capped at 1s
+    #
+    # @param retry_count - Zero-based retry count
+    # @return [Float] - Delay in seconds
+    def calculate_retry_interval(retry_count)
+      initial_interval = Helpers::Constants::ODP_EVENT_MANAGER[:INITIAL_RETRY_INTERVAL]
+      max_interval = Helpers::Constants::ODP_EVENT_MANAGER[:MAX_RETRY_INTERVAL]
+      interval = initial_interval * (2**retry_count)
+      [interval, max_interval].min
     end
   end
 end

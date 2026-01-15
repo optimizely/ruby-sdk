@@ -459,7 +459,10 @@ module Optimizely
       }.freeze
 
       EVENT_DISPATCH_CONFIG = {
-        REQUEST_TIMEOUT: 10
+        REQUEST_TIMEOUT: 10,
+        MAX_RETRIES: 3,
+        INITIAL_RETRY_INTERVAL: 0.2, # 200ms in seconds
+        MAX_RETRY_INTERVAL: 1.0 # 1 second
       }.freeze
 
       ODP_GRAPHQL_API_CONFIG = {
@@ -490,7 +493,9 @@ module Optimizely
         DEFAULT_QUEUE_CAPACITY: 10_000,
         DEFAULT_BATCH_SIZE: 10,
         DEFAULT_FLUSH_INTERVAL_SECONDS: 1,
-        DEFAULT_RETRY_COUNT: 3
+        DEFAULT_RETRY_COUNT: 3,
+        INITIAL_RETRY_INTERVAL: 0.2, # 200ms in seconds
+        MAX_RETRY_INTERVAL: 1.0 # 1 second
       }.freeze
 
       HTTP_HEADERS = {
