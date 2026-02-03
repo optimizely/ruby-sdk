@@ -1801,4 +1801,298 @@ describe Optimizely::DatafileProjectConfig do
       end
     end
   end
+
+  describe 'holdout experiments field and mapping' do
+    let(:config_with_experiment_holdouts) do
+      config_body_with_experiments = config_body.dup
+      config_body_with_experiments['holdouts'] = [
+        {
+          'id' => 'holdout_exp_1',
+          'key' => 'local_holdout_1',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => [],
+          'experiments' => ['exp_123', 'exp_456'],
+          'variations' => [],
+          'trafficAllocation' => []
+        },
+        {
+          'id' => 'holdout_exp_2',
+          'key' => 'local_holdout_2',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => [],
+          'experiments' => ['exp_789'],
+          'variations' => [],
+          'trafficAllocation' => []
+        },
+        {
+          'id' => 'holdout_global',
+          'key' => 'global_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedFlags' => [],
+          'excludedFlags' => [],
+          'variations' => [],
+          'trafficAllocation' => []
+        }
+      ]
+
+      Optimizely::DatafileProjectConfig.new(
+        JSON.dump(config_body_with_experiments),
+        logger,
+        error_handler
+      )
+    end
+
+    describe '#get_holdouts_for_experiment' do
+      it 'should return holdouts targeting a specific experiment' do
+        holdouts = config_with_experiment_holdouts.get_holdouts_for_experiment('exp_123')
+        expect(holdouts.length).to eq(1)
+        expect(holdouts.first['id']).to eq('holdout_exp_1')
+        expect(holdouts.first['key']).to eq('local_holdout_1')
+      end
+
+      it 'should return multiple holdouts if experiment is targeted by multiple holdouts' do
+        # Add another holdout targeting exp_123
+        config_body_multi = config_body.dup
+        config_body_multi['holdouts'] = [
+          {
+            'id' => 'holdout_1',
+            'key' => 'local_holdout_1',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'experiments' => ['exp_shared'],
+            'variations' => [],
+            'trafficAllocation' => []
+          },
+          {
+            'id' => 'holdout_2',
+            'key' => 'local_holdout_2',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'experiments' => ['exp_shared'],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_multi),
+          logger,
+          error_handler
+        )
+
+        holdouts = config.get_holdouts_for_experiment('exp_shared')
+        expect(holdouts.length).to eq(2)
+        expect(holdouts.map { |h| h['id'] }).to contain_exactly('holdout_1', 'holdout_2')
+      end
+
+      it 'should return empty array for experiment not targeted by any holdout' do
+        holdouts = config_with_experiment_holdouts.get_holdouts_for_experiment('exp_not_exists')
+        expect(holdouts).to eq([])
+      end
+
+      it 'should not return global holdouts (without experiments field)' do
+        holdouts = config_with_experiment_holdouts.get_holdouts_for_experiment('exp_random')
+        expect(holdouts).to eq([])
+
+        # Verify global holdout exists but is not returned
+        global_holdout = config_with_experiment_holdouts.get_holdout('holdout_global')
+        expect(global_holdout).not_to be_nil
+        expect(global_holdout['experiments']).to eq([])
+      end
+
+      it 'should handle holdout targeting multiple experiments' do
+        holdouts_exp1 = config_with_experiment_holdouts.get_holdouts_for_experiment('exp_123')
+        holdouts_exp2 = config_with_experiment_holdouts.get_holdouts_for_experiment('exp_456')
+
+        expect(holdouts_exp1.length).to eq(1)
+        expect(holdouts_exp2.length).to eq(1)
+        expect(holdouts_exp1.first['id']).to eq('holdout_exp_1')
+        expect(holdouts_exp2.first['id']).to eq('holdout_exp_1')
+        expect(holdouts_exp1.first['id']).to eq(holdouts_exp2.first['id'])
+      end
+    end
+
+    describe '#local_holdout?' do
+      it 'should return true for holdouts with experiments array' do
+        holdout = config_with_experiment_holdouts.get_holdout('holdout_exp_1')
+        expect(config_with_experiment_holdouts.local_holdout?(holdout)).to be true
+      end
+
+      it 'should return false for holdouts without experiments' do
+        holdout = config_with_experiment_holdouts.get_holdout('holdout_global')
+        expect(config_with_experiment_holdouts.local_holdout?(holdout)).to be false
+      end
+
+      it 'should return false for holdouts with empty experiments array' do
+        config_body_empty = config_body.dup
+        config_body_empty['holdouts'] = [
+          {
+            'id' => 'holdout_empty',
+            'key' => 'empty_holdout',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'experiments' => [],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_empty),
+          logger,
+          error_handler
+        )
+
+        holdout = config.get_holdout('holdout_empty')
+        expect(config.local_holdout?(holdout)).to be false
+      end
+    end
+
+    describe 'experiments field parsing and defaults' do
+      it 'should parse experiments field from datafile' do
+        holdout = config_with_experiment_holdouts.get_holdout('holdout_exp_1')
+        expect(holdout['experiments']).to eq(['exp_123', 'exp_456'])
+      end
+
+      it 'should default experiments to empty array if not provided' do
+        config_body_no_experiments = config_body.dup
+        config_body_no_experiments['holdouts'] = [
+          {
+            'id' => 'holdout_no_exp',
+            'key' => 'holdout_without_experiments',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_no_experiments),
+          logger,
+          error_handler
+        )
+
+        holdout = config.get_holdout('holdout_no_exp')
+        expect(holdout['experiments']).to eq([])
+      end
+
+      it 'should build experiment_holdouts_map correctly' do
+        expect(config_with_experiment_holdouts.experiment_holdouts_map).to be_a(Hash)
+        expect(config_with_experiment_holdouts.experiment_holdouts_map.keys).to include('exp_123', 'exp_456', 'exp_789')
+        expect(config_with_experiment_holdouts.experiment_holdouts_map['exp_123'].first['id']).to eq('holdout_exp_1')
+      end
+
+      it 'should not include non-running holdouts in experiment mapping' do
+        config_body_inactive = config_body.dup
+        config_body_inactive['holdouts'] = [
+          {
+            'id' => 'holdout_inactive',
+            'key' => 'inactive_holdout',
+            'status' => 'Paused',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'experiments' => ['exp_inactive'],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_inactive),
+          logger,
+          error_handler
+        )
+
+        holdouts = config.get_holdouts_for_experiment('exp_inactive')
+        expect(holdouts).to eq([])
+      end
+    end
+
+    describe 'backward compatibility' do
+      it 'should work with datafiles without experiments field' do
+        config_body_legacy = config_body.dup
+        config_body_legacy['holdouts'] = [
+          {
+            'id' => 'holdout_legacy',
+            'key' => 'legacy_holdout',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_legacy),
+          logger,
+          error_handler
+        )
+
+        holdout = config.get_holdout('holdout_legacy')
+        expect(holdout).not_to be_nil
+        expect(holdout['experiments']).to eq([])
+        expect(config.local_holdout?(holdout)).to be false
+      end
+
+      it 'should handle mix of holdouts with and without experiments field' do
+        config_body_mixed = config_body.dup
+        config_body_mixed['holdouts'] = [
+          {
+            'id' => 'holdout_with_exp',
+            'key' => 'holdout_1',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'experiments' => ['exp_1'],
+            'variations' => [],
+            'trafficAllocation' => []
+          },
+          {
+            'id' => 'holdout_without_exp',
+            'key' => 'holdout_2',
+            'status' => 'Running',
+            'audiences' => [],
+            'includedFlags' => [],
+            'excludedFlags' => [],
+            'variations' => [],
+            'trafficAllocation' => []
+          }
+        ]
+
+        config = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(config_body_mixed),
+          logger,
+          error_handler
+        )
+
+        holdout1 = config.get_holdout('holdout_with_exp')
+        holdout2 = config.get_holdout('holdout_without_exp')
+
+        expect(config.local_holdout?(holdout1)).to be true
+        expect(config.local_holdout?(holdout2)).to be false
+
+        holdouts = config.get_holdouts_for_experiment('exp_1')
+        expect(holdouts.length).to eq(1)
+        expect(holdouts.first['id']).to eq('holdout_with_exp')
+      end
+    end
+  end
 end

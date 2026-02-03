@@ -34,7 +34,8 @@ module Optimizely
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
                 :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
-                :global_holdouts, :included_holdouts, :excluded_holdouts, :flag_holdouts_map
+                :global_holdouts, :included_holdouts, :excluded_holdouts, :flag_holdouts_map,
+                :experiment_holdouts_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -119,12 +120,16 @@ module Optimizely
       @included_holdouts = {}
       @excluded_holdouts = {}
       @flag_holdouts_map = {}
+      @experiment_holdouts_map = {}
 
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
 
         # Ensure holdout has layerId field (holdouts don't have campaigns)
         holdout['layerId'] ||= ''
+
+        # Ensure experiments field defaults to empty array
+        holdout['experiments'] ||= []
 
         @holdout_id_map[holdout['id']] = holdout
 
@@ -151,6 +156,13 @@ module Optimizely
             @excluded_holdouts[flag_id] ||= []
             @excluded_holdouts[flag_id] << holdout
           end
+        end
+
+        # Build experiment-to-holdout mapping
+        experiments = holdout['experiments'] || []
+        experiments.each do |experiment_id|
+          @experiment_holdouts_map[experiment_id] ||= []
+          @experiment_holdouts_map[experiment_id] << holdout
         end
       end
 
@@ -686,6 +698,27 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
       nil
+    end
+
+    def get_holdouts_for_experiment(experiment_id)
+      # Returns the holdouts applicable to the given experiment ID
+      #
+      # experiment_id - String experiment ID
+      #
+      # Returns Array of holdouts targeting this experiment
+
+      @experiment_holdouts_map[experiment_id] || []
+    end
+
+    def local_holdout?(holdout)
+      # Determines if a holdout is local (targets specific experiments)
+      #
+      # holdout - Holdout hash
+      #
+      # Returns true if holdout has experiments array and is not empty
+
+      experiments = holdout['experiments'] || []
+      !experiments.empty?
     end
 
     private
