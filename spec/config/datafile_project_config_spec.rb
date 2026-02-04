@@ -1813,7 +1813,7 @@ describe Optimizely::DatafileProjectConfig do
           'audiences' => [],
           'includedFlags' => [],
           'excludedFlags' => [],
-          'experiments' => ['exp_123', 'exp_456'],
+          'experiments' => %w[exp_123 exp_456],
           'variations' => [],
           'trafficAllocation' => []
         },
@@ -1962,7 +1962,7 @@ describe Optimizely::DatafileProjectConfig do
     describe 'experiments field parsing and defaults' do
       it 'should parse experiments field from datafile' do
         holdout = config_with_experiment_holdouts.get_holdout('holdout_exp_1')
-        expect(holdout['experiments']).to eq(['exp_123', 'exp_456'])
+        expect(holdout['experiments']).to eq(%w[exp_123 exp_456])
       end
 
       it 'should default experiments to empty array if not provided' do
