@@ -462,7 +462,7 @@ module Optimizely
         REQUEST_TIMEOUT: 10,
         MAX_RETRIES: 3,
         INITIAL_RETRY_INTERVAL: 0.2, # 200ms in seconds
-        MAX_RETRY_INTERVAL: 1.0 # 1 second
+        MAX_RETRY_INTERVAL: 3.0 # 3 seconds
       }.freeze
 
       ODP_GRAPHQL_API_CONFIG = {
