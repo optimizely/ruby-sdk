@@ -100,7 +100,9 @@ module Optimizely
 
       should_ignore_user_profile_service = decide_options.include? Optimizely::Decide::OptimizelyDecideOption::IGNORE_USER_PROFILE_SERVICE
       # Check for saved bucketing decisions if decide_options do not include ignoreUserProfileService
-      unless should_ignore_user_profile_service && user_profile_tracker
+      # Skip UPS for CMAB experiments as they require dynamic decisions
+      is_cmab_experiment = experiment.key?('cmab')
+      unless should_ignore_user_profile_service || is_cmab_experiment || !user_profile_tracker
         saved_variation_id, reasons_received = get_saved_variation_id(project_config, experiment_id, user_profile_tracker.user_profile)
         decide_reasons.push(*reasons_received)
         if saved_variation_id
@@ -109,6 +111,13 @@ module Optimizely
           decide_reasons.push(message)
           return VariationResult.new(nil, false, decide_reasons, saved_variation_id)
         end
+      end
+
+      # Add decision reason when UPS is skipped for CMAB
+      if is_cmab_experiment && !should_ignore_user_profile_service && user_profile_tracker
+        message = 'User Profile Service is not used for CMAB experiments.'
+        @logger.log(Logger::INFO, message)
+        decide_reasons.push(message)
       end
 
       # Check audience conditions
@@ -155,7 +164,8 @@ module Optimizely
       decide_reasons.push(message) if message
 
       # Persist bucketing decision
-      user_profile_tracker.update_user_profile(experiment_id, variation_id) unless should_ignore_user_profile_service && user_profile_tracker
+      # Skip UPS for CMAB experiments as they require dynamic decisions
+      user_profile_tracker.update_user_profile(experiment_id, variation_id) unless should_ignore_user_profile_service || is_cmab_experiment || !user_profile_tracker
       VariationResult.new(cmab_uuid, false, decide_reasons, variation_id)
     end
 
