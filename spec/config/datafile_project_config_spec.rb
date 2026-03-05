@@ -1819,6 +1819,37 @@ describe Optimizely::DatafileProjectConfig do
       }
     end
 
+    it 'should parse experiment type field from datafile' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [{'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}],
+            'type' => 'feature_rollout'
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => '',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+      expect(experiment['type']).to eq('feature_rollout')
+    end
+
     it 'should set experiment type to nil when type field is missing' do
       datafile = build_datafile(
         experiments: [
