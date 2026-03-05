@@ -180,7 +180,6 @@ module Optimizely
         @all_segments.concat Audience.get_segments(audience['conditions'])
       end
 
-      @flag_variation_map = generate_feature_variation_map(@feature_flags)
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
       @all_experiments.each do |id, exp|
         variations = exp.fetch('variations')
@@ -228,6 +227,9 @@ module Optimizely
           @variation_id_to_variable_usage_map[everyone_else_variation['id']] = generate_key_map(variation_variables, 'id') if variation_variables
         end
       end
+
+      # Generate flag_variation_map after injection so it includes everyone-else variations
+      @flag_variation_map = generate_feature_variation_map(@feature_flags)
 
       # Adding Holdout variations in variation id and key maps
       return unless @holdouts && !@holdouts.empty?
