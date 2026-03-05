@@ -205,6 +205,9 @@ module Optimizely
                 'cmab' => {
                   'type' => 'object'
                 },
+                'type' => {
+                  'type' => 'string'
+                },
                 'holdouts' => {
                   'type' => 'array'
                 }
