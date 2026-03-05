@@ -2178,5 +2178,127 @@ describe Optimizely::DatafileProjectConfig do
       expect(variation_ids).not_to include('targeted_var_1')
       expect(variation_ids).not_to include('targeted_var_2')
     end
+
+    it 'should preserve featureEnabled value on injected variation' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'rollout_var', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
+            ],
+            'type' => 'feature_rollout'
+          }
+        ],
+        rollouts: [
+          {
+            'id' => 'rollout_1',
+            'experiments' => [
+              {
+                'id' => 'rollout_everyone_else',
+                'key' => 'rollout_everyone_else',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => [],
+                'trafficAllocation' => [{'entityId' => 'everyone_else_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {'key' => 'everyone_else_var', 'id' => 'everyone_else_var', 'featureEnabled' => false}
+                ]
+              }
+            ]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => 'rollout_1',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+
+      injected = experiment['variations'].find { |v| v['id'] == 'everyone_else_var' }
+      expect(injected).not_to be_nil
+      expect(injected['featureEnabled']).to eq(false)
+    end
+
+    it 'should propagate variables from the everyone else variation' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'rollout_var', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
+            ],
+            'type' => 'feature_rollout'
+          }
+        ],
+        rollouts: [
+          {
+            'id' => 'rollout_1',
+            'experiments' => [
+              {
+                'id' => 'rollout_everyone_else',
+                'key' => 'rollout_everyone_else',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => [],
+                'trafficAllocation' => [{'entityId' => 'everyone_else_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {
+                    'key' => 'everyone_else_var',
+                    'id' => 'everyone_else_var',
+                    'featureEnabled' => false,
+                    'variables' => [
+                      {'id' => 'var_1', 'value' => 'default_value'}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => 'rollout_1',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+
+      injected = experiment['variations'].find { |v| v['id'] == 'everyone_else_var' }
+      expect(injected).not_to be_nil
+      expect(injected['variables']).to eq([{'id' => 'var_1', 'value' => 'default_value'}])
+
+      # Verify variation_id_to_variable_usage_map is populated
+      variable_usage = config.variation_id_to_variable_usage_map['everyone_else_var']
+      expect(variable_usage).not_to be_nil
+      expect(variable_usage).to have_key('var_1')
+    end
   end
 end
