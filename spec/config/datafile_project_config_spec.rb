@@ -2103,6 +2103,5 @@ describe Optimizely::DatafileProjectConfig do
       expect(experiment['variations'].length).to eq(1)
       expect(experiment['trafficAllocation'].length).to eq(1)
     end
-
   end
 end
