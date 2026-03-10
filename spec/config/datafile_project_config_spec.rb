@@ -2008,6 +2008,11 @@ describe Optimizely::DatafileProjectConfig do
       expect(config.variation_id_map['feature_rollout_exp']).to have_key('everyone_else_var')
       expect(config.variation_id_map_by_experiment_id['exp_fr']).to have_key('everyone_else_var')
       expect(config.variation_key_map_by_experiment_id['exp_fr']).to have_key('everyone_else_var')
+
+      # flag_variation_map should also include the injected variation
+      flag_variations = config.flag_variation_map['test_flag']
+      injected_ids = flag_variations.map { |v| v['id'] }
+      expect(injected_ids).to include('everyone_else_var')
     end
 
     it 'should not modify non-feature_rollout experiments' do

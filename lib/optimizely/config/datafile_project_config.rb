@@ -212,7 +212,7 @@ module Optimizely
 
         feature_flag['experimentIds'].each do |exp_id|
           experiment = @experiment_id_map[exp_id]
-          next unless experiment && experiment['type'] == 'feature_rollout'
+          next unless experiment && experiment['type'] == Helpers::Constants::EXPERIMENT_TYPES['fr']
 
           experiment['variations'].push(everyone_else_variation)
           experiment['trafficAllocation'].push(
