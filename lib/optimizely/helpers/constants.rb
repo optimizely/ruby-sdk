@@ -20,8 +20,8 @@ module Optimizely
     module Constants
       EXPERIMENT_TYPES = {
         'ab' => 'a/b',
-        'mab' => 'mab',
-        'cmab' => 'cmab',
+        'mab' => 'multi_armed_bandit',
+        'cmab' => 'contextual_multi_armed_bandit',
         'td' => 'targeted_delivery',
         'fr' => 'feature_rollout'
       }.freeze

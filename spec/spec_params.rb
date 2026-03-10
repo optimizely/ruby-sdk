@@ -2062,6 +2062,8 @@ module OptimizelySpec
         new_obj.map! do |val|
           deep_clone(val)
         end
+      else
+        new_obj
       end
     end
   end
