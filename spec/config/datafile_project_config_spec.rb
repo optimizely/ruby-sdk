@@ -1831,7 +1831,7 @@ describe Optimizely::DatafileProjectConfig do
             'audienceIds' => [],
             'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
             'variations' => [{'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}],
-            'type' => 'feature_rollout'
+            'type' => 'fr'
           }
         ],
         feature_flags: [
@@ -1847,7 +1847,7 @@ describe Optimizely::DatafileProjectConfig do
 
       config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
       experiment = config.experiment_id_map['exp_fr']
-      expect(experiment['type']).to eq('feature_rollout')
+      expect(experiment['type']).to eq('fr')
     end
 
     it 'should set experiment type to nil when type field is missing' do
@@ -1894,7 +1894,7 @@ describe Optimizely::DatafileProjectConfig do
             'variations' => [
               {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
             ],
-            'type' => 'feature_rollout'
+            'type' => 'fr'
           }
         ],
         rollouts: [
@@ -1969,7 +1969,7 @@ describe Optimizely::DatafileProjectConfig do
             'variations' => [
               {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
             ],
-            'type' => 'feature_rollout'
+            'type' => 'fr'
           }
         ],
         rollouts: [
@@ -2029,7 +2029,7 @@ describe Optimizely::DatafileProjectConfig do
             'variations' => [
               {'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}
             ],
-            'type' => 'a/b'
+            'type' => 'ab'
           }
         ],
         rollouts: [
@@ -2083,7 +2083,7 @@ describe Optimizely::DatafileProjectConfig do
             'variations' => [
               {'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}
             ],
-            'type' => 'feature_rollout'
+            'type' => 'fr'
           }
         ],
         feature_flags: [

@@ -19,11 +19,11 @@ module Optimizely
   module Helpers
     module Constants
       EXPERIMENT_TYPES = {
-        'ab' => 'a/b',
-        'mab' => 'multi_armed_bandit',
-        'cmab' => 'contextual_multi_armed_bandit',
-        'td' => 'targeted_delivery',
-        'fr' => 'feature_rollout'
+        'ab' => 'ab',
+        'mab' => 'mab',
+        'cmab' => 'cmab',
+        'td' => 'td',
+        'fr' => 'fr'
       }.freeze
 
       JSON_SCHEMA_V2 = {
