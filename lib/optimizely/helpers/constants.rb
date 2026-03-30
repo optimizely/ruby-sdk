@@ -507,7 +507,7 @@ module Optimizely
         DEFAULT_FLUSH_INTERVAL_SECONDS: 1,
         DEFAULT_RETRY_COUNT: 3,
         INITIAL_RETRY_INTERVAL: 0.2, # 200ms in seconds
-        MAX_RETRY_INTERVAL: 1.0 # 1 second
+        MAX_RETRY_INTERVAL: 3.0 # 3 seconds
       }.freeze
 
       HTTP_HEADERS = {
