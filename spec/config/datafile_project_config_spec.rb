@@ -1801,4 +1801,307 @@ describe Optimizely::DatafileProjectConfig do
       end
     end
   end
+
+  describe 'Feature Rollout support' do
+    def build_datafile(experiments: [], rollouts: [], feature_flags: [])
+      {
+        'version' => '4',
+        'accountId' => '12001',
+        'projectId' => '111001',
+        'revision' => '1',
+        'experiments' => experiments,
+        'events' => [],
+        'attributes' => [],
+        'audiences' => [],
+        'groups' => [],
+        'rollouts' => rollouts,
+        'featureFlags' => feature_flags
+      }
+    end
+
+    it 'should parse experiment type field from datafile' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [{'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}],
+            'type' => 'fr'
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => '',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+      expect(experiment['type']).to eq('fr')
+    end
+
+    it 'should set experiment type to nil when type field is missing' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_ab',
+            'key' => 'ab_test_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [{'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_ab'],
+            'rolloutId' => '',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_ab']
+      expect(experiment['type']).to be_nil
+    end
+
+    it 'should inject everyone else variation into feature_rollout experiments' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'rollout_var', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
+            ],
+            'type' => 'fr'
+          }
+        ],
+        rollouts: [
+          {
+            'id' => 'rollout_1',
+            'experiments' => [
+              {
+                'id' => 'rollout_targeted_rule',
+                'key' => 'rollout_targeted_rule',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => ['audience_1'],
+                'trafficAllocation' => [{'entityId' => 'targeted_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {'key' => 'targeted_var', 'id' => 'targeted_var', 'featureEnabled' => true}
+                ]
+              },
+              {
+                'id' => 'rollout_everyone_else',
+                'key' => 'rollout_everyone_else',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => [],
+                'trafficAllocation' => [{'entityId' => 'everyone_else_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {'key' => 'everyone_else_var', 'id' => 'everyone_else_var', 'featureEnabled' => false}
+                ]
+              }
+            ]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => 'rollout_1',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+
+      # Should now have 2 variations: original + everyone else
+      expect(experiment['variations'].length).to eq(2)
+
+      variation_ids = experiment['variations'].map { |v| v['id'] }
+      expect(variation_ids).to include('everyone_else_var')
+
+      # Verify traffic allocation was appended with endOfRange=10000
+      expect(experiment['trafficAllocation'].length).to eq(2)
+      last_allocation = experiment['trafficAllocation'].last
+      expect(last_allocation['entityId']).to eq('everyone_else_var')
+      expect(last_allocation['endOfRange']).to eq(10_000)
+    end
+
+    it 'should update all variation maps after injection' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'rollout_var', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'rollout_var', 'id' => 'rollout_var', 'featureEnabled' => true}
+            ],
+            'type' => 'fr'
+          }
+        ],
+        rollouts: [
+          {
+            'id' => 'rollout_1',
+            'experiments' => [
+              {
+                'id' => 'rollout_everyone_else',
+                'key' => 'rollout_everyone_else',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => [],
+                'trafficAllocation' => [{'entityId' => 'everyone_else_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {'key' => 'everyone_else_var', 'id' => 'everyone_else_var', 'featureEnabled' => false}
+                ]
+              }
+            ]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => 'rollout_1',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+
+      expect(config.variation_key_map['feature_rollout_exp']).to have_key('everyone_else_var')
+      expect(config.variation_id_map['feature_rollout_exp']).to have_key('everyone_else_var')
+      expect(config.variation_id_map_by_experiment_id['exp_fr']).to have_key('everyone_else_var')
+      expect(config.variation_key_map_by_experiment_id['exp_fr']).to have_key('everyone_else_var')
+
+      # flag_variation_map should also include the injected variation
+      flag_variations = config.flag_variation_map['test_flag']
+      injected_ids = flag_variations.map { |v| v['id'] }
+      expect(injected_ids).to include('everyone_else_var')
+    end
+
+    it 'should not modify non-feature_rollout experiments' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_ab',
+            'key' => 'ab_test_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}
+            ],
+            'type' => 'ab'
+          }
+        ],
+        rollouts: [
+          {
+            'id' => 'rollout_1',
+            'experiments' => [
+              {
+                'id' => 'rollout_everyone_else',
+                'key' => 'rollout_everyone_else',
+                'status' => 'Running',
+                'forcedVariations' => {},
+                'layerId' => 'rollout_1',
+                'audienceIds' => [],
+                'trafficAllocation' => [{'entityId' => 'everyone_else_var', 'endOfRange' => 10_000}],
+                'variations' => [
+                  {'key' => 'everyone_else_var', 'id' => 'everyone_else_var', 'featureEnabled' => false}
+                ]
+              }
+            ]
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_ab'],
+            'rolloutId' => 'rollout_1',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_ab']
+
+      expect(experiment['variations'].length).to eq(1)
+      expect(experiment['trafficAllocation'].length).to eq(1)
+    end
+
+    it 'should not modify feature_rollout experiment when rolloutId is empty' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_fr',
+            'key' => 'feature_rollout_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [
+              {'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}
+            ],
+            'type' => 'fr'
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_fr'],
+            'rolloutId' => '',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      experiment = config.experiment_id_map['exp_fr']
+
+      expect(experiment['variations'].length).to eq(1)
+      expect(experiment['trafficAllocation'].length).to eq(1)
+    end
+  end
 end

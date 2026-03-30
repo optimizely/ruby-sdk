@@ -18,6 +18,14 @@
 module Optimizely
   module Helpers
     module Constants
+      EXPERIMENT_TYPES = {
+        'ab' => 'ab',
+        'mab' => 'mab',
+        'cmab' => 'cmab',
+        'td' => 'td',
+        'fr' => 'fr'
+      }.freeze
+
       JSON_SCHEMA_V2 = {
         'type' => 'object',
         'properties' => {
@@ -204,6 +212,10 @@ module Optimizely
                 },
                 'cmab' => {
                   'type' => 'object'
+                },
+                'type' => {
+                  'type' => %w[string null],
+                  'enum' => EXPERIMENT_TYPES.values + [nil]
                 },
                 'holdouts' => {
                   'type' => 'array'

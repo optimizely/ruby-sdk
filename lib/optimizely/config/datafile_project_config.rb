@@ -180,7 +180,6 @@ module Optimizely
         @all_segments.concat Audience.get_segments(audience['conditions'])
       end
 
-      @flag_variation_map = generate_feature_variation_map(@feature_flags)
       @all_experiments = @experiment_id_map.merge(@rollout_experiment_id_map)
       @all_experiments.each do |id, exp|
         variations = exp.fetch('variations')
@@ -205,7 +204,32 @@ module Optimizely
         feature_flag['experimentIds'].each do |experiment_id|
           @experiment_feature_map[experiment_id] = [feature_flag['id']]
         end
+
+        # Feature Rollout support: inject the "everyone else" variation
+        # into any experiment with type == "feature_rollout"
+        everyone_else_variation = get_everyone_else_variation(feature_flag)
+        next if everyone_else_variation.nil?
+
+        feature_flag['experimentIds'].each do |exp_id|
+          experiment = @experiment_id_map[exp_id]
+          next unless experiment && experiment['type'] == Helpers::Constants::EXPERIMENT_TYPES['fr']
+
+          experiment['variations'].push(everyone_else_variation)
+          experiment['trafficAllocation'].push(
+            'entityId' => everyone_else_variation['id'],
+            'endOfRange' => 10_000
+          )
+          @variation_key_map[experiment['key']][everyone_else_variation['key']] = everyone_else_variation
+          @variation_id_map[experiment['key']][everyone_else_variation['id']] = everyone_else_variation
+          @variation_id_map_by_experiment_id[exp_id][everyone_else_variation['id']] = everyone_else_variation
+          @variation_key_map_by_experiment_id[exp_id][everyone_else_variation['key']] = everyone_else_variation
+          variation_variables = everyone_else_variation['variables']
+          @variation_id_to_variable_usage_map[everyone_else_variation['id']] = generate_key_map(variation_variables, 'id') if variation_variables
+        end
       end
+
+      # Generate flag_variation_map after injection so it includes everyone-else variations
+      @flag_variation_map = generate_feature_variation_map(@feature_flags)
 
       # Adding Holdout variations in variation id and key maps
       return unless @holdouts && !@holdouts.empty?
@@ -689,6 +713,38 @@ module Optimizely
     end
 
     private
+
+    def get_everyone_else_variation(feature_flag)
+      # Get the "everyone else" variation for a feature flag.
+      #
+      # The "everyone else" rule is the last experiment in the flag's rollout,
+      # and its first variation is the "everyone else" variation.
+      #
+      # feature_flag - Feature flag hash
+      #
+      # Returns the "everyone else" variation hash, or nil if not available.
+
+      rollout_id = feature_flag['rolloutId']
+      return nil if rollout_id.nil? || rollout_id.empty?
+
+      rollout = @rollout_id_map[rollout_id]
+      return nil if rollout.nil?
+
+      experiments = rollout['experiments']
+      return nil if experiments.nil? || experiments.empty?
+
+      everyone_else_rule = experiments.last
+      variations = everyone_else_rule['variations']
+      return nil if variations.nil? || variations.empty?
+
+      variation = variations.first
+      {
+        'id' => variation['id'],
+        'key' => variation['key'],
+        'featureEnabled' => variation['featureEnabled'] == true,
+        'variables' => variation.fetch('variables', [])
+      }
+    end
 
     def generate_feature_variation_map(feature_flags)
       flag_variation_map = {}
