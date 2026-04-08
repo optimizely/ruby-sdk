@@ -1880,6 +1880,39 @@ describe Optimizely::DatafileProjectConfig do
       expect(experiment['type']).to be_nil
     end
 
+    it 'should accept experiments with unknown type values' do
+      datafile = build_datafile(
+        experiments: [
+          {
+            'id' => 'exp_unknown',
+            'key' => 'unknown_type_exp',
+            'status' => 'Running',
+            'forcedVariations' => {},
+            'layerId' => 'layer_1',
+            'audienceIds' => [],
+            'trafficAllocation' => [{'entityId' => 'var_1', 'endOfRange' => 5000}],
+            'variations' => [{'key' => 'var_1', 'id' => 'var_1', 'featureEnabled' => true}],
+            'type' => 'new_unknown_type'
+          }
+        ],
+        feature_flags: [
+          {
+            'id' => 'flag_1',
+            'key' => 'test_flag',
+            'experimentIds' => ['exp_unknown'],
+            'rolloutId' => '',
+            'variables' => []
+          }
+        ]
+      )
+
+      config = Optimizely::DatafileProjectConfig.new(JSON.dump(datafile), logger, error_handler)
+      expect(config).not_to be_nil
+      experiment = config.experiment_id_map['exp_unknown']
+      expect(experiment['type']).to eq('new_unknown_type')
+      expect(experiment['key']).to eq('unknown_type_exp')
+    end
+
     it 'should inject everyone else variation into feature_rollout experiments' do
       datafile = build_datafile(
         experiments: [

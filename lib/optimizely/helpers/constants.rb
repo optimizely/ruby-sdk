@@ -214,8 +214,7 @@ module Optimizely
                   'type' => 'object'
                 },
                 'type' => {
-                  'type' => %w[string null],
-                  'enum' => EXPERIMENT_TYPES.values + [nil]
+                  'type' => %w[string null]
                 },
                 'holdouts' => {
                   'type' => 'array'
