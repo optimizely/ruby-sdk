@@ -16,6 +16,7 @@
 #    limitations under the License.
 #
 require_relative 'event_processor'
+require_relative '../fork_tracker'
 require_relative '../helpers/validator'
 module Optimizely
   class BatchEventProcessor < EventProcessor
@@ -77,6 +78,7 @@ module Optimizely
         @resource = ConditionVariable.new
       end
       @thread = Thread.new { run_queue }
+      ForkTracker.after_fork { @thread = Thread.new { run_queue } }
       @started = true
       @stopped = false
     end
