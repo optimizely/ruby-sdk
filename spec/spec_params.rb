@@ -2051,6 +2051,145 @@ module OptimizelySpec
 
   CONFIG_BODY_WITH_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_HOLDOUTS).freeze
 
+  # Local Holdouts test datafile
+  CONFIG_BODY_WITH_LOCAL_HOLDOUTS = VALID_CONFIG_BODY.merge(
+    {
+      'holdouts' => [
+        {
+          'id' => 'local_holdout_single_rule',
+          'key' => 'local_holdout_single',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['177770'], # Single rule from feature flag
+          'variations' => [
+            {
+              'id' => 'local_var_1',
+              'key' => 'control',
+              'featureEnabled' => true
+            },
+            {
+              'id' => 'local_var_2',
+              'key' => 'treatment',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_1',
+              'endOfRange' => 5000
+            },
+            {
+              'entityId' => 'local_var_2',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'local_holdout_multiple_rules',
+          'key' => 'local_holdout_multi',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['177770', '177774'], # Multiple rules
+          'variations' => [
+            {
+              'id' => 'local_var_3',
+              'key' => 'holdout_variation',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_3',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'global_holdout_nil_rules',
+          'key' => 'global_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => nil, # Global holdout (nil means all rules)
+          'variations' => [
+            {
+              'id' => 'global_var_1',
+              'key' => 'global_control',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'global_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'local_holdout_empty_array',
+          'key' => 'local_holdout_empty',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => [], # Local holdout with empty array
+          'variations' => [
+            {
+              'id' => 'empty_var_1',
+              'key' => 'empty_control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'empty_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'local_holdout_nonexistent_rule',
+          'key' => 'local_holdout_bad_rule',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['99999999'], # Non-existent rule ID
+          'variations' => [
+            {
+              'id' => 'bad_var_1',
+              'key' => 'bad_control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'bad_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'inactive_local_holdout',
+          'key' => 'inactive_local',
+          'status' => 'Inactive',
+          'audiences' => [],
+          'includedRules' => ['177770'],
+          'variations' => [
+            {
+              'id' => 'inactive_var_1',
+              'key' => 'inactive_control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'inactive_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ]
+    }
+  ).freeze
+
+  CONFIG_BODY_WITH_LOCAL_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_LOCAL_HOLDOUTS).freeze
+
   def self.deep_clone(obj)
     obj.dup.tap do |new_obj|
       case new_obj
