@@ -34,7 +34,7 @@ module Optimizely
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
                 :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
-                :global_holdouts, :included_holdouts, :excluded_holdouts, :flag_holdouts_map
+                :global_holdouts, :rule_holdouts_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -116,9 +116,7 @@ module Optimizely
       @flag_variation_map = {}
       @holdout_id_map = {}
       @global_holdouts = []
-      @included_holdouts = {}
-      @excluded_holdouts = {}
-      @flag_holdouts_map = {}
+      @rule_holdouts_map = {}
 
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
@@ -128,28 +126,19 @@ module Optimizely
 
         @holdout_id_map[holdout['id']] = holdout
 
-        included_flags = holdout['includedFlags'] || []
-        excluded_flags = holdout['excludedFlags'] || []
+        # Local Holdouts: included_rules field determines scope
+        # nil = global holdout (applies to all rules)
+        # array = local holdout (applies to specific rules)
+        included_rules = holdout['includedRules']
 
-        case [included_flags.empty?, excluded_flags.empty?]
-        when [true, true]
-          # No included or excluded flags - this is a global holdout
+        if included_rules.nil?
+          # Global holdout - applies to all rules
           @global_holdouts << holdout
-
-        when [false, true], [false, false]
-          # Has included flags - add to included_holdouts map
-          included_flags.each do |flag_id|
-            @included_holdouts[flag_id] ||= []
-            @included_holdouts[flag_id] << holdout
-          end
-
-        when [true, false]
-          # No included flags but has excluded flags - global with exclusions
-          @global_holdouts << holdout
-
-          excluded_flags.each do |flag_id|
-            @excluded_holdouts[flag_id] ||= []
-            @excluded_holdouts[flag_id] << holdout
+        else
+          # Local holdout - applies to specific rules
+          included_rules.each do |rule_id|
+            @rule_holdouts_map[rule_id] ||= []
+            @rule_holdouts_map[rule_id] << holdout
           end
         end
       end
@@ -658,44 +647,27 @@ module Optimizely
       @rollout_experiment_id_map.key?(experiment_id)
     end
 
-    def get_holdouts_for_flag(flag_id)
-      # Helper method to get holdouts from an applied feature flag
+    def get_global_holdouts # rubocop:disable Naming/AccessorMethodName
+      # Helper method to get all global holdouts
       #
-      # flag_id - (REQUIRED) ID of the feature flag
-      #         This parameter is required and should not be null/nil
-      #
-      # Returns the holdouts that apply for a specific flag
+      # Returns array of global holdouts (holdouts with includedRules == nil)
 
       return [] if @holdouts.nil? || @holdouts.empty?
 
-      # Check cache first (before validation, so we cache the validation result too)
-      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
+      @global_holdouts
+    end
 
-      # Validate that the flag exists in the datafile
-      flag_exists = @feature_flags.any? { |flag| flag['id'] == flag_id }
-      unless flag_exists
-        # Cache the empty result for non-existent flags
-        @flag_holdouts_map[flag_id] = []
-        return []
-      end
+    def get_holdouts_for_rule(rule_id)
+      # Helper method to get local holdouts for a specific rule
+      #
+      # rule_id - (REQUIRED) ID of the rule
+      #
+      # Returns array of local holdouts targeting this rule
 
-      # Prioritize global holdouts first
-      excluded = @excluded_holdouts[flag_id] || []
+      return [] if @holdouts.nil? || @holdouts.empty?
+      return [] if rule_id.nil?
 
-      active_holdouts = if excluded.any?
-                          @global_holdouts.reject { |holdout| excluded.include?(holdout) }
-                        else
-                          @global_holdouts.dup
-                        end
-
-      # Append included holdouts
-      included = @included_holdouts[flag_id] || []
-      active_holdouts.concat(included)
-
-      # Cache the result
-      @flag_holdouts_map[flag_id] = active_holdouts
-
-      @flag_holdouts_map[flag_id] || []
+      @rule_holdouts_map[rule_id] || []
     end
 
     def get_holdout(holdout_id)
@@ -710,6 +682,17 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
       nil
+    end
+
+    def global_holdout?(holdout)
+      # Helper method to check if a holdout is global
+      #
+      # holdout - Holdout hash
+      #
+      # Returns true if holdout has includedRules == nil (global),
+      #         false otherwise (local)
+
+      holdout['includedRules'].nil?
     end
 
     private

@@ -99,20 +99,8 @@ describe Optimizely::DecisionService do
           feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
           expect(feature_flag).not_to be_nil
 
-          # Find the most specific holdout for this flag (prefer explicitly included over global)
-          applicable_holdout = config_with_holdouts.holdouts.find do |holdout|
-            # First preference: holdout that explicitly includes this flag
-            holdout['includedFlags']&.include?(feature_flag['id'])
-          end
-
-          # If no explicit holdout found, fall back to global holdouts
-          if applicable_holdout.nil?
-            applicable_holdout = config_with_holdouts.holdouts.find do |holdout|
-              # Global holdout (empty/nil includedFlags) that doesn't exclude this flag
-              (holdout['includedFlags'].nil? || holdout['includedFlags'].empty?) &&
-                !holdout['excludedFlags']&.include?(feature_flag['id'])
-            end
-          end
+          # Find a global holdout applicable to this flag
+          applicable_holdout = config_with_holdouts.get_global_holdouts.first
 
           expect(applicable_holdout).not_to be_nil, 'No applicable holdout found for boolean_feature'
 
@@ -372,9 +360,7 @@ describe Optimizely::DecisionService do
         expect(feature_flag).not_to be_nil
 
         # Get global holdouts
-        global_holdouts = config_with_holdouts.holdouts.select do |h|
-          h['includedFlags'].nil? || h['includedFlags'].empty?
-        end
+        global_holdouts = config_with_holdouts.get_global_holdouts
 
         unless global_holdouts.empty?
           user_context = project_with_holdouts.create_user_context('testUserId', {})
@@ -391,17 +377,18 @@ describe Optimizely::DecisionService do
         end
       end
 
-      it 'should respect included and excluded flags configuration' do
-        # Test that flags in excludedFlags are not affected by that holdout
-        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
+      it 'should respect includedRules configuration' do
+        # Global holdouts should not include local holdouts
+        global_holdouts = config_with_holdouts.get_global_holdouts
 
-        if feature_flag
-          # Get holdouts for this flag
-          holdouts_for_flag = config_with_holdouts.get_holdouts_for_flag(feature_flag['id'])
+        global_holdouts.each do |holdout|
+          expect(holdout['includedRules']).to be_nil
+        end
 
-          # Should not include holdouts that exclude this flag
-          excluded_holdout = holdouts_for_flag.find { |h| h['key'] == 'excluded_holdout' }
-          expect(excluded_holdout).to be_nil
+        # Local holdouts should only appear for their specific rules
+        local_holdouts = config_with_holdouts.get_holdouts_for_rule('111127')
+        local_holdouts.each do |holdout|
+          expect(holdout['includedRules']).to include('111127')
         end
       end
     end
@@ -730,7 +717,7 @@ describe Optimizely::DecisionService do
           []
         )
 
-        # Mock get_variations_for_feature_list instead of get_variation_for_feature
+        # Mock get_variations_for_feature_list which is called by decide_for_keys
         allow(optimizely_with_mocked_events.decision_service).to receive(:get_variations_for_feature_list)
           .and_return([holdout_decision_result])
 
