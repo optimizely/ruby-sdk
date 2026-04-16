@@ -1947,8 +1947,7 @@ module OptimizelySpec
           'key' => 'global_holdout',
           'status' => 'Running',
           'audiences' => [],
-          'includedFlags' => [],
-          'excludedFlags' => ['155554'],
+          'includedRules' => nil,
           'variations' => [
             {
               'id' => 'var_1',
@@ -1977,8 +1976,7 @@ module OptimizelySpec
           'key' => 'boolean_feature_holdout',
           'status' => 'Running',
           'audiences' => [],
-          'includedFlags' => ['155549'],
-          'excludedFlags' => [],
+          'includedRules' => ['111127'],
           'variations' => [
             {
               'id' => 'var_boolean',
@@ -1998,8 +1996,7 @@ module OptimizelySpec
           'key' => 'holdout_empty_1',
           'status' => 'Running',
           'audiences' => [],
-          'includedFlags' => [],
-          'excludedFlags' => [],
+          'includedRules' => nil,
           'variations' => [],
           'trafficAllocation' => []
         },
@@ -2008,8 +2005,7 @@ module OptimizelySpec
           'key' => 'specific_holdout',
           'status' => 'Running',
           'audiences' => [],
-          'includedFlags' => ['155559'],
-          'excludedFlags' => [],
+          'includedRules' => ['122230'],
           'variations' => [
             {
               'id' => 'var_3',
@@ -2029,8 +2025,7 @@ module OptimizelySpec
           'key' => 'inactive_holdout',
           'status' => 'Inactive',
           'audiences' => [],
-          'includedFlags' => ['155554'],
-          'excludedFlags' => [],
+          'includedRules' => ['177770'],
           'variations' => [
             {
               'id' => 'var_4',
@@ -2089,7 +2084,7 @@ module OptimizelySpec
           'key' => 'local_holdout_multi',
           'status' => 'Running',
           'audiences' => [],
-          'includedRules' => ['177770', '177774'], # Multiple rules
+          'includedRules' => %w[177770 177774], # Multiple rules
           'variations' => [
             {
               'id' => 'local_var_3',

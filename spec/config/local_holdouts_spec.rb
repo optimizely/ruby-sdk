@@ -146,7 +146,7 @@ describe 'Local Holdouts' do
       end
 
       it 'should not include global holdouts in rule_holdouts_map' do
-        config.rule_holdouts_map.each do |_rule_id, holdouts|
+        config.rule_holdouts_map.each_value do |holdouts|
           holdouts.each do |holdout|
             expect(holdout['includedRules']).not_to be_nil
           end
@@ -271,13 +271,13 @@ describe 'Local Holdouts' do
       it 'should check local holdouts for specific rule before audience evaluation' do
         user_context = project.create_user_context('local_user', {})
 
-        # Find experiment rule that has local holdout
-        experiment = config.experiment_id_map['177770']
+        # Find rollout experiment rule that has local holdout
+        experiment = config.rollout_experiment_id_map['177770']
         expect(experiment).not_to be_nil
 
         # Mock bucketer to always bucket into local holdout
         allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_instance, _config, exp, _bucketing_id, _user_id|
-          if exp['id'] == 'local_holdout_single_rule' || exp['id'] == 'local_holdout_multiple_rules'
+          if %w[local_holdout_single_rule local_holdout_multiple_rules].include?(exp['id'])
             [exp['variations'].first, []]
           else
             [nil, []]
@@ -286,7 +286,7 @@ describe 'Local Holdouts' do
 
         result = decision_service.get_variation_from_experiment_rule(
           config,
-          experiment['featureIds']&.first || 'unknown',
+          'boolean_single_variable_feature',
           experiment,
           user_context,
           nil,
@@ -301,7 +301,7 @@ describe 'Local Holdouts' do
       it 'should skip rule evaluation when user is in local holdout' do
         user_context = project.create_user_context('skip_user', {})
 
-        experiment = config.experiment_id_map['177770']
+        experiment = config.rollout_experiment_id_map['177770']
 
         # Mock bucketer to bucket into local holdout
         allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_instance, _config, exp, _bucketing_id, _user_id|
@@ -314,7 +314,7 @@ describe 'Local Holdouts' do
 
         result = decision_service.get_variation_from_experiment_rule(
           config,
-          experiment['featureIds']&.first || 'unknown',
+          'boolean_single_variable_feature',
           experiment,
           user_context,
           nil,
@@ -334,7 +334,7 @@ describe 'Local Holdouts' do
 
         # Verify both holdouts are checked in order
         user_context = project.create_user_context('multi_holdout_user', {})
-        experiment = config.experiment_id_map[rule_id]
+        experiment = config.rollout_experiment_id_map[rule_id]
 
         # First holdout should be checked first
         allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_instance, _config, exp, _bucketing_id, _user_id|
@@ -347,7 +347,7 @@ describe 'Local Holdouts' do
 
         result = decision_service.get_variation_from_experiment_rule(
           config,
-          experiment['featureIds']&.first || 'unknown',
+          'boolean_single_variable_feature',
           experiment,
           user_context,
           nil,
@@ -404,7 +404,7 @@ describe 'Local Holdouts' do
         expect(empty_holdout['includedRules']).to eq([])
 
         # Should not be in any rule's holdouts
-        config.rule_holdouts_map.each do |_rule_id, holdouts|
+        config.rule_holdouts_map.each_value do |holdouts|
           expect(holdouts).not_to include(empty_holdout)
         end
       end

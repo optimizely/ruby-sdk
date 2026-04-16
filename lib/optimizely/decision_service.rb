@@ -460,7 +460,7 @@ module Optimizely
         reasons.push(message)
 
         # Return holdout variation as rule variation (with nil variation_id for holdout source)
-        return VariationResult.new(holdout_decision.decision['holdout']['id'], false, reasons, nil)
+        return VariationResult.new(holdout_decision.decision.experiment['id'], false, reasons, nil)
       end
 
       variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)

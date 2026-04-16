@@ -647,7 +647,7 @@ module Optimizely
       @rollout_experiment_id_map.key?(experiment_id)
     end
 
-    def get_global_holdouts
+    def get_global_holdouts # rubocop:disable Naming/AccessorMethodName
       # Helper method to get all global holdouts
       #
       # Returns array of global holdouts (holdouts with includedRules == nil)
