@@ -169,9 +169,10 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
+      # Get running holdouts from the holdout_id_map (all holdouts are global now)
+      running_holdouts = project_config.holdout_id_map.values
 
-      if holdouts && !holdouts.empty?
+      if running_holdouts && !running_holdouts.empty?
         # Has holdouts - use get_decision_for_flag which checks holdouts first
         get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
       else
@@ -195,8 +196,8 @@ module Optimizely
       reasons = decide_reasons ? decide_reasons.dup : []
       user_id = user_context.user_id
 
-      # Check holdouts
-      holdouts = project_config.get_holdouts_for_flag(feature_flag['id'])
+      # Check holdouts (all holdouts are global now - apply to all flags)
+      holdouts = project_config.holdout_id_map.values
 
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)

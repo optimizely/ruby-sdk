@@ -346,14 +346,6 @@ module Optimizely
                 },
                 'status' => {
                   'type' => 'string'
-                },
-                'includedFlags' => {
-                  'type' => 'array',
-                  'items' => {'type' => 'string'}
-                },
-                'excludedFlags' => {
-                  'type' => 'array',
-                  'items' => {'type' => 'string'}
                 }
               }
             }
