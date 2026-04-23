@@ -1407,7 +1407,6 @@ describe Optimizely::DatafileProjectConfig do
         expect(feature_flag['key']).to eq('boolean_feature')
       end
     end
-
   end
 
   describe 'Holdout Decision Reasons' do

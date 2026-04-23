@@ -376,7 +376,6 @@ describe Optimizely::DecisionService do
           expect(result).to be_an(Array)
         end
       end
-
     end
 
     describe 'holdout logging and error handling' do
