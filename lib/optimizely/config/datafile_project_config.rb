@@ -33,8 +33,7 @@ module Optimizely
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
-                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
-                :global_holdouts, :included_holdouts, :excluded_holdouts, :flag_holdouts_map
+                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -115,10 +114,6 @@ module Optimizely
       @variation_id_to_experiment_map = {}
       @flag_variation_map = {}
       @holdout_id_map = {}
-      @global_holdouts = []
-      @included_holdouts = {}
-      @excluded_holdouts = {}
-      @flag_holdouts_map = {}
 
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
@@ -127,31 +122,6 @@ module Optimizely
         holdout['layerId'] ||= ''
 
         @holdout_id_map[holdout['id']] = holdout
-
-        included_flags = holdout['includedFlags'] || []
-        excluded_flags = holdout['excludedFlags'] || []
-
-        case [included_flags.empty?, excluded_flags.empty?]
-        when [true, true]
-          # No included or excluded flags - this is a global holdout
-          @global_holdouts << holdout
-
-        when [false, true], [false, false]
-          # Has included flags - add to included_holdouts map
-          included_flags.each do |flag_id|
-            @included_holdouts[flag_id] ||= []
-            @included_holdouts[flag_id] << holdout
-          end
-
-        when [true, false]
-          # No included flags but has excluded flags - global with exclusions
-          @global_holdouts << holdout
-
-          excluded_flags.each do |flag_id|
-            @excluded_holdouts[flag_id] ||= []
-            @excluded_holdouts[flag_id] << holdout
-          end
-        end
       end
 
       @experiment_id_map.each_value do |exp|
@@ -656,46 +626,6 @@ module Optimizely
       # Returns true if experiment belongs to  any rollout,
       #              false otherwise.
       @rollout_experiment_id_map.key?(experiment_id)
-    end
-
-    def get_holdouts_for_flag(flag_id)
-      # Helper method to get holdouts from an applied feature flag
-      #
-      # flag_id - (REQUIRED) ID of the feature flag
-      #         This parameter is required and should not be null/nil
-      #
-      # Returns the holdouts that apply for a specific flag
-
-      return [] if @holdouts.nil? || @holdouts.empty?
-
-      # Check cache first (before validation, so we cache the validation result too)
-      return @flag_holdouts_map[flag_id] if @flag_holdouts_map.key?(flag_id)
-
-      # Validate that the flag exists in the datafile
-      flag_exists = @feature_flags.any? { |flag| flag['id'] == flag_id }
-      unless flag_exists
-        # Cache the empty result for non-existent flags
-        @flag_holdouts_map[flag_id] = []
-        return []
-      end
-
-      # Prioritize global holdouts first
-      excluded = @excluded_holdouts[flag_id] || []
-
-      active_holdouts = if excluded.any?
-                          @global_holdouts.reject { |holdout| excluded.include?(holdout) }
-                        else
-                          @global_holdouts.dup
-                        end
-
-      # Append included holdouts
-      included = @included_holdouts[flag_id] || []
-      active_holdouts.concat(included)
-
-      # Cache the result
-      @flag_holdouts_map[flag_id] = active_holdouts
-
-      @flag_holdouts_map[flag_id] || []
     end
 
     def get_holdout(holdout_id)
