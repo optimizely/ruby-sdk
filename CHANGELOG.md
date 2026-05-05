@@ -1,5 +1,23 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.3.0
+May 4, 2026
+
+### New Features
+
+**Feature Rollout**: Added support for Feature Rollouts, a new experiment type 
+combining Targeted Delivery simplicity with A/B test measurement capabilities. 
+Feature Rollouts enable progressive rollouts with full impact analytics, metric tracking, 
+and confidence intervals. 
+See [Feature Rollout docs](https://support.optimizely.com/hc/en-us/articles/45552846481037-Run-Feature-Rollouts-in-Feature-Experimentation) for more information.
+
+- Exclude CMAB from UserProfileService ([#384](https://github.com/optimizely/ruby-sdk/pull/384))
+- Add Event Retries ([#385](https://github.com/optimizely/ruby-sdk/pull/385))
+- Arnica code risk findings for Ruby SDK ([#391](https://github.com/optimizely/ruby-sdk/pull/391))
+- Add Feature Rollout support ([#392](https://github.com/optimizely/ruby-sdk/pull/392))
+- Remove experiment type validation from config parsing ([#393](https://github.com/optimizely/ruby-sdk/pull/393))
+- Remove legacy flag-level holdout fields ([#395](https://github.com/optimizely/ruby-sdk/pull/395))
+
 ## 5.2.1
 December 17th, 2025
 
