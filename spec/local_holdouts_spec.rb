@@ -33,7 +33,7 @@ describe 'Local Holdouts' do
       it 'treats holdouts as global (backward compatibility)' do
         # All holdouts in CONFIG_BODY_WITH_HOLDOUTS have no includedRules = nil = global
         running_holdouts = config.holdout_id_map.values
-        global_holdouts = config.get_global_holdouts
+        global_holdouts = config.global_holdouts
 
         # Running holdouts: holdout_1, holdout_boolean_feature, holdout_empty_1, holdout_2 (holdout_3 is Inactive)
         expect(global_holdouts.length).to eq(running_holdouts.length)
@@ -46,13 +46,13 @@ describe 'Local Holdouts' do
       let(:local_config) { Optimizely::DatafileProjectConfig.new(local_config_json, spy_logger, error_handler) }
 
       it 'classifies holdout with nil includedRules as global' do
-        global_holdouts = local_config.get_global_holdouts
+        global_holdouts = local_config.global_holdouts
         expect(global_holdouts.length).to eq(1)
         expect(global_holdouts.first['id']).to eq('global_holdout_1')
       end
 
       it 'classifies holdout with non-nil includedRules as local' do
-        global_holdouts = local_config.get_global_holdouts
+        global_holdouts = local_config.global_holdouts
         # Only global_holdout_1 should be in global list, not local_holdout_1
         expect(global_holdouts.none? { |h| h['id'] == 'local_holdout_1' }).to be(true)
       end
@@ -75,7 +75,7 @@ describe 'Local Holdouts' do
         expect(holdouts).to be_empty
       end
 
-      it 'get_global_holdouts returns empty array when no global holdouts' do
+      it 'global_holdouts returns empty array when no global holdouts' do
         # Build a config with only a local holdout
         only_local = OptimizelySpec::VALID_CONFIG_BODY.merge(
           'holdouts' => [
@@ -87,14 +87,14 @@ describe 'Local Holdouts' do
               'audienceIds' => [],
               'audienceConditions' => [],
               'includedRules' => ['some_rule'],
-              'variations' => [{ 'id' => 'v1', 'key' => 'off', 'featureEnabled' => false }],
-              'trafficAllocation' => [{ 'entityId' => 'v1', 'endOfRange' => 10_000 }]
+              'variations' => [{'id' => 'v1', 'key' => 'off', 'featureEnabled' => false}],
+              'trafficAllocation' => [{'entityId' => 'v1', 'endOfRange' => 10_000}]
             }
           ]
         )
         only_local_config = Optimizely::DatafileProjectConfig.new(JSON.dump(only_local), spy_logger, error_handler)
 
-        expect(only_local_config.get_global_holdouts).to be_empty
+        expect(only_local_config.global_holdouts).to be_empty
         expect(only_local_config.rule_holdouts_map['some_rule'].length).to eq(1)
       end
     end
@@ -102,17 +102,17 @@ describe 'Local Holdouts' do
 
   describe 'is_global? semantics via includedRules' do
     it 'treats nil includedRules as global (no field in datafile)' do
-      holdout = { 'id' => 'h1', 'key' => 'global', 'includedRules' => nil }
+      holdout = {'id' => 'h1', 'key' => 'global', 'includedRules' => nil}
       expect(holdout['includedRules'].nil?).to be(true)
     end
 
     it 'treats non-nil includedRules as local even if empty' do
-      holdout = { 'id' => 'h2', 'key' => 'local_empty', 'includedRules' => [] }
+      holdout = {'id' => 'h2', 'key' => 'local_empty', 'includedRules' => []}
       expect(holdout['includedRules'].nil?).to be(false)
     end
 
     it 'treats non-nil includedRules with values as local' do
-      holdout = { 'id' => 'h3', 'key' => 'local', 'includedRules' => ['rule1'] }
+      holdout = {'id' => 'h3', 'key' => 'local', 'includedRules' => ['rule1']}
       expect(holdout['includedRules'].nil?).to be(false)
     end
   end

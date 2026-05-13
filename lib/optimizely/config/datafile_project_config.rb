@@ -658,15 +658,6 @@ module Optimizely
       nil
     end
 
-    def get_global_holdouts
-      # Returns all global holdouts (those with includedRules == nil).
-      # Global holdouts apply to all rules and are evaluated at the flag level.
-      #
-      # Returns Array of holdout hashes
-
-      @global_holdouts
-    end
-
     def get_holdouts_for_rule(rule_id)
       # Returns local holdouts targeting a specific rule.
       # Local holdouts are holdouts where includedRules is a non-nil array containing rule_id.
