@@ -2041,6 +2041,60 @@ module OptimizelySpec
 
   CONFIG_BODY_WITH_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_HOLDOUTS).freeze
 
+  # Config with both global and local holdouts for testing local holdouts feature
+  CONFIG_BODY_WITH_LOCAL_HOLDOUTS = VALID_CONFIG_BODY.merge(
+    {
+      'holdouts' => [
+        {
+          'id' => 'global_holdout_1',
+          'key' => 'global_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          'audienceIds' => [],
+          'audienceConditions' => [],
+          'variations' => [
+            {
+              'id' => 'global_var_1',
+              'key' => 'holdout_variation',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'global_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+          # No includedRules key => nil => global holdout
+        },
+        {
+          'id' => 'local_holdout_1',
+          'key' => 'local_holdout_exp',
+          'status' => 'Running',
+          'audiences' => [],
+          'audienceIds' => [],
+          'audienceConditions' => [],
+          'includedRules' => ['111127'], # targets experiment rule 111127
+          'variations' => [
+            {
+              'id' => 'local_var_1',
+              'key' => 'local_holdout_variation',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ]
+    }
+  ).freeze
+
+  CONFIG_BODY_WITH_LOCAL_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_LOCAL_HOLDOUTS).freeze
+
   def self.deep_clone(obj)
     obj.dup.tap do |new_obj|
       case new_obj

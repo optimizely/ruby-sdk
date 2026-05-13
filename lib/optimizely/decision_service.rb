@@ -169,11 +169,14 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      # Get running holdouts from the holdout_id_map (all holdouts are global now)
+      # Get running holdouts from the holdout_id_map (global and local).
+      # If any holdouts exist, use get_decision_for_flag which checks global holdouts
+      # at flag level and local holdouts per-rule.
       running_holdouts = project_config.holdout_id_map.values
 
       if running_holdouts && !running_holdouts.empty?
-        # Has holdouts - use get_decision_for_flag which checks holdouts first
+        # Has holdouts - use get_decision_for_flag which checks global holdouts first,
+        # then experiments/rollouts which check local holdouts per-rule
         get_decision_for_flag(feature_flag, user_context, project_config, decide_options)
       else
         get_variations_for_feature_list(project_config, [feature_flag], user_context, decide_options).first
@@ -196,16 +199,17 @@ module Optimizely
       reasons = decide_reasons ? decide_reasons.dup : []
       user_id = user_context.user_id
 
-      # Check holdouts (all holdouts are global now - apply to all flags)
-      holdouts = project_config.holdout_id_map.values
+      # Check global holdouts first (those with includedRules == nil).
+      # Global holdouts apply to all rules and are evaluated at the flag level.
+      global_holdouts = project_config.get_global_holdouts
 
-      holdouts.each do |holdout|
+      global_holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
 
         next unless holdout_decision.decision
 
-        message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
+        message = "The user '#{user_id}' is bucketed into global holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         reasons.push(message)
         return DecisionResult.new(holdout_decision.decision, false, reasons)
@@ -446,6 +450,21 @@ module Optimizely
       reasons.push(*forced_reasons)
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
+      # Check local holdouts targeting this specific experiment rule.
+      # Local holdouts are checked after forced decisions but before regular bucketing.
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user, project_config)
+        reasons.push(*holdout_decision.reasons)
+        if holdout_decision.decision
+          message = "The user '#{user.user_id}' is bucketed into local holdout '#{holdout['key']}' for experiment rule '#{rule['key']}' in flag '#{flag_key}'."
+          @logger.log(Logger::INFO, message)
+          reasons.push(message)
+          variation_id = holdout_decision.decision.variation['id']
+          return VariationResult.new(nil, false, reasons, variation_id)
+        end
+      end
+
       variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
       variation_result.reasons = reasons + variation_result.reasons
       variation_result
@@ -469,6 +488,20 @@ module Optimizely
       reasons.push(*forced_reasons)
 
       return [variation, skip_to_everyone_else, reasons] if variation
+
+      # Check local holdouts targeting this specific delivery rule.
+      # Local holdouts are checked after forced decisions but before audience/bucketing evaluation.
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
+        reasons.push(*holdout_decision.reasons)
+        if holdout_decision.decision
+          message = "The user '#{user_context.user_id}' is bucketed into local holdout '#{holdout['key']}' for delivery rule '#{rule['key']}' in flag '#{flag_key}'."
+          @logger.log(Logger::INFO, message)
+          reasons.push(message)
+          return [holdout_decision.decision.variation, skip_to_everyone_else, reasons]
+        end
+      end
 
       user_id = user_context.user_id
       attributes = user_context.user_attributes
