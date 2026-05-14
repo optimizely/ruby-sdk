@@ -33,7 +33,8 @@ module Optimizely
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
-                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map
+                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
+                :global_holdouts, :rule_holdouts_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -114,6 +115,8 @@ module Optimizely
       @variation_id_to_experiment_map = {}
       @flag_variation_map = {}
       @holdout_id_map = {}
+      @global_holdouts = []
+      @rule_holdouts_map = {}
 
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
@@ -122,6 +125,19 @@ module Optimizely
         holdout['layerId'] ||= ''
 
         @holdout_id_map[holdout['id']] = holdout
+
+        # Build global vs local holdout mappings
+        # A holdout is global when includedRules is nil/absent (applies to all rules)
+        # A holdout is local when includedRules is a non-nil array (applies only to specified rules)
+        if holdout_global?(holdout)
+          @global_holdouts << holdout
+        else
+          included_rules = holdout['includedRules'] || []
+          included_rules.each do |rule_id|
+            @rule_holdouts_map[rule_id] ||= []
+            @rule_holdouts_map[rule_id] << holdout
+          end
+        end
       end
 
       @experiment_id_map.each_value do |exp|
@@ -640,6 +656,35 @@ module Optimizely
 
       @logger.log Logger::ERROR, "Holdout with ID '#{holdout_id}' not found."
       nil
+    end
+
+    def get_global_holdouts
+      # Returns all running holdouts that are global (includedRules is nil/absent).
+      # Global holdouts apply to all rules across all flags.
+      #
+      # Returns Array of global holdout hashes
+      @global_holdouts
+    end
+
+    def get_holdouts_for_rule(rule_id)
+      # Returns running local holdouts that target a specific rule ID.
+      # Local holdouts apply only to the rules listed in their includedRules array.
+      #
+      # rule_id - String ID of the experiment/delivery rule
+      #
+      # Returns Array of holdout hashes targeting the rule (empty array if none)
+      @rule_holdouts_map[rule_id] || []
+    end
+
+    def holdout_global?(holdout)
+      # Determines whether a holdout is global (applies to all rules) or local (applies to specific rules).
+      # A holdout is global when includedRules is nil or absent from the datafile.
+      # A holdout with an empty array [] is a local holdout with no matching rules (NOT global).
+      #
+      # holdout - Holdout hash from the datafile
+      #
+      # Returns true if the holdout is global, false if local
+      !holdout.key?('includedRules') || holdout['includedRules'].nil?
     end
 
     private

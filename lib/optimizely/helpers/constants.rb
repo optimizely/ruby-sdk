@@ -346,6 +346,9 @@ module Optimizely
                 },
                 'status' => {
                   'type' => 'string'
+                },
+                'includedRules' => {
+                  'type' => %w[array null]
                 }
               }
             }

@@ -169,7 +169,7 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      # Get running holdouts from the holdout_id_map (all holdouts are global now)
+      # Check for any running holdouts (global or local)
       running_holdouts = project_config.holdout_id_map.values
 
       if running_holdouts && !running_holdouts.empty?
@@ -196,8 +196,8 @@ module Optimizely
       reasons = decide_reasons ? decide_reasons.dup : []
       user_id = user_context.user_id
 
-      # Check holdouts (all holdouts are global now - apply to all flags)
-      holdouts = project_config.holdout_id_map.values
+      # Check global holdouts first (flag level) — these apply to all rules across all flags
+      holdouts = project_config.get_global_holdouts
 
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
@@ -441,11 +441,26 @@ module Optimizely
       # Returns variation_id and reasons
       reasons = []
 
+      # Step 1: Forced decision check — existing logic, evaluated per rule
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
       variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
+      # Step 2: Local holdout check — check holdouts targeting this specific rule (FSSDK-12369)
+      # Local holdouts are evaluated per-rule, after forced decisions, before audience/traffic checks.
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user, project_config)
+        reasons.push(*holdout_decision.reasons)
+        if holdout_decision.decision
+          # User is in a local holdout — return holdout variation, skip rule evaluation
+          holdout_variation = holdout_decision.decision.variation
+          return VariationResult.new(nil, false, reasons, holdout_variation['id'])
+        end
+      end
+
+      # Step 3: Regular rule evaluation — existing logic
       variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
       variation_result.reasons = reasons + variation_result.reasons
       variation_result
@@ -464,11 +479,26 @@ module Optimizely
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
+
+      # Step 1: Forced decision check — existing logic, evaluated per rule
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
       variation, forced_reasons = validated_forced_decision(project_config, context, user_context)
       reasons.push(*forced_reasons)
 
       return [variation, skip_to_everyone_else, reasons] if variation
+
+      # Step 2: Local holdout check — check holdouts targeting this specific delivery rule (FSSDK-12369)
+      # Local holdouts are evaluated per-rule, after forced decisions, before audience/traffic checks.
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
+        reasons.push(*holdout_decision.reasons)
+        if holdout_decision.decision
+          # User is in a local holdout — return holdout variation, skip delivery rule evaluation
+          holdout_variation = holdout_decision.decision.variation
+          return [holdout_variation, skip_to_everyone_else, reasons]
+        end
+      end
 
       user_id = user_context.user_id
       attributes = user_context.user_attributes
