@@ -864,7 +864,6 @@ describe Optimizely::DecisionService do
         # Spy on get_variation to verify it is NOT called (audience/traffic skipped)
         allow(decision_service_local).to receive(:get_variation).and_call_original
 
-        feature_flag = config_with_local_holdouts.feature_flag_key_map['boolean_feature']
         user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
         user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
 
@@ -904,7 +903,6 @@ describe Optimizely::DecisionService do
         # Track that get_variation (regular rule evaluation) is called
         allow(decision_service_local).to receive(:get_variation).and_call_original
 
-        feature_flag = config_with_local_holdouts.feature_flag_key_map['boolean_feature']
         user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
         user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
 

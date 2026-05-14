@@ -1955,7 +1955,7 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'returns true for holdout with explicit nil includedRules' do
-        holdout = { 'id' => 'test', 'key' => 'test', 'includedRules' => nil }
+        holdout = {'id' => 'test', 'key' => 'test', 'includedRules' => nil}
         expect(config_with_local_holdouts.holdout_global?(holdout)).to be true
       end
 
@@ -2013,8 +2013,8 @@ describe Optimizely::DatafileProjectConfig do
                   'status' => 'Running',
                   'audiences' => [],
                   'includedRules' => ['some_rule_id'],
-                  'variations' => [{ 'id' => 'v1', 'key' => 'holdout', 'featureEnabled' => false }],
-                  'trafficAllocation' => [{ 'entityId' => 'v1', 'endOfRange' => 10_000 }]
+                  'variations' => [{'id' => 'v1', 'key' => 'holdout', 'featureEnabled' => false}],
+                  'trafficAllocation' => [{'entityId' => 'v1', 'endOfRange' => 10_000}]
                 }
               ]
             )
