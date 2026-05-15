@@ -197,7 +197,7 @@ module Optimizely
       user_id = user_context.user_id
 
       # Check global holdouts first (flag level) — these apply to all rules across all flags
-      holdouts = project_config.get_global_holdouts
+      holdouts = project_config.global_holdouts
 
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
@@ -453,11 +453,10 @@ module Optimizely
       local_holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user, project_config)
         reasons.push(*holdout_decision.reasons)
-        if holdout_decision.decision
-          # User is in a local holdout — return holdout variation, skip rule evaluation
-          holdout_variation = holdout_decision.decision.variation
-          return VariationResult.new(nil, false, reasons, holdout_variation['id'])
-        end
+        next unless holdout_decision.decision
+
+        holdout_variation = holdout_decision.decision.variation
+        return VariationResult.new(nil, false, reasons, holdout_variation['id'])
       end
 
       # Step 3: Regular rule evaluation — existing logic
@@ -493,11 +492,10 @@ module Optimizely
       local_holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
-        if holdout_decision.decision
-          # User is in a local holdout — return holdout variation, skip delivery rule evaluation
-          holdout_variation = holdout_decision.decision.variation
-          return [holdout_variation, skip_to_everyone_else, reasons]
-        end
+        next unless holdout_decision.decision
+
+        holdout_variation = holdout_decision.decision.variation
+        return [holdout_variation, skip_to_everyone_else, reasons]
       end
 
       user_id = user_context.user_id
