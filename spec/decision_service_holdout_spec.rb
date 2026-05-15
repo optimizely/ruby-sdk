@@ -994,5 +994,43 @@ describe Optimizely::DecisionService do
         end
       end
     end
+
+    # Mandatory enforcement test (cross-SDK): forced decision must beat a 100% traffic local holdout.
+    # Ordering: Forced Decision → Local Holdout → Regular Rule (non-negotiable).
+    describe 'forced decision beats 100% traffic local holdout' do
+      it 'returns forced decision variation even when 100% local holdout targets the same rule' do
+        # holdout_local_1 targets experiment 122227 (test_experiment_with_audience) with 100% traffic.
+        # User also has a forced decision set for boolean_feature / test_experiment_with_audience.
+        # Expected: forced decision wins; variation_id is from forced decision, not the holdout.
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+        expect(local_holdout['includedRules']).to eq(['122227'])
+        expect(local_holdout['trafficAllocation'].first['endOfRange']).to eq(10_000) # 100% traffic
+
+        # Set forced decision for boolean_feature / test_experiment_with_audience → control_with_audience
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+        context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(
+          'boolean_feature',
+          'test_experiment_with_audience'
+        )
+        forced = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('control_with_audience')
+        user_ctx.set_forced_decision(context, forced)
+
+        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
+
+        result = decision_service_local.get_variation_from_experiment_rule(
+          config_with_local_holdouts,
+          'boolean_feature',
+          config_with_local_holdouts.experiment_id_map['122227'],
+          user_ctx,
+          user_profile_tracker
+        )
+
+        # Forced decision must win — variation_id must be control_with_audience (122228), not the holdout variation
+        expect(result).not_to be_nil
+        expect(result.variation_id).to eq('122228') # control_with_audience — forced decision variation
+        expect(result.variation_id).not_to eq('local_var_1') # must NOT be holdout variation
+      end
+    end
   end
 end
