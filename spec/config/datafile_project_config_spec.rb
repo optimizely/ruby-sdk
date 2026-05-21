@@ -1974,9 +1974,9 @@ describe Optimizely::DatafileProjectConfig do
       end
     end
 
-    describe '#get_global_holdouts' do
+    describe '#global_holdouts' do
       it 'returns only holdouts without includedRules (global holdouts)' do
-        global_holdouts = config_with_local_holdouts.get_global_holdouts
+        global_holdouts = config_with_local_holdouts.global_holdouts
 
         expect(global_holdouts).not_to be_nil
         expect(global_holdouts).to be_an(Array)
@@ -1988,14 +1988,14 @@ describe Optimizely::DatafileProjectConfig do
       end
 
       it 'does not include local holdouts (those with includedRules array)' do
-        global_holdouts = config_with_local_holdouts.get_global_holdouts
+        global_holdouts = config_with_local_holdouts.global_holdouts
         local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
 
         expect(global_holdouts).not_to include(local_holdout)
       end
 
       it 'does not include holdouts with empty includedRules array' do
-        global_holdouts = config_with_local_holdouts.get_global_holdouts
+        global_holdouts = config_with_local_holdouts.global_holdouts
         empty_local_holdout = config_with_local_holdouts.get_holdout('holdout_local_empty_rules')
 
         # Empty [] is local, not global — must not appear in global_holdouts
@@ -2022,7 +2022,7 @@ describe Optimizely::DatafileProjectConfig do
           logger,
           error_handler
         )
-        expect(config_no_global.get_global_holdouts).to eq([])
+        expect(config_no_global.global_holdouts).to eq([])
       end
     end
 
@@ -2079,7 +2079,7 @@ describe Optimizely::DatafileProjectConfig do
 
         # Must be classified as global
         expect(config_global_only.holdout_global?(holdout)).to be true
-        expect(config_global_only.get_global_holdouts).to include(holdout)
+        expect(config_global_only.global_holdouts).to include(holdout)
         expect(config_global_only.get_holdouts_for_rule('any_rule')).to eq([])
       end
 

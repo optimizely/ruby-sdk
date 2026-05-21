@@ -783,7 +783,7 @@ describe Optimizely::DecisionService do
         expect(config_with_local_holdouts.holdout_global?(global_holdout)).to be true
 
         # Verify it appears in global_holdouts list
-        expect(config_with_local_holdouts.get_global_holdouts).to include(global_holdout)
+        expect(config_with_local_holdouts.global_holdouts).to include(global_holdout)
 
         # Mock the holdout to return a decision to simulate user being in global holdout
         allow(decision_service_local).to receive(:get_variation_for_holdout)
@@ -836,10 +836,10 @@ describe Optimizely::DecisionService do
         expect(rule_holdouts).to include(local_holdout)
 
         # Verify it is NOT in global holdouts
-        expect(config_with_local_holdouts.get_global_holdouts).not_to include(local_holdout)
+        expect(config_with_local_holdouts.global_holdouts).not_to include(local_holdout)
 
         # Set up global holdouts to miss (no global holdout decision)
-        config_with_local_holdouts.get_global_holdouts.each do |gh|
+        config_with_local_holdouts.global_holdouts.each do |gh|
           allow(decision_service_local).to receive(:get_variation_for_holdout)
             .with(gh, anything, anything)
             .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
@@ -889,7 +889,7 @@ describe Optimizely::DecisionService do
         expect(local_holdout).not_to be_nil
 
         # All global holdouts miss
-        config_with_local_holdouts.get_global_holdouts.each do |gh|
+        config_with_local_holdouts.global_holdouts.each do |gh|
           allow(decision_service_local).to receive(:get_variation_for_holdout)
             .with(gh, anything, anything)
             .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
