@@ -87,7 +87,7 @@ module Optimizely
       @segment_manager.fetch_qualified_segments(ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID], user_id, options)
     end
 
-    def identify_user(user_id:)
+    def identify_user(identifiers:)
       unless @enabled
         @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (ODP disabled).')
         return
@@ -102,10 +102,16 @@ module Optimizely
         return
       end
 
+      valid_identifiers = identifiers.select { |_k, v| v && !v.to_s.empty? }
+      if valid_identifiers.length < 2
+        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+        return
+      end
+
       @event_manager.send_event(
         type: ODP_MANAGER_CONFIG[:EVENT_TYPE],
         action: 'identified',
-        identifiers: {ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id},
+        identifiers: valid_identifiers,
         data: {}
       )
     end

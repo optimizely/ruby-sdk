@@ -1018,13 +1018,13 @@ module Optimizely
       @odp_manager.send_event(type: type, action: action, identifiers: identifiers, data: data)
     end
 
-    def identify_user(user_id:)
+    def identify_user(identifiers:)
       unless is_valid
         @logger.log(Logger::ERROR, InvalidProjectConfigError.new('identify_user').message)
         return
       end
 
-      @odp_manager.identify_user(user_id: user_id)
+      @odp_manager.identify_user(identifiers: identifiers)
     end
 
     def fetch_qualified_segments(user_id:, options: [])

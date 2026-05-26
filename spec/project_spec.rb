@@ -226,7 +226,7 @@ describe 'Optimizely' do
 
     it 'should send identify event when called with odp enabled' do
       project = Optimizely::Project.new(datafile: config_body_integrations_JSON, logger: spy_logger)
-      expect(project.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+      expect(project.odp_manager).to receive(:identify_user).with({identifiers: {'fs_user_id' => 'tester'}})
       project.create_user_context('tester')
 
       project.close

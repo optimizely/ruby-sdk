@@ -218,10 +218,11 @@ describe Optimizely::OdpManager do
   end
 
   describe '#identify_user' do
-    it 'should send event' do
+    it 'should send event when multiple identifiers provided' do
       allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
       event_manager = Optimizely::OdpEventManager.new
-      event = Optimizely::OdpEvent.new(type: 'fullstack', action: 'identified', identifiers: {user_key => user_value}, data: {})
+      identifiers = {user_key => user_value, 'email' => 'test@example.com'}
+      event = Optimizely::OdpEvent.new(type: 'fullstack', action: 'identified', identifiers: identifiers, data: {})
       expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
 
       expect(event_manager.api_manager)
@@ -233,7 +234,48 @@ describe Optimizely::OdpManager do
       manager = Optimizely::OdpManager.new(disable: false, event_manager: event_manager, logger: spy_logger)
       manager.update_odp_config(api_key, api_host, segments_to_check)
 
-      manager.identify_user(user_id: user_value)
+      manager.identify_user(identifiers: identifiers)
+
+      manager.stop!
+    end
+
+    it 'should not send event when only one identifier provided' do
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+
+      manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
+      manager.update_odp_config(api_key, api_host, segments_to_check)
+      manager.identify_user(identifiers: {user_key => user_value})
+
+      manager.stop!
+    end
+
+    it 'should not count empty or nil identifier values' do
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+
+      manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
+      manager.update_odp_config(api_key, api_host, segments_to_check)
+      manager.identify_user(identifiers: {user_key => user_value, 'email' => '', 'phone' => nil})
+
+      manager.stop!
+    end
+
+    it 'should send event with all valid identifiers when some are empty' do
+      allow(SecureRandom).to receive(:uuid).and_return(test_uuid)
+      event_manager = Optimizely::OdpEventManager.new
+      valid_identifiers = {user_key => user_value, 'email' => 'test@example.com'}
+      event = Optimizely::OdpEvent.new(type: 'fullstack', action: 'identified', identifiers: valid_identifiers, data: {})
+      expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
+
+      expect(event_manager.api_manager)
+        .to receive(:send_odp_events)
+        .once
+        .with(api_key, api_host, [event])
+        .and_return(false)
+
+      manager = Optimizely::OdpManager.new(disable: false, event_manager: event_manager, logger: spy_logger)
+      manager.update_odp_config(api_key, api_host, segments_to_check)
+
+      manager.identify_user(identifiers: {user_key => user_value, 'email' => 'test@example.com', 'phone' => ''})
 
       manager.stop!
     end
@@ -243,7 +285,7 @@ describe Optimizely::OdpManager do
       expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (ODP disabled).')
 
       manager = Optimizely::OdpManager.new(disable: true, logger: spy_logger)
-      manager.identify_user(user_id: user_value)
+      manager.identify_user(identifiers: {user_key => user_value, 'email' => 'test@example.com'})
 
       manager.stop!
     end
@@ -253,7 +295,7 @@ describe Optimizely::OdpManager do
       expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (ODP not integrated).')
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.update_odp_config(nil, nil, [])
-      manager.identify_user(user_id: user_value)
+      manager.identify_user(identifiers: {user_key => user_value, 'email' => 'test@example.com'})
 
       manager.stop!
     end
@@ -263,7 +305,7 @@ describe Optimizely::OdpManager do
       expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (datafile not ready).')
 
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
-      manager.identify_user(user_id: user_value)
+      manager.identify_user(identifiers: {user_key => user_value, 'email' => 'test@example.com'})
 
       manager.stop!
     end
