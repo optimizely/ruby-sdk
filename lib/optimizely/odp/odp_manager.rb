@@ -103,6 +103,8 @@ module Optimizely
       end
 
       valid_identifiers = identifiers.select { |_k, v| v && !v.to_s.empty? }
+      # Identify requires 2+ identifiers to link (e.g., vuid + fs_user_id).
+      # A single identifier has no cross-reference value and generates unnecessary traffic.
       if valid_identifiers.length < 2
         @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (fewer than 2 valid identifiers).')
         return
