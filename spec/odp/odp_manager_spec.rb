@@ -239,8 +239,8 @@ describe Optimizely::OdpManager do
       manager.stop!
     end
 
-    it 'should not send event when only one identifier provided' do
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+    it 'should not send event when fewer than 2 valid identifiers' do
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (fewer than 2 valid identifiers).')
 
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.update_odp_config(api_key, api_host, segments_to_check)
@@ -250,7 +250,7 @@ describe Optimizely::OdpManager do
     end
 
     it 'should not count empty or nil identifier values' do
-      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+      expect(spy_logger).to receive(:log).with(Logger::DEBUG, 'ODP identify event is not dispatched (fewer than 2 valid identifiers).')
 
       manager = Optimizely::OdpManager.new(disable: false, logger: spy_logger)
       manager.update_odp_config(api_key, api_host, segments_to_check)

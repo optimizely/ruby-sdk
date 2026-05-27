@@ -104,7 +104,7 @@ module Optimizely
 
       valid_identifiers = identifiers.select { |_k, v| v && !v.to_s.empty? }
       if valid_identifiers.length < 2
-        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (only one identifier provided).')
+        @logger.log(Logger::DEBUG, 'ODP identify event is not dispatched (fewer than 2 valid identifiers).')
         return
       end
 
