@@ -17,6 +17,7 @@
 #
 
 require 'json'
+require_relative 'helpers/constants'
 
 module Optimizely
   class OptimizelyUserContext
@@ -36,7 +37,10 @@ module Optimizely
       @forced_decisions = {}
       @qualified_segments = nil
 
-      @optimizely_client&.identify_user(user_id: user_id) if identify
+      return unless identify
+
+      identifiers = {Optimizely::Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id}
+      @optimizely_client&.identify_user(identifiers: identifiers)
     end
 
     def clone
