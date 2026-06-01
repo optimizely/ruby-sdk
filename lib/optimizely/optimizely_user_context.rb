@@ -37,10 +37,10 @@ module Optimizely
       @forced_decisions = {}
       @qualified_segments = nil
 
-      if identify
-        identifiers = {Optimizely::Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id}
-        @optimizely_client&.identify_user(identifiers: identifiers)
-      end
+      return unless identify
+
+      identifiers = {Optimizely::Helpers::Constants::ODP_MANAGER_CONFIG[:KEY_FOR_USER_ID] => user_id}
+      @optimizely_client&.identify_user(identifiers: identifiers)
     end
 
     def clone
