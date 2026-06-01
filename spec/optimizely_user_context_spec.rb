@@ -907,7 +907,7 @@ describe 'Optimizely' do
   it 'should send identify event when user context created' do
     stub_request(:post, 'https://api.zaius.com/v3/graphql').to_return(status: 200, body: good_response_data.to_json)
     stub_request(:post, 'https://api.zaius.com/v3/events').to_return(status: 200)
-    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({identifiers: {'fs_user_id' => 'tester'}})
     Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
 
     integration_project_instance.close
@@ -915,7 +915,7 @@ describe 'Optimizely' do
 
   it 'should skip identify with decisions' do
     stub_request(:post, impression_log_url)
-    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({user_id: 'tester'})
+    expect(integration_project_instance.odp_manager).to receive(:identify_user).with({identifiers: {'fs_user_id' => 'tester'}})
     expect(spy_logger).not_to receive(:log).with(Logger::ERROR, anything)
 
     user_context = Optimizely::OptimizelyUserContext.new(integration_project_instance, 'tester', {})
