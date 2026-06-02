@@ -1935,4 +1935,163 @@ describe Optimizely::DatafileProjectConfig do
       expect(experiment['trafficAllocation'].length).to eq(1)
     end
   end
+
+  # Level 1 — Local Holdouts config/parsing tests (FSSDK-12369)
+  describe 'local holdouts data model and config parsing' do
+    let(:config_with_local_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger,
+        error_handler
+      )
+    end
+
+    describe '#holdout_global?' do
+      it 'returns true for holdout with no includedRules key (old datafile format)' do
+        global_holdout = config_with_local_holdouts.get_holdout('holdout_1')
+        expect(global_holdout).not_to be_nil
+        expect(global_holdout.key?('includedRules')).to be false
+        expect(config_with_local_holdouts.holdout_global?(global_holdout)).to be true
+      end
+
+      it 'returns true for holdout with explicit nil includedRules' do
+        holdout = {'id' => 'test', 'key' => 'test', 'includedRules' => nil}
+        expect(config_with_local_holdouts.holdout_global?(holdout)).to be true
+      end
+
+      it 'returns false for holdout with non-nil includedRules array (local holdout)' do
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+        expect(config_with_local_holdouts.holdout_global?(local_holdout)).to be false
+      end
+
+      it 'returns false for holdout with empty includedRules array (local holdout with no matching rules)' do
+        local_holdout_empty = config_with_local_holdouts.get_holdout('holdout_local_empty_rules')
+        expect(local_holdout_empty).not_to be_nil
+        expect(local_holdout_empty['includedRules']).to eq([])
+        # Empty array is local holdout (not global) — DIFFERENT from nil
+        expect(config_with_local_holdouts.holdout_global?(local_holdout_empty)).to be false
+      end
+    end
+
+    describe '#global_holdouts' do
+      it 'returns only holdouts without includedRules (global holdouts)' do
+        global_holdouts = config_with_local_holdouts.global_holdouts
+
+        expect(global_holdouts).not_to be_nil
+        expect(global_holdouts).to be_an(Array)
+
+        # All returned holdouts must be global
+        global_holdouts.each do |holdout|
+          expect(config_with_local_holdouts.holdout_global?(holdout)).to be true
+        end
+      end
+
+      it 'does not include local holdouts (those with includedRules array)' do
+        global_holdouts = config_with_local_holdouts.global_holdouts
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+
+        expect(global_holdouts).not_to include(local_holdout)
+      end
+
+      it 'does not include holdouts with empty includedRules array' do
+        global_holdouts = config_with_local_holdouts.global_holdouts
+        empty_local_holdout = config_with_local_holdouts.get_holdout('holdout_local_empty_rules')
+
+        # Empty [] is local, not global — must not appear in global_holdouts
+        expect(global_holdouts).not_to include(empty_local_holdout)
+      end
+
+      it 'returns empty array when no global holdouts are present' do
+        config_no_global = Optimizely::DatafileProjectConfig.new(
+          JSON.dump(
+            OptimizelySpec::VALID_CONFIG_BODY.merge(
+              'holdouts' => [
+                {
+                  'id' => 'only_local',
+                  'key' => 'only_local_holdout',
+                  'status' => 'Running',
+                  'audiences' => [],
+                  'includedRules' => ['some_rule_id'],
+                  'variations' => [{'id' => 'v1', 'key' => 'holdout', 'featureEnabled' => false}],
+                  'trafficAllocation' => [{'entityId' => 'v1', 'endOfRange' => 10_000}]
+                }
+              ]
+            )
+          ),
+          logger,
+          error_handler
+        )
+        expect(config_no_global.global_holdouts).to eq([])
+      end
+    end
+
+    describe '#get_holdouts_for_rule' do
+      it 'returns local holdouts targeting the specified rule ID' do
+        rule_holdouts = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+
+        expect(rule_holdouts).to include(local_holdout)
+      end
+
+      it 'returns empty array for a rule ID with no targeting holdouts' do
+        rule_holdouts = config_with_local_holdouts.get_holdouts_for_rule('unknown_rule_id_xyz')
+        expect(rule_holdouts).to eq([])
+      end
+
+      it 'does not return global holdouts (those without includedRules)' do
+        rule_holdouts = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        global_holdout = config_with_local_holdouts.get_holdout('holdout_1')
+
+        # Global holdout must not appear in rule-specific list
+        expect(rule_holdouts).not_to include(global_holdout)
+      end
+
+      it 'does not return holdouts targeting other rules' do
+        # holdout_local_2 targets rule 122238, not 122227
+        holdouts_for_rule_a = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        local_holdout_2 = config_with_local_holdouts.get_holdout('holdout_local_2')
+
+        expect(holdouts_for_rule_a).not_to include(local_holdout_2)
+      end
+
+      it 'returns empty array for holdout with empty includedRules — does not match any rule' do
+        # holdout_local_empty_rules has includedRules: [] — should not appear for any rule
+        rule_holdouts = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        empty_rules_holdout = config_with_local_holdouts.get_holdout('holdout_local_empty_rules')
+
+        expect(rule_holdouts).not_to include(empty_rules_holdout)
+      end
+    end
+
+    describe 'backward compatibility — old datafiles without includedRules' do
+      it 'parses holdouts without includedRules field as global (backward compatible)' do
+        # Use the config with only global holdouts (no includedRules key)
+        config_global_only = Optimizely::DatafileProjectConfig.new(
+          OptimizelySpec::CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY_JSON,
+          logger,
+          error_handler
+        )
+
+        holdout = config_global_only.get_holdout('global_holdout_only_1')
+        expect(holdout).not_to be_nil
+        expect(holdout.key?('includedRules')).to be false
+
+        # Must be classified as global
+        expect(config_global_only.holdout_global?(holdout)).to be true
+        expect(config_global_only.global_holdouts).to include(holdout)
+        expect(config_global_only.get_holdouts_for_rule('any_rule')).to eq([])
+      end
+
+      it 'does not raise errors when processing old datafiles' do
+        expect do
+          Optimizely::DatafileProjectConfig.new(
+            OptimizelySpec::CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY_JSON,
+            logger,
+            error_handler
+          )
+        end.not_to raise_error
+      end
+    end
+  end
 end

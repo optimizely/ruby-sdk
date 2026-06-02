@@ -40,7 +40,7 @@ module Optimizely
 
     Decision = Struct.new(:experiment, :variation, :source, :cmab_uuid)
     CmabDecisionResult = Struct.new(:error, :result, :reasons)
-    VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation_id)
+    VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation_id, :holdout_decision)
     DecisionResult = Struct.new(:decision, :error, :reasons)
 
     DECISION_SOURCES = {
@@ -169,7 +169,7 @@ module Optimizely
       # user_context - Optimizely user context instance
       #
       # Returns DecisionResult struct.
-      # Get running holdouts from the holdout_id_map (all holdouts are global now)
+      # Check for any running holdouts (global or local)
       running_holdouts = project_config.holdout_id_map.values
 
       if running_holdouts && !running_holdouts.empty?
@@ -196,8 +196,8 @@ module Optimizely
       reasons = decide_reasons ? decide_reasons.dup : []
       user_id = user_context.user_id
 
-      # Check holdouts (all holdouts are global now - apply to all flags)
-      holdouts = project_config.holdout_id_map.values
+      # Check global holdouts first (flag level) — these apply to all rules across all flags
+      holdouts = project_config.global_holdouts
 
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
@@ -365,6 +365,9 @@ module Optimizely
         # If there's an error, return immediately instead of falling back to next experiment
         return DecisionResult.new(nil, error, decide_reasons) if error
 
+        # If a global holdout decision was made, return it directly
+        return DecisionResult.new(variation_result.holdout_decision, false, decide_reasons) if variation_result.holdout_decision
+
         next unless variation_id
 
         variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
@@ -415,8 +418,11 @@ module Optimizely
       index = 0
       rollout_rules = rollout['experiments']
       while index < rollout_rules.length
-        variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context)
+        holdout_decision, variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context)
         decide_reasons.push(*reasons_received)
+
+        return DecisionResult.new(holdout_decision, false, decide_reasons) if holdout_decision
+
         if variation
           rule = rollout_rules[index]
           feature_decision = Decision.new(rule, variation, DECISION_SOURCES['ROLLOUT'], nil)
@@ -441,11 +447,24 @@ module Optimizely
       # Returns variation_id and reasons
       reasons = []
 
+      # Step 1: Forced decision check
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
       variation, forced_reasons = validated_forced_decision(project_config, context, user)
       reasons.push(*forced_reasons)
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
+      # Step 2: Local holdout check
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user, project_config)
+        reasons.push(*holdout_decision.reasons)
+        next unless holdout_decision.decision
+
+        holdout_variation = holdout_decision.decision.variation
+        return VariationResult.new(nil, false, reasons, holdout_variation['id'], holdout_decision.decision)
+      end
+
+      # Step 3: Regular rule evaluation
       variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
       variation_result.reasons = reasons + variation_result.reasons
       variation_result
@@ -460,16 +479,26 @@ module Optimizely
       # rule - An experiment rule key
       # user_context - Optimizely user context instance
       #
-      # Returns variation, boolean to skip for eveyone else rule and reasons
+      # Returns [holdout_decision, variation, skip_to_everyone_else, reasons]
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
+
+      # Step 1: Forced decision check
       context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(flag_key, rule['key'])
       variation, forced_reasons = validated_forced_decision(project_config, context, user_context)
       reasons.push(*forced_reasons)
+      return [nil, variation, skip_to_everyone_else, reasons] if variation
 
-      return [variation, skip_to_everyone_else, reasons] if variation
+      # Step 2: Local holdout check
+      local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
+      local_holdouts.each do |holdout|
+        holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
+        reasons.push(*holdout_decision.reasons)
+        return [holdout_decision.decision, nil, skip_to_everyone_else, reasons] if holdout_decision.decision
+      end
 
+      # Step 3: Regular rule evaluation
       user_id = user_context.user_id
       attributes = user_context.user_attributes
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
@@ -485,7 +514,7 @@ module Optimizely
         message = "User '#{user_id}' does not meet the conditions for targeting rule '#{logging_key}'."
         @logger.log(Logger::DEBUG, message)
         reasons.push(message)
-        return [nil, skip_to_everyone_else, reasons]
+        return [nil, nil, skip_to_everyone_else, reasons]
       end
 
       message = "User '#{user_id}' meets the audience conditions for targeting rule '#{logging_key}'."
@@ -505,7 +534,7 @@ module Optimizely
         reasons.push(message)
         skip_to_everyone_else = true
       end
-      [bucket_variation, skip_to_everyone_else, reasons]
+      [nil, bucket_variation, skip_to_everyone_else, reasons]
     end
 
     def set_forced_variation(project_config, experiment_key, user_id, variation_key)

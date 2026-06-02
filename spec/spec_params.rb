@@ -1947,6 +1947,7 @@ module OptimizelySpec
           'key' => 'global_holdout',
           'status' => 'Running',
           'audiences' => [],
+          # No includedRules field => global holdout (applies to all rules)
           'variations' => [
             {
               'id' => 'var_1',
@@ -1985,6 +1986,69 @@ module OptimizelySpec
           'trafficAllocation' => [
             {
               'entityId' => 'var_boolean',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          # Local holdout targeting experiment rule 122227 (used in boolean_feature)
+          'id' => 'holdout_local_1',
+          'key' => 'local_holdout_rule_122227',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['122227'],
+          'variations' => [
+            {
+              'id' => 'local_var_1',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          # Local holdout targeting a different rule (122238), not rule 122227
+          'id' => 'holdout_local_2',
+          'key' => 'local_holdout_rule_122238',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['122238'],
+          'variations' => [
+            {
+              'id' => 'local_var_2',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_2',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          # Local holdout with empty includedRules array — local holdout with no matching rules (NOT global)
+          'id' => 'holdout_local_empty_rules',
+          'key' => 'local_holdout_empty_rules',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => [],
+          'variations' => [
+            {
+              'id' => 'local_var_empty',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_empty',
               'endOfRange' => 10_000
             }
           ]
@@ -2040,6 +2104,36 @@ module OptimizelySpec
   ).freeze
 
   CONFIG_BODY_WITH_HOLDOUTS_JSON = JSON.dump(CONFIG_BODY_WITH_HOLDOUTS).freeze
+
+  # Config with only global holdouts (no includedRules) for backward compatibility tests
+  CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY = VALID_CONFIG_BODY.merge(
+    {
+      'holdouts' => [
+        {
+          'id' => 'global_holdout_only_1',
+          'key' => 'global_only_holdout',
+          'status' => 'Running',
+          'audiences' => [],
+          # No includedRules key at all — old datafile format, defaults to global
+          'variations' => [
+            {
+              'id' => 'gho_var_1',
+              'key' => 'control',
+              'featureEnabled' => true
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'gho_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ]
+    }
+  ).freeze
+
+  CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY_JSON = JSON.dump(CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY).freeze
 
   def self.deep_clone(obj)
     obj.dup.tap do |new_obj|

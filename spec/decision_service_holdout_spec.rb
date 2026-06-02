@@ -748,4 +748,289 @@ describe Optimizely::DecisionService do
       end
     end
   end
+
+  # Level 2 — Decision service tests for local holdouts (FSSDK-12369)
+  describe 'Local Holdout Decision Service Tests' do
+    let(:config_with_local_holdouts) do
+      Optimizely::DatafileProjectConfig.new(
+        OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        spy_logger,
+        error_handler
+      )
+    end
+
+    let(:project_with_local_holdouts) do
+      Optimizely::Project.new(
+        datafile: OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+        logger: spy_logger,
+        error_handler: error_handler
+      )
+    end
+
+    let(:decision_service_local) do
+      Optimizely::DecisionService.new(spy_logger, spy_cmab_service)
+    end
+
+    after(:example) do
+      project_with_local_holdouts&.close
+    end
+
+    describe 'global holdout branch — evaluated at flag level before any rules' do
+      it 'returns holdout decision before per-rule evaluation when user hits global holdout' do
+        # global_holdout (holdout_1) has no includedRules => global
+        global_holdout = config_with_local_holdouts.get_holdout('holdout_1')
+        expect(global_holdout).not_to be_nil
+        expect(config_with_local_holdouts.holdout_global?(global_holdout)).to be true
+
+        # Verify it appears in global_holdouts list
+        expect(config_with_local_holdouts.global_holdouts).to include(global_holdout)
+
+        # Mock the holdout to return a decision to simulate user being in global holdout
+        allow(decision_service_local).to receive(:get_variation_for_holdout)
+          .with(global_holdout, anything, anything)
+          .and_return(
+            Optimizely::DecisionService::DecisionResult.new(
+              Optimizely::DecisionService::Decision.new(
+                global_holdout,
+                global_holdout['variations'].first,
+                Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+                nil
+              ),
+              false,
+              ['User is in global holdout']
+            )
+          )
+
+        # Mock get_variation_for_feature_experiment to track if it is called
+        allow(decision_service_local).to receive(:get_variation_for_feature_experiment).and_call_original
+
+        feature_flag = config_with_local_holdouts.feature_flag_key_map['boolean_feature']
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+
+        result = decision_service_local.get_decision_for_flag(
+          feature_flag,
+          user_ctx,
+          config_with_local_holdouts
+        )
+
+        # Should return holdout decision from global holdout (flag level)
+        expect(result).not_to be_nil
+        expect(result.decision).not_to be_nil
+        expect(result.decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
+
+        # Experiment evaluation must NOT be called since global holdout fired
+        expect(decision_service_local).not_to have_received(:get_variation_for_feature_experiment)
+      end
+    end
+
+    describe 'local holdout hit branch — user bucketed into local holdout for a specific rule' do
+      it 'returns holdout variation for the rule; audience and traffic allocation are not evaluated' do
+        # Local holdout targeting experiment rule 122227
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+        expect(local_holdout['includedRules']).to eq(['122227'])
+        expect(config_with_local_holdouts.holdout_global?(local_holdout)).to be false
+
+        # Verify it is in the rule holdouts map for rule 122227
+        rule_holdouts = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        expect(rule_holdouts).to include(local_holdout)
+
+        # Verify it is NOT in global holdouts
+        expect(config_with_local_holdouts.global_holdouts).not_to include(local_holdout)
+
+        # Set up global holdouts to miss (no global holdout decision)
+        config_with_local_holdouts.global_holdouts.each do |gh|
+          allow(decision_service_local).to receive(:get_variation_for_holdout)
+            .with(gh, anything, anything)
+            .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
+        end
+
+        # Local holdout for rule 122227 fires
+        allow(decision_service_local).to receive(:get_variation_for_holdout)
+          .with(local_holdout, anything, anything)
+          .and_return(
+            Optimizely::DecisionService::DecisionResult.new(
+              Optimizely::DecisionService::Decision.new(
+                local_holdout,
+                local_holdout['variations'].first,
+                Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+                nil
+              ),
+              false,
+              ['User is in local holdout for rule 122227']
+            )
+          )
+
+        # Spy on get_variation to verify it is NOT called (audience/traffic skipped)
+        allow(decision_service_local).to receive(:get_variation).and_call_original
+
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
+
+        result = decision_service_local.get_variation_from_experiment_rule(
+          config_with_local_holdouts,
+          'boolean_feature',
+          config_with_local_holdouts.experiment_id_map['122227'],
+          user_ctx,
+          user_profile_tracker
+        )
+
+        # get_variation must NOT be called — local holdout takes precedence
+        expect(decision_service_local).not_to have_received(:get_variation)
+
+        # Variation ID must be from the local holdout
+        expect(result.variation_id).to eq(local_holdout['variations'].first['id'])
+      end
+    end
+
+    describe 'local holdout miss branch — user not in local holdout falls through to rule evaluation' do
+      it 'proceeds to regular rule evaluation when local holdout does not match' do
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+
+        # All global holdouts miss
+        config_with_local_holdouts.global_holdouts.each do |gh|
+          allow(decision_service_local).to receive(:get_variation_for_holdout)
+            .with(gh, anything, anything)
+            .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
+        end
+
+        # Local holdout also misses (user not bucketed)
+        allow(decision_service_local).to receive(:get_variation_for_holdout)
+          .with(local_holdout, anything, anything)
+          .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, ['User not in local holdout']))
+
+        # Track that get_variation (regular rule evaluation) is called
+        allow(decision_service_local).to receive(:get_variation).and_call_original
+
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
+
+        decision_service_local.get_variation_from_experiment_rule(
+          config_with_local_holdouts,
+          'boolean_feature',
+          config_with_local_holdouts.experiment_id_map['122227'],
+          user_ctx,
+          user_profile_tracker
+        )
+
+        # Regular rule evaluation must be called since local holdout missed
+        expect(decision_service_local).to have_received(:get_variation)
+      end
+    end
+
+    describe 'rule specificity — local holdout for rule X does not affect rule Y' do
+      it 'local holdout targeting rule 122227 is not returned for rule 122238' do
+        # holdout_local_1 targets rule 122227 only
+        holdouts_for_rule_a = config_with_local_holdouts.get_holdouts_for_rule('122227')
+        holdouts_for_rule_b = config_with_local_holdouts.get_holdouts_for_rule('122238')
+
+        local_holdout_1 = config_with_local_holdouts.get_holdout('holdout_local_1')
+        local_holdout_2 = config_with_local_holdouts.get_holdout('holdout_local_2')
+
+        # holdout_local_1 should be in rule 122227's list
+        expect(holdouts_for_rule_a).to include(local_holdout_1)
+        # holdout_local_1 should NOT be in rule 122238's list
+        expect(holdouts_for_rule_a).not_to include(local_holdout_2)
+
+        # holdout_local_2 should be in rule 122238's list
+        expect(holdouts_for_rule_b).to include(local_holdout_2)
+        # holdout_local_2 should NOT be in rule 122227's list
+        expect(holdouts_for_rule_b).not_to include(local_holdout_1)
+
+        # Unknown rule should return empty array
+        expect(config_with_local_holdouts.get_holdouts_for_rule('unknown_rule_id')).to eq([])
+      end
+    end
+
+    describe 'experiment vs delivery rules — local holdout check applies to both rule types' do
+      it 'applies local holdout check in get_variation_from_experiment_rule' do
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+
+        # Verify get_holdouts_for_rule is called during experiment rule evaluation
+        allow(config_with_local_holdouts).to receive(:get_holdouts_for_rule).and_call_original
+
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
+
+        decision_service_local.get_variation_from_experiment_rule(
+          config_with_local_holdouts,
+          'boolean_feature',
+          config_with_local_holdouts.experiment_id_map['122227'],
+          user_ctx,
+          user_profile_tracker
+        )
+
+        expect(config_with_local_holdouts).to have_received(:get_holdouts_for_rule).with('122227')
+      end
+
+      it 'applies local holdout check in get_variation_from_delivery_rule' do
+        # boolean_single_variable_feature has a rollout with delivery rules
+        feature_flag = config_with_local_holdouts.feature_flag_key_map['boolean_single_variable_feature']
+        rollout_id = feature_flag['rolloutId']
+
+        unless rollout_id.nil? || rollout_id.empty?
+          rollout = config_with_local_holdouts.rollout_id_map[rollout_id]
+
+          unless rollout.nil? || rollout['experiments'].empty?
+            rollout_rules = rollout['experiments']
+            first_rule = rollout_rules[0]
+
+            allow(config_with_local_holdouts).to receive(:get_holdouts_for_rule).and_call_original
+
+            user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+
+            decision_service_local.get_variation_from_delivery_rule(
+              config_with_local_holdouts,
+              'boolean_single_variable_feature',
+              rollout_rules,
+              0,
+              user_ctx
+            )
+
+            expect(config_with_local_holdouts).to have_received(:get_holdouts_for_rule).with(first_rule['id'])
+          end
+        end
+      end
+    end
+
+    # Mandatory enforcement test (cross-SDK): forced decision must beat a 100% traffic local holdout.
+    # Ordering: Forced Decision → Local Holdout → Regular Rule (non-negotiable).
+    describe 'forced decision beats 100% traffic local holdout' do
+      it 'returns forced decision variation even when 100% local holdout targets the same rule' do
+        # holdout_local_1 targets experiment 122227 (test_experiment_with_audience) with 100% traffic.
+        # User also has a forced decision set for boolean_feature / test_experiment_with_audience.
+        # Expected: forced decision wins; variation_id is from forced decision, not the holdout.
+        local_holdout = config_with_local_holdouts.get_holdout('holdout_local_1')
+        expect(local_holdout).not_to be_nil
+        expect(local_holdout['includedRules']).to eq(['122227'])
+        expect(local_holdout['trafficAllocation'].first['endOfRange']).to eq(10_000) # 100% traffic
+
+        # Set forced decision for boolean_feature / test_experiment_with_audience → control_with_audience
+        user_ctx = project_with_local_holdouts.create_user_context('test_user', {})
+        context = Optimizely::OptimizelyUserContext::OptimizelyDecisionContext.new(
+          'boolean_feature',
+          'test_experiment_with_audience'
+        )
+        forced = Optimizely::OptimizelyUserContext::OptimizelyForcedDecision.new('control_with_audience')
+        user_ctx.set_forced_decision(context, forced)
+
+        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
+
+        result = decision_service_local.get_variation_from_experiment_rule(
+          config_with_local_holdouts,
+          'boolean_feature',
+          config_with_local_holdouts.experiment_id_map['122227'],
+          user_ctx,
+          user_profile_tracker
+        )
+
+        # Forced decision must win — variation_id must be control_with_audience (122228), not the holdout variation
+        expect(result).not_to be_nil
+        expect(result.variation_id).to eq('122228') # control_with_audience — forced decision variation
+        expect(result.variation_id).not_to eq('local_var_1') # must NOT be holdout variation
+      end
+    end
+  end
 end
