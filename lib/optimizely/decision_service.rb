@@ -365,7 +365,7 @@ module Optimizely
         # If there's an error, return immediately instead of falling back to next experiment
         return DecisionResult.new(nil, error, decide_reasons) if error
 
-        # If a local holdout decision was made, return it directly
+        # If a global holdout decision was made, return it directly
         return DecisionResult.new(variation_result.holdout_decision, false, decide_reasons) if variation_result.holdout_decision
 
         next unless variation_id
