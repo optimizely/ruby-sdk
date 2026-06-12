@@ -352,6 +352,26 @@ module Optimizely
                 }
               }
             }
+          },
+          'localHoldouts' => {
+            'type' => 'array',
+            'items' => {
+              'type' => 'object',
+              'properties' => {
+                'id' => {
+                  'type' => 'string'
+                },
+                'key' => {
+                  'type' => 'string'
+                },
+                'status' => {
+                  'type' => 'string'
+                },
+                'includedRules' => {
+                  'type' => %w[array null]
+                }
+              }
+            }
           }
         },
         'required' => %w[
