@@ -1947,7 +1947,7 @@ module OptimizelySpec
           'key' => 'global_holdout',
           'status' => 'Running',
           'audiences' => [],
-          # No includedRules field => global holdout (applies to all rules)
+          # Entries in `holdouts` are global by section membership.
           'variations' => [
             {
               'id' => 'var_1',
@@ -1986,69 +1986,6 @@ module OptimizelySpec
           'trafficAllocation' => [
             {
               'entityId' => 'var_boolean',
-              'endOfRange' => 10_000
-            }
-          ]
-        },
-        {
-          # Local holdout targeting experiment rule 122227 (used in boolean_feature)
-          'id' => 'holdout_local_1',
-          'key' => 'local_holdout_rule_122227',
-          'status' => 'Running',
-          'audiences' => [],
-          'includedRules' => ['122227'],
-          'variations' => [
-            {
-              'id' => 'local_var_1',
-              'key' => 'holdout',
-              'featureEnabled' => false
-            }
-          ],
-          'trafficAllocation' => [
-            {
-              'entityId' => 'local_var_1',
-              'endOfRange' => 10_000
-            }
-          ]
-        },
-        {
-          # Local holdout targeting a different rule (122238), not rule 122227
-          'id' => 'holdout_local_2',
-          'key' => 'local_holdout_rule_122238',
-          'status' => 'Running',
-          'audiences' => [],
-          'includedRules' => ['122238'],
-          'variations' => [
-            {
-              'id' => 'local_var_2',
-              'key' => 'holdout',
-              'featureEnabled' => false
-            }
-          ],
-          'trafficAllocation' => [
-            {
-              'entityId' => 'local_var_2',
-              'endOfRange' => 10_000
-            }
-          ]
-        },
-        {
-          # Local holdout with empty includedRules array — local holdout with no matching rules (NOT global)
-          'id' => 'holdout_local_empty_rules',
-          'key' => 'local_holdout_empty_rules',
-          'status' => 'Running',
-          'audiences' => [],
-          'includedRules' => [],
-          'variations' => [
-            {
-              'id' => 'local_var_empty',
-              'key' => 'holdout',
-              'featureEnabled' => false
-            }
-          ],
-          'trafficAllocation' => [
-            {
-              'entityId' => 'local_var_empty',
               'endOfRange' => 10_000
             }
           ]
@@ -2095,6 +2032,52 @@ module OptimizelySpec
           'trafficAllocation' => [
             {
               'entityId' => 'var_4',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ],
+      # Top-level `localHoldouts` section — rule-scoped holdouts (Gen 3 datafile format).
+      # Older SDKs ignore this section; Gen 3 SDKs apply only to rules in includedRules.
+      'localHoldouts' => [
+        {
+          # Local holdout targeting experiment rule 122227 (used in boolean_feature)
+          'id' => 'holdout_local_1',
+          'key' => 'local_holdout_rule_122227',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['122227'],
+          'variations' => [
+            {
+              'id' => 'local_var_1',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          # Local holdout targeting a different rule (122238), not rule 122227
+          'id' => 'holdout_local_2',
+          'key' => 'local_holdout_rule_122238',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['122238'],
+          'variations' => [
+            {
+              'id' => 'local_var_2',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_2',
               'endOfRange' => 10_000
             }
           ]

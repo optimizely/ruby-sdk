@@ -33,8 +33,8 @@ module Optimizely
                 :group_id_map, :rollout_id_map, :rollout_experiment_id_map, :variation_id_map,
                 :variation_id_to_variable_usage_map, :variation_key_map, :variation_id_map_by_experiment_id,
                 :variation_key_map_by_experiment_id, :flag_variation_map, :integration_key_map, :integrations,
-                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :holdout_id_map,
-                :global_holdouts, :rule_holdouts_map
+                :public_key_for_odp, :host_for_odp, :all_segments, :region, :holdouts, :local_holdouts,
+                :holdout_id_map, :global_holdouts, :rule_holdouts_map
     # Boolean - denotes if Optimizely should remove the last block of visitors' IP address before storing event data
     attr_reader :anonymize_ip
 
@@ -71,7 +71,10 @@ module Optimizely
       @send_flag_decisions = config.fetch('sendFlagDecisions', false)
       @integrations = config.fetch('integrations', [])
       @region = config.fetch('region', 'US')
+      # `holdouts` carries only global holdouts; `localHoldouts` (new top-level section) carries
+      # only rule-scoped local holdouts. Section membership is the sole signal for scope.
       @holdouts = config.fetch('holdouts', [])
+      @local_holdouts = config.fetch('localHoldouts', [])
 
       # Default to US region if not specified
       @region = 'US' if @region.nil? || @region.empty?
@@ -118,25 +121,38 @@ module Optimizely
       @global_holdouts = []
       @rule_holdouts_map = {}
 
+      # Section membership determines scope: entries in `holdouts` are global, entries in
+      # `localHoldouts` are local. Any `includedRules` on a `holdouts` entry is stripped/ignored.
       @holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
 
         # Ensure holdout has layerId field (holdouts don't have campaigns)
         holdout['layerId'] ||= ''
+        # Strip includedRules from global-section entries — section membership is the sole signal.
+        holdout.delete('includedRules')
 
         @holdout_id_map[holdout['id']] = holdout
+        @global_holdouts << holdout
+      end
 
-        # Build global vs local holdout mappings
-        # A holdout is global when includedRules is nil/absent (applies to all rules)
-        # A holdout is local when includedRules is a non-nil array (applies only to specified rules)
-        if holdout_global?(holdout)
-          @global_holdouts << holdout
-        else
-          included_rules = holdout['includedRules'] || []
-          included_rules.each do |rule_id|
-            @rule_holdouts_map[rule_id] ||= []
-            @rule_holdouts_map[rule_id] << holdout
-          end
+      @local_holdouts.each do |holdout|
+        next unless holdout['status'] == 'Running'
+
+        # Local holdouts without includedRules are invalid — log and skip (do not fall back to global).
+        included_rules = holdout['includedRules']
+        if included_rules.nil? || !included_rules.is_a?(Array) || included_rules.empty?
+          @logger.log(
+            Logger::ERROR,
+            "Local holdout '#{holdout['key'] || holdout['id']}' is missing or has empty 'includedRules'; skipping."
+          )
+          next
+        end
+
+        holdout['layerId'] ||= ''
+        @holdout_id_map[holdout['id']] = holdout
+        included_rules.each do |rule_id|
+          @rule_holdouts_map[rule_id] ||= []
+          @rule_holdouts_map[rule_id] << holdout
         end
       end
 
@@ -217,10 +233,11 @@ module Optimizely
       # Generate flag_variation_map after injection so it includes everyone-else variations
       @flag_variation_map = generate_feature_variation_map(@feature_flags)
 
-      # Adding Holdout variations in variation id and key maps
-      return unless @holdouts && !@holdouts.empty?
+      # Adding Holdout variations in variation id and key maps (both global and local sections).
+      all_holdouts = (@holdouts || []) + (@local_holdouts || [])
+      return if all_holdouts.empty?
 
-      @holdouts.each do |holdout|
+      all_holdouts.each do |holdout|
         next unless holdout['status'] == 'Running'
 
         holdout_key = holdout['key']
@@ -659,7 +676,7 @@ module Optimizely
     end
 
     def get_holdouts_for_rule(rule_id)
-      # Returns running local holdouts that target a specific rule ID.
+      # Returns running local holdouts (from the `localHoldouts` section) that target the rule.
       # Local holdouts apply only to the rules listed in their includedRules array.
       #
       # rule_id - String ID of the experiment/delivery rule
@@ -669,9 +686,9 @@ module Optimizely
     end
 
     def holdout_global?(holdout)
-      # Determines whether a holdout is global (applies to all rules) or local (applies to specific rules).
-      # A holdout is global when includedRules is nil or absent from the datafile.
-      # A holdout with an empty array [] is a local holdout with no matching rules (NOT global).
+      # Returns true when the holdout came from the global `holdouts` section.
+      # Section membership is the sole signal for scope; `ProjectConfig` strips `includedRules`
+      # from `holdouts`-section entries at parse time, so absence of the key is equivalent.
       #
       # holdout - Holdout hash from the datafile
       #
