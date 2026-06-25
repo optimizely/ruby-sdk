@@ -4052,7 +4052,10 @@ describe 'Optimizely' do
               decisions: [{
                 campaign_id: '',
                 experiment_id: '',
-                variation_id: '',
+                # FSSDK-12813: empty/whitespace/non-numeric variation_id
+                # normalizes to nil per spec (variation_id retains the
+                # strict numeric-string-only contract).
+                variation_id: nil,
                 metadata: {
                   flag_key: 'multi_variate_feature',
                   rule_key: '',

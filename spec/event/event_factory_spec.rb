@@ -830,22 +830,36 @@ describe Optimizely::EventFactory do
       expect(first_event(log_event)[:entity_id]).to eq('222222')
     end
 
-    it 'substitutes experiment_id when campaign_id is whitespace' do
+    it 'passes whitespace campaign_id through unchanged (FSSDK-12813 relaxed contract: non-empty string)' do
+      # Per relaxed spec, any non-empty string is valid for campaign_id —
+      # only empty string / nil / missing trigger the experiment_id fallback.
       impression = build_impression(
         experiment_layer_id: '   ', experiment_id: '222222', variation_id: '333333'
       )
       log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
-      expect(first_decision(log_event)[:campaign_id]).to eq('222222')
-      expect(first_event(log_event)[:entity_id]).to eq('222222')
+      expect(first_decision(log_event)[:campaign_id]).to eq('   ')
+      expect(first_event(log_event)[:entity_id]).to eq('   ')
     end
 
-    it 'substitutes experiment_id when campaign_id is a non-numeric placeholder' do
+    it 'passes non-numeric opaque campaign_id through unchanged (FSSDK-12813 relaxed contract)' do
+      # Per relaxed spec, opaque IDs such as "default-12345" or "layer_abc"
+      # are valid for campaign_id and entity_id; only empty/null trigger the
+      # experiment_id fallback.
       impression = build_impression(
         experiment_layer_id: 'campaign_a', experiment_id: '222222', variation_id: '333333'
       )
       log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
-      expect(first_decision(log_event)[:campaign_id]).to eq('222222')
-      expect(first_event(log_event)[:entity_id]).to eq('222222')
+      expect(first_decision(log_event)[:campaign_id]).to eq('campaign_a')
+      expect(first_event(log_event)[:entity_id]).to eq('campaign_a')
+    end
+
+    it 'passes prefixed opaque campaign_id (default-12345) through unchanged (FSSDK-12813)' do
+      impression = build_impression(
+        experiment_layer_id: 'default-12345', experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:campaign_id]).to eq('default-12345')
+      expect(first_event(log_event)[:entity_id]).to eq('default-12345')
     end
 
     it 'falls back to empty string when both campaign_id and experiment_id are invalid' do
