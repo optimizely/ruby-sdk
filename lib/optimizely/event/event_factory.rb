@@ -23,6 +23,7 @@ require_relative 'entity/snapshot'
 require_relative 'entity/snapshot_event'
 require_relative 'entity/visitor'
 require 'optimizely/helpers/validator'
+require 'optimizely/helpers/event_id_validator'
 module Optimizely
   class EventFactory
     # EventFactory builds LogEvent objects from a given user_event.
@@ -108,15 +109,28 @@ module Optimizely
       private
 
       def create_impression_event_visitor(impression_event)
+        # FSSDK-12813: Normalize campaign_id, variation_id, and entity_id
+        # uniformly across all decision types (experiment, feature test,
+        # rollout, holdout). No branching by decision type — every impression
+        # decision flows through this single normalization path.
+        normalized_campaign_id = Helpers::EventIdValidator.normalize_campaign_id(
+          impression_event.experiment_layer_id, impression_event.experiment_id
+        )
+        normalized_variation_id = Helpers::EventIdValidator.normalize_variation_id(
+          impression_event.variation_id
+        )
+
         decision = Decision.new(
-          campaign_id: impression_event.experiment_layer_id,
+          campaign_id: normalized_campaign_id,
           experiment_id: impression_event.experiment_id,
-          variation_id: impression_event.variation_id,
+          variation_id: normalized_variation_id,
           metadata: impression_event.metadata
         )
 
+        # FR-009: entity_id on impression events must equal decisions[].campaign_id
+        # byte-for-byte. Reuse the already-normalized campaign_id.
         snapshot_event = Optimizely::SnapshotEvent.new(
-          entity_id: impression_event.experiment_layer_id,
+          entity_id: normalized_campaign_id,
           timestamp: impression_event.timestamp,
           uuid: impression_event.uuid,
           key: ACTIVATE_EVENT_KEY

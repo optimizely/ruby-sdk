@@ -741,4 +741,227 @@ describe Optimizely::EventFactory do
     expect(log_event.url).to eq(@expected_endpoints[:US])
     expect(log_event.http_verb).to eq(:post)
   end
+
+  # ----------------------------------------------------------------------
+  # FSSDK-12813: Decision-event ID normalization tests.
+  #
+  # These integration tests exercise the EventFactory wire payload to verify
+  # that campaign_id, variation_id, and entity_id are normalized uniformly
+  # across every decision type (experiment, feature test, rollout, holdout).
+  # ----------------------------------------------------------------------
+  describe 'FSSDK-12813 decision event ID normalization' do
+    let(:event_context) do
+      Optimizely::EventContext.new(
+        region: 'US',
+        account_id: '12001',
+        project_id: '111001',
+        anonymize_ip: false,
+        revision: '42',
+        client_name: Optimizely::CLIENT_ENGINE,
+        client_version: Optimizely::VERSION
+      ).as_json
+    end
+    let(:metadata) do
+      {
+        flag_key: 'flag_a',
+        rule_key: 'rule_a',
+        rule_type: 'experiment',
+        variation_key: 'var_a',
+        enabled: true
+      }
+    end
+
+    def build_impression(experiment_layer_id:, experiment_id:, variation_id:)
+      Optimizely::ImpressionEvent.new(
+        event_context: event_context,
+        user_id: 'test_user',
+        experiment_layer_id: experiment_layer_id,
+        experiment_id: experiment_id,
+        variation_id: variation_id,
+        metadata: metadata,
+        visitor_attributes: [],
+        bot_filtering: nil
+      )
+    end
+
+    def first_decision(log_event)
+      log_event.params[:visitors][0][:snapshots][0][:decisions][0]
+    end
+
+    def first_event(log_event)
+      log_event.params[:visitors][0][:snapshots][0][:events][0]
+    end
+
+    it 'passes valid numeric campaign_id and variation_id through unchanged' do
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      decision = first_decision(log_event)
+      event = first_event(log_event)
+
+      expect(decision[:campaign_id]).to eq('111111')
+      expect(decision[:experiment_id]).to eq('222222')
+      expect(decision[:variation_id]).to eq('333333')
+      expect(event[:entity_id]).to eq('111111')
+      expect(event[:entity_id]).to eq(decision[:campaign_id])
+    end
+
+    it 'substitutes experiment_id when campaign_id (layerId) is nil' do
+      # FR-001/FR-002: nil campaign_id must be replaced with experiment_id.
+      impression = build_impression(
+        experiment_layer_id: nil, experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      decision = first_decision(log_event)
+      event = first_event(log_event)
+
+      expect(decision[:campaign_id]).to eq('222222')
+      # FR-009: entity_id must equal decisions[].campaign_id byte-for-byte.
+      expect(event[:entity_id]).to eq('222222')
+    end
+
+    it 'substitutes experiment_id when campaign_id is an empty string' do
+      impression = build_impression(
+        experiment_layer_id: '', experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:campaign_id]).to eq('222222')
+      expect(first_event(log_event)[:entity_id]).to eq('222222')
+    end
+
+    it 'substitutes experiment_id when campaign_id is whitespace' do
+      impression = build_impression(
+        experiment_layer_id: '   ', experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:campaign_id]).to eq('222222')
+      expect(first_event(log_event)[:entity_id]).to eq('222222')
+    end
+
+    it 'substitutes experiment_id when campaign_id is a non-numeric placeholder' do
+      impression = build_impression(
+        experiment_layer_id: 'campaign_a', experiment_id: '222222', variation_id: '333333'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:campaign_id]).to eq('222222')
+      expect(first_event(log_event)[:entity_id]).to eq('222222')
+    end
+
+    it 'falls back to empty string when both campaign_id and experiment_id are invalid' do
+      # Mirrors the legacy empty-slot impression case that send_impression emits
+      # when there is no decision (e.g. send_flag_decisions and no rule matched).
+      impression = build_impression(
+        experiment_layer_id: '', experiment_id: '', variation_id: nil
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      decision = first_decision(log_event)
+      event = first_event(log_event)
+
+      expect(decision[:campaign_id]).to eq('')
+      expect(decision[:variation_id]).to be_nil
+      expect(event[:entity_id]).to eq('')
+    end
+
+    it 'normalizes invalid variation_id to nil (empty string case)' do
+      # FR-003/FR-004: empty variation_id becomes nil.
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: ''
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:variation_id]).to be_nil
+    end
+
+    it 'normalizes invalid variation_id to nil (non-numeric placeholder case)' do
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: 'variation_a'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:variation_id]).to be_nil
+    end
+
+    it 'normalizes invalid variation_id to nil (whitespace case)' do
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: '   '
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:variation_id]).to be_nil
+    end
+
+    it 'normalizes invalid variation_id to nil (non-string case)' do
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: 333_333
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:variation_id]).to be_nil
+    end
+
+    it 'leaves valid nil variation_id as nil (already-normalized)' do
+      impression = build_impression(
+        experiment_layer_id: '111111', experiment_id: '222222', variation_id: nil
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(first_decision(log_event)[:variation_id]).to be_nil
+    end
+
+    it 'applies the same normalization for holdout decision metadata (FR-005)' do
+      # FR-005: normalization must be uniform across decision types. A holdout
+      # decision carries rule_type 'holdout' in metadata but still flows through
+      # the same impression factory path — so the same normalization applies.
+      holdout_metadata = metadata.merge(rule_type: 'holdout')
+      impression = Optimizely::ImpressionEvent.new(
+        event_context: event_context,
+        user_id: 'test_user',
+        experiment_layer_id: '', # holdout with no layer id
+        experiment_id: '999777', # falls back to holdout id
+        variation_id: 'invalid_placeholder',
+        metadata: holdout_metadata,
+        visitor_attributes: [],
+        bot_filtering: nil
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      decision = first_decision(log_event)
+      event = first_event(log_event)
+
+      expect(decision[:campaign_id]).to eq('999777')
+      expect(decision[:variation_id]).to be_nil
+      expect(event[:entity_id]).to eq('999777')
+      expect(decision[:metadata][:rule_type]).to eq('holdout')
+    end
+
+    it 'does not log or warn on the normalization path (FR-007)' do
+      impression = build_impression(
+        experiment_layer_id: '', experiment_id: '222222', variation_id: 'bad'
+      )
+      Optimizely::EventFactory.create_log_event(impression, spy_logger)
+
+      # spy_logger.log should not have been invoked for any normalization
+      # bookkeeping (we still allow other log calls from upstream code paths,
+      # but in this isolated test there are none).
+      expect(spy_logger).not_to have_received(:log)
+    end
+
+    it 'still emits the event payload when IDs are invalid (FR-006: do not drop)' do
+      impression = build_impression(
+        experiment_layer_id: nil, experiment_id: nil, variation_id: 'bad'
+      )
+      log_event = Optimizely::EventFactory.create_log_event(impression, spy_logger)
+      expect(log_event).not_to be_nil
+      expect(log_event.params[:visitors][0][:snapshots][0][:decisions]).not_to be_empty
+      expect(log_event.params[:visitors][0][:snapshots][0][:events]).not_to be_empty
+    end
+
+    it 'does not normalize conversion event entity_id (FR-010)' do
+      # Conversion events derive entity_id from the event id source and must
+      # remain unchanged. The conversion fixture's entity_id (111095) is
+      # already numeric and must be preserved verbatim.
+      experiment_event = project_config.get_event_from_key('test_event')
+      allow(project_config).to receive(:bot_filtering).and_return(true)
+      conversion_event = Optimizely::UserEventFactory.create_conversion_event(
+        project_config, experiment_event, 'test_user', nil, nil
+      )
+      log_event = Optimizely::EventFactory.create_log_event(conversion_event, spy_logger)
+      expect(first_event(log_event)[:entity_id]).to eq('111095')
+    end
+  end
 end
