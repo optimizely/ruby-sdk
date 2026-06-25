@@ -743,13 +743,13 @@ describe Optimizely::EventFactory do
   end
 
   # ----------------------------------------------------------------------
-  # FSSDK-12813: Decision-event ID normalization tests.
+  # Decision-event ID normalization tests.
   #
   # These integration tests exercise the EventFactory wire payload to verify
   # that campaign_id, variation_id, and entity_id are normalized uniformly
   # across every decision type (experiment, feature test, rollout, holdout).
   # ----------------------------------------------------------------------
-  describe 'FSSDK-12813 decision event ID normalization' do
+  describe 'decision event ID normalization' do
     let(:event_context) do
       Optimizely::EventContext.new(
         region: 'US',
@@ -830,7 +830,7 @@ describe Optimizely::EventFactory do
       expect(first_event(log_event)[:entity_id]).to eq('222222')
     end
 
-    it 'passes whitespace campaign_id through unchanged (FSSDK-12813 relaxed contract: non-empty string)' do
+    it 'passes whitespace campaign_id through unchanged (relaxed contract: non-empty string)' do
       # Per relaxed spec, any non-empty string is valid for campaign_id —
       # only empty string / nil / missing trigger the experiment_id fallback.
       impression = build_impression(
@@ -841,7 +841,7 @@ describe Optimizely::EventFactory do
       expect(first_event(log_event)[:entity_id]).to eq('   ')
     end
 
-    it 'passes non-numeric opaque campaign_id through unchanged (FSSDK-12813 relaxed contract)' do
+    it 'passes non-numeric opaque campaign_id through unchanged (relaxed contract)' do
       # Per relaxed spec, opaque IDs such as "default-12345" or "layer_abc"
       # are valid for campaign_id and entity_id; only empty/null trigger the
       # experiment_id fallback.
@@ -853,7 +853,7 @@ describe Optimizely::EventFactory do
       expect(first_event(log_event)[:entity_id]).to eq('campaign_a')
     end
 
-    it 'passes prefixed opaque campaign_id (default-12345) through unchanged (FSSDK-12813)' do
+    it 'passes prefixed opaque campaign_id (default-12345) through unchanged' do
       impression = build_impression(
         experiment_layer_id: 'default-12345', experiment_id: '222222', variation_id: '333333'
       )

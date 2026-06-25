@@ -18,7 +18,7 @@
 module Optimizely
   module Helpers
     # EventIdValidator normalizes ID fields on outgoing decision events so
-    # that the wire payload is byte-equivalent across SDKs (FSSDK-12813).
+    # that the wire payload is byte-equivalent across SDKs.
     #
     # Two contracts apply:
     #   * campaign_id and entity_id (impression events): valid iff non-empty

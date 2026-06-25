@@ -109,10 +109,6 @@ module Optimizely
       private
 
       def create_impression_event_visitor(impression_event)
-        # FSSDK-12813: Normalize campaign_id, variation_id, and entity_id
-        # uniformly across all decision types (experiment, feature test,
-        # rollout, holdout). No branching by decision type — every impression
-        # decision flows through this single normalization path.
         normalized_campaign_id = Helpers::EventIdValidator.normalize_campaign_id(
           impression_event.experiment_layer_id, impression_event.experiment_id
         )

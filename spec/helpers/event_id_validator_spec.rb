@@ -124,7 +124,7 @@ describe Optimizely::Helpers::EventIdValidator do
       expect(described_class.normalize_campaign_id('111122', '999888')).to eq('111122')
     end
 
-    it 'returns the campaign_id unchanged when it is a non-empty opaque string (FSSDK-12813 relaxed contract)' do
+    it 'returns the campaign_id unchanged when it is a non-empty opaque string (relaxed contract)' do
       # FR-001: any non-empty string is valid for campaign_id; opaque IDs
       # like "default-12345" or "layer_abc" pass through unchanged.
       expect(described_class.normalize_campaign_id('default-12345', '999888')).to eq('default-12345')
@@ -133,9 +133,9 @@ describe Optimizely::Helpers::EventIdValidator do
     end
 
     it 'returns the campaign_id unchanged when it is a whitespace-only string (non-empty per spec)' do
-      # FSSDK-12813: whitespace is non-empty, so it passes through. The
-      # upstream datafile producer is responsible for content quality;
-      # SDK only enforces non-emptiness.
+      # Whitespace is non-empty, so it passes through. The upstream datafile
+      # producer is responsible for content quality; SDK only enforces
+      # non-emptiness.
       expect(described_class.normalize_campaign_id('   ', '999888')).to eq('   ')
     end
 
@@ -147,7 +147,7 @@ describe Optimizely::Helpers::EventIdValidator do
       expect(described_class.normalize_campaign_id('', '999888')).to eq('999888')
     end
 
-    it 'returns experiment_id (opaque string) when campaign_id is empty (FSSDK-12813 relaxed contract)' do
+    it 'returns experiment_id (opaque string) when campaign_id is empty (relaxed contract)' do
       # FR-002 fallback also accepts opaque experiment_id values.
       expect(described_class.normalize_campaign_id('', 'exp_42')).to eq('exp_42')
     end
@@ -190,8 +190,8 @@ describe Optimizely::Helpers::EventIdValidator do
     end
 
     it 'returns nil when variation_id is a non-numeric placeholder string' do
-      # FSSDK-12813: variation_id stays strict (FR-003/FR-004) — opaque
-      # placeholders like "variation_a" normalize to nil unlike campaign_id.
+      # variation_id stays strict (FR-003/FR-004) — opaque placeholders like
+      # "variation_a" normalize to nil unlike campaign_id.
       expect(described_class.normalize_variation_id('variation_a')).to be_nil
     end
 
