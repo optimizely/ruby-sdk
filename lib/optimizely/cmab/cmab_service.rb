@@ -179,12 +179,14 @@ module Optimizely
       return filtered_user_attributes if experiment.nil? || experiment['cmab'].nil?
 
       cmab_attribute_ids = experiment['cmab']['attributeIds']
+      return filtered_user_attributes unless cmab_attribute_ids.is_a?(Array)
+
       cmab_attribute_ids.each do |attribute_id|
         attribute = project_config.attribute_id_map[attribute_id]
         next unless attribute
 
         attribute_key = attribute['key']
-        filtered_user_attributes[attribute_key] = user_attributes[attribute_key] if user_attributes.key?(attribute_key)
+        filtered_user_attributes[attribute_id] = user_attributes[attribute_key] if user_attributes.key?(attribute_key)
       end
 
       filtered_user_attributes

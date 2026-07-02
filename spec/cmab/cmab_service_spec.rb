@@ -37,7 +37,7 @@ describe Optimizely::DefaultCmabService do
   describe '#get_decision' do
     it 'returns decision from cache when valid' do
       expected_key = cmab_service.send(:get_cache_key, user_id, rule_id)
-      expected_attributes = {'age' => 25, 'location' => 'USA'}
+      expected_attributes = {'66' => 25, '77' => 'USA'}
       expected_hash = cmab_service.send(:hash_attributes, expected_attributes)
 
       cached_value = Optimizely::CmabCacheValue.new(
@@ -58,7 +58,7 @@ describe Optimizely::DefaultCmabService do
 
     it 'ignores cache when option given' do
       allow(mock_cmab_client).to receive(:fetch_decision).and_return('varB')
-      expected_attributes = {'age' => 25, 'location' => 'USA'}
+      expected_attributes = {'66' => 25, '77' => 'USA'}
 
       decision, reasons = cmab_service.get_decision(
         mock_project_config,
@@ -126,8 +126,7 @@ describe Optimizely::DefaultCmabService do
       allow(mock_cmab_cache).to receive(:save)
       allow(mock_cmab_client).to receive(:fetch_decision).and_return('varE')
 
-      expected_attributes = {'age' => 25, 'location' => 'USA'}
-      cmab_service.send(:hash_attributes, expected_attributes)
+      expected_attributes = {'66' => 25, '77' => 'USA'}
       expected_key = cmab_service.send(:get_cache_key, user_id, rule_id)
 
       decision, reasons = cmab_service.get_decision(mock_project_config, mock_user_context, rule_id, [])
@@ -163,11 +162,10 @@ describe Optimizely::DefaultCmabService do
         [Optimizely::Decide::OptimizelyDecideOption::IGNORE_CMAB_CACHE]
       )
 
-      # Verify only age and location are passed
       expect(mock_cmab_client).to have_received(:fetch_decision).with(
         rule_id,
         user_id,
-        {'age' => 25, 'location' => 'USA'},
+        {'66' => 25, '77' => 'USA'},
         decision.cmab_uuid
       )
       expect(reasons).to include(match(/Ignoring CMAB cache for user '#{user_id}' and rule '#{rule_id}'/))
@@ -178,8 +176,8 @@ describe Optimizely::DefaultCmabService do
     it 'returns correct subset of attributes' do
       filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
 
-      expect(filtered['age']).to eq(25)
-      expect(filtered['location']).to eq('USA')
+      expect(filtered['66']).to eq(25)
+      expect(filtered['77']).to eq('USA')
     end
 
     it 'returns empty hash when no cmab config' do
@@ -192,6 +190,38 @@ describe Optimizely::DefaultCmabService do
 
     it 'returns empty hash when experiment not found' do
       allow(mock_project_config).to receive(:experiment_id_map).and_return({})
+
+      filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
+
+      expect(filtered).to eq({})
+    end
+
+    it 'skips attribute IDs not found in attribute_id_map' do
+      allow(mock_project_config).to receive(:attribute_id_map).and_return({'66' => mock_attr1})
+
+      filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
+
+      expect(filtered).to eq({'66' => 25})
+    end
+
+    it 'returns empty hash when user has none of the CMAB attributes' do
+      allow(mock_user_context).to receive(:user_attributes).and_return({'unrelated' => 'value'})
+
+      filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
+
+      expect(filtered).to eq({})
+    end
+
+    it 'returns empty hash when attributeIds is empty' do
+      allow(mock_project_config).to receive(:experiment_id_map).and_return({rule_id => {'cmab' => {'attributeIds' => []}}})
+
+      filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
+
+      expect(filtered).to eq({})
+    end
+
+    it 'returns empty hash when attributeIds is nil' do
+      allow(mock_project_config).to receive(:experiment_id_map).and_return({rule_id => {'cmab' => {'attributeIds' => nil}}})
 
       filtered = cmab_service.send(:filter_attributes, mock_project_config, mock_user_context, rule_id)
 
