@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2020, 2022-2023, Optimizely and contributors
+#    Copyright 2016-2020, 2022-2023, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -4052,7 +4052,7 @@ describe 'Optimizely' do
               decisions: [{
                 campaign_id: '',
                 experiment_id: '',
-                variation_id: '',
+                variation_id: nil,
                 metadata: {
                   flag_key: 'multi_variate_feature',
                   rule_key: '',
