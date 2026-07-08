@@ -1,5 +1,24 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.4.0
+July 8, 2026
+
+### New Features
+
+**Local Holdouts**: Added support for Local Holdouts, enabling holdout experiments
+to be scoped to specific feature flags rather than applied globally.
+Local Holdouts let you measure the true incremental impact of individual features
+by holding out a subset of users from specific rollouts while still serving them other experiences.
+See [Holdouts docs](https://support.optimizely.com/hc/en-us/articles/38941939408269-Global-holdouts) for more information.
+
+- Add local holdouts support with includedRules field ([#398](https://github.com/optimizely/ruby-sdk/pull/398))
+- Add localHoldouts datafile section for backward compatibility ([#400](https://github.com/optimizely/ruby-sdk/pull/400))
+
+### Bug Fixes
+- Use attribute id instead of key for CMAB prediction requests ([#402](https://github.com/optimizely/ruby-sdk/pull/402))
+- Normalize decision event campaign_id, variation_id, and entity_id ([#401](https://github.com/optimizely/ruby-sdk/pull/401))
+- Block ODP identify event for single identifier ([#399](https://github.com/optimizely/ruby-sdk/pull/399))
+
 ## 5.3.0
 May 4, 2026
 
