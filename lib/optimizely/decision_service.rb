@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2022, Optimizely and contributors
+#    Copyright 2017-2022, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -198,6 +198,7 @@ module Optimizely
 
       # Check global holdouts first (flag level) — these apply to all rules across all flags
       holdouts = project_config.global_holdouts
+      exclude_td_holdout_decision = nil
 
       holdouts.each do |holdout|
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
@@ -205,14 +206,21 @@ module Optimizely
 
         next unless holdout_decision.decision
 
-        message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
-        @logger.log(Logger::INFO, message)
-        reasons.push(message)
-        return DecisionResult.new(holdout_decision.decision, false, reasons)
+        if holdout['excludeTargetedDeliveries'] == true
+          message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}', but targeted deliveries are excluded."
+          @logger.log(Logger::INFO, message)
+          reasons.push(message)
+          exclude_td_holdout_decision = holdout_decision.decision
+        else
+          message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
+          @logger.log(Logger::INFO, message)
+          reasons.push(message)
+          return DecisionResult.new(holdout_decision.decision, false, reasons)
+        end
       end
 
       # Check if the feature flag has an experiment and the user is bucketed into that experiment
-      experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+      experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options, exclude_td_holdout_decision)
       reasons.push(*experiment_decision.reasons)
 
       return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
@@ -221,7 +229,7 @@ module Optimizely
       return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
 
       # Check if the feature flag has a rollout and the user is bucketed into that rollout
-      rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
+      rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context, exclude_td_holdout_decision)
       reasons.push(*rollout_decision.reasons)
 
       if rollout_decision.decision
@@ -237,6 +245,8 @@ module Optimizely
 
         DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons)
       else
+        return DecisionResult.new(exclude_td_holdout_decision, false, reasons) if exclude_td_holdout_decision
+
         message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         DecisionResult.new(nil, false, reasons)
@@ -325,15 +335,7 @@ module Optimizely
       decisions
     end
 
-    def get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options = [])
-      # Gets the variation the user is bucketed into for the feature flag's experiment.
-      #
-      # project_config - project_config - Instance of ProjectConfig
-      # feature_flag - The feature flag the user wants to access
-      # user_context - Optimizely user context instance
-      #
-      # Returns a DecisionResult containing the decision (or nil if not bucketed),
-      # an error flag, and an array of decision reasons.
+    def get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options = [], global_holdout_decision = nil)
       decide_reasons = []
       user_id = user_context.user_id
       feature_flag_key = feature_flag['key']
@@ -355,7 +357,7 @@ module Optimizely
         end
 
         experiment_id = experiment['id']
-        variation_result = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, user_profile_tracker, decide_options)
+        variation_result = get_variation_from_experiment_rule(project_config, feature_flag_key, experiment, user_context, user_profile_tracker, decide_options, global_holdout_decision)
         error = variation_result.error
         reasons_received = variation_result.reasons
         variation_id = variation_result.variation_id
@@ -384,16 +386,7 @@ module Optimizely
       DecisionResult.new(nil, false, decide_reasons)
     end
 
-    def get_variation_for_feature_rollout(project_config, feature_flag, user_context)
-      # Determine which variation the user is in for a given rollout.
-      # Returns the variation of the first experiment the user qualifies for.
-      #
-      # project_config - project_config - Instance of ProjectConfig
-      # feature_flag - The feature flag the user wants to access
-      # user_context - Optimizely user context instance
-      #
-      # Returns a DecisionResult containing the decision (or nil if not bucketed),
-      # an error flag, and an array of decision reasons.
+    def get_variation_for_feature_rollout(project_config, feature_flag, user_context, global_holdout_decision = nil)
       decide_reasons = []
 
       rollout_id = feature_flag['rolloutId']
@@ -418,7 +411,7 @@ module Optimizely
       index = 0
       rollout_rules = rollout['experiments']
       while index < rollout_rules.length
-        holdout_decision, variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context)
+        holdout_decision, variation, skip_to_everyone_else, reasons_received = get_variation_from_delivery_rule(project_config, feature_flag_key, rollout_rules, index, user_context, global_holdout_decision)
         decide_reasons.push(*reasons_received)
 
         return DecisionResult.new(holdout_decision, false, decide_reasons) if holdout_decision
@@ -435,16 +428,7 @@ module Optimizely
       DecisionResult.new(nil, false, decide_reasons)
     end
 
-    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, user_profile_tracker, options = [])
-      # Determine which variation the user is in for a given rollout.
-      # Returns the variation from experiment rules.
-      #
-      # project_config - project_config - Instance of ProjectConfig
-      # flag_key - The feature flag the user wants to access
-      # rule - An experiment rule key
-      # user - Optimizely user context instance
-      #
-      # Returns variation_id and reasons
+    def get_variation_from_experiment_rule(project_config, flag_key, rule, user, user_profile_tracker, options = [], global_holdout_decision = nil)
       reasons = []
 
       # Step 1: Forced decision check
@@ -453,9 +437,16 @@ module Optimizely
       reasons.push(*forced_reasons)
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
-      # Step 2: Local holdout check
+      # Step 2: Global holdout check (when excludeTargetedDeliveries is true, TD rules skip the holdout)
+      if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
+        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision)
+      end
+
+      # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
       local_holdouts.each do |holdout|
+        next if holdout['excludeTargetedDeliveries'] == true && rule['type'] == Helpers::Constants::EXPERIMENT_TYPES['td']
+
         holdout_decision = get_variation_for_holdout(holdout, user, project_config)
         reasons.push(*holdout_decision.reasons)
         next unless holdout_decision.decision
@@ -464,22 +455,13 @@ module Optimizely
         return VariationResult.new(nil, false, reasons, holdout_variation['id'], holdout_decision.decision)
       end
 
-      # Step 3: Regular rule evaluation
+      # Step 4: Regular rule evaluation
       variation_result = get_variation(project_config, rule['id'], user, user_profile_tracker, options)
       variation_result.reasons = reasons + variation_result.reasons
       variation_result
     end
 
-    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context)
-      # Determine which variation the user is in for a given rollout.
-      # Returns the variation from delivery rules.
-      #
-      # project_config - project_config - Instance of ProjectConfig
-      # flag_key - The feature flag the user wants to access
-      # rule - An experiment rule key
-      # user_context - Optimizely user context instance
-      #
-      # Returns [holdout_decision, variation, skip_to_everyone_else, reasons]
+    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context, global_holdout_decision = nil)
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
@@ -490,15 +472,22 @@ module Optimizely
       reasons.push(*forced_reasons)
       return [nil, variation, skip_to_everyone_else, reasons] if variation
 
-      # Step 2: Local holdout check
+      # Step 2: Global holdout check
+      if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
+        return [global_holdout_decision, nil, skip_to_everyone_else, reasons]
+      end
+
+      # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
       local_holdouts.each do |holdout|
+        next if holdout['excludeTargetedDeliveries'] == true && rule['type'] == Helpers::Constants::EXPERIMENT_TYPES['td']
+
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
         return [holdout_decision.decision, nil, skip_to_everyone_else, reasons] if holdout_decision.decision
       end
 
-      # Step 3: Regular rule evaluation
+      # Step 4: Regular rule evaluation
       user_id = user_context.user_id
       attributes = user_context.user_attributes
       bucketing_id, bucketing_id_reasons = get_bucketing_id(user_id, attributes)
