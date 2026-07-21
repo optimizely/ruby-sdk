@@ -438,9 +438,7 @@ module Optimizely
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
       # Step 2: Global holdout check (when excludeTargetedDeliveries is true, TD rules skip the holdout)
-      if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision)
-      end
+      return VariationResult.new(nil, false, reasons, nil, global_holdout_decision) if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
 
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
@@ -473,9 +471,7 @@ module Optimizely
       return [nil, variation, skip_to_everyone_else, reasons] if variation
 
       # Step 2: Global holdout check
-      if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-        return [global_holdout_decision, nil, skip_to_everyone_else, reasons]
-      end
+      return [global_holdout_decision, nil, skip_to_everyone_else, reasons] if global_holdout_decision && rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
 
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
