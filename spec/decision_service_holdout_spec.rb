@@ -1032,5 +1032,202 @@ describe Optimizely::DecisionService do
         expect(result.variation_id).not_to eq('local_var_1') # must NOT be holdout variation
       end
     end
+
+    describe 'exclude_targeted_deliveries' do
+      let(:config_with_etd) do
+        Optimizely::DatafileProjectConfig.new(
+          OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_EXCLUDE_TARGETED_JSON,
+          spy_logger,
+          error_handler
+        )
+      end
+
+      let(:project_with_etd) do
+        Optimizely::Project.new(
+          datafile: OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_EXCLUDE_TARGETED_JSON,
+          logger: spy_logger,
+          error_handler: error_handler
+        )
+      end
+
+      let(:decision_service_etd) do
+        Optimizely::DecisionService.new(spy_logger, spy_cmab_service, spy_user_profile_service)
+      end
+
+      after(:example) do
+        project_with_etd&.close
+      end
+
+      describe 'global holdout with exclude_targeted_deliveries=true' do
+        it 'blocks experiment rules and returns holdout decision' do
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+          feature_flag = config_with_etd.feature_flag_key_map['boolean_feature']
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket)
+            .and_return([{ 'id' => 'var_etd_1', 'key' => 'control', 'featureEnabled' => false }, []])
+
+          result = decision_service_etd.get_decision_for_flag(
+            feature_flag, user_ctx, config_with_etd, [], nil
+          )
+
+          expect(result.decision).not_to be_nil
+          expect(result.decision.source).to eq('holdout')
+          expect(result.decision.variation['id']).to eq('var_etd_1')
+        end
+
+        it 'allows delivery/rollout rules to proceed normally' do
+          feature_flag = config_with_etd.feature_flag_key_map['string_single_variable_feature']
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+
+          holdout_variation = { 'id' => 'var_etd_1', 'key' => 'control', 'featureEnabled' => false }
+          rollout_variation = { 'id' => '177780', 'key' => '177780', 'featureEnabled' => true, 'variables' => [] }
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_bucketer, _config, exp, *_rest|
+            if exp['id'] == 'holdout_etd_global'
+              [holdout_variation, []]
+            elsif exp['id'] == 'holdout_no_etd_global'
+              [nil, []]
+            else
+              [rollout_variation, []]
+            end
+          end
+          allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
+            .and_return([true, []])
+
+          result = decision_service_etd.get_decision_for_flag(
+            feature_flag, user_ctx, config_with_etd, [], nil
+          )
+
+          expect(result.decision).not_to be_nil
+          expect(result.decision.source).to eq('rollout')
+        end
+
+        it 'returns holdout decision when no rollout matches' do
+          feature_flag = config_with_etd.feature_flag_key_map['boolean_feature']
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+
+          holdout_variation = { 'id' => 'var_etd_1', 'key' => 'control', 'featureEnabled' => false }
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_bucketer, _config, exp, *_rest|
+            if exp['id'] == 'holdout_etd_global'
+              [holdout_variation, []]
+            else
+              [nil, []]
+            end
+          end
+
+          result = decision_service_etd.get_decision_for_flag(
+            feature_flag, user_ctx, config_with_etd, [], nil
+          )
+
+          expect(result.decision).not_to be_nil
+          expect(result.decision.source).to eq('holdout')
+        end
+      end
+
+      describe 'global holdout without exclude_targeted_deliveries' do
+        it 'returns holdout immediately blocking all rules' do
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+          feature_flag = config_with_etd.feature_flag_key_map['boolean_feature']
+
+          holdout_etd_var = { 'id' => 'var_etd_1', 'key' => 'control', 'featureEnabled' => false }
+          holdout_no_etd_var = { 'id' => 'var_no_etd_1', 'key' => 'control', 'featureEnabled' => false }
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket) do |_bucketer, _config, exp, *_rest|
+            if exp['id'] == 'holdout_etd_global'
+              [nil, []]
+            elsif exp['id'] == 'holdout_no_etd_global'
+              [holdout_no_etd_var, []]
+            else
+              raise 'Should not evaluate experiment rules when holdout blocks'
+            end
+          end
+
+          result = decision_service_etd.get_decision_for_flag(
+            feature_flag, user_ctx, config_with_etd, [], nil
+          )
+
+          expect(result.decision).not_to be_nil
+          expect(result.decision.source).to eq('holdout')
+          expect(result.decision.variation['id']).to eq('var_no_etd_1')
+        end
+      end
+
+      describe 'local holdout with exclude_targeted_deliveries=true on delivery rule' do
+        it 'skips holdout and serves delivery variation' do
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+          feature_flag = config_with_etd.feature_flag_key_map['string_single_variable_feature']
+          rollout = config_with_etd.get_rollout_from_id(feature_flag['rolloutId'])
+          rules = rollout['experiments']
+          rule_index = 0
+
+          rollout_variation = rules[rule_index]['variations'].first
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket)
+            .and_return([rollout_variation, []])
+          allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
+            .and_return([true, []])
+
+          _holdout_decision, variation, _skip, _reasons = decision_service_etd.get_variation_from_delivery_rule(
+            config_with_etd, feature_flag['key'], rules, rule_index, user_ctx
+          )
+
+          expect(variation).not_to be_nil
+          expect(variation['id']).to eq(rollout_variation['id'])
+        end
+      end
+
+      describe 'local holdout without exclude_targeted_deliveries on experiment rule' do
+        it 'applies holdout and returns holdout variation' do
+          user_ctx = project_with_etd.create_user_context('some-user', {})
+          experiment = config_with_etd.experiment_id_map['122227']
+          user_profile_tracker = Optimizely::UserProfileTracker.new('some-user', nil, spy_logger)
+
+          holdout_variation = { 'id' => 'local_var_no_etd_1', 'key' => 'holdout', 'featureEnabled' => false }
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket)
+            .and_return([holdout_variation, []])
+          allow(Optimizely::Audience).to receive(:user_meets_audience_conditions?)
+            .and_return([true, []])
+
+          result = decision_service_etd.get_variation_from_experiment_rule(
+            config_with_etd, 'boolean_feature', experiment, user_ctx, user_profile_tracker
+          )
+
+          expect(result.holdout_decision).not_to be_nil
+          expect(result.holdout_decision.source).to eq('holdout')
+        end
+      end
+
+      describe 'backward compatibility' do
+        it 'treats absent exclude_targeted_deliveries as false' do
+          config_no_etd = Optimizely::DatafileProjectConfig.new(
+            OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+            spy_logger,
+            error_handler
+          )
+          project_no_etd = Optimizely::Project.new(
+            datafile: OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
+            logger: spy_logger,
+            error_handler: error_handler
+          )
+
+          user_ctx = project_no_etd.create_user_context('some-user', {})
+          feature_flag = config_no_etd.feature_flag_key_map['boolean_feature']
+
+          allow_any_instance_of(Optimizely::Bucketer).to receive(:bucket)
+            .and_return([{ 'id' => 'var_1', 'key' => 'control', 'featureEnabled' => true }, []])
+
+          result = decision_service_etd.get_decision_for_flag(
+            feature_flag, user_ctx, config_no_etd, [], nil
+          )
+
+          expect(result.decision).not_to be_nil
+          expect(result.decision.source).to eq('holdout')
+
+          project_no_etd.close
+        end
+      end
+    end
   end
 end

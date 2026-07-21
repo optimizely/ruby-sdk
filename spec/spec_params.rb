@@ -2118,6 +2118,97 @@ module OptimizelySpec
 
   CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY_JSON = JSON.dump(CONFIG_BODY_WITH_GLOBAL_HOLDOUTS_ONLY).freeze
 
+  CONFIG_BODY_WITH_HOLDOUTS_EXCLUDE_TARGETED = VALID_CONFIG_BODY.merge(
+    {
+      'holdouts' => [
+        {
+          'id' => 'holdout_etd_global',
+          'key' => 'global_holdout_exclude_td',
+          'status' => 'Running',
+          'audiences' => [],
+          'exclude_targeted_deliveries' => true,
+          'variations' => [
+            {
+              'id' => 'var_etd_1',
+              'key' => 'control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_etd_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'holdout_no_etd_global',
+          'key' => 'global_holdout_no_exclude_td',
+          'status' => 'Running',
+          'audiences' => [],
+          'variations' => [
+            {
+              'id' => 'var_no_etd_1',
+              'key' => 'control',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'var_no_etd_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ],
+      'localHoldouts' => [
+        {
+          'id' => 'holdout_etd_local',
+          'key' => 'local_holdout_exclude_td',
+          'status' => 'Running',
+          'audiences' => [],
+          'exclude_targeted_deliveries' => true,
+          'includedRules' => ['177774'],
+          'variations' => [
+            {
+              'id' => 'local_var_etd_1',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_etd_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        },
+        {
+          'id' => 'holdout_no_etd_local',
+          'key' => 'local_holdout_no_exclude_td',
+          'status' => 'Running',
+          'audiences' => [],
+          'includedRules' => ['122227'],
+          'variations' => [
+            {
+              'id' => 'local_var_no_etd_1',
+              'key' => 'holdout',
+              'featureEnabled' => false
+            }
+          ],
+          'trafficAllocation' => [
+            {
+              'entityId' => 'local_var_no_etd_1',
+              'endOfRange' => 10_000
+            }
+          ]
+        }
+      ]
+    }
+  ).freeze
+
+  CONFIG_BODY_WITH_HOLDOUTS_EXCLUDE_TARGETED_JSON = JSON.dump(CONFIG_BODY_WITH_HOLDOUTS_EXCLUDE_TARGETED).freeze
+
   def self.deep_clone(obj)
     obj.dup.tap do |new_obj|
       case new_obj

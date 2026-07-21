@@ -349,6 +349,9 @@ module Optimizely
                 },
                 'includedRules' => {
                   'type' => %w[array null]
+                },
+                'exclude_targeted_deliveries' => {
+                  'type' => 'boolean'
                 }
               }
             }
@@ -369,6 +372,9 @@ module Optimizely
                 },
                 'includedRules' => {
                   'type' => %w[array null]
+                },
+                'exclude_targeted_deliveries' => {
+                  'type' => 'boolean'
                 }
               }
             }

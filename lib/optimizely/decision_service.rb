@@ -198,27 +198,35 @@ module Optimizely
 
       # Check global holdouts first (flag level) — these apply to all rules across all flags
       holdouts = project_config.global_holdouts
+      global_holdout_decision = nil
 
       holdouts.each do |holdout|
-        holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
-        reasons.push(*holdout_decision.reasons)
+        holdout_result = get_variation_for_holdout(holdout, user_context, project_config)
+        reasons.push(*holdout_result.reasons)
 
-        next unless holdout_decision.decision
+        next unless holdout_result.decision
 
         message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         reasons.push(message)
-        return DecisionResult.new(holdout_decision.decision, false, reasons)
+
+        if holdout['exclude_targeted_deliveries']
+          global_holdout_decision = holdout_result.decision
+        else
+          return DecisionResult.new(holdout_result.decision, false, reasons)
+        end
       end
 
-      # Check if the feature flag has an experiment and the user is bucketed into that experiment
-      experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
-      reasons.push(*experiment_decision.reasons)
+      unless global_holdout_decision
+        # Check if the feature flag has an experiment and the user is bucketed into that experiment
+        experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+        reasons.push(*experiment_decision.reasons)
 
-      return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
+        return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
 
-      # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
-      return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
+        # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
+        return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
+      end
 
       # Check if the feature flag has a rollout and the user is bucketed into that rollout
       rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context)
@@ -237,6 +245,10 @@ module Optimizely
 
         DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons)
       else
+        if global_holdout_decision
+          return DecisionResult.new(global_holdout_decision, false, reasons)
+        end
+
         message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
         DecisionResult.new(nil, false, reasons)
@@ -493,6 +505,8 @@ module Optimizely
       # Step 2: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
       local_holdouts.each do |holdout|
+        next if holdout['exclude_targeted_deliveries']
+
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
         return [holdout_decision.decision, nil, skip_to_everyone_else, reasons] if holdout_decision.decision
