@@ -239,6 +239,7 @@ module Optimizely
           user_id,
           attributes
         )
+        decision_event_dispatched = true
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables

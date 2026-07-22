@@ -745,6 +745,7 @@ describe Optimizely::DecisionService do
         expect(notification).to have_key(:variables), 'Notification should contain variables'
         expect(notification).to have_key(:reasons), 'Notification should contain reasons'
         expect(notification).to have_key(:decision_event_dispatched), 'Notification should contain decision_event_dispatched'
+        expect(notification[:decision_event_dispatched]).to eq(true), 'decision_event_dispatched should be true when holdout impression is sent'
       end
     end
   end
@@ -1134,6 +1135,7 @@ describe Optimizely::DecisionService do
         # TD rule should NOT get holdout decision; should proceed to regular evaluation
         expect(result.holdout_decision).to be_nil
         expect(result.variation_id).to eq('122228')
+        expect(result.reasons).to include(a_string_matching(/Holdout 'global_holdout' has excludeTargetedDeliveries enabled, continuing to rollout evaluation/))
       end
 
       it 'applies holdout to non-TD (AB) rules even when excludeTargetedDeliveries is true' do
