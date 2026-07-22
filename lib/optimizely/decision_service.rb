@@ -437,14 +437,12 @@ module Optimizely
 
       # Step 2: Global holdout check (when excludeTargetedDeliveries is true, TD rules skip the holdout)
       if global_holdout_decision
-        if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-          return VariationResult.new(nil, false, reasons, nil, global_holdout_decision)
-        else
-          holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
-          message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
-          @logger.log(Logger::INFO, message)
-          reasons.push(message)
-        end
+        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision) if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
+
+        holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
+        message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
+        @logger.log(Logger::INFO, message)
+        reasons.push(message)
       end
 
       # Step 3: Local holdout check
@@ -477,14 +475,12 @@ module Optimizely
 
       # Step 2: Global holdout check
       if global_holdout_decision
-        if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-          return [global_holdout_decision, nil, skip_to_everyone_else, reasons]
-        else
-          holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
-          message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
-          @logger.log(Logger::INFO, message)
-          reasons.push(message)
-        end
+        return [global_holdout_decision, nil, skip_to_everyone_else, reasons] if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
+
+        holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
+        message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
+        @logger.log(Logger::INFO, message)
+        reasons.push(message)
       end
 
       # Step 3: Local holdout check
