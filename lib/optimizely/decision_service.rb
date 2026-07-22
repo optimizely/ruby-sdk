@@ -41,7 +41,7 @@ module Optimizely
     Decision = Struct.new(:experiment, :variation, :source, :cmab_uuid)
     CmabDecisionResult = Struct.new(:error, :result, :reasons)
     VariationResult = Struct.new(:cmab_uuid, :error, :reasons, :variation_id, :holdout_decision)
-    DecisionResult = Struct.new(:decision, :error, :reasons)
+    DecisionResult = Struct.new(:decision, :error, :reasons, :holdout_decision)
 
     DECISION_SOURCES = {
       'EXPERIMENT' => 'experiment',
@@ -223,10 +223,10 @@ module Optimizely
       experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options, exclude_td_holdout_decision)
       reasons.push(*experiment_decision.reasons)
 
-      return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
+      return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons, exclude_td_holdout_decision) if experiment_decision.decision
 
       # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
-      return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
+      return DecisionResult.new(nil, experiment_decision.error, reasons, exclude_td_holdout_decision) if experiment_decision.error
 
       # Check if the feature flag has a rollout and the user is bucketed into that rollout
       rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context, exclude_td_holdout_decision)
@@ -243,13 +243,11 @@ module Optimizely
           reasons.push(message)
         end
 
-        DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons)
+        DecisionResult.new(rollout_decision.decision, rollout_decision.error, reasons, exclude_td_holdout_decision)
       else
-        return DecisionResult.new(exclude_td_holdout_decision, false, reasons) if exclude_td_holdout_decision
-
         message = "The user '#{user_id}' is not bucketed into a rollout for feature flag '#{feature_flag['key']}'."
         @logger.log(Logger::INFO, message)
-        DecisionResult.new(nil, false, reasons)
+        DecisionResult.new(nil, false, reasons, exclude_td_holdout_decision)
       end
     end
 
@@ -443,8 +441,6 @@ module Optimizely
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
       local_holdouts.each do |holdout|
-        next if holdout['excludeTargetedDeliveries'] == true && rule['type'] == Helpers::Constants::EXPERIMENT_TYPES['td']
-
         holdout_decision = get_variation_for_holdout(holdout, user, project_config)
         reasons.push(*holdout_decision.reasons)
         next unless holdout_decision.decision
@@ -476,8 +472,6 @@ module Optimizely
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
       local_holdouts.each do |holdout|
-        next if holdout['excludeTargetedDeliveries'] == true && rule['type'] == Helpers::Constants::EXPERIMENT_TYPES['td']
-
         holdout_decision = get_variation_for_holdout(holdout, user_context, project_config)
         reasons.push(*holdout_decision.reasons)
         return [holdout_decision.decision, nil, skip_to_everyone_else, reasons] if holdout_decision.decision

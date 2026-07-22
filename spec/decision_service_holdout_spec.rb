@@ -1207,7 +1207,7 @@ describe Optimizely::DecisionService do
     end
 
     describe 'local holdout with excludeTargetedDeliveries' do
-      it 'skips local holdout for TD rules when excludeTargetedDeliveries is true' do
+      it 'local holdout still applies to TD rules even when excludeTargetedDeliveries is true' do
         local_holdout = config_with_holdouts.get_holdout('holdout_local_1')
         local_holdout['excludeTargetedDeliveries'] = true
 
@@ -1222,10 +1222,21 @@ describe Optimizely::DecisionService do
             .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
         end
 
-        # Mock get_variation to simulate rule match
-        allow(ds).to receive(:get_variation).and_return(
-          Optimizely::DecisionService::VariationResult.new(nil, false, ['Bucketed into TD rule'], '122228')
-        )
+        # Local holdout fires
+        allow(ds).to receive(:get_variation_for_holdout)
+          .with(local_holdout, anything, anything)
+          .and_return(
+            Optimizely::DecisionService::DecisionResult.new(
+              Optimizely::DecisionService::Decision.new(
+                local_holdout,
+                local_holdout['variations'].first,
+                Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+                nil
+              ),
+              false,
+              ['User in local holdout']
+            )
+          )
 
         user_ctx = project_with_holdouts.create_user_context('test_user', {})
         user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
@@ -1238,9 +1249,10 @@ describe Optimizely::DecisionService do
           user_profile_tracker
         )
 
-        # Local holdout should be skipped for TD rule; regular evaluation proceeds
-        expect(result.variation_id).to eq('122228')
-        expect(result.holdout_decision).to be_nil
+        # Local holdout MUST still apply — excludeTargetedDeliveries is ignored for local holdouts
+        expect(result.holdout_decision).not_to be_nil
+        expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
+        expect(result.variation_id).to eq(local_holdout['variations'].first['id'])
       end
 
       it 'applies local holdout for AB rules even when excludeTargetedDeliveries is true' do
@@ -1333,6 +1345,105 @@ describe Optimizely::DecisionService do
         )
 
         # Holdout applies to TD rule because excludeTargetedDeliveries is false
+        expect(result.holdout_decision).not_to be_nil
+        expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
+      end
+    end
+
+    describe 'global holdout excludeTargetedDeliveries integration with get_decision_for_flag' do
+      it 'returns TD decision with holdout_decision attached when excludeTargetedDeliveries=true and TD succeeds' do
+        global_holdout = config_with_holdouts.get_holdout('holdout_1')
+        global_holdout['excludeTargetedDeliveries'] = true
+
+        holdout_variation = global_holdout['variations'].first
+        holdout_dec = Optimizely::DecisionService::Decision.new(
+          global_holdout,
+          holdout_variation,
+          Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+          nil
+        )
+
+        # Global holdout hits
+        allow(ds).to receive(:get_variation_for_holdout)
+          .with(global_holdout, anything, anything)
+          .and_return(Optimizely::DecisionService::DecisionResult.new(holdout_dec, false, ['User in holdout']))
+
+        # Other global holdouts miss
+        config_with_holdouts.global_holdouts.reject { |h| h['id'] == 'holdout_1' }.each do |h|
+          allow(ds).to receive(:get_variation_for_holdout)
+            .with(h, anything, anything)
+            .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
+        end
+
+        # Set experiment 122227 as TD and mock a successful TD match
+        experiment = config_with_holdouts.experiment_id_map['122227']
+        experiment['type'] = 'td'
+
+        td_decision = Optimizely::DecisionService::Decision.new(
+          experiment,
+          experiment['variations'].first,
+          Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'],
+          nil
+        )
+
+        allow(ds).to receive(:get_variation_for_feature_experiment).and_return(
+          Optimizely::DecisionService::DecisionResult.new(td_decision, false, ['TD matched'])
+        )
+
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
+        user_ctx = project_with_holdouts.create_user_context('test_user', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config_with_holdouts)
+
+        # TD decision is returned as the primary decision
+        expect(result.decision).not_to be_nil
+        expect(result.decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'])
+
+        # holdout_decision is attached separately for impression event
+        expect(result.holdout_decision).not_to be_nil
+        expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
+      end
+
+      it 'returns nil decision with holdout_decision attached when excludeTargetedDeliveries=true and TD returns nil' do
+        global_holdout = config_with_holdouts.get_holdout('holdout_1')
+        global_holdout['excludeTargetedDeliveries'] = true
+
+        holdout_variation = global_holdout['variations'].first
+        holdout_dec = Optimizely::DecisionService::Decision.new(
+          global_holdout,
+          holdout_variation,
+          Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+          nil
+        )
+
+        # Global holdout hits
+        allow(ds).to receive(:get_variation_for_holdout)
+          .with(global_holdout, anything, anything)
+          .and_return(Optimizely::DecisionService::DecisionResult.new(holdout_dec, false, ['User in holdout']))
+
+        config_with_holdouts.global_holdouts.reject { |h| h['id'] == 'holdout_1' }.each do |h|
+          allow(ds).to receive(:get_variation_for_holdout)
+            .with(h, anything, anything)
+            .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
+        end
+
+        # Experiment and rollout both return nil
+        allow(ds).to receive(:get_variation_for_feature_experiment).and_return(
+          Optimizely::DecisionService::DecisionResult.new(nil, false, ['No experiment match'])
+        )
+        allow(ds).to receive(:get_variation_for_feature_rollout).and_return(
+          Optimizely::DecisionService::DecisionResult.new(nil, false, ['No rollout match'])
+        )
+
+        feature_flag = config_with_holdouts.feature_flag_key_map['boolean_feature']
+        user_ctx = project_with_holdouts.create_user_context('test_user', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config_with_holdouts)
+
+        # Decision is nil — does NOT fall back to holdout as the primary decision
+        expect(result.decision).to be_nil
+
+        # But holdout_decision is still attached for impression event
         expect(result.holdout_decision).not_to be_nil
         expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
