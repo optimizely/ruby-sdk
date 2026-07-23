@@ -206,7 +206,7 @@ module Optimizely
 
         next unless holdout_decision.decision
 
-        if holdout['excludeTargetedDeliveries'] == true
+        if holdout['exclude_targeted_deliveries'] == true
           message = "The user '#{user_id}' is bucketed into holdout '#{holdout['key']}' for feature flag '#{feature_flag['key']}', but targeted deliveries are excluded."
           @logger.log(Logger::INFO, message)
           reasons.push(message)

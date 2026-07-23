@@ -1035,7 +1035,7 @@ describe Optimizely::DecisionService do
     end
   end
 
-  describe 'excludeTargetedDeliveries holdout behavior' do
+  describe 'exclude_targeted_deliveries holdout behavior' do
     let(:config_with_holdouts) do
       Optimizely::DatafileProjectConfig.new(
         OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS_JSON,
@@ -1058,10 +1058,10 @@ describe Optimizely::DecisionService do
 
     after(:example) { project_with_holdouts&.close }
 
-    describe 'global holdout with excludeTargetedDeliveries' do
-      it 'applies holdout normally when excludeTargetedDeliveries is false' do
+    describe 'global holdout with exclude_targeted_deliveries' do
+      it 'applies holdout normally when exclude_targeted_deliveries is false' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
-        global_holdout['excludeTargetedDeliveries'] = false
+        global_holdout['exclude_targeted_deliveries'] = false
 
         allow(ds).to receive(:get_variation_for_holdout)
           .with(global_holdout, anything, anything)
@@ -1094,7 +1094,7 @@ describe Optimizely::DecisionService do
         expect(result.decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
 
-      it 'stores holdout decision but lets TD rules bypass when excludeTargetedDeliveries is true' do
+      it 'stores holdout decision but lets TD rules bypass when exclude_targeted_deliveries is true' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
 
         holdout_decision = Optimizely::DecisionService::Decision.new(
@@ -1138,9 +1138,9 @@ describe Optimizely::DecisionService do
         expect(result.reasons).to include(a_string_matching(/Holdout 'global_holdout' has excludeTargetedDeliveries enabled, continuing to rollout evaluation/))
       end
 
-      it 'applies holdout to non-TD (AB) rules even when excludeTargetedDeliveries is true' do
+      it 'applies holdout to non-TD (AB) rules even when exclude_targeted_deliveries is true' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
-        global_holdout['excludeTargetedDeliveries'] = true
+        global_holdout['exclude_targeted_deliveries'] = true
 
         holdout_decision = Optimizely::DecisionService::Decision.new(
           global_holdout,
@@ -1171,10 +1171,10 @@ describe Optimizely::DecisionService do
       end
     end
 
-    describe 'global holdout with missing excludeTargetedDeliveries (backward compat)' do
+    describe 'global holdout with missing exclude_targeted_deliveries (backward compat)' do
       it 'defaults to applying holdout normally when field is absent' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
-        global_holdout.delete('excludeTargetedDeliveries')
+        global_holdout.delete('exclude_targeted_deliveries')
 
         allow(ds).to receive(:get_variation_for_holdout)
           .with(global_holdout, anything, anything)
@@ -1208,10 +1208,10 @@ describe Optimizely::DecisionService do
       end
     end
 
-    describe 'local holdout with excludeTargetedDeliveries' do
-      it 'local holdout still applies to TD rules even when excludeTargetedDeliveries is true' do
+    describe 'local holdout with exclude_targeted_deliveries' do
+      it 'local holdout still applies to TD rules even when exclude_targeted_deliveries is true' do
         local_holdout = config_with_holdouts.get_holdout('holdout_local_1')
-        local_holdout['excludeTargetedDeliveries'] = true
+        local_holdout['exclude_targeted_deliveries'] = true
 
         # Set experiment 122227 as TD type
         experiment = config_with_holdouts.experiment_id_map['122227']
@@ -1251,15 +1251,15 @@ describe Optimizely::DecisionService do
           user_profile_tracker
         )
 
-        # Local holdout MUST still apply — excludeTargetedDeliveries is ignored for local holdouts
+        # Local holdout MUST still apply — exclude_targeted_deliveries is ignored for local holdouts
         expect(result.holdout_decision).not_to be_nil
         expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
         expect(result.variation_id).to eq(local_holdout['variations'].first['id'])
       end
 
-      it 'applies local holdout for AB rules even when excludeTargetedDeliveries is true' do
+      it 'applies local holdout for AB rules even when exclude_targeted_deliveries is true' do
         local_holdout = config_with_holdouts.get_holdout('holdout_local_1')
-        local_holdout['excludeTargetedDeliveries'] = true
+        local_holdout['exclude_targeted_deliveries'] = true
 
         # Experiment 122227 as AB type
         experiment = config_with_holdouts.experiment_id_map['122227']
@@ -1304,9 +1304,9 @@ describe Optimizely::DecisionService do
         expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
 
-      it 'applies local holdout normally when excludeTargetedDeliveries is false' do
+      it 'applies local holdout normally when exclude_targeted_deliveries is false' do
         local_holdout = config_with_holdouts.get_holdout('holdout_local_1')
-        local_holdout['excludeTargetedDeliveries'] = false
+        local_holdout['exclude_targeted_deliveries'] = false
 
         # Set experiment 122227 as TD type
         experiment = config_with_holdouts.experiment_id_map['122227']
@@ -1319,7 +1319,7 @@ describe Optimizely::DecisionService do
             .and_return(Optimizely::DecisionService::DecisionResult.new(nil, false, []))
         end
 
-        # Local holdout fires even for TD rule because excludeTargetedDeliveries is false
+        # Local holdout fires even for TD rule because exclude_targeted_deliveries is false
         allow(ds).to receive(:get_variation_for_holdout)
           .with(local_holdout, anything, anything)
           .and_return(
@@ -1346,16 +1346,16 @@ describe Optimizely::DecisionService do
           user_profile_tracker
         )
 
-        # Holdout applies to TD rule because excludeTargetedDeliveries is false
+        # Holdout applies to TD rule because exclude_targeted_deliveries is false
         expect(result.holdout_decision).not_to be_nil
         expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
     end
 
-    describe 'global holdout excludeTargetedDeliveries integration with get_decision_for_flag' do
-      it 'returns TD decision with holdout_decision attached when excludeTargetedDeliveries=true and TD succeeds' do
+    describe 'global holdout exclude_targeted_deliveries integration with get_decision_for_flag' do
+      it 'returns TD decision with holdout_decision attached when exclude_targeted_deliveries=true and TD succeeds' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
-        global_holdout['excludeTargetedDeliveries'] = true
+        global_holdout['exclude_targeted_deliveries'] = true
 
         holdout_variation = global_holdout['variations'].first
         holdout_dec = Optimizely::DecisionService::Decision.new(
@@ -1406,9 +1406,9 @@ describe Optimizely::DecisionService do
         expect(result.holdout_decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
 
-      it 'returns nil decision with holdout_decision attached when excludeTargetedDeliveries=true and TD returns nil' do
+      it 'returns nil decision with holdout_decision attached when exclude_targeted_deliveries=true and TD returns nil' do
         global_holdout = config_with_holdouts.get_holdout('holdout_1')
-        global_holdout['excludeTargetedDeliveries'] = true
+        global_holdout['exclude_targeted_deliveries'] = true
 
         holdout_variation = global_holdout['variations'].first
         holdout_dec = Optimizely::DecisionService::Decision.new(
@@ -1451,10 +1451,10 @@ describe Optimizely::DecisionService do
       end
     end
 
-    describe 'forced decision beats holdout with excludeTargetedDeliveries' do
-      it 'returns forced decision even when excludeTargetedDeliveries is true and holdout covers the rule' do
+    describe 'forced decision beats holdout with exclude_targeted_deliveries' do
+      it 'returns forced decision even when exclude_targeted_deliveries is true and holdout covers the rule' do
         local_holdout = config_with_holdouts.get_holdout('holdout_local_1')
-        local_holdout['excludeTargetedDeliveries'] = true
+        local_holdout['exclude_targeted_deliveries'] = true
         expect(local_holdout['trafficAllocation'].first['endOfRange']).to eq(10_000)
 
         experiment = config_with_holdouts.experiment_id_map['122227']
