@@ -334,6 +334,17 @@ module Optimizely
     end
 
     def get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options = [], global_holdout_decision = nil)
+      # Gets the variation the user is bucketed into for the feature flag's experiment.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # feature_flag - The feature flag the user wants to access
+      # user_context - Optimizely user context instance
+      # user_profile_tracker - Tracker for reading and updating user profile of the user
+      # decide_options - Array of decide options
+      # global_holdout_decision - Decision from global holdout when excludeTargetedDeliveries is true (nil otherwise)
+      #
+      # Returns a DecisionResult containing the decision (or nil if not bucketed),
+      # an error flag, and an array of decision reasons.
       decide_reasons = []
       user_id = user_context.user_id
       feature_flag_key = feature_flag['key']
@@ -385,6 +396,16 @@ module Optimizely
     end
 
     def get_variation_for_feature_rollout(project_config, feature_flag, user_context, global_holdout_decision = nil)
+      # Determine which variation the user is in for a given rollout.
+      # Returns the variation of the first experiment the user qualifies for.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # feature_flag - The feature flag the user wants to access
+      # user_context - Optimizely user context instance
+      # global_holdout_decision - Decision from global holdout when excludeTargetedDeliveries is true (nil otherwise)
+      #
+      # Returns a DecisionResult containing the decision (or nil if not bucketed),
+      # an error flag, and an array of decision reasons.
       decide_reasons = []
 
       rollout_id = feature_flag['rolloutId']
@@ -427,6 +448,18 @@ module Optimizely
     end
 
     def get_variation_from_experiment_rule(project_config, flag_key, rule, user, user_profile_tracker, options = [], global_holdout_decision = nil)
+      # Determine which variation the user is in for a given experiment rule.
+      # Returns the variation from experiment rules.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # flag_key - The feature flag the user wants to access
+      # rule - An experiment rule key
+      # user - Optimizely user context instance
+      # user_profile_tracker - Tracker for reading and updating user profile of the user
+      # options - Array of decide options
+      # global_holdout_decision - Decision from global holdout when excludeTargetedDeliveries is true (nil otherwise)
+      #
+      # Returns variation_id and reasons
       reasons = []
 
       # Step 1: Forced decision check
@@ -463,6 +496,17 @@ module Optimizely
     end
 
     def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context, global_holdout_decision = nil)
+      # Determine which variation the user is in for a given delivery rule.
+      # Returns the variation from delivery rules.
+      #
+      # project_config - project_config - Instance of ProjectConfig
+      # flag_key - The feature flag key
+      # rules - Array of delivery rules
+      # rule_index - Index of the current rule
+      # user_context - Optimizely user context instance
+      # global_holdout_decision - Decision from global holdout when excludeTargetedDeliveries is true (nil otherwise)
+      #
+      # Returns variation_id, reasons, and skip_to_everyone_else flag
       reasons = []
       skip_to_everyone_else = false
       rule = rules[rule_index]
