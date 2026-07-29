@@ -472,9 +472,7 @@ module Optimizely
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
       # Step 2: Global holdout check (when excludeTargetedDeliveries is true, all experiment rules are blocked)
-      if global_holdout_decision
-        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision)
-      end
+      return VariationResult.new(nil, false, reasons, nil, global_holdout_decision) if global_holdout_decision
 
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
@@ -493,7 +491,7 @@ module Optimizely
       variation_result
     end
 
-    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context, global_holdout_decision = nil)
+    def get_variation_from_delivery_rule(project_config, flag_key, rules, rule_index, user_context, _global_holdout_decision = nil)
       # Determine which variation the user is in for a given delivery rule.
       # Returns the variation from delivery rules.
       #
