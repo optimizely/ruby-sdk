@@ -219,14 +219,17 @@ module Optimizely
         end
       end
 
-      # Check if the feature flag has an experiment and the user is bucketed into that experiment
-      experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options, exclude_td_holdout_decision)
-      reasons.push(*experiment_decision.reasons)
+      # When excludeTargetedDeliveries is active, skip experiment evaluation entirely
+      # and go straight to rollout
+      unless exclude_td_holdout_decision
+        experiment_decision = get_variation_for_feature_experiment(project_config, feature_flag, user_context, user_profile_tracker, decide_options)
+        reasons.push(*experiment_decision.reasons)
 
-      return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons, exclude_td_holdout_decision) if experiment_decision.decision
+        return DecisionResult.new(experiment_decision.decision, experiment_decision.error, reasons) if experiment_decision.decision
 
-      # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
-      return DecisionResult.new(nil, experiment_decision.error, reasons, exclude_td_holdout_decision) if experiment_decision.error
+        # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
+        return DecisionResult.new(nil, experiment_decision.error, reasons) if experiment_decision.error
+      end
 
       # Check if the feature flag has a rollout and the user is bucketed into that rollout
       rollout_decision = get_variation_for_feature_rollout(project_config, feature_flag, user_context, exclude_td_holdout_decision)
@@ -468,14 +471,9 @@ module Optimizely
       reasons.push(*forced_reasons)
       return VariationResult.new(nil, false, reasons, variation['id']) if variation
 
-      # Step 2: Global holdout check (when excludeTargetedDeliveries is true, TD rules skip the holdout)
+      # Step 2: Global holdout check (when excludeTargetedDeliveries is true, all experiment rules are blocked)
       if global_holdout_decision
-        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision) if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-
-        holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
-        message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
-        @logger.log(Logger::INFO, message)
-        reasons.push(message)
+        return VariationResult.new(nil, false, reasons, nil, global_holdout_decision)
       end
 
       # Step 3: Local holdout check
@@ -517,15 +515,8 @@ module Optimizely
       reasons.push(*forced_reasons)
       return [nil, variation, skip_to_everyone_else, reasons] if variation
 
-      # Step 2: Global holdout check
-      if global_holdout_decision
-        return [global_holdout_decision, nil, skip_to_everyone_else, reasons] if rule['type'] != Helpers::Constants::EXPERIMENT_TYPES['td']
-
-        holdout_key = global_holdout_decision.experiment ? global_holdout_decision.experiment['key'] : 'unknown'
-        message = "Holdout '#{holdout_key}' has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
-        @logger.log(Logger::INFO, message)
-        reasons.push(message)
-      end
+      # Step 2: Global holdout check (when excludeTargetedDeliveries is true, all rollout rules evaluate normally)
+      # No blocking here — ETD bypasses holdout for the entire rollout evaluation
 
       # Step 3: Local holdout check
       local_holdouts = project_config.get_holdouts_for_rule(rule['id'])
