@@ -206,7 +206,7 @@ module Optimizely
 
         next unless holdout_decision.decision
 
-        if holdout['exclude_targeted_deliveries'] == true
+        if holdout['excludeTargetedDeliveries'] == true
           message = "Holdout \"#{holdout['key']}\" has excludeTargetedDeliveries enabled, continuing to rollout evaluation."
           @logger.log(Logger::INFO, message)
           reasons.push(message)

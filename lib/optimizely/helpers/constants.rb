@@ -350,7 +350,7 @@ module Optimizely
                 'includedRules' => {
                   'type' => %w[array null]
                 },
-                'exclude_targeted_deliveries' => {
+                'excludeTargetedDeliveries' => {
                   'type' => 'boolean'
                 }
               }
@@ -373,7 +373,7 @@ module Optimizely
                 'includedRules' => {
                   'type' => %w[array null]
                 },
-                'exclude_targeted_deliveries' => {
+                'excludeTargetedDeliveries' => {
                   'type' => 'boolean'
                 }
               }
