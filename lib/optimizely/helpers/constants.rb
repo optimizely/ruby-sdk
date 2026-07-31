@@ -372,9 +372,6 @@ module Optimizely
                 },
                 'includedRules' => {
                   'type' => %w[array null]
-                },
-                'excludeTargetedDeliveries' => {
-                  'type' => 'boolean'
                 }
               }
             }

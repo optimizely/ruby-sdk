@@ -1094,35 +1094,6 @@ describe Optimizely::DecisionService do
         expect(result.decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
 
-      it 'blocks all experiment rules when global_holdout_decision is set (regardless of type)' do
-        global_holdout = config_with_holdouts.get_holdout('holdout_1')
-
-        holdout_decision = Optimizely::DecisionService::Decision.new(
-          global_holdout,
-          global_holdout['variations'].first,
-          Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
-          nil
-        )
-
-        experiment = config_with_holdouts.experiment_id_map['122227']
-
-        user_ctx = project_with_holdouts.create_user_context('test_user', {})
-        user_profile_tracker = Optimizely::UserProfileTracker.new('test_user', nil, spy_logger)
-
-        result = ds.get_variation_from_experiment_rule(
-          config_with_holdouts,
-          'boolean_feature',
-          experiment,
-          user_ctx,
-          user_profile_tracker,
-          [],
-          holdout_decision
-        )
-
-        # All experiment rules should be blocked — holdout decision returned
-        expect(result.holdout_decision).to eq(holdout_decision)
-        expect(result.variation_id).to be_nil
-      end
     end
 
     describe 'global holdout with missing excludeTargetedDeliveries (backward compat)' do
