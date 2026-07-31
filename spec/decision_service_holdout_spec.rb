@@ -1093,7 +1093,6 @@ describe Optimizely::DecisionService do
         expect(result.decision).not_to be_nil
         expect(result.decision.source).to eq(Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'])
       end
-
     end
 
     describe 'global holdout with missing excludeTargetedDeliveries (backward compat)' do
