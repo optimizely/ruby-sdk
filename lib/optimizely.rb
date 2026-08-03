@@ -193,7 +193,7 @@ module Optimizely
       OptimizelyUserContext.new(self, user_id, attributes)
     end
 
-    def create_optimizely_decision(user_context, flag_key, decision, reasons, decide_options, config)
+    def create_optimizely_decision(user_context, flag_key, decision, reasons, decide_options, config, holdout_decision = nil)
       # Create Optimizely Decision Result.
       user_id = user_context.user_id
       attributes = user_context.user_attributes
@@ -222,6 +222,23 @@ module Optimizely
 
       if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && (decision_source == Optimizely::DecisionService::DECISION_SOURCES['FEATURE_TEST'] || decision_source == Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] || config.send_flag_decisions)
         send_impression(config, experiment, variation_key || '', flag_key, rule_key || '', feature_enabled, decision_source, user_id, attributes, decision&.cmab_uuid)
+        decision_event_dispatched = true
+      end
+
+      if holdout_decision && !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && decision_source != Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
+        holdout_experiment = holdout_decision.experiment
+        holdout_variation = holdout_decision.variation
+        send_impression(
+          config,
+          holdout_experiment,
+          holdout_variation ? holdout_variation['key'] : '',
+          flag_key,
+          holdout_experiment ? holdout_experiment['key'] : '',
+          holdout_variation ? holdout_variation['featureEnabled'] : false,
+          Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+          user_id,
+          attributes
+        )
         decision_event_dispatched = true
       end
 
@@ -377,6 +394,7 @@ module Optimizely
       end
       decision_list = @decision_service.get_variations_for_feature_list(config, flags_without_forced_decision, user_context, decide_options)
 
+      holdout_decisions = {}
       flags_without_forced_decision.each_with_index do |flag, i|
         decision = decision_list[i].decision
         reasons = decision_list[i].reasons
@@ -390,6 +408,8 @@ module Optimizely
           next
         end
         flag_decisions[flag_key] = decision
+        holdout_decision = decision_list[i].holdout_decision
+        holdout_decisions[flag_key] = holdout_decision if holdout_decision
         decision_reasons_dict[flag_key] ||= []
         decision_reasons_dict[flag_key].push(*reasons)
       end
@@ -402,7 +422,8 @@ module Optimizely
           flag_decision,
           decision_reasons,
           decide_options,
-          config
+          config,
+          holdout_decisions[key]
         )
 
         enabled_flags_only_missing = !decide_options.include?(OptimizelyDecideOption::ENABLED_FLAGS_ONLY)
