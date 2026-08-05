@@ -18,6 +18,7 @@
 require_relative 'odp_event_api_manager'
 require_relative '../helpers/constants'
 require_relative 'odp_event'
+require_relative '../fork_tracker'
 
 module Optimizely
   class OdpEventManager
@@ -68,6 +69,7 @@ module Optimizely
       @api_key = odp_config.api_key
 
       @thread = Thread.new { run }
+      ForkTracker.after_fork { @thread = Thread.new { run } }
       @logger.log(Logger::INFO, 'Starting scheduler.')
     end
 

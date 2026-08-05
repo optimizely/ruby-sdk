@@ -15,6 +15,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+require_relative '../fork_tracker'
+
 module Optimizely
   class AsyncScheduler
     attr_reader :running
@@ -48,16 +50,8 @@ module Optimizely
         return
       end
 
-      begin
-        @running = true
-        @thread = Thread.new { execution_wrapper(@callback) }
-      rescue StandardError => e
-        @logger.log(
-          Logger::ERROR,
-          "Couldn't create a new thread for async scheduler. #{e.message}"
-        )
-        @error_handler.handle_error(e)
-      end
+      force_start!
+      ForkTracker.after_fork { force_start! }
     end
 
     def stop!
@@ -71,6 +65,17 @@ module Optimizely
     end
 
     private
+
+    def force_start!
+      @running = true
+      @thread = Thread.new { execution_wrapper(@callback) }
+    rescue StandardError => e
+      @logger.log(
+        Logger::ERROR,
+        "Couldn't create a new thread for async scheduler. #{e.message}"
+      )
+      @error_handler.handle_error(e)
+    end
 
     def execution_wrapper(callback)
       # Executes the given callback periodically
