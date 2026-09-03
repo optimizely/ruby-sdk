@@ -15,8 +15,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-require 'coveralls'
-Coveralls.wear!
+if ENV['COVERALLS_REPO_TOKEN']
+  require 'coveralls'
+  Coveralls.wear!
+end
 $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'optimizely'
 require 'spec_params'
