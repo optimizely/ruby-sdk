@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2020, 2023, Optimizely and contributors
+#    Copyright 2017-2020, 2023, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -479,6 +479,8 @@ describe Optimizely::DecisionService do
           expected_decision_result = Optimizely::DecisionService::DecisionResult.new(
             expected_decision,
             false,
+            [],
+            nil,
             []
           )
           user_profile_tracker = Optimizely::UserProfileTracker.new(user_context.user_id)

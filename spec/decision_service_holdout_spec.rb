@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2017-2020, 2023, Optimizely and contributors
+#    Copyright 2017-2020, 2023, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -1384,6 +1384,163 @@ describe Optimizely::DecisionService do
         expect(result.variation_id).to eq('122228')
         expect(result.holdout_decision).to be_nil
       end
+    end
+  end
+
+  describe 'local holdout hit continues rule evaluation' do
+    let(:spy_event_processor) { spy('event_processor') }
+    let(:holdout_source) { Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'] }
+    let(:chrome_user) { {'browser_type' => 'chrome'} }
+
+    def local_holdout(id, rule_ids)
+      {
+        'id' => id,
+        'key' => id,
+        'status' => 'Running',
+        'audiences' => [],
+        'includedRules' => rule_ids,
+        'variations' => [{'id' => "#{id}_var", 'key' => 'holdout', 'featureEnabled' => false}],
+        'trafficAllocation' => [{'entityId' => "#{id}_var", 'endOfRange' => 10_000}]
+      }
+    end
+
+    # Global holdouts in the shared fixture bucket every user, so they are removed here.
+    def datafile(local_holdouts: nil, send_flag_decisions: true)
+      body = OptimizelySpec.deep_clone(OptimizelySpec::CONFIG_BODY_WITH_HOLDOUTS)
+      body['holdouts'] = []
+      body['localHoldouts'] = local_holdouts if local_holdouts
+      body['sendFlagDecisions'] = send_flag_decisions
+      body
+    end
+
+    def build_project(body, user_profile_service: nil)
+      project = Optimizely::Project.new(
+        datafile: JSON.dump(body),
+        logger: spy_logger,
+        error_handler: error_handler,
+        event_processor: spy_event_processor,
+        user_profile_service: user_profile_service
+      )
+      allow(project).to receive(:send_impression).and_wrap_original do |original, *args|
+        @impressions << args
+        original.call(*args)
+      end
+      @projects << project
+      project
+    end
+
+    def holdout_impressions
+      @impressions.select { |args| args[6] == holdout_source }.map { |args| args[1]['id'] }
+    end
+
+    before do
+      @projects = []
+      @impressions = []
+    end
+    after { @projects.each(&:close) }
+
+    it 'serves a later delivery rule after a holdout hit without jumping to Everyone Else' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_a', ['177770'])]))
+      decision = project.create_user_context('user', chrome_user).decide('boolean_single_variable_feature')
+
+      expect(decision.rule_key).to eq('177772')
+      expect(decision.variation_key).to eq('177773')
+      expect(holdout_impressions).to eq(['lh_a'])
+    end
+
+    it 'sends one holdout event per held-out rule' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_a', ['177770']), local_holdout('lh_b', ['177772'])]))
+      decision = project.create_user_context('user', chrome_user).decide('boolean_single_variable_feature')
+
+      expect(decision.rule_key).to eq('177776')
+      expect(holdout_impressions).to eq(%w[lh_a lh_b])
+      expect(project).to have_received(:send_impression)
+        .with(anything, anything, '177778', 'boolean_single_variable_feature', '177776', true, 'rollout', 'user', anything, anything)
+    end
+
+    it 'sends holdout events when no rule serves' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_all', %w[177770 177772 177776])]))
+      decision = project.create_user_context('user', chrome_user).decide('boolean_single_variable_feature')
+
+      expect(decision.variation_key).to be_nil
+      expect(decision.enabled).to be false
+      expect(holdout_impressions).to eq(%w[lh_all lh_all lh_all])
+    end
+
+    it 'sends two holdout events when one local holdout targets two hit rules' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_two', %w[177770 177772])]))
+      decision = project.create_user_context('user', chrome_user).decide('boolean_single_variable_feature')
+
+      expect(decision.rule_key).to eq('177776')
+      expect(holdout_impressions).to eq(%w[lh_two lh_two])
+    end
+
+    it 'sends the holdout event for a delivery rule even when sendFlagDecisions is off' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_a', ['177770'])], send_flag_decisions: false))
+      decision = project.create_user_context('user', chrome_user).decide('boolean_single_variable_feature')
+
+      expect(decision.rule_key).to eq('177772')
+      expect(@impressions.length).to eq(1)
+      expect(holdout_impressions).to eq(['lh_a'])
+    end
+
+    it 'suppresses local holdout events with DISABLE_DECISION_EVENT' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_a', ['177770']), local_holdout('lh_b', ['177772'])]))
+      decision = project.create_user_context('user', chrome_user).decide(
+        'boolean_single_variable_feature',
+        [Optimizely::Decide::OptimizelyDecideOption::DISABLE_DECISION_EVENT]
+      )
+
+      expect(decision.rule_key).to eq('177776')
+      expect(@impressions).to be_empty
+    end
+
+    it 'serves the second experiment rule after being held out of the first' do
+      body = datafile
+      body['featureFlags'].find { |f| f['key'] == 'boolean_feature' }['experimentIds'] = %w[122227 111127]
+      project = build_project(body)
+
+      decision = project.create_user_context('user', {}).decide('boolean_feature')
+
+      expect(decision.rule_key).to eq('test_experiment')
+      expect(holdout_impressions).to eq(['holdout_local_1'])
+      expect(project).to have_received(:send_impression)
+        .with(anything, anything, decision.variation_key, 'boolean_feature', 'test_experiment', true, 'feature-test', 'user', anything, anything)
+
+      config = project.config_manager.config
+      result = Optimizely::DecisionService.new(spy_logger, spy_cmab_service).get_decision_for_flag(
+        config.feature_flag_key_map['boolean_feature'],
+        project.create_user_context('user', {}),
+        config
+      )
+      expect(result.decision.experiment['id']).to eq('111127')
+      expect(result.holdout_decisions.map { |d| d.experiment['id'] }).to eq(['holdout_local_1'])
+      expect(result.holdout_decision).to eq(result.holdout_decisions.first)
+    end
+
+    it 'applies the local holdout over a stored sticky variation' do
+      ups = double('user_profile_service', save: nil)
+      allow(ups).to receive(:lookup).with('user').and_return(
+        user_id: 'user',
+        experiment_bucket_map: {'122227' => {variation_id: '122228'}}
+      )
+      project = build_project(datafile, user_profile_service: ups)
+
+      decision = project.create_user_context('user', {}).decide('boolean_feature')
+
+      expect(decision.variation_key).not_to eq('control_with_audience')
+      expect(decision.rule_key).not_to eq('test_experiment_with_audience')
+      expect(decision.variation_key).to be_nil
+      expect(decision.rule_key).to be_nil
+      expect(decision.enabled).to be false
+      expect(holdout_impressions).to eq(['holdout_local_1'])
+    end
+
+    it 'skips a held-out rule without a holdout event in legacy APIs' do
+      project = build_project(datafile(local_holdouts: [local_holdout('lh_a', %w[177770 177772])]))
+
+      expect(project.is_feature_enabled('boolean_single_variable_feature', 'user', chrome_user)).to be true
+      expect(holdout_impressions).to eq([])
     end
   end
 end
