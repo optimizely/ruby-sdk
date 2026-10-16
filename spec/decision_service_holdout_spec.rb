@@ -1413,13 +1413,14 @@ describe Optimizely::DecisionService do
       body
     end
 
-    def build_project(body, user_profile_service: nil)
+    def build_project(body, user_profile_service: nil, cmab_service: nil)
       project = Optimizely::Project.new(
         datafile: JSON.dump(body),
         logger: spy_logger,
         error_handler: error_handler,
         event_processor: spy_event_processor,
-        user_profile_service: user_profile_service
+        user_profile_service: user_profile_service,
+        cmab_service: cmab_service
       )
       allow(project).to receive(:send_impression).and_wrap_original do |original, *args|
         @impressions << args
@@ -1516,6 +1517,33 @@ describe Optimizely::DecisionService do
       expect(result.decision.experiment['id']).to eq('111127')
       expect(result.holdout_decisions.map { |d| d.experiment['id'] }).to eq(['holdout_local_1'])
       expect(result.holdout_decision).to eq(result.holdout_decisions.first)
+    end
+
+    it 'discards earlier local holdout hits when a later rule ends in a decision error' do
+      body = datafile
+      body['featureFlags'].find { |f| f['key'] == 'boolean_feature' }['experimentIds'] = %w[122227 111127]
+      body['experiments'].find { |e| e['id'] == '111127' }['cmab'] = {'attributeIds' => [], 'trafficAllocation' => 10_000}
+      failing_cmab = double('cmab_service')
+      allow(failing_cmab).to receive(:get_decision).and_raise(StandardError, 'CMAB request failed')
+      project = build_project(body, cmab_service: failing_cmab)
+
+      decisions = project.create_user_context('user', chrome_user).decide_for_keys(%w[boolean_feature boolean_single_variable_feature])
+
+      config = project.config_manager.config
+      result = Optimizely::DecisionService.new(spy_logger, failing_cmab).get_decision_for_flag(
+        config.feature_flag_key_map['boolean_feature'],
+        project.create_user_context('user', chrome_user),
+        config
+      )
+      expect(result.error).to be true
+      expect(result.holdout_decisions.map { |d| d.experiment['id'] }).to eq(['holdout_local_1'])
+
+      expect(decisions['boolean_feature'].variation_key).to be_nil
+      expect(decisions['boolean_feature'].reasons).to include('Failed to fetch CMAB data for experiment test_experiment.')
+      expect(@impressions.map { |args| args[3] }).not_to include('boolean_feature')
+      expect(holdout_impressions).to be_empty
+      expect(decisions['boolean_single_variable_feature'].variation_key).not_to be_nil
+      expect(@impressions.map { |args| args[3] }).to include('boolean_single_variable_feature')
     end
 
     it 'applies the local holdout over a stored sticky variation' do
