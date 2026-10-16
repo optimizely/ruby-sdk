@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2020, 2022-2023, Optimizely and contributors
+#    Copyright 2020, 2022-2023, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -743,7 +743,6 @@ describe 'Optimizely' do
       user_id = 'tester'
       original_attributes = {}
       threads = []
-      user_clone = nil
       user_context_obj = Optimizely::OptimizelyUserContext.new(forced_decision_project_instance, user_id, original_attributes)
       allow(user_context_obj).to receive(:clone)
       allow(user_context_obj).to receive(:set_forced_decision)
@@ -760,7 +759,7 @@ describe 'Optimizely' do
       # clone
       threads << Thread.new do
         100.times do
-          user_clone = user_context_obj.clone
+          user_context_obj.clone
         end
       end
 
