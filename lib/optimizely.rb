@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 #
-#    Copyright 2016-2023, Optimizely and contributors
+#    Copyright 2016-2023, 2026, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -225,21 +225,25 @@ module Optimizely
         decision_event_dispatched = true
       end
 
-      if holdout_decision && !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && decision_source != Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
-        holdout_experiment = holdout_decision.experiment
-        holdout_variation = holdout_decision.variation
-        send_impression(
-          config,
-          holdout_experiment,
-          holdout_variation ? holdout_variation['key'] : '',
-          flag_key,
-          holdout_experiment ? holdout_experiment['key'] : '',
-          holdout_variation ? holdout_variation['featureEnabled'] : false,
-          Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
-          user_id,
-          attributes
-        )
-        decision_event_dispatched = true
+      # Accepts a single Decision or an Array; Kernel#Array would splat the Decision struct.
+      holdout_decisions = holdout_decision.is_a?(Array) ? holdout_decision : [holdout_decision].compact
+      if !decide_options.include?(OptimizelyDecideOption::DISABLE_DECISION_EVENT) && decision_source != Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT']
+        holdout_decisions.each do |local_holdout_decision|
+          holdout_experiment = local_holdout_decision.experiment
+          holdout_variation = local_holdout_decision.variation
+          send_impression(
+            config,
+            holdout_experiment,
+            holdout_variation ? holdout_variation['key'] : '',
+            flag_key,
+            holdout_experiment ? holdout_experiment['key'] : '',
+            holdout_variation ? holdout_variation['featureEnabled'] : false,
+            Optimizely::DecisionService::DECISION_SOURCES['HOLDOUT'],
+            user_id,
+            attributes
+          )
+          decision_event_dispatched = true
+        end
       end
 
       # Generate all variables map if decide options doesn't include excludeVariables
@@ -408,8 +412,7 @@ module Optimizely
           next
         end
         flag_decisions[flag_key] = decision
-        holdout_decision = decision_list[i].holdout_decision
-        holdout_decisions[flag_key] = holdout_decision if holdout_decision
+        holdout_decisions[flag_key] = decision_list[i].holdout_decisions || [decision_list[i].holdout_decision].compact
         decision_reasons_dict[flag_key] ||= []
         decision_reasons_dict[flag_key].push(*reasons)
       end
