@@ -59,4 +59,24 @@ describe Optimizely::OdpEvent do
       expect(parsed['data']['custom_key']).to eq('custom_value')
     end
   end
+
+  describe 'custom data with non-string keys' do
+    # odp_data_types_valid? only checks hash values, not keys, so a caller can reach
+    # OdpEvent with non-string keys (e.g. Integer, nil). These can't collide with the
+    # symbol-keyed defaults, and calling to_sym on them would raise, so they must be
+    # left as-is rather than symbolized.
+    let(:event) { described_class.new(type: 'fullstack', action: 'test_action', identifiers: {'fs_user_id' => 'user1'}, data: {1 => 'x', nil => 'y'}) }
+
+    it 'does not raise' do
+      expect { event.to_json }.not_to raise_error
+    end
+
+    it 'keeps the defaults and the non-string-keyed fields' do
+      parsed = JSON.parse(event.to_json)
+      expect(parsed['data']['data_source_type']).to eq('sdk')
+      expect(parsed['data']['data_source']).to eq('ruby-sdk')
+      expect(parsed['data']['1']).to eq('x')
+      expect(parsed['data']['']).to eq('y')
+    end
+  end
 end
