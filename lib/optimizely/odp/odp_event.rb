@@ -39,7 +39,10 @@ module Optimizely
         data_source: 'ruby-sdk',
         data_source_version: VERSION
       }
-      data.update(custom_data)
+      # custom_data may use string keys (e.g. parsed from JSON); normalize to symbols so it
+      # overrides the matching default key above instead of adding a duplicate-looking one,
+      # which later fails JSON generation (symbol/string key collision).
+      data.update(custom_data.transform_keys(&:to_sym))
       data
     end
 
