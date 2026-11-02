@@ -1,5 +1,19 @@
 # Optimizely Ruby SDK Changelog
 
+## 5.6.0
+October 30, 2026
+
+### Changed
+
+**Local Holdouts: rule evaluation continues after a holdout hit**:
+When a user matches a local holdout on a rule, the SDK now excludes the user from that rule only
+and continues evaluating the remaining rules, instead of returning the holdout variation and skipping
+the rest of the flag. Each local holdout hit sends its own holdout impression event (using the
+existing event format), regardless of `sendFlagDecisions`. Global holdouts are unchanged.
+
+- Fix ODP event duplicate symbol/string key JSON error ([#408](https://github.com/optimizely/ruby-sdk/pull/408))
+- Continue rule evaluation after local holdout hit ([#407](https://github.com/optimizely/ruby-sdk/pull/407))
+
 ## 5.5.0
 September 2, 2026
 
