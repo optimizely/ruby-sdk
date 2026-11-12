@@ -386,7 +386,7 @@ describe Optimizely::BatchEventProcessor do
         user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
         log_event = Optimizely::EventFactory.create_log_event(user_event, spy_logger)
         request = stub_request(:post, log_event.url).with(body: log_event.params.to_json)
-                  .to_return(status: status).then.to_return(status: 200)
+                                                    .to_return(status: status).then.to_return(status: 200)
         @event_processor = Optimizely::BatchEventProcessor.new(notification_center: @notification_center)
         allow(@event_processor).to receive(:sleep)
         @event_processor.current_batch << user_event
@@ -399,6 +399,24 @@ describe Optimizely::BatchEventProcessor do
           Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], log_event
         ).once
       end
+    end
+
+    it 'should retry a timeout with the default dispatcher' do
+      user_event = Optimizely::UserEventFactory.create_conversion_event(project_config, event, 'test_user', nil, nil)
+      log_event = Optimizely::EventFactory.create_log_event(user_event, spy_logger)
+      request = stub_request(:post, log_event.url).with(body: log_event.params.to_json)
+                                                  .to_timeout.then.to_return(status: 200)
+      @event_processor = Optimizely::BatchEventProcessor.new(notification_center: @notification_center)
+      allow(@event_processor).to receive(:sleep)
+      @event_processor.current_batch << user_event
+
+      @event_processor.send(:flush_queue!)
+
+      expect(request).to have_been_requested.twice
+      expect(@event_processor.current_batch).to be_empty
+      expect(@notification_center).to have_received(:send_notifications).with(
+        Optimizely::NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT], log_event
+      ).once
     end
 
     it 'should retry on dispatch errors with exponential backoff' do

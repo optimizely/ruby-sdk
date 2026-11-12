@@ -184,6 +184,7 @@ module Optimizely
         begin
           result = @event_dispatcher.dispatch_event(log_event)
           raise result if result.is_a?(StandardError)
+
           @notification_center&.send_notifications(
             NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
             log_event
