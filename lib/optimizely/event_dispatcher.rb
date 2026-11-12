@@ -50,7 +50,9 @@ module Optimizely
 
       when 500...600
         @logger.log(Logger::ERROR, error_msg)
-        @error_handler.handle_error(HTTPCallError.new("HTTP Server Error: #{response.code}"))
+        error = HTTPCallError.new("HTTP Server Error: #{response.code}")
+        @error_handler.handle_error(error)
+        error
       else
         @logger.log(Logger::DEBUG, "event successfully sent with response code #{response.code}")
       end

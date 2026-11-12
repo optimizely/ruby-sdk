@@ -182,7 +182,8 @@ module Optimizely
 
       while retry_count < max_retries
         begin
-          @event_dispatcher.dispatch_event(log_event)
+          result = @event_dispatcher.dispatch_event(log_event)
+          raise result if result.is_a?(StandardError)
           @notification_center&.send_notifications(
             NotificationCenter::NOTIFICATION_TYPES[:LOG_EVENT],
             log_event
