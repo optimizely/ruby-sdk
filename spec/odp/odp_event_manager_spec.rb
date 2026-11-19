@@ -588,11 +588,14 @@ describe Optimizely::OdpEventManager do
       # Third retry: 800ms
       expect(event_manager.send(:calculate_retry_interval, 2)).to eq(0.8)
 
-      # Fourth retry: capped at 1s
-      expect(event_manager.send(:calculate_retry_interval, 3)).to eq(1.0)
+      # Fourth retry: 1.6s
+      expect(event_manager.send(:calculate_retry_interval, 3)).to eq(1.6)
 
-      # Fifth retry: still capped at 1s
-      expect(event_manager.send(:calculate_retry_interval, 4)).to eq(1.0)
+      # Fifth retry: capped at 3s
+      expect(event_manager.send(:calculate_retry_interval, 4)).to eq(3.0)
+
+      # Sixth retry: still capped at 3s
+      expect(event_manager.send(:calculate_retry_interval, 5)).to eq(3.0)
     end
   end
 end
