@@ -21,6 +21,8 @@ require 'optimizely/error_handler'
 require 'optimizely/logger'
 
 # Helper class for testing with controlled bucket values
+# This is a plain Ruby test double, not a Rails model, so the mass assignment (attr_accessible) rule does not apply.
+# nosemgrep: ruby.lang.security.model-attributes-attr-accessible.model-attributes-attr-accessible
 class TestBucketer < Optimizely::Bucketer
   def initialize(logger)
     super(logger)
