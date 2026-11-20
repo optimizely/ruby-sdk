@@ -140,8 +140,9 @@ module Optimizely
         @logger.log Logger::INFO, "Notification #{notification_type} sent successfully."
       rescue => e
         @logger.log(Logger::ERROR, "Problem calling notify callback. Error: #{e}")
-        return nil
       end
+
+      nil
     end
 
     def notification_count(notification_type)

@@ -479,6 +479,19 @@ describe Optimizely::NotificationCenter do
                                                  .with(Logger::INFO, 'delivered two.')
       end
 
+      it 'should keep calling remaining listeners when an earlier listener raises' do
+        notification_type = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
+        failing = ->(_args) { raise 'listener failure' }
+        notification_center.add_notification_listener(notification_type, failing)
+        notification_center.add_notification_listener(notification_type, invitation.method(:deliver_two))
+
+        expect { notification_center.send_notifications(notification_type, @args) }.to_not raise_error
+        expect(spy_logger).to have_received(:log)
+          .with(Logger::ERROR, 'Problem calling notify callback. Error: listener failure')
+        expect(spy_logger).to have_received(:log).once
+                                                 .with(Logger::INFO, 'delivered two.')
+      end
+
       it 'should send notifications and verify that all callbacks are called' do
         notification_type_decision = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:ACTIVATE]
         notification_type_track = Optimizely::NotificationCenter::NOTIFICATION_TYPES[:TRACK]
