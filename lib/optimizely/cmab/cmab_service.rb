@@ -214,6 +214,9 @@ module Optimizely
       # @param attributes [Hash] The attributes to be hashed.
       # @return [String] The MD5 hash of the sorted and serialized attributes.
       sorted_attrs = JSON.generate(attributes.sort.to_h)
+      # MD5 is intentional: this is only a fast fingerprint to detect changed attribute values in the local
+      # CMAB cache (computed on every CMAB evaluation). It is not used for security, so a cryptographic hash is not needed.
+      # nosemgrep: ruby.lang.security.weak-hashes-md5.weak-hashes-md5
       Digest::MD5.hexdigest(sorted_attrs)
     end
   end

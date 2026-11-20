@@ -19,6 +19,9 @@ jobs:
       with:
         # You should create a personal access token and store it in your repository
         token: ${{ secrets.CI_USER_TOKEN }}
+        # The token is only needed for this checkout. Later steps pass it explicitly via env
+        # and do not use git, so do not leave it in .git/config.
+        persist-credentials: false
         repository: 'optimizely/travisci-tools'
         path: 'home/runner/travisci-tools'
         ref: 'master'
