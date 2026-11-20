@@ -205,16 +205,19 @@ module Optimizely
     end
 
     def hash_attributes(attributes)
-      # Generates a SHA256 hash for a given attributes hash.
+      # Generates an MD5 hash for a given attributes hash.
       #
       # The method sorts the attributes by key, serializes them to a JSON string,
-      # and then computes the SHA256 hash of the resulting string. This ensures that
+      # and then computes the MD5 hash of the resulting string. This ensures that
       # the hash is consistent regardless of the original key order in the input hash.
       #
       # @param attributes [Hash] The attributes to be hashed.
-      # @return [String] The SHA256 hash of the sorted and serialized attributes.
+      # @return [String] The MD5 hash of the sorted and serialized attributes.
       sorted_attrs = JSON.generate(attributes.sort.to_h)
-      Digest::SHA256.hexdigest(sorted_attrs)
+      # MD5 is intentional: this is only a fast fingerprint to detect changed attribute values in the local
+      # CMAB cache (computed on every CMAB evaluation). It is not used for security, so a cryptographic hash is not needed.
+      # nosemgrep: ruby.lang.security.weak-hashes-md5.weak-hashes-md5
+      Digest::MD5.hexdigest(sorted_attrs)
     end
   end
 end
